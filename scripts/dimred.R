@@ -1,8 +1,14 @@
+datasets = readRDS("~/thesis/projects/dyngen/results/datasets.rds")
+
+
+
+dimreds = list("pca"=pca, "mds"=mds, "tsne"=tsne, "dp"=dp, "ica"=ica, "lle"=lle, "simlr"=simlr)
+dimreds = list("mds"=mds, "pca"=pca, "ica"=ica, "lmds"=lmds, "tsne"=tsne, "dp"=dp)
 settings = expand.grid(datasetid=seq_len(length(datasets)), dimredname=names(dimreds))%>% mutate(settingid=seq_len(length(datasetid))) %>% split(1:nrow(.)) %>% map(as.list)
 
-spaces = settings %>% keep(~T) %>% map(~list(counts=datasets[[.$datasetid]]$counts, dimred=dimreds[[.$dimredname]])) %>% 
+spaces = settings %>% keep(~T) %>% map(~list(counts=datasets[[.$datasetid]]$counts, dimred=dimreds[[.$dimredname]])) %>%
   qsub_lapply(
-    function(x) x$dimred(x$counts), 
+    function(x) x$dimred(x$counts),
     override_qsub_config(wait=F, stop_on_error = F),
     qsub_environment=c("process_dimred")
   )
@@ -35,23 +41,23 @@ jaccard = function(x1, x2) length(intersect(x1, x2))/length(union(x1, x2))
 cellcomparison = map(settings, function(setting) {
   dataset = datasets[[setting$datasetid]]
   space = setting$space
-  
+
   ## first get the distances between every pair of cells
   original = dataset$expression[rownames(dataset$counts), ]
   simulationtimes = dambiutils::pick(dataset$cellinfo, cell=rownames(dataset$counts))$simulationtime %>% set_names(rownames(dataset$counts))
-  
+
   distances = SCORPIUS::euclidean.distance(space)
-  
+
   k = 10
   knn_observed = get_knn(distances, k)
   knn = get_knn(dataset$gs$celldistances[rownames(dataset$counts), rownames(dataset$counts)], k)
-  
+
   #> simulation time prediction
   observedtimes = map_dbl(knn_observed, function(neighborhood) {mean(simulationtimes[neighborhood])})
-  
+
   #> overlap of nearby cells
   jaccards = map_dbl(1:length(knn), function(i) jaccard(knn[[i]], knn_observed[[i]]))
-  
+
   data.frame(setting, observedtime=observedtimes, simulationtime=simulationtimes, jaccard=jaccards, cell=names(observedtimes))
 }) %>% bind_rows()
 
