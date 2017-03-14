@@ -1,4 +1,4 @@
-datasets = readRDS("~/thesis/projects/dyngen/results/datasets.rds")
+datasets = readRDS("../dyngen/results/datasets.rds")
 
 
 
