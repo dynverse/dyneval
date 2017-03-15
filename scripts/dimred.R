@@ -1,7 +1,6 @@
 datasets = readRDS("../dyngen/results/datasets.rds")
 
 
-
 dimreds = list("pca"=pca, "mds"=mds, "tsne"=tsne, "dp"=dp, "ica"=ica, "lle"=lle, "simlr"=simlr)
 dimreds = list("mds"=mds, "pca"=pca, "ica"=ica, "lmds"=lmds, "tsne"=tsne, "dp"=dp)
 settings = expand.grid(datasetid=seq_len(length(datasets)), dimredname=names(dimreds))%>% mutate(settingid=seq_len(length(datasetid))) %>% split(1:nrow(.)) %>% map(as.list)
