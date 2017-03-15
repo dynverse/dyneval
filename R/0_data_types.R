@@ -21,8 +21,14 @@ dt_symmetric_similarity_matrix <- dt_symmetric %>% inherits(dt_similarity_matrix
 
 dt_reduced_space <- create_data_type("reduced_space") %>% inherits(dt_matrix)
 
-wrap_data_object <- function(data_types, data_object) {
-  l <- list(data_types = data_types$data_types, data_object = data_object)
+#' Wrap a data object
+#'
+#' @param data_types the data type object
+#' @param data_object the data itself
+#'
+#' @export
+wrap_data_object <- function(data_type_object, data_object) {
+  l <- list(data_types = data_type_object$data_types, data_object = data_object)
   class(l) <- "dyneval::data_object"
   l
 }

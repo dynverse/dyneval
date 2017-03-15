@@ -99,4 +99,18 @@ mt_matrix_dimensionality_reduction <- create_method_type(
   output_types = list("space" = dt_reduced_space)
 )
 
-
+#' Running a dyneval method
+#'
+#' @param wrapped_method The wrapped method
+#' @param data The wrapped data to be passed
+#' @param ... Parameters of the method
+#'
+#' @export
+run_method <- function(wrapped_method, data, ...) {
+  params <- list(...)
+  combined_data <- c(
+    data,
+    params
+  )
+  do.call(wrapped_method$method_function, combined_data)
+}
