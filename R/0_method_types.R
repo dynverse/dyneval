@@ -112,12 +112,17 @@ mt_objects <- list(
   create_method_type(
     name = "distance_dimensionality_reduction",
     input_types = list("distance" = "symmetric_distance_matrix"),
-    output_types = list("space" = "reduced_space")
+    output_types = list("space" = "space")
   ),
   create_method_type(
     name = "matrix_dimensionality_reduction",
     input_types = list("x" = "matrix"),
-    output_types = list("space" = "reduced_space")
+    output_types = list("space" = "space")
+  ),
+  create_method_type(
+    name = "trajectory_inference",
+    input_types = list("space" = "space"),
+    output_types = list("pseudotime" = "pseudotime", "trajectory" = "trajectory")
   )
 )
 names(mt_objects) <- sapply(mt_objects, function(mto) mto$name)

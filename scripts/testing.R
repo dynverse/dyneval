@@ -22,6 +22,9 @@ wrapped_distmat <- run_method(meth2, wrapped_simmat, get_parameter_row(meth2, 1)
 meth3 <- dyneval:::imp_distance_to_space[[1]]
 wrapped_space <- run_method(meth3, wrapped_distmat, get_parameter_row(meth3, 1))
 
+meth4 <- dyneval:::imp_trajectory_inference[[1]]
+wrapped_traj <- run_method(meth4, wrapped_space, get_parameter_row(meth4, 1))
+
 # unwrap data and plot it
 space <- unwrap_data_object(wrapped_space$space)
 plot(space)
