@@ -20,7 +20,7 @@ dt_objects <- list(
   create_data_type("similarity_matrix") %>% inherits("matrix"),
   create_data_type("symmetric_distance_matrix") %>% inherits("symmetric", "distance_matrix"),
   create_data_type("symmetric_similarity_matrix") %>% inherits("symmetric", "similarity_matrix"),
-  create_data_type("reduced_space") %>% inherits(matrix)
+  create_data_type("reduced_space") %>% inherits("matrix")
 )
 names(dt_objects) <- sapply(dt_objects, function(dto) dto$name)
 

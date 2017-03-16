@@ -27,45 +27,42 @@ space <- unwrap_data_object(wrapped_space$space)
 plot(space)
 
 ## making a method graph ------------------------------------------------------
-object_names <- ls(getNamespace("dyneval"), all.names=TRUE)
-mt_object_names <- object_names[grepl("^mt_", object_names)]
-dt_object_names <- object_names[grepl("^dt_", object_names)]
-dt_object_names2 <- gsub("^dt_", "", dt_object_names)
-mt_objects <- lapply(mt_object_names, function(name) getNamespace("dyneval")[[name]])
-dt_objects <- setNames(lapply(dt_object_names, function(name) getNamespace("dyneval")[[name]]), dt_object_names)
+mt_object_names <- names(dyneval:::mt_objects)
+dt_object_names <- names(dyneval:::dt_objects)
+mt_objects <- dyneval:::mt_objects
+dt_objects <- dyneval:::dt_objects
 mt_as_df <- bind_rows(lapply(mt_objects, function(mt_obj) {
-  name <- mt_obj$name
-  input_param_type <- sapply(mt_obj$input_types, function(moit) dt_object_names2[sapply(dt_objects, function(dto) !is.character(all.equal(dto, moit)))])
-  output_param_type <- sapply(mt_obj$output_types, function(moot) dt_object_names2[sapply(dt_objects, function(dto) !is.character(all.equal(dto, moot)))])
   bind_rows(
-    data_frame(name, param_name = names(mt_obj$input_types), param_type = input_param_type, type = "input"),
-    data_frame(name, param_name = names(mt_obj$output_types), param_type = output_param_type, type = "output")
+    data_frame(name = mt_obj$name, param_name = names(mt_obj$input_types), param_type = unlist(mt_obj$input_types), type = "input"),
+    data_frame(name = mt_obj$name, param_name = names(mt_obj$output_types), param_type = unlist(mt_obj$output_types), type = "output")
   )
+}))
+inherits_as_df <- bind_rows(lapply(dt_objects, function(dt_obj) {
+  if (!is.null(dt_obj$super)) {
+    data_frame(name = dt_obj$name, super = dt_obj$super, type = "inherits")
+  } else {
+    NULL
+  }
 }))
 mt_as_df
 object_types <- bind_rows(
-  data_frame(id = unique(mt_as_df$name), node_type = "method"),
-  data_frame(id = unique(mt_as_df$param_type), node_type = "data")
+  data_frame(id = mt_object_names, node_type = "method"),
+  data_frame(id = dt_object_names, node_type = "data")
 )
 
-edge_df <- mt_as_df %>% mutate(from = ifelse(type == "input", param_type, name), to = ifelse(type == "input", name, param_type)) %>% select(from, to, label = param_name, name, param_name, param_type, type)
 edge_df <- bind_rows(
-  edge_df,
-  data_frame(from = "distance_matrix", to = "matrix", label = "inherits"),
-  data_frame(from = "similarity_matrix", to = "matrix", label = "inherits"),
-  data_frame(from = "symmetric_distance_matrix", to = "distance_matrix", label = "inherits"),
-  # data_frame(from = "symmetric_distance_matrix", to = "symmetric", label = "inherits"),
-  data_frame(from = "symmetric_similarity_matrix", to = "similarity_matrix", label = "inherits"),
-  # data_frame(from = "symmetric_similarity_matrix", to = "symmetric", label = "inherits"),
-  data_frame(from = "reduced_space", to = "matrix", label = "inherits")
+  mt_as_df %>%
+    mutate(from = ifelse(type == "input", param_type, name), to = ifelse(type == "input", name, param_type)) %>%
+    select(from, to, label = param_name, name, param_name, param_type, type),
+  inherits_as_df %>% mutate(from = name, to = super, label = type) %>% select(from, to, label, name, super, type)
 )
-
+type_colours <- c(input = "blue", output = "red", inherits = "lightgray")
 node_df <- object_types %>% mutate(vertex.shape = ifelse(node_type == "method", "rectangle", "circle")) %>% select(id, vertex.shape)
 library(igraph)
 igr <- igraph::graph_from_data_frame(edge_df %>% as.data.frame(), directed = T, vertices = node_df)
 
 pdf("scratch/methods.pdf", 10, 10)
-plot(igr, vertex.shape = node_df$vertex.shape, edge.color = ifelse(edge_df$label != "inherits", "black", "lightgray"))
+plot(igr, vertex.shape = node_df$vertex.shape, edge.color = type_colours[edge_df$type])
 dev.off()
 write_tsv(edge_df, "scratch/methods_edges.tsv")
 write_tsv(node_df, "scratch/methods_nodes.tsv")
