@@ -3,9 +3,8 @@ imp_symmetric_distance_metric <- list(
     method_name = "symmetric_euclidean",
     method_type = mt_symmetric_distance_metric,
     method_function = function(x) {
-      dm <- as.matrix(stats::dist(x))
       list(
-        distance = wrap_data_object(dt_symmetric_distance_matrix, dm)
+        distance = as.matrix(stats::dist(x))
       )
     },
     parameter_sets = list(),
@@ -18,9 +17,8 @@ imp_distance_metric <- list(
     method_name = "euclidean",
     method_type = mt_distance_metric,
     method_function = function(x, y) {
-      dm <- SCORPIUS:::euclidean_distance_rcpp(x, y)
       list(
-        distance = wrap_data_object(dt_distance_matrix, dm)
+        distance = SCORPIUS:::euclidean_distance_rcpp(x, y)
       )
     },
     parameter_sets = list(),

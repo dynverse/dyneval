@@ -7,7 +7,7 @@ dataset <- datasets[[1]]
 rm(datasets)
 
 expr <- log2(dataset$counts+1)
-wrapped_expr <- wrap_data_object(dyneval:::dt_matrix, expr)
+wrapped_expr <- wrap_data_object("expression", expr)
 named_wrapped_expr <- list(x = wrapped_expr)
 
 # pick the first symmetric similarity metric and run it
@@ -15,7 +15,7 @@ meth1 <- dyneval:::imp_symmetric_similarity_metric[[1]]
 wrapped_simmat <- run_method(meth1, named_wrapped_expr, get_parameter_row(meth1, 1))
 
 # pick the first sym2dist method and run it
-meth2 <- dyneval:::imp_similarity_to_distance[[1]]
+meth2 <- dyneval:::imp_symmetric_similarity_to_distance[[1]]
 wrapped_distmat <- run_method(meth2, wrapped_simmat, get_parameter_row(meth2, 1))
 
 # pick the first distance2space method and run it
@@ -48,7 +48,7 @@ object_types <- bind_rows(
   data_frame(id = unique(mt_as_df$param_type), node_type = "data")
 )
 
-edge_df <- mt_as_df %>% mutate(from = ifelse(type == "input", param_type, name), to = ifelse(type == "input", name, param_type)) %>% select(from, to, label = param_name)
+edge_df <- mt_as_df %>% mutate(from = ifelse(type == "input", param_type, name), to = ifelse(type == "input", name, param_type)) %>% select(from, to, label = param_name, name, param_name, param_type, type)
 edge_df <- bind_rows(
   edge_df,
   data_frame(from = "distance_matrix", to = "matrix", label = "inherits"),

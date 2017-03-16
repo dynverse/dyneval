@@ -1,24 +1,36 @@
-create_data_type <- function(data_types) {
-  l <- list(data_types = data_types)
+create_data_type <- function(name) {
+  l <- list(name = name)
   class(l) <- "dyneval::data_type"
   l
 }
 
-inherits <- function(data_type1, data_type2) {
-  combined_data_types <- unique(c(data_type1$data_types, data_type2$data_types))
-  create_data_type(combined_data_types)
+inherits <- function(sub_data_type, ...) {
+  super_data_types <- c(...)
+  sub_data_type$super <- c(sub_data_type$super, super_data_types)
+  sub_data_type
 }
 
-dt_matrix <- create_data_type("matrix")
-dt_vector <- create_data_type("vector")
-dt_list <- create_data_type("list")
-dt_symmetric <- create_data_type("symmetric")
+dt_objects <- list(
+  create_data_type("matrix"),
+  create_data_type("vector"),
+  create_data_type("list"),
+  create_data_type("symmetric"),
+  create_data_type("expression") %>% inherits("matrix"),
+  create_data_type("distance_matrix") %>% inherits("matrix"),
+  create_data_type("similarity_matrix") %>% inherits("matrix"),
+  create_data_type("symmetric_distance_matrix") %>% inherits("symmetric", "distance_matrix"),
+  create_data_type("symmetric_similarity_matrix") %>% inherits("symmetric", "similarity_matrix"),
+  create_data_type("reduced_space") %>% inherits(matrix)
+)
+names(dt_objects) <- sapply(dt_objects, function(dto) dto$name)
 
-dt_distance_matrix <- create_data_type("distance_matrix") %>% inherits(dt_matrix)
-dt_similarity_matrix <- create_data_type("similarity_matrix") %>% inherits(dt_matrix)
-dt_symmetric_distance_matrix <- dt_symmetric %>% inherits(dt_distance_matrix)
-dt_symmetric_similarity_matrix <- dt_symmetric %>% inherits(dt_similarity_matrix)
-dt_reduced_space <- create_data_type("reduced_space") %>% inherits(dt_matrix)
+is_data_type <- function(object) {
+  object %in% names(dt_objects)
+}
+
+check_data_type <- function(object) {
+  if (!is_data_type(object)) stop("data_type ", sQuote(object), " is unexpected")
+}
 
 #' Wrap a data object
 #'
@@ -26,10 +38,25 @@ dt_reduced_space <- create_data_type("reduced_space") %>% inherits(dt_matrix)
 #' @param data_object the data itself
 #'
 #' @export
-wrap_data_object <- function(data_type_object, data_object) {
-  l <- list(data_types = data_type_object$data_types, data_object = data_object)
+wrap_data_object <- function(data_type, data_object) {
+  check_data_type(data_type)
+  l <- list(data_type = data_type, data_object = data_object)
   class(l) <- "dyneval::data_object"
   l
+}
+
+implements <- function(class, superclass) {
+  check_data_type(class)
+  check_data_type(superclass)
+  if (class == superclass) {
+    T
+  } else {
+    any(sapply(dt_objects[[class]]$super, implements, superclass))
+  }
+}
+
+instanceof <- function(wrapped_data_object, superclass) {
+  implements(wrapped_data_object$data_type, superclass)
 }
 
 #' Returns whether an object is a data_object

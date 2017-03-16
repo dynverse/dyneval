@@ -4,9 +4,8 @@ imp_matrix_to_space <- list(
     method_type = mt_matrix_dimensionality_reduction,
     method_function = function(x, num_dimensions) {
       sp <- stats::prcomp(t(x))$rotation[,seq_len(num_dimensions)]
-      spc <- clean_dimred_output(sp, rownames(distance))
       list(
-        space = wrap_data_object(dt_reduced_space, spc)
+        space = clean_dimred_output(sp, rownames(distance))
       )
     },
     parameter_sets = list(list(num_dimensions = seq(2, 10))),
@@ -18,9 +17,8 @@ imp_matrix_to_space <- list(
     method_function = function(x, num_dimensions) {
       x <- t(scale(t(x)))
       sp <- fastICA::fastICA(x, n.comp = num_dimensions)$S
-      spc <- clean_dimred_output(sp, rownames(distance))
       list(
-        space = wrap_data_object(dt_reduced_space, spc)
+        space = clean_dimred_output(sp, rownames(distance))
       )
     },
     parameter_sets = list(list(num_dimensions = seq(2, 10))),
@@ -34,9 +32,8 @@ imp_matrix_to_space <- list(
       num_neighbours <- lle::calc_k(t(scale(t(x))), num_dimensions)
       num_neighbours <- num_neighbours$k[which.min(num_neighbours$rho)]
       sp <- lle::lle(x, m = num_dimensions, k = num_neighbours)$Y
-      spc <- clean_dimred_output(sp, rownames(distance))
       list(
-        space = wrap_data_object(dt_reduced_space, spc)
+        space = clean_dimred_output(sp, rownames(distance))
       )
     },
     parameter_sets = list(list(num_dimensions = seq(2, 10))),

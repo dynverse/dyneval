@@ -1,4 +1,10 @@
 create_method_type <- function(name, input_types, output_types) {
+  for (input_type in input_types) {
+    check_data_type(input_type)
+  }
+  for (output_type in output_types) {
+    check_data_type(output_type)
+  }
   l <- list(
     name = name,
     input_types = input_types,
@@ -15,37 +21,37 @@ wrap_method <- function(method_name, method_type, method_function, parameter_set
   if (!all(names(input_types) == form_args[seq_along(input_types)])) {
     stop("Not all input_types were found")
   }
-  wrapped_function <- function(...) {
-    execution_arguments <- list(...)
+  wrapped_function <- function(data_objects, extra_parameters) {
     for (namespace in required_namespaces) {
       requireNamespace(namespace)
     }
     for (i in seq_along(input_types)) {
-      if (!all(input_types[[i]]$data_types %in% execution_arguments[[i]]$data_types)) {
+      if (!instanceof(data_objects[[i]], input_types[[i]])) {
         message <- paste0(
           "Mismatch in input data types.\n",
-          "Parameter: ", names(execution_arguments)[[i]], "\n",
-          "expected DT: ", paste(input_types[[i]]$data_types, collapse=";"), "\n",
-          "actual DT: ", paste(execution_arguments[[i]]$data_types, collapse=";"))
+          "Parameter: ", names(data_objects)[[i]], "\n",
+          "Expected: ", paste(input_types[[i]], collapse=";"), "\n",
+          "Observed: ", paste(data_objects[[i]], collapse=";"))
         stop(message)
       }
-      execution_arguments[[i]] <- unwrap_data_object(execution_arguments[[i]])
     }
-    method_output <- do.call(method_function, execution_arguments)
+    # call function with auto unwrap
+    method_output <- do.call(method_function, c(lapply(data_objects, unwrap_data_object), extra_parameters))
     if (!all(names(output_types) == names(method_output))) {
-      stop("Not all output_types were found")
+      message <- paste0(
+        "Not all output_types were found.\n",
+        "Expected: ", paste(names(output_types), collapse = ", "), "\n",
+        "Observed: ", paste(names(method_output), collapse = ", ")
+      )
+      stop(message)
     }
-    for (i in seq_along(output_types)) {
-      if (!all(output_types[[i]]$data_types %in% method_output[[i]]$data_types)) {
-        message <- paste0(
-          "Mismatch in output data types.\n",
-          "Parameter: ", names(method_output)[[i]], "\n",
-          "expected DT: ", paste(output_types[[i]]$data_types, collapse=";"), "\n",
-          "actual DT: ", paste(method_output[[i]]$data_types, collapse=";"))
-        stop(message)
-      }
-    }
-    method_output
+    # return with auto wrap
+    # wrapped_output <- list()
+    # for (i in seq_along(method_output)) {
+    #   wrapped_output[[i]] <- wrap_data_object(output_types[[i]], method_output[[i]])
+    # }
+    # wrapped_output
+    mapply(output_types, method_output, FUN = wrap_data_object, SIMPLIFY = F)
   }
   expanded_parameters <- generate_parameters(parameter_sets)
   wrapped_method <- list(
@@ -62,43 +68,53 @@ wrap_method <- function(method_name, method_type, method_function, parameter_set
 
 mt_symmetric_distance_metric <- create_method_type(
   name = "symmetric_distance_metric",
-  input_types = list("x" = dt_matrix),
-  output_types = list("distance" = dt_symmetric_distance_matrix)
+  input_types = list("x" = "matrix"),
+  output_types = list("distance" = "symmetric_distance_matrix")
 )
 mt_distance_metric <- create_method_type(
   name = "distance_metric",
-  input_types = list("x" = dt_matrix, "y" = dt_matrix),
-  output_types = list("distance" = dt_distance_matrix)
+  input_types = list("x" = "matrix", "y" = "matrix"),
+  output_types = list("distance" = "distance_matrix")
 )
 mt_symmetric_similarity_metric <- create_method_type(
   name = "symmetric_similarity_metric",
-  input_types = list("x" = dt_matrix),
-  output_types = list("similarity" = dt_symmetric_similarity_matrix)
+  input_types = list("x" = "matrix"),
+  output_types = list("similarity" = "symmetric_similarity_matrix")
 )
 mt_similarity_metric <- create_method_type(
   name = "similarity_metric",
-  input_types = list("x" = dt_matrix, "y" = dt_matrix),
-  output_types = list("similarity" = dt_similarity_matrix)
+  input_types = list("x" = "matrix", "y" = "matrix"),
+  output_types = list("similarity" = "similarity_matrix")
 )
 mt_similarity_to_distance <- create_method_type(
   name = "similarity_to_distance",
-  input_types = list("similarity" = dt_similarity_matrix),
-  output_types = list("distance" = dt_distance_matrix)
+  input_types = list("similarity" = "similarity_matrix"),
+  output_types = list("distance" = "distance_matrix")
 )
 mt_distance_to_similarity <- create_method_type(
   name = "distance_to_similarity",
-  input_types = list("distance" = dt_distance_matrix),
-  output_types = list("similarity" = dt_similarity_matrix)
+  input_types = list("distance" = "distance_matrix"),
+  output_types = list("similarity" = "similarity_matrix")
+)
+mt_symmetric_similarity_to_distance <- create_method_type(
+  name = "symmetric_similarity_to_distance",
+  input_types = list("similarity" = "symmetric_similarity_matrix"),
+  output_types = list("distance" = "symmetric_distance_matrix")
+)
+mt_symmetric_distance_to_similarity <- create_method_type(
+  name = "symmetric_distance_to_similarity",
+  input_types = list("distance" = "symmetric_distance_matrix"),
+  output_types = list("similarity" = "symmetric_similarity_matrix")
 )
 mt_distance_dimensionality_reduction <- create_method_type(
   name = "distance_dimensionality_reduction",
-  input_types = list("distance" = dt_symmetric_distance_matrix),
-  output_types = list("space" = dt_reduced_space)
+  input_types = list("distance" = "symmetric_distance_matrix"),
+  output_types = list("space" = "reduced_space")
 )
 mt_matrix_dimensionality_reduction <- create_method_type(
   name = "matrix_dimensionality_reduction",
-  input_types = list("x" = dt_matrix),
-  output_types = list("space" = dt_reduced_space)
+  input_types = list("x" = "matrix"),
+  output_types = list("space" = "reduced_space")
 )
 
 #' Running a dyneval method
@@ -109,6 +125,5 @@ mt_matrix_dimensionality_reduction <- create_method_type(
 #'
 #' @export
 run_method <- function(wrapped_method, data, parameters) {
-  combined_data <- c(data, parameters)
-  do.call(wrapped_method$method_function, combined_data)
+  wrapped_method$method_function(data, parameters)
 }

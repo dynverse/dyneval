@@ -4,7 +4,7 @@
 \alias{wrap_data_object}
 \title{Wrap a data object}
 \usage{
-wrap_data_object(data_type_object, data_object)
+wrap_data_object(data_type, data_object)
 }
 \arguments{
 \item{data_object}{the data itself}
