@@ -47,11 +47,13 @@ wrap_method <- function(method_name, method_type, method_function, parameter_set
     }
     method_output
   }
+  expanded_parameters <- generate_parameters(parameter_sets)
   wrapped_method <- list(
     method_type_name = method_type$name,
     method_name = method_name,
     method_function = wrapped_function,
     parameter_sets = parameter_sets,
+    expanded_parameters = expanded_parameters,
     required_namespaces = required_namespaces
   )
   class(wrapped_method) <- "dyneval::wrapped_method"
@@ -64,7 +66,7 @@ mt_symmetric_distance_metric <- create_method_type(
   output_types = list("distance" = dt_symmetric_distance_matrix)
 )
 mt_distance_metric <- create_method_type(
-  name = "nonsymmetric_distance_metric",
+  name = "distance_metric",
   input_types = list("x" = dt_matrix, "y" = dt_matrix),
   output_types = list("distance" = dt_distance_matrix)
 )
@@ -74,7 +76,7 @@ mt_symmetric_similarity_metric <- create_method_type(
   output_types = list("similarity" = dt_symmetric_similarity_matrix)
 )
 mt_similarity_metric <- create_method_type(
-  name = "nonsymmetric_similarity_metric",
+  name = "similarity_metric",
   input_types = list("x" = dt_matrix, "y" = dt_matrix),
   output_types = list("similarity" = dt_similarity_matrix)
 )
@@ -90,7 +92,7 @@ mt_distance_to_similarity <- create_method_type(
 )
 mt_distance_dimensionality_reduction <- create_method_type(
   name = "distance_dimensionality_reduction",
-  input_types = list("distance" = dt_distance_matrix),
+  input_types = list("distance" = dt_symmetric_distance_matrix),
   output_types = list("space" = dt_reduced_space)
 )
 mt_matrix_dimensionality_reduction <- create_method_type(
@@ -103,14 +105,10 @@ mt_matrix_dimensionality_reduction <- create_method_type(
 #'
 #' @param wrapped_method The wrapped method
 #' @param data The wrapped data to be passed
-#' @param ... Parameters of the method
+#' @param parameters Parameters of the method
 #'
 #' @export
-run_method <- function(wrapped_method, data, ...) {
-  params <- list(...)
-  combined_data <- c(
-    data,
-    params
-  )
+run_method <- function(wrapped_method, data, parameters) {
+  combined_data <- c(data, parameters)
   do.call(wrapped_method$method_function, combined_data)
 }

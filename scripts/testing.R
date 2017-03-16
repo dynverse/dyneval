@@ -8,19 +8,105 @@ rm(datasets)
 
 expr <- log2(dataset$counts+1)
 wrapped_expr <- wrap_data_object(dyneval:::dt_matrix, expr)
+named_wrapped_expr <- list(x = wrapped_expr)
 
 # pick the first symmetric similarity metric and run it
-wrapped_simmat <- run_method(dyneval:::imp_symmetric_similarity_metric[[1]], data = list(x = wrapped_expr), method = "pearson")
+meth1 <- dyneval:::imp_symmetric_similarity_metric[[1]]
+wrapped_simmat <- run_method(meth1, named_wrapped_expr, get_parameter_row(meth1, 1))
 
 # pick the first sym2dist method and run it
-wrapped_distmat <- run_method(dyneval:::imp_similarity_to_distance[[1]], data = wrapped_simmat, method = "corr")
+meth2 <- dyneval:::imp_similarity_to_distance[[1]]
+wrapped_distmat <- run_method(meth2, wrapped_simmat, get_parameter_row(meth2, 1))
 
 # pick the first distance2space method and run it
-wrapped_space <- run_method(dyneval:::imp_distance_to_space[[1]], data = wrapped_distmat, num_dimensions = 2)
+meth3 <- dyneval:::imp_distance_to_space[[1]]
+wrapped_space <- run_method(meth3, wrapped_distmat, get_parameter_row(meth3, 1))
 
 # unwrap data and plot it
 space <- unwrap_data_object(wrapped_space$space)
 plot(space)
 
+## making a method graph ------------------------------------------------------
+object_names <- ls(getNamespace("dyneval"), all.names=TRUE)
+mt_object_names <- object_names[grepl("^mt_", object_names)]
+dt_object_names <- object_names[grepl("^dt_", object_names)]
+dt_object_names2 <- gsub("^dt_", "", dt_object_names)
+mt_objects <- lapply(mt_object_names, function(name) getNamespace("dyneval")[[name]])
+dt_objects <- setNames(lapply(dt_object_names, function(name) getNamespace("dyneval")[[name]]), dt_object_names)
+mt_as_df <- bind_rows(lapply(mt_objects, function(mt_obj) {
+  name <- mt_obj$name
+  input_param_type <- sapply(mt_obj$input_types, function(moit) dt_object_names2[sapply(dt_objects, function(dto) !is.character(all.equal(dto, moit)))])
+  output_param_type <- sapply(mt_obj$output_types, function(moot) dt_object_names2[sapply(dt_objects, function(dto) !is.character(all.equal(dto, moot)))])
+  bind_rows(
+    data_frame(name, param_name = names(mt_obj$input_types), param_type = input_param_type, type = "input"),
+    data_frame(name, param_name = names(mt_obj$output_types), param_type = output_param_type, type = "output")
+  )
+}))
+mt_as_df
+object_types <- bind_rows(
+  data_frame(id = unique(mt_as_df$name), node_type = "method"),
+  data_frame(id = unique(mt_as_df$param_type), node_type = "data")
+)
 
+edge_df <- mt_as_df %>% mutate(from = ifelse(type == "input", param_type, name), to = ifelse(type == "input", name, param_type)) %>% select(from, to, label = param_name)
+edge_df <- bind_rows(
+  edge_df,
+  data_frame(from = "distance_matrix", to = "matrix", label = "inherits"),
+  data_frame(from = "similarity_matrix", to = "matrix", label = "inherits"),
+  data_frame(from = "symmetric_distance_matrix", to = "distance_matrix", label = "inherits"),
+  # data_frame(from = "symmetric_distance_matrix", to = "symmetric", label = "inherits"),
+  data_frame(from = "symmetric_similarity_matrix", to = "similarity_matrix", label = "inherits"),
+  # data_frame(from = "symmetric_similarity_matrix", to = "symmetric", label = "inherits"),
+  data_frame(from = "reduced_space", to = "matrix", label = "inherits")
+)
 
+node_df <- object_types %>% mutate(vertex.shape = ifelse(node_type == "method", "rectangle", "circle")) %>% select(id, vertex.shape)
+library(igraph)
+igr <- igraph::graph_from_data_frame(edge_df %>% as.data.frame(), directed = T, vertices = node_df)
+
+pdf("scratch/methods.pdf", 10, 10)
+plot(igr, vertex.shape = node_df$vertex.shape, edge.color = ifelse(edge_df$label != "inherits", "black", "lightgray"))
+dev.off()
+write_tsv(edge_df, "scratch/methods_edges.tsv")
+write_tsv(node_df, "scratch/methods_nodes.tsv")
+
+## toying with params ---------------------------------------------------------
+wrapped_method <- dyneval:::imp_similarity_to_distance[[1]]
+# wrapped_method$parameter_sets <- list(
+#   list(method = "alpha_method", alpha = c(.1, .2, .5), k = 2:4, fun = function(a) a + 1),
+#   list(method = "beta_method", beta = c("one", "two"), k = 3:5, fun = function(b) b + 2)
+# )
+wrapped_method$parameter_sets <- list(
+  list(method = "alpha_method", alpha = c(.1, .2, .5), k = 2:4),
+  list(method = "beta_method", beta = c("one", "two"), k = 3:5)
+)
+
+## toying with mlr paramsets --------------------------------------------------
+library(mlr)
+params <- makeParamSet(
+  makeIntegerLearnerParam(id = "ntree", default = 500L, lower = 1L),
+  makeIntegerLearnerParam(id = "se.ntree", default = 100L, lower = 1L, when = "both", requires = quote(se.method == "bootstrap")),
+  makeDiscreteLearnerParam(id = "se.method", default = "jackknife",
+                           values = c("bootstrap", "jackknife",  "sd"),
+                           requires = quote(se.method %in% c("jackknife") && keep.inbag == TRUE),
+                           when = "both"),
+  makeIntegerLearnerParam(id = "se.boot", default = 50L, lower = 1L, when = "both"),
+  makeIntegerLearnerParam(id = "mtry", lower = 1L),
+  makeLogicalLearnerParam(id = "replace", default = TRUE),
+  makeUntypedLearnerParam(id = "strata", tunable = FALSE),
+  makeIntegerVectorLearnerParam(id = "sampsize", lower = 1L),
+  makeIntegerLearnerParam(id = "nodesize", default = 5L, lower = 1L),
+  makeIntegerLearnerParam(id = "maxnodes", lower = 1L),
+  makeLogicalLearnerParam(id = "importance", default = FALSE),
+  makeLogicalLearnerParam(id = "localImp", default = FALSE),
+  makeIntegerLearnerParam(id = "nPerm", default = 1L),
+  makeLogicalLearnerParam(id = "proximity", default = FALSE, tunable = FALSE),
+  makeLogicalLearnerParam(id = "oob.prox", requires = quote(proximity == TRUE), tunable = FALSE),
+  makeLogicalLearnerParam(id = "do.trace", default = FALSE, tunable = FALSE),
+  makeLogicalLearnerParam(id = "keep.forest", default = TRUE, tunable = FALSE),
+  makeLogicalLearnerParam(id = "keep.inbag", default = FALSE, tunable = FALSE)
+)
+
+# work with tuneParms
+
+# saving benchmarking results in data base? http://stackoverflow.com/questions/3285307/save-r-plot-to-web-server

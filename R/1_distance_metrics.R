@@ -27,10 +27,3 @@ imp_distance_metric <- list(
     required_namespaces = c("SCORPIUS")
   )
 )
-
-# simlr = function(x, ndim=3, nclusters=4) {
-#   result = SIMLR::SIMLR(t(x), nclusters)
-#   S = result$S
-#   space = tsne::tsne(as.dist(max(S)-S), k = ndim)
-#   process_dimred(space)
-# }

@@ -4,14 +4,14 @@
 \alias{run_method}
 \title{Running a dyneval method}
 \usage{
-run_method(wrapped_method, data, ...)
+run_method(wrapped_method, data, parameters)
 }
 \arguments{
 \item{wrapped_method}{The wrapped method}
 
 \item{data}{The wrapped data to be passed}
 
-\item{...}{Parameters of the method}
+\item{parameters}{Parameters of the method}
 }
 \description{
 Running a dyneval method

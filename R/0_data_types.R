@@ -18,7 +18,6 @@ dt_distance_matrix <- create_data_type("distance_matrix") %>% inherits(dt_matrix
 dt_similarity_matrix <- create_data_type("similarity_matrix") %>% inherits(dt_matrix)
 dt_symmetric_distance_matrix <- dt_symmetric %>% inherits(dt_distance_matrix)
 dt_symmetric_similarity_matrix <- dt_symmetric %>% inherits(dt_similarity_matrix)
-
 dt_reduced_space <- create_data_type("reduced_space") %>% inherits(dt_matrix)
 
 #' Wrap a data object
@@ -33,10 +32,20 @@ wrap_data_object <- function(data_type_object, data_object) {
   l
 }
 
+#' Returns whether an object is a data_object
+#'
+#' @param object the object to test
+#'
+#' @export
 is_wrapped_data_object <- function(object) {
   class(object) == "dyneval::data_object"
 }
 
+#' Unwrap a data_object
+#'
+#' @param wrapped_data_object a wrapped data_object
+#'
+#' @export
 unwrap_data_object <- function(wrapped_data_object) {
   if (!is_wrapped_data_object(wrapped_data_object)) {
     stop("Object is not a wrapped data object")
