@@ -15,8 +15,10 @@ create_method_type <- function(name, input_types, output_types) {
 }
 
 wrap_method <- function(method_name, method_type, method_function, parameter_sets, required_namespaces) {
-  input_types <- method_type$input_types
-  output_types <- method_type$output_types
+  check_method_type(method_type)
+  method_type_object <- mt_objects[[method_type]]
+  input_types <- method_type_object$input_types
+  output_types <- method_type_object$output_types
   form_args <- formalArgs(method_function)
   if (!all(names(input_types) == form_args[seq_along(input_types)])) {
     stop("Not all input_types were found")
@@ -55,7 +57,7 @@ wrap_method <- function(method_name, method_type, method_function, parameter_set
   }
   expanded_parameters <- generate_parameters(parameter_sets)
   wrapped_method <- list(
-    method_type_name = method_type$name,
+    method_type = method_type,
     method_name = method_name,
     method_function = wrapped_function,
     parameter_sets = parameter_sets,
@@ -66,56 +68,67 @@ wrap_method <- function(method_name, method_type, method_function, parameter_set
   wrapped_method
 }
 
-mt_symmetric_distance_metric <- create_method_type(
-  name = "symmetric_distance_metric",
-  input_types = list("x" = "matrix"),
-  output_types = list("distance" = "symmetric_distance_matrix")
+mt_objects <- list(
+  create_method_type(
+    name = "symmetric_distance_metric",
+    input_types = list("x" = "matrix"),
+    output_types = list("distance" = "symmetric_distance_matrix")
+  ),
+  create_method_type(
+    name = "distance_metric",
+    input_types = list("x" = "matrix", "y" = "matrix"),
+    output_types = list("distance" = "distance_matrix")
+  ),
+  create_method_type(
+    name = "symmetric_similarity_metric",
+    input_types = list("x" = "matrix"),
+    output_types = list("similarity" = "symmetric_similarity_matrix")
+  ),
+  create_method_type(
+    name = "similarity_metric",
+    input_types = list("x" = "matrix", "y" = "matrix"),
+    output_types = list("similarity" = "similarity_matrix")
+  ),
+  create_method_type(
+    name = "similarity_to_distance",
+    input_types = list("similarity" = "similarity_matrix"),
+    output_types = list("distance" = "distance_matrix")
+  ),
+  create_method_type(
+    name = "distance_to_similarity",
+    input_types = list("distance" = "distance_matrix"),
+    output_types = list("similarity" = "similarity_matrix")
+  ),
+  create_method_type(
+    name = "symmetric_similarity_to_distance",
+    input_types = list("similarity" = "symmetric_similarity_matrix"),
+    output_types = list("distance" = "symmetric_distance_matrix")
+  ),
+  create_method_type(
+    name = "symmetric_distance_to_similarity",
+    input_types = list("distance" = "symmetric_distance_matrix"),
+    output_types = list("similarity" = "symmetric_similarity_matrix")
+  ),
+  create_method_type(
+    name = "distance_dimensionality_reduction",
+    input_types = list("distance" = "symmetric_distance_matrix"),
+    output_types = list("space" = "reduced_space")
+  ),
+  create_method_type(
+    name = "matrix_dimensionality_reduction",
+    input_types = list("x" = "matrix"),
+    output_types = list("space" = "reduced_space")
+  )
 )
-mt_distance_metric <- create_method_type(
-  name = "distance_metric",
-  input_types = list("x" = "matrix", "y" = "matrix"),
-  output_types = list("distance" = "distance_matrix")
-)
-mt_symmetric_similarity_metric <- create_method_type(
-  name = "symmetric_similarity_metric",
-  input_types = list("x" = "matrix"),
-  output_types = list("similarity" = "symmetric_similarity_matrix")
-)
-mt_similarity_metric <- create_method_type(
-  name = "similarity_metric",
-  input_types = list("x" = "matrix", "y" = "matrix"),
-  output_types = list("similarity" = "similarity_matrix")
-)
-mt_similarity_to_distance <- create_method_type(
-  name = "similarity_to_distance",
-  input_types = list("similarity" = "similarity_matrix"),
-  output_types = list("distance" = "distance_matrix")
-)
-mt_distance_to_similarity <- create_method_type(
-  name = "distance_to_similarity",
-  input_types = list("distance" = "distance_matrix"),
-  output_types = list("similarity" = "similarity_matrix")
-)
-mt_symmetric_similarity_to_distance <- create_method_type(
-  name = "symmetric_similarity_to_distance",
-  input_types = list("similarity" = "symmetric_similarity_matrix"),
-  output_types = list("distance" = "symmetric_distance_matrix")
-)
-mt_symmetric_distance_to_similarity <- create_method_type(
-  name = "symmetric_distance_to_similarity",
-  input_types = list("distance" = "symmetric_distance_matrix"),
-  output_types = list("similarity" = "symmetric_similarity_matrix")
-)
-mt_distance_dimensionality_reduction <- create_method_type(
-  name = "distance_dimensionality_reduction",
-  input_types = list("distance" = "symmetric_distance_matrix"),
-  output_types = list("space" = "reduced_space")
-)
-mt_matrix_dimensionality_reduction <- create_method_type(
-  name = "matrix_dimensionality_reduction",
-  input_types = list("x" = "matrix"),
-  output_types = list("space" = "reduced_space")
-)
+names(mt_objects) <- sapply(mt_objects, function(mto) mto$name)
+
+is_method_type <- function(object) {
+  object %in% names(mt_objects)
+}
+
+check_method_type <- function(object) {
+  if (!is_method_type(object)) stop("method_type ", sQuote(object), " is unexpected")
+}
 
 #' Running a dyneval method
 #'

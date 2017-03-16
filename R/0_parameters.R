@@ -11,5 +11,6 @@ generate_parameters <- function(parameter_sets) {
 #'
 #' @export
 get_parameter_row <- function(method, parameter_row) {
+
   na.omit(as.list(method$expanded_parameters[parameter_row,,drop=F]))
 }

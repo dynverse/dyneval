@@ -1,7 +1,7 @@
 imp_matrix_to_space <- list(
   wrap_method(
     method_name = "pca_stats",
-    method_type = mt_matrix_dimensionality_reduction,
+    method_type = "matrix_dimensionality_reduction",
     method_function = function(x, num_dimensions) {
       sp <- stats::prcomp(t(x))$rotation[,seq_len(num_dimensions)]
       list(
@@ -13,7 +13,7 @@ imp_matrix_to_space <- list(
   ),
   wrap_method(
     method_name = "ica_fastICA",
-    method_type = mt_matrix_dimensionality_reduction,
+    method_type = "matrix_dimensionality_reduction",
     method_function = function(x, num_dimensions) {
       x <- t(scale(t(x)))
       sp <- fastICA::fastICA(x, n.comp = num_dimensions)$S
@@ -26,7 +26,7 @@ imp_matrix_to_space <- list(
   ),
   wrap_method(
     method_name = "lle_lle",
-    method_type = mt_matrix_dimensionality_reduction,
+    method_type = "matrix_dimensionality_reduction",
     method_function = function(x, num_dimensions) {
       x <- t(scale(t(x)))
       num_neighbours <- lle::calc_k(t(scale(t(x))), num_dimensions)
