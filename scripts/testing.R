@@ -2,10 +2,12 @@ library(tidyverse)
 library(magrittr)
 library(dyneval)
 
+## testing execution of one method --------------------------------------------
 datasets <- readRDS("../dyngen/results/datasets.rds")
 dataset <- datasets[[1]]
 rm(datasets)
 
+cellinfo <- dataset$cellinfo[match(rownames(dataset$counts), dataset$cellinfo$cell),]
 expr <- log2(dataset$counts+1)
 wrapped_expr <- wrap_data_object("expression", expr)
 named_wrapped_expr <- list(x = wrapped_expr)
@@ -27,7 +29,9 @@ wrapped_traj <- run_method(meth4, wrapped_space, get_parameter_row(meth4, 1))
 
 # unwrap data and plot it
 space <- unwrap_data_object(wrapped_space$space)
-plot(space)
+traj <- unwrap_data_object(wrapped_traj$trajectory)
+
+SCORPIUS::draw.trajectory.plot(space, cellinfo$simulationtime, path = traj) + scale_colour_gradientn(colours = RColorBrewer::brewer.pal(3, "Set2"))
 
 ## making a method graph ------------------------------------------------------
 mt_object_names <- names(dyneval:::mt_objects)
@@ -64,7 +68,7 @@ node_df <- object_types %>% mutate(vertex.shape = ifelse(node_type == "method", 
 library(igraph)
 igr <- igraph::graph_from_data_frame(edge_df %>% as.data.frame(), directed = T, vertices = node_df)
 
-pdf("scratch/methods.pdf", 10, 10)
+pdf("scratch/methods.pdf", 15, 15)
 plot(igr, vertex.shape = node_df$vertex.shape, edge.color = type_colours[edge_df$type])
 dev.off()
 write_tsv(edge_df, "scratch/methods_edges.tsv")
