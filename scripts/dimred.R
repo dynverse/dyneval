@@ -1,4 +1,4 @@
-datasets = readRDS("~/thesis/projects/dyngen/results/datasets.rds")
+datasets = readRDS("../dyngen/results/datasets.rds")
 
 dimreds = list("pca"=pca, "mds"=mds, "tsne"=tsne, "dp"=dp, "ica"=ica, "lle"=lle, "simlr"=simlr)
 dimreds = list("mds"=mds, "pca"=pca, "ica"=ica, "lmds"=lmds, "tsne"=tsne, "dp"=dp)
