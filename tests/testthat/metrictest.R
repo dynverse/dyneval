@@ -27,3 +27,15 @@ traj <- list(
 )
 drtraj <- dimensionality_reduce_trajectory("test", traj)
 make_trajectory_plot(drtraj)
+
+# test more than 12 milestones
+traj <- list(
+  structure = data.frame(from = letters[-26], to = letters[-1], length = 1, stringsAsFactors = F),
+  cells = local({
+    d <- diag(length(letters))
+    colnames(d) <- letters
+    as.data.frame(d)
+  })
+)
+drtraj <- dimensionality_reduce_trajectory("test", traj)
+make_trajectory_plot(drtraj)
