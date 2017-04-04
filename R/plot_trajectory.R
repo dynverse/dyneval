@@ -9,9 +9,8 @@
 dimensionality_reduce_trajectory <- function(name, traj) {
   # retrieve information on milestones
   names_milestones <- colnames(traj$cells)
-  allmilestones <- paste0("milestone_", seq_len(12))
-  colours_allmilestones <- setNames(RColorBrewer::brewer.pal(length(allmilestones), "Set3"), allmilestones)
-  colours_milestones <- colours_allmilestones[names_milestones]
+  colour_milestones <- RColorBrewer::brewer.pal(max(3, length(names_milestones)), "Set3")[seq_along(names_milestones)]
+  colours_milestones <- setNames(colour_milestones, names_milestones)
   colours_rgb_milestones <- t(col2rgb(colours_milestones))
 
   # get structure

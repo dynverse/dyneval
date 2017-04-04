@@ -13,9 +13,17 @@ all_trajs <- list(
   cells = bind_rows(trajectory_data %>% map(~ .$cells))
 )
 
-make_trajectory_plot(trajectory[[8]])
-with(trajectory_data[[8]], make_trajectory_plot(milestones, lines, cells))
+make_trajectory_plot(trajectory_data[[8]])
 
 # pdf("Rplot.pdf", 16, 12)
 make_trajectory_plot(all_trajs) + facet_wrap(~name)
 # dev.off()
+
+
+# test renaming
+traj <- list(
+  structure = data.frame(from = "x", to = "y", length = 1, stringsAsFactors = F),
+  cells = data_frame(x = seq(0, 1, by = .1), y = 1 - x)
+)
+drtraj <- dimensionality_reduce_trajectory("test", traj)
+make_trajectory_plot(drtraj)
