@@ -19,6 +19,13 @@ dimensionality_reduce_trajectory <- function(name, traj) {
 
   # get structure
   structure <- traj$structure
+
+  # structure <- bind_rows(structure, bind_rows(lapply(names_milestones, function(x) {
+  #   strx <- structure %>% filter(from == x)
+  #   if (nrow(strx) > 1) {
+  #     expand.grid(from = strx$to, to = strx$to, length = 1, stringsAsFactors = F)
+  #   }
+  # })))
   gr <- igraph::graph_from_data_frame(structure, vertices = names_milestones)
 
   # retrieve information on cells
@@ -27,7 +34,7 @@ dimensionality_reduce_trajectory <- function(name, traj) {
   colours_cells <- mapply(colours_rgb_cells[,1], colours_rgb_cells[,2], colours_rgb_cells[,3], FUN = rgb, maxColorValue = 256)
 
   # reduce dimensionality on structure
-  gr_space_milestones <- layout_with_kk(gr, weights = E(gr)$length) %>% SCORPIUS::rescale.and.center()
+  gr_space_milestones <- layout_with_kk(gr, weights = E(gr)$length, maxiter = 200) %>% SCORPIUS::rescale.and.center()
   dimnames(gr_space_milestones) <- list(names_milestones, paste0("Comp", seq_len(ncol(gr_space_milestones))))
 
   # project dimensionality to cells

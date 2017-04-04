@@ -13,29 +13,30 @@ all_trajs <- list(
   cells = bind_rows(trajectory_data %>% map(~ .$cells))
 )
 
-make_trajectory_plot(trajectory_data[[8]])
+# make_trajectory_plot(trajectory_data[[7]])
+# make_trajectory_plot(trajectory_data[[6]])
 
 # pdf("Rplot.pdf", 16, 12)
-make_trajectory_plot(all_trajs) + facet_wrap(~name)
+make_trajectory_plot(all_trajs) + facet_wrap(~name, ncol = 6)
 # dev.off()
 
-
-# test renaming
-traj <- list(
-  structure = data.frame(from = "x", to = "y", length = 1, stringsAsFactors = F),
-  cells = data_frame(x = seq(0, 1, by = .1), y = 1 - x)
-)
-drtraj <- dimensionality_reduce_trajectory("test", traj)
-make_trajectory_plot(drtraj)
-
-# test more than 12 milestones
-traj <- list(
-  structure = data.frame(from = letters[-26], to = letters[-1], length = 1, stringsAsFactors = F),
-  cells = local({
-    d <- diag(length(letters))
-    colnames(d) <- letters
-    as.data.frame(d)
-  })
-)
-drtraj <- dimensionality_reduce_trajectory("test", traj)
-make_trajectory_plot(drtraj)
+#
+# # test renaming
+# traj <- list(
+#   structure = data.frame(from = "x", to = "y", length = 1, stringsAsFactors = F),
+#   cells = data_frame(x = seq(0, 1, by = .1), y = 1 - x)
+# )
+# drtraj <- dimensionality_reduce_trajectory("test", traj)
+# make_trajectory_plot(drtraj)
+#
+# # test more than 12 milestones
+# traj <- list(
+#   structure = data.frame(from = letters[-26], to = letters[-1], length = 1, stringsAsFactors = F),
+#   cells = local({
+#     d <- diag(length(letters))
+#     colnames(d) <- letters
+#     as.data.frame(d)
+#   })
+# )
+# drtraj <- dimensionality_reduce_trajectory("test", traj)
+# make_trajectory_plot(drtraj)
