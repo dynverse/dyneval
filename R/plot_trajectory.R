@@ -5,10 +5,14 @@
 #' @param name The name of the trajectory (mandatory)
 #' @param traj The trajectory itself. TODO: explain format
 #'
+#' @importFrom igraph graph_from_data_frame layout_with_kk E
+#' @importFrom SCORPIUS rescale.and.center
+#' @importFrom RColorBrewer brewer.pal
+#'
 #' @export
 dimensionality_reduce_trajectory <- function(name, traj) {
   # retrieve information on milestones
-  names_milestones <- colnames(traj$cells)
+  names_milestones <- colnames(traj$cells)[-1]
   if (length(names_milestones) <= 12) {
     colour_milestones <- RColorBrewer::brewer.pal(max(3, length(names_milestones)), "Set3")[seq_along(names_milestones)]
     colours_milestones <- setNames(colour_milestones, names_milestones)
@@ -20,25 +24,18 @@ dimensionality_reduce_trajectory <- function(name, traj) {
   # get structure
   structure <- traj$structure
 
-  # structure <- bind_rows(structure, bind_rows(lapply(names_milestones, function(x) {
-  #   strx <- structure %>% filter(from == x)
-  #   if (nrow(strx) > 1) {
-  #     expand.grid(from = strx$to, to = strx$to, length = 1, stringsAsFactors = F)
-  #   }
-  # })))
-  gr <- igraph::graph_from_data_frame(structure, vertices = names_milestones)
-
   # retrieve information on cells
-  pct_cells <- traj$cells
-  colours_rgb_cells <- as.matrix(pct_cells) %*% colours_rgb_milestones
+  pct_cells <- as.matrix(traj$cells[,names_milestones,drop=F])
+  colours_rgb_cells <- pct_cells %*% colours_rgb_milestones
   colours_cells <- mapply(colours_rgb_cells[,1], colours_rgb_cells[,2], colours_rgb_cells[,3], FUN = rgb, maxColorValue = 256)
 
   # reduce dimensionality on structure
+  gr <- graph_from_data_frame(structure, vertices = names_milestones)
   gr_space_milestones <- layout_with_kk(gr, weights = E(gr)$length, maxiter = 200) %>% SCORPIUS::rescale.and.center()
   dimnames(gr_space_milestones) <- list(names_milestones, paste0("Comp", seq_len(ncol(gr_space_milestones))))
 
   # project dimensionality to cells
-  gr_space_cells <- as.matrix(pct_cells) %*% gr_space_milestones
+  gr_space_cells <- pct_cells %*% gr_space_milestones
 
   # format data
   space_milestones <- data.frame(
@@ -55,6 +52,7 @@ dimensionality_reduce_trajectory <- function(name, traj) {
     stringsAsFactors = F)
   space_cells <- data.frame(
     name,
+    cellid = traj$cells$cellid,
     gr_space_cells,
     colour = colours_cells,
     stringsAsFactors = F)
