@@ -17,8 +17,8 @@ trainLearner.ti.scorpius = function(.task, .subset, num_dimensions, num_clusters
   space <- SCORPIUS::reduce.dimensionality(dist, ndim = num_dimensions)
   traj <- SCORPIUS::infer.trajectory(space, k = num_clusters)
 
-  structure <- tibble::data_frame(from = "A", to = "B", length = 1)
-  cells <- tibble::data_frame(cellid = rownames(expression), A = 1 - traj$time, B = 1 - A)
+  state_network <- tibble::data_frame(from = "A", to = "B", length = 1)
+  state_percentages <- tibble::data_frame(cellid = rownames(expression), A = 1 - traj$time, B = 1 - A)
 
-  wrap_ti_output(structure, cells)
+  wrap_ti_output(state_network, state_percentages)
 }
