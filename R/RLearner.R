@@ -17,8 +17,10 @@ make_task_data <- function(expression, gold_structure, gold_cells) {
 }
 
 
-get_task_data <- function(.task, .subset) { # can we use mlr::getTaskData for this?
-
+get_task_data <- function(.task, .subset) {
+  # does not work as it should
+  # can we use mlr::getTaskData for this?
+  .task
 }
 
 wrap_ti_output <- function(structure, cells) {
