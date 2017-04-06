@@ -1,3 +1,8 @@
+#' read data from ods files
+#'
+#' Bugfix wrapper of the \code{\link[readODS]{read_ods}} function
+#'
+#' @import readODS
 my_read_ods <- function(path = NULL, sheet = 1, col_names = TRUE, col_types = NULL, na = "", skip = 0, formula_as_formula = FALSE, range = NULL) {
   res <- readODS:::parse_ods_to_sheets(path)
   ods_ns <- res[[2]]
@@ -20,32 +25,44 @@ my_read_ods <- function(path = NULL, sheet = 1, col_names = TRUE, col_types = NU
   return(res)
 }
 
+#' Read an ODS file containing a trajectory. TODO: explain format. Ask Robrecht about the format for now.
+#'
+#' @param filename the location of the ODS
+#'
+#' @import dplyr
+#' @import tidyr
+#' @import readr
+#'
+#' @export
 read_ods_trajectory <- function(filename) {
   structure_coltypes <- cols_only(from = col_character(), to = col_character(), length = col_double())
+  cells_coltypes <- cols(cellid = col_character(), .default = col_double())
 
+  # read structure tab
   structure <- my_read_ods(
     filename,
     sheet = "structure",
     col_types = structure_coltypes
-  ) %>%
-    mutate(
-      from = paste0("milestone_", from),
-      to = paste0("milestone_", to)
-    )
+  ) %>% mutate(
+    from = ifelse(grepl("^[0-9]*$", from), paste0("milestone_", from), from),
+    to = ifelse(grepl("^[0-9]*$", to), paste0("milestone_", to), to)
+  )
 
   milestones <- sort(unique(c(structure$from, structure$to)))
 
+  # read cells tab
   cells <- my_read_ods(
     filename,
     sheet = "cells",
-    col_types = cols(.default = col_double())
+    col_types = cells_coltypes
   ) %>%
-    select(one_of(milestones))
+    mutate(cellid = paste0("cell_", cellid)) %>%
+    select(cellid, one_of(milestones))
 
+  # fill in NAs
   for (milestone in milestones) {
     cells[,milestone] <- ifelse(is.na(cells[,milestone]), 0, cells[,milestone])
   }
-  rownames(cells) <- paste0("cell_", seq_len(nrow(cells)))
 
   list(structure = structure, cells = cells)
 }
