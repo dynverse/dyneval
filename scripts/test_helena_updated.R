@@ -16,6 +16,9 @@ scorpius_output$state_names
 scorpius_output$state_network
 scorpius_output$state_percentages
 
-# todo:
-#  - compare task$state_network and task$state_percentages
-#  - to output$state_network and output$state_percentages
+plot_grid(
+  plotLearner.ti.default(task),
+  plotLearner.ti.default(scorpius_output),
+  plotLearner.ti.scorpius(scorpius_output),
+  nrow = 1
+)
