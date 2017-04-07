@@ -1,6 +1,7 @@
 library(dyneval)
 library(tidyverse)
-set.seed(5)
+library(cowplot)
+set.seed(1)
 
 task <- read_task_data("ti", "linear", "ginhoux")
 
@@ -9,7 +10,7 @@ plotLearner.ti.default(task)
 scorpius_output <- trainLearner.ti.scorpius(task, .subset = NULL, num_dimensions = 3, num_clusters = 4)
 
 plotLearner.ti.default(scorpius_output)
-plotLearner.ti.scorpius(task, .subset = NULL, scorpius_output)
+plotLearner.ti.scorpius(scorpius_output)
 
 scorpius_output$state_names
 scorpius_output$state_network

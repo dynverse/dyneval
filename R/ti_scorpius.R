@@ -45,7 +45,7 @@ trainLearner.ti.scorpius <- function(.task, .subset, num_dimensions, num_cluster
 #' @import ggplot2
 #' @importFrom viridis scale_color_viridis
 #' @export
-plotLearner.ti.scorpius <- function(.task, .subset, ti_predictions) {
+plotLearner.ti.scorpius <- function(ti_predictions) {
   sample_df <- data.frame(
     ti_predictions$dimred_samples,
     pseudotime = ti_predictions$pseudotime
