@@ -34,7 +34,12 @@ plotLearnerData.ti.default <- function(traj_object) {
 
   # reduce dimensionality on state_network
   gr <- graph_from_data_frame(state_network, vertices = state_names)
-  gr_space_states <- layout_with_kk(gr, weights = E(gr)$length, maxiter = 200) %>% SCORPIUS::rescale.and.center()
+  lengths <- E(gr)$length
+  if (min(lengths) * 3 < max(lengths)) {
+    lengths <- ((lengths - min(lengths)) / (max(lengths) - min(lengths)) + 1) %>% sqrt
+  }
+
+  gr_space_states <- layout_with_kk(gr, weights = lengths, maxiter = 200) %>% SCORPIUS::rescale.and.center()
   dimnames(gr_space_states) <- list(state_names, paste0("Comp", seq_len(ncol(gr_space_states))))
 
   # project dimensionality to samples
