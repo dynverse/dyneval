@@ -29,11 +29,36 @@ plotLearnerData.ti.default <- function(traj_object) {
   state_percentages <- traj_object$state_percentages
   state_percentages_m <- as.matrix(state_percentages[,state_names,drop=F])
   rownames(state_percentages_m) <- state_percentages$id
-  colours_rgb_samples <- state_percentages_m %*% colours_rgb_states
+  colstate_networkstate_networkstate_networkours_rgb_samples <- state_percentages_m %*% colours_rgb_states
   colours_samples <- mapply(colours_rgb_samples[,1], colours_rgb_samples[,2], colours_rgb_samples[,3], FUN = rgb, maxColorValue = 256)
 
+  structure <- bind_rows(state_network, bind_rows(lapply(state_names, function(x) {
+    # add imaginary links, ifneedbe
+    strx <- state_network %>%
+      filter(from == x)
+
+    if (nrow(strx) > 1) {
+      strx <- strx %>%
+        mutate(
+          angle = seq(0, 120/360*pi*2, length.out = n()),
+          x = length * cos(angle),
+          y = length * sin(angle)
+        )
+      poss <- strx %>% select(x, y) %>% as.matrix
+      rownames(poss) <- strx$to
+      poss %>%
+        dist %>%
+        as.matrix %>%
+        reshape2::melt(varnames = c("from", "to"), value.name = "length") %>%
+        mutate(from = as.character(from), to = as.character(to)) %>%
+        filter(from != to)
+    } else {
+      NULL
+    }
+  })))
+
   # reduce dimensionality on state_network
-  gr <- graph_from_data_frame(state_network, vertices = state_names)
+  gr <- graph_from_data_frame(structure, vertices = state_names)
   lengths <- E(gr)$length
   if (min(lengths) * 3 < max(lengths)) {
     lengths <- ((lengths - min(lengths)) / (max(lengths) - min(lengths)) + .5) %>% sqrt
