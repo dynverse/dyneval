@@ -36,7 +36,7 @@ plotLearnerData.ti.default <- function(traj_object) {
   gr <- graph_from_data_frame(state_network, vertices = state_names)
   lengths <- E(gr)$length
   if (min(lengths) * 3 < max(lengths)) {
-    lengths <- ((lengths - min(lengths)) / (max(lengths) - min(lengths)) + 1) %>% sqrt
+    lengths <- ((lengths - min(lengths)) / (max(lengths) - min(lengths)) + .5) %>% sqrt
   }
 
   gr_space_states <- layout_with_kk(gr, weights = lengths, maxiter = 200) %>% SCORPIUS::rescale.and.center()
