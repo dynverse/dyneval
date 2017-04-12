@@ -79,5 +79,45 @@ all_trajs <- list(
 class(all_trajs) <- "dyneval::ti_dimred_wrapper"
 
 plotLearner.ti.default(all_trajs) + facet_wrap(~name)
+plotLearner.ti.default(trajectoryplot_data[[4]])
 
+
+traj <- trajectory_data[[4]]
+
+task_emdist <- emdist(traj)
+plot_emdist(traj, task_emdist)
+
+# gr <- igraph::graph_from_data_frame(traj$state_network, directed = T, vertices = traj$state_names)
+# milestone_distances <- igraph::distances(gr, weights = igraph::E(gr)$length)
+# pct <- as.matrix(traj$state_percentages[,-1])
+# rownames(pct) <- traj$state_percentages$id
+#
+#
+#
+#
+# # can also implement myself https://people.cs.umass.edu/~mcgregor/papers/13-approx1.pdf
+# cell_dists <- expand.grid(from = rownames(pct), to = rownames(pct)) %>%
+#   mutate(dist = mapply(from, to, FUN = function(i, j) {
+#     tr <- transport::transport(pct[i,], pct[j,], costm = milestone_distances, method = "revsimplex") %>%
+#       mutate(dist = milestone_distances[cbind(from,to)], mult = mass * dist)
+#     sum(tr$mult)
+#   }))
+# pheatmap::pheatmap(reshape2::acast(cell_dists, from~to, value.var = "dist"), cluster_rows = F, cluster_cols = F, annotation_col = as.data.frame(pct), annotation_row = as.data.frame(pct))
+#
+#
+#
+# x <- pct[1,]
+# y <- pct[2,]
+# tr <-  transport::transport(x, y, costm = milestone_distances, method = "shortsimplex")
+# tr <-  transport::transport(x, y, costm = milestone_distances, method = "revsimplex")
+# out <- tr %>%
+#   mutate(dist = milestone_distances[cbind(from,to)], mult = mass * dist)
+# out
+
+
+# a <- c(100, 200, 80, 150, 50, 140, 170, 30, 10, 70)
+# b <- c(60, 120, 150, 110, 40, 90, 160, 120, 70, 80)
+# costm <- matrix(sample(1:20, 100, replace=TRUE), 10, 10)
+# res <- transport::transport(a,b,costm) %>% mutate(dist = costm[cbind(from,to)], mult = mass * dist)
+# distance <- sum(res$mult)
 
