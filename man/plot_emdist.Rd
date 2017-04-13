@@ -4,7 +4,7 @@
 \alias{plot_emdist}
 \title{Plot the Earth Mover's distances in a heatmap}
 \usage{
-plot_emdist(traj, emdist)
+plot_emdist(traj, dist)
 }
 \arguments{
 \item{traj}{the trajectory (less than 500 cells is recommended)}
