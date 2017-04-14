@@ -1,7 +1,7 @@
 library(dyneval)
 library(tidyverse)
 
-task <- dyneval:::read_ti_task_data("linear_ginhoux")
+task <- read_task_data("ti", "linear", "ginhoux")
 
 task$state_network
 task$state_percentages

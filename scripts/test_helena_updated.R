@@ -4,10 +4,10 @@ library(cowplot)
 set.seed(1)
 
 task <- read_task_data("ti", "linear", "ginhoux")
-task_time <- task$state_percentages %>% mutate(time = percent_rank(MDP + 2*CDP + 4*PreDC)) %>% .$time
+task_emdist <- compute_em_dist(task)
 
 pred_output <- trainLearner.ti.scorpius(task, .subset = NULL, num_dimensions = 3, num_clusters = 4)
-qplot(task_time, pred_output$pseudotime)
+pred_emdist <- compute_em_dist(pred_output)
 
 plot_grid(
   plotLearner.ti.default(task),
@@ -16,13 +16,10 @@ plot_grid(
   nrow = 1
 )
 
-task_emdist <- compute_em_dist(task)
-pred_emdist <- compute_em_dist(pred_output)
-
 corank <- compute_coranking(task_emdist, pred_emdist)
 
 corank$lcmc
-corank$mean_lcmc
+corank$auc_lcmc
 
 plot(corank$lcmc)
 coRanking::imageplot(corank$corank)
