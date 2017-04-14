@@ -4,10 +4,12 @@
 \alias{compute_em_dist}
 \title{Calculate Earth Mover's Distance between cells in a trajectory}
 \usage{
-compute_em_dist(traj)
+compute_em_dist(traj, parallel = T)
 }
 \arguments{
 \item{traj}{the trajectory}
+
+\item{parallel}{compute distances in parallel}
 }
 \description{
 Calculate Earth Mover's Distance between cells in a trajectory
