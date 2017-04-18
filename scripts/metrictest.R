@@ -72,52 +72,44 @@ trajectory_data <- lapply(files, read_trajectory_ods)
 trajectoryplot_data <- lapply(trajectory_data, plotLearnerData.ti.default)
 
 all_trajs <- list(
-  space_states = bind_rows(trajectoryplot_data %>% map(~ .$space_states)),
-  space_lines = bind_rows(trajectoryplot_data %>% map(~ .$space_lines)),
-  space_samples = bind_rows(trajectoryplot_data %>% map(~ .$space_samples))
+  space_states = trajectoryplot_data %>% map_df(~ .$space_states),
+  space_lines = trajectoryplot_data %>% map_df(~ .$space_lines),
+  space_samples = trajectoryplot_data %>% map_df(~ .$space_samples)
 )
 class(all_trajs) <- "dyneval::ti_dimred_wrapper"
 
 plotLearner.ti.default(all_trajs) + facet_wrap(~name)
-plotLearner.ti.default(trajectoryplot_data[[4]])
 
+out_folder <- "scratch/output_metrictest"
+dir.create(out_folder)
 
-traj <- trajectory_data[[4]]
+pngsz <- 1200
+for (ix in seq_along(trajectory_data)) {
+  cat("Processing test ", ix, "\n", sep="")
 
-task_emdist <- emdist(traj)
-plot_emdist(traj, task_emdist)
+  file_traj <- paste0(out_folder, "/test_", ix, "_traj.png")
+  file_hm <- paste0(out_folder, "/test_", ix, "_heatmap.png")
+  file_comb <- paste0(out_folder, "/test_", ix, "_comb.png")
 
-# gr <- igraph::graph_from_data_frame(traj$state_network, directed = T, vertices = traj$state_names)
-# milestone_distances <- igraph::distances(gr, weights = igraph::E(gr)$length)
-# pct <- as.matrix(traj$state_percentages[,-1])
-# rownames(pct) <- traj$state_percentages$id
-#
-#
-#
-#
-# # can also implement myself https://people.cs.umass.edu/~mcgregor/papers/13-approx1.pdf
-# cell_dists <- expand.grid(from = rownames(pct), to = rownames(pct)) %>%
-#   mutate(dist = mapply(from, to, FUN = function(i, j) {
-#     tr <- transport::transport(pct[i,], pct[j,], costm = milestone_distances, method = "revsimplex") %>%
-#       mutate(dist = milestone_distances[cbind(from,to)], mult = mass * dist)
-#     sum(tr$mult)
-#   }))
-# pheatmap::pheatmap(reshape2::acast(cell_dists, from~to, value.var = "dist"), cluster_rows = F, cluster_cols = F, annotation_col = as.data.frame(pct), annotation_row = as.data.frame(pct))
-#
-#
-#
-# x <- pct[1,]
-# y <- pct[2,]
-# tr <-  transport::transport(x, y, costm = milestone_distances, method = "shortsimplex")
-# tr <-  transport::transport(x, y, costm = milestone_distances, method = "revsimplex")
-# out <- tr %>%
-#   mutate(dist = milestone_distances[cbind(from,to)], mult = mass * dist)
-# out
+  traj <- trajectory_data[[ix]]
+  plotdata <- trajectoryplot_data[[ix]]
 
+  png(file_traj, pngsz, pngsz, res = 300)
+  print(plotLearner.ti.default(plotdata))
+  dev.off()
 
-# a <- c(100, 200, 80, 150, 50, 140, 170, 30, 10, 70)
-# b <- c(60, 120, 150, 110, 40, 90, 160, 120, 70, 80)
-# costm <- matrix(sample(1:20, 100, replace=TRUE), 10, 10)
-# res <- transport::transport(a,b,costm) %>% mutate(dist = costm[cbind(from,to)], mult = mass * dist)
-# distance <- sum(res$mult)
+  emdist <- compute_emlike_dist(traj)
+
+  plot_emdist(traj, emdist,
+              filename = file_hm,
+              width = pngsz/300, height = pngsz/300)
+
+  system(paste0("convert ", file_traj, " ", file_hm, " -append ", file_comb))
+  file.remove(file_traj)
+  file.remove(file_hm)
+}
+
+in_files <- paste(paste0(out_folder, "/test_", seq_along(trajectory_data), "_comb.png"), collapse = " ")
+
+system(paste0("convert ", in_files, " +append ", out_folder, "/test_comb.png"))
 

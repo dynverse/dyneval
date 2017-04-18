@@ -4,7 +4,7 @@ makeRLearner.ti.monocle <- function() {
     cl = "ti.mococle",
     package = c("monocle"),
     par.set = makeParamSet(
-      # makeIntegerLearningParam(id = "num_dimensions", lower = 1L, default = 3L),
+      makeIntegerLearningParam(id = "num_dimensions", lower = 1L, default = 2L)
       # makeIntegerLearningParam(id = "num_clusters", lower = 2L, default = 4L)
     ),
     # properties = c("linear", "dimred_samples", "dimred_traj", "pseudotime"), # What to add?
@@ -20,14 +20,14 @@ makeRLearner.ti.monocle <- function() {
 #' @import dplyr
 #'
 #' @export
-trainLearner.ti.monocle <- function(.task, .subset) {
+trainLearner.ti.monocle <- function(.task, .subset, num_dimensions) {
   # subsetting will not work yet, but the function is already provided
   data <- get_task_data(.task, .subset)
 
   expression <- data$expression
 
   cds_1 <- monocle::newCellDataSet(t(as.matrix(expression)))
-  cds_2 <- monocle::reduceDimension(cds_1, max_components = 2)
+  cds_2 <- monocle::reduceDimension(cds_1, max_components = num_dimensions)
   cds_3 <- monocle::orderCells(cds_2, reverse = FALSE)
 
   gr <- cds_3@auxOrderingData$DDRTree$pr_graph_cell_proj_tree
@@ -67,6 +67,8 @@ trainLearner.ti.monocle <- function(.task, .subset) {
     unique %>%
     spread(waypoint, value, fill = 0) %>%
     slice(match(rownames(expression), id))
+
+  state_percentages <- state_percentages[,c("id", state_names)]
 
   wrap_ti_prediction(
     ti_type = "tree",

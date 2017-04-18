@@ -2,7 +2,7 @@
 
 export(RLearnerTI)
 export(compute_coranking)
-export(compute_em_dist)
+export(compute_emlike_dist)
 export(get_task_data)
 export(get_task_identifier)
 export(makeRLearner.ti.monocle)

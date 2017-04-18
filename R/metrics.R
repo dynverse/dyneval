@@ -1,53 +1,100 @@
-
 #' Calculate Earth Mover's Distance between cells in a trajectory
 #'
 #' @param traj the trajectory
-#' @param parallel compute distances in parallel
 #'
 #' @export
 #'
 #' @importFrom igraph graph_from_data_frame E distances
 #' @importFrom transport transport
 #' @import dplyr
-compute_em_dist <- function(traj, parallel = T) {
-  state_network <- traj$state_network
-  state_names <- traj$state_names
+compute_emlike_dist <- function(traj) {
+  state_network <- traj$state_network %>% mutate(from = paste0("state_", from), to = paste0("state_", to))
+  state_names <- traj$state_names %>% paste0("state_", .)
   state_percentages <- traj$state_percentages
+  colnames(state_percentages)[-1] <- paste0("state_", colnames(state_percentages)[-1])
 
   # calculate the shortest path distances between milestones
-  gr <- igraph::graph_from_data_frame(state_network, directed = T, vertices = state_names)
-  milestone_distances <- igraph::distances(gr, weights = igraph::E(gr)$length)
+  phantom_edges <- bind_rows(lapply(state_names, function(sn) {
+    sn_filt <- state_network %>% filter(from == sn)
+    dis_vec <- setNames(sn_filt$length, sn_filt$to)
+    phantom_edges <-
+      expand.grid(from = sn_filt$to, to = sn_filt$to, stringsAsFactors = F) %>%
+      filter(from < to) %>%
+      mutate(length = dis_vec[from] + dis_vec[to])
+    phantom_edges
+  }))
+  gr <- igraph::graph_from_data_frame(bind_rows(state_network %>% mutate(length = 2 * length), phantom_edges), directed = F, vertices = state_names)
+  milestone_distances <- igraph::distances(gr, weights = igraph::E(gr)$length, mode = "all")
 
   # transport percentages data
   pct <- as.matrix(state_percentages[,-1])
   ids <- state_percentages$id
   rownames(pct) <- ids
 
-  # calculate the distances between cells
-  # could also implement myself https://people.cs.umass.edu/~mcgregor/papers/13-approx1.pdf
-  sapply_fun <-
-    if (parallel) {
-      function(X, FUN, ...) {
-        unlist(parallel::mclapply(X, FUN, mc.cores = 8, ...))
+  fromto_matrix <- matrix(0, nrow = length(state_names), ncol = length(state_names), dimnames = list(state_names, state_names))
+  fromto2 <- state_network %>% reshape2::acast(from~to, value.var = "length", fun.aggregate = length)
+  fromto_matrix[rownames(fromto2), colnames(fromto2)] <- fromto2
+  diag(fromto_matrix) <- 1
+
+  froms <- setNames(lapply(rownames(pct), function(xi) {
+    x <- pct[xi,]
+    notzero <- x != 0
+    wh <-
+      if (sum(notzero) == 1) {
+        which(notzero)
+      } else {
+        apply(fromto_matrix, 1, function(y) {
+          all(!notzero | y)
+        })
       }
+    state_names[wh]
+  }), rownames(pct))
+
+  closest <- bind_rows(lapply(state_names, function(state_name) {
+    # cat("State ", state_name, "\n", sep="")
+    sample_node <- froms %>% map_lgl(~ state_name %in% .)
+    if (sum(sample_node) == 0) {
+      NULL
     } else {
-      pbapply::pbsapply
+      milestones <- which(fromto_matrix[state_name,] == 1)
+      dist_milestones <- milestone_distances[milestones, milestones, drop = F]
+      sample_pcts <- pct[sample_node, milestones, drop = F]
+      closest_to_nodes <-
+        sample_pcts %*% dist_milestones %>%
+        reshape2::melt(varnames = c("from", "to"), value.name = "length")
+
+      closest_to_samples <-
+        expand.grid(from = rownames(sample_pcts), to = rownames(sample_pcts), stringsAsFactors = F) %>%
+        filter(from < to)
+      closest_to_samples$length <- sapply(seq_len(nrow(closest_to_samples)), function(xi) {
+        a <- sample_pcts[closest_to_samples$from[[xi]],]
+        b <- sample_pcts[closest_to_samples$to[[xi]],]
+        diff <- a - b
+        which_from <- diff < 0
+        num_from <- sum(which_from)
+        which_to <- diff > 0
+        num_to <- sum(which_to)
+
+        if (num_from == 1) {
+          sum(dist_milestones[which_from, which_to] * diff[which_to])
+        } else if (num_to == 1) {
+          -sum(dist_milestones[which_from, which_to] * diff[which_from])
+        } else if (num_from == 0) {
+          0
+        } else {
+          transport::transport(a, b, costm = dist_milestones) %>%
+            mutate(dist = dist_milestones[cbind(from,to)], mult = mass * dist) %>%
+            .$mult %>%
+            sum
+        }
+      })
+
+      bind_rows(closest_to_nodes, closest_to_samples)
     }
+  }))
 
-  cell_dists <- expand.grid(from = rownames(pct), to = rownames(pct)) %>% filter(as.integer(from) < as.integer(to))
-  cell_dists$dist <- sapply_fun(seq_len(nrow(cell_dists)), function(i) {
-    a <- pct[cell_dists$from[[i]],]
-    b <- pct[cell_dists$to[[i]],]
-    transport::transport(a, b, costm = milestone_distances, method = "shortsimplex") %>%
-      mutate(dist = milestone_distances[cbind(from,to)], mult = mass * dist) %>%
-      .$mult %>%
-      sum
-  })
-
-  dist_m <- cell_dists %>% reshape2::acast(from~to, value.var = "dist", fill = 0)
-  dist_m2 <- matrix(0, nrow = length(ids), ncol = length(ids), dimnames = list(ids, ids))
-  dist_m2[rownames(dist_m), colnames(dist_m)] <- dist_m
-  (dist_m2 + t(dist_m2))
+  gr2 <- igraph::graph_from_data_frame(closest, directed = F, vertices = c(state_names, ids))
+  dist_m <- gr2 %>% igraph::distances(v = ids, to = ids, weights = igraph::E(gr2)$length)
 }
 
 #' Plot the Earth Mover's distances in a heatmap
@@ -59,7 +106,7 @@ compute_em_dist <- function(traj, parallel = T) {
 #'
 #' @importFrom reshape2 acast
 #' @importFrom pheatmap pheatmap
-plot_emdist <- function(traj, dist) {
+plot_emdist <- function(traj, dist, ...) {
   state_percentages <- traj$state_percentages
   pct <- as.data.frame(state_percentages[,-1])
   rownames(pct) <- state_percentages$id
@@ -74,7 +121,11 @@ plot_emdist <- function(traj, dist) {
     legend_breaks = F,
     border_color = NA,
     show_rownames = F,
-    show_colnames = F)
+    show_colnames = F,
+    annotation_legend = F,
+    annotation_names_row = F,
+    annotation_names_col = F,
+    ...)
 }
 
 #' Compute the coranking matrix and
