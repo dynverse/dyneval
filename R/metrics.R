@@ -28,7 +28,7 @@ compute_emlike_dist <- function(traj) {
 
   # transport percentages data
   pct <- as.matrix(state_percentages[,-1])
-  ids <- state_percentages$id
+  ids <- as.character(state_percentages$id)
   rownames(pct) <- ids
 
   fromto_matrix <- matrix(0, nrow = length(state_names), ncol = length(state_names), dimnames = list(state_names, state_names))
@@ -159,11 +159,14 @@ compute_coranking <- function(gold_dist, pred_dist) {
 
   lcmc <- coRanking::LCMC(corank)
 
-  auc_lcmc <- mean(lcmc)
+  summary <- data_frame(
+    auc_lcmc = mean(lcmc),
+    max_lcmc = max(lcmc)
+  )
 
   list(
     corank = corank,
     lcmc = lcmc,
-    auc_lcmc = auc_lcmc
+    summary = summary
   )
 }
