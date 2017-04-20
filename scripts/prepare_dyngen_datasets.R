@@ -45,7 +45,7 @@ dyngen_dataset_to_task <- function(dataset, name) {
     left_join(node_graph$node_graph, by = c("piecestateid"="edge_id")) %>%
     select(from, to, length)
 
-  expression <- log2(dataset$counts + 1)
+  expression <- t(SCORPIUS::quant.scale(t(log2(dataset$counts + 1))))
   # expression <- dataset$expression
 
   state_percentages <- dataset$gs$cellinfo %>%
@@ -112,9 +112,9 @@ for (dataset_num in seq_along(datasets)) {
     corank2 <- compute_coranking(task_emdist, pred_emdist2)
 
     cat("  Saving data\n")
-    scores <- data_frame(
+    scores <- data.frame(
       method = c("SCORPIUS", "monocle"),
-      auc_lcmc = c(corank1$auc_lcmc, corank2$auc_lcmc),
+      bind_rows(corank1$summary, corank2$summary),
       cor = cor(task_emdist %>% as.vector, cbind(pred_emdist1 %>% as.vector, pred_emdist2 %>% as.vector))[1,])
 
     save(task, pred_output1, pred_output2, task_emdist, pred_emdist1, pred_emdist2, corank1, corank2, scores, file = data_file)
@@ -174,13 +174,24 @@ for (dataset_num in seq_along(datasets)) {
 
     # row 5
     png(paste0(data_dir, "/plot13.png"), plsz, plsz, res = 300)
-    print(ggplot(scores) + geom_bar(aes(method, auc_lcmc), stat = "identity"))
+    print(ggplot(scores) + geom_bar(aes(method, max_lcmc), stat = "identity"))
     dev.off()
     png(paste0(data_dir, "/plot14.png"), plsz, plsz, res = 300)
     coRanking::imageplot(corank1$corank)
     dev.off()
     png(paste0(data_dir, "/plot15.png"), plsz, plsz, res = 300)
     coRanking::imageplot(corank2$corank)
+    dev.off()
+
+    # row 6
+    png(paste0(data_dir, "/plot16.png"), plsz, plsz, res = 300)
+    print(ggplot(scores) + geom_bar(aes(method, cor), stat = "identity"))
+    dev.off()
+    png(paste0(data_dir, "/plot17.png"), plsz, plsz, res = 300)
+    (ggplot() + geom_point(aes(as.vector(task_emdist), as.vector(pred_emdist1)), alpha = .1, size = .5) + labs(x = "original EM dist", y = "SCORPIUS EM dist")) %>% print
+    dev.off()
+    png(paste0(data_dir, "/plot18.png"), plsz, plsz, res = 300)
+    (ggplot() + geom_point(aes(as.vector(task_emdist), as.vector(pred_emdist2)), alpha = .1, size = .5) + labs(x = "original EM dist", y = "monocle EM dist")) %>% print
     dev.off()
 
     system(paste0(
@@ -191,9 +202,62 @@ for (dataset_num in seq_along(datasets)) {
       "convert plot[789].png -append result_c.png\n",
       "convert plot1[012].png -append result_d.png\n",
       "convert plot1[345].png -append result_e.png\n",
-      "convert result_[abcde].png +append result.png\n",
+      "convert plot1[678].png -append result_f.png\n",
+      "convert result_[abcdef].png +append result.png\n",
       "HERE\n"))
 
     file.copy(paste0(data_dir, "/result.png"), paste0(data_dir, "_plot.png"), overwrite = T)
   }
 }
+
+
+dat_evals <- lapply(seq_along(datasets), function(dataset_num) {
+  task_name <- paste0("dataset_", dataset_num)
+  data_dir <- paste0(output_root_folder, task_name)
+  data_file <- paste0(data_dir, "/data.RData")
+  if (!file.exists(data_file)) {
+    NULL
+  } else {
+    vals <- load(data_file)
+    environment() %>% as.list() %>% .[vals]
+  }
+})
+
+scores <- dat_evals %>% map_df(~ data.frame(dataset = .$task$name, ti_type = .$task$ti_type, .$scores))
+ggplot(scores) +
+  geom_path(aes(max_lcmc, cor, group = dataset)) +
+  geom_point(aes(max_lcmc, cor, colour = method), size = 3)
+#
+# de <- dat_evals[[1]]
+# qplot(as.vector(de$task_emdist), as.vector(de$pred_emdist1))
+# qplot(as.vector(de$task_emdist), as.vector(de$pred_emdist2))
+#
+#
+# dataset <- datasets[[10]]
+#
+# # expression_c <- t(SCORPIUS::quant.scale(t(log2(dataset$counts + 1))))
+# # expression_r <- dataset$expression[rownames(expression_c),]
+# #
+# # pheatmap::pheatmap(t(SCORPIUS::quant.scale(expression_c)), cluster_cols = F)
+# # pheatmap::pheatmap(t(SCORPIUS::quant.scale(expression_r)), cluster_cols = F)
+#
+# task <- dyngen_dataset_to_task(dataset, "freiu")
+# plotdata <- plotLearnerData.ti.default(task)
+# plotLearner.ti.default(plotdata)
+# space_states <- plotdata$space_states
+#
+# expr <- task$expression
+# ddr <- DDRTree::DDRTree(SCORPIUS::quant.scale(t(expr)), dimensions = 20, sigma = .001, maxIter = 20, lambda = NULL, param.gamma = 10, tol = .001)
+# sample_coord <- data.frame(t(ddr$Z))
+# traj_coord <- data.frame(t(ddr$Y))
+# colnames(sample_coord) <- colnames(traj_coord) <- paste0("Comp", seq_len(ncol(sample_coord)))
+# sample_coord$type <- task$state_names[apply(task$state_percentages[,-1], 1, which.max)]
+# tree_links <- ddr$stree %>% as.matrix %>% reshape2::melt(varnames=c("from", "to"), value.name = "value") %>% filter(value != 0)
+# tree_links_coord <- tree_links %>% left_join(data.frame(from = seq_len(nrow(traj_coord)), from=traj_coord)) %>% left_join(data.frame(to = seq_len(nrow(traj_coord)), to=traj_coord))
+#
+# ggplot() +
+#   geom_segment(aes(x = from.Comp1, xend = to.Comp1, y = from.Comp2, yend = to.Comp2), tree_links_coord) +
+#   geom_point(aes(Comp1, Comp2, colour = type), sample_coord) +
+#   scale_colour_manual(values = setNames(space_states$colour, space_states$id)) +
+#   theme(panel.background = element_rect(fill = "#777777"))
+# #
