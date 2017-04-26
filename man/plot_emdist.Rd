@@ -4,10 +4,12 @@
 \alias{plot_emdist}
 \title{Plot the Earth Mover's distances in a heatmap}
 \usage{
-plot_emdist(traj, emdist)
+plot_emdist(traj, dist, dimred = NULL, ...)
 }
 \arguments{
 \item{traj}{the trajectory (less than 500 cells is recommended)}
+
+\item{dimred}{the dimensionality reduction of the trajectory as produced by \code{\link{plotLearnerData.ti.default}}}
 
 \item{emdist}{the Earth Mover's distances as calculated by \code{\link{emdist}}}
 }
