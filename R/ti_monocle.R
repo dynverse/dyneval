@@ -24,7 +24,7 @@ trainLearner.ti.monocle <- function(.task, .subset, num_dimensions) {
   # subsetting will not work yet, but the function is already provided
   data <- get_task_data(.task, .subset)
 
-  expression <- data$expression
+  expression <- t(SCORPIUS::quant.scale(t(data$expression), 0))
 
   cds_1 <- monocle::newCellDataSet(t(as.matrix(expression)))
   cds_2 <- monocle::reduceDimension(cds_1, max_components = num_dimensions)
@@ -56,11 +56,10 @@ trainLearner.ti.monocle <- function(.task, .subset, num_dimensions) {
 
   pct_melted <- bind_rows(lapply(asp2, function(path) {
     dists <- t(igraph::distances(gr, v = path[c(1, length(path))], to = path))
-    # colMax <- apply(dists, 2, max)
-    #pct <- 1 - dists / ifelse(colMax != 0, colMax, 1)
-    # pct <- 1 - apply(dists, 2, function(x) x / max(x))
     pct <- 1 - t(apply(dists, 1, function(x) x / sum(x)))
-    pct %>% reshape2::melt(varnames = c("id", "waypoint"))
+    pct %>%
+      reshape2::melt(varnames = c("id", "waypoint")) %>%
+      mutate(id = as.character(id), waypoint = as.character(waypoint))
   }))
 
   state_percentages <- pct_melted %>%
@@ -70,6 +69,12 @@ trainLearner.ti.monocle <- function(.task, .subset, num_dimensions) {
 
   state_percentages <- state_percentages[,c("id", state_names)]
 
+  #' rename states
+  state_network <- state_network %>% mutate(from = paste0("state_", from), to = paste0("state_", to))
+  state_names <- paste0("state_", state_names)
+  colnames(state_percentages) <- c("id", state_names)
+
+  #' wrap output
   wrap_ti_prediction(
     ti_type = "tree",
     name = "monocle",
