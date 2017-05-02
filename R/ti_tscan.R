@@ -26,7 +26,7 @@ makeRLearner.ti.tscan <- function() {
 #' @import tidyverse
 #' @import TSCAN
 #'
-#'#' @export
+#' @export
 trainLearner.ti.tscan <- function(.task, num_dimensions) {
   # subsetting will not work yet, but the function is already provided
   data <- get_task_data(.task)
@@ -63,7 +63,6 @@ trainLearner.ti.tscan <- function(.task, num_dimensions) {
   )
 }
 
-#' @importFrom TSCAN plot_cell_trajectory
 #' @export
 plotLearner.ti.TSCAN <- function(ti_predictions) {
   qplot(percent_rank(ti_predictions$state_percentages[,1]), ti_predictions$state_percentages[,1], colour = data$sample_info$group.name)

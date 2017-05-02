@@ -18,7 +18,6 @@ makeRLearner.ti.monocle <- function() {
 #' @importFrom igraph degree all_shortest_paths distances
 #' @importFrom reshape2 melt
 #' @import dplyr
-#'
 #' @export
 trainLearner.ti.monocle <- function(.task, .subset, num_dimensions) {
   # subsetting will not work yet, but the function is already provided
