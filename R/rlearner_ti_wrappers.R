@@ -68,6 +68,9 @@ abstract_wrapper <- function(type, ti_type, name, state_names, state_network, st
   if (!is.data.frame(state_percentages) || ncol(state_percentages) != length(state_names)+1) {
     stop(sQuote("state_network"), " should be a data frame with exactly N+1 columns, where N is the number of states as defined by ", sQuote("state_names"), ".")
   }
+  if (!all(colnames(state_percentages) == c("id", state_names))) {
+    stop("The column names of ", sQuote("state_network"), " should be c(\"id\", state_names).")
+  }
   if (any(!state_names %in% colnames(state_percentages))) {
     stop("Not all states in ", sQuote("state_percentages"), " are in ", sQuote("state_names"), ".")
   }

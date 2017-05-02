@@ -72,12 +72,44 @@ trajectory_data <- lapply(files, read_trajectory_ods)
 trajectoryplot_data <- lapply(trajectory_data, plotLearnerData.ti.default)
 
 all_trajs <- list(
-  space_states = bind_rows(trajectoryplot_data %>% map(~ .$space_states)),
-  space_lines = bind_rows(trajectoryplot_data %>% map(~ .$space_lines)),
-  space_samples = bind_rows(trajectoryplot_data %>% map(~ .$space_samples))
+  space_states = trajectoryplot_data %>% map_df(~ .$space_states),
+  space_lines = trajectoryplot_data %>% map_df(~ .$space_lines),
+  space_samples = trajectoryplot_data %>% map_df(~ .$space_samples)
 )
 class(all_trajs) <- "dyneval::ti_dimred_wrapper"
 
 plotLearner.ti.default(all_trajs) + facet_wrap(~name)
 
+out_folder <- "scratch/output_metrictest"
+dir.create(out_folder)
+
+pngsz <- 1200
+for (ix in seq_along(trajectory_data)) {
+  cat("Processing test ", ix, "\n", sep="")
+
+  file_traj <- paste0(out_folder, "/test_", ix, "_traj.png")
+  file_hm <- paste0(out_folder, "/test_", ix, "_heatmap.png")
+  file_comb <- paste0(out_folder, "/test_", ix, "_comb.png")
+
+  traj <- trajectory_data[[ix]]
+  plotdata <- trajectoryplot_data[[ix]]
+
+  png(file_traj, pngsz, pngsz, res = 300)
+  print(plotLearner.ti.default(plotdata))
+  dev.off()
+
+  emdist <- compute_emlike_dist(traj)
+
+  plot_emdist(traj, emdist,
+              filename = file_hm,
+              width = pngsz/300, height = pngsz/300)
+
+  system(paste0("convert ", file_traj, " ", file_hm, " -append ", file_comb))
+  file.remove(file_traj)
+  file.remove(file_hm)
+}
+
+in_files <- paste(paste0(out_folder, "/test_", seq_along(trajectory_data), "_comb.png"), collapse = " ")
+
+system(paste0("convert ", in_files, " +append ", out_folder, "/test_comb.png"))
 

@@ -26,7 +26,7 @@ cellinfo_known = cellinfo_known %>% rowwise() %>% mutate(color=as.character(map2
 
 
 plot_observation = function(observation, known) {
-  plotdata = left_join(observation$cellinfo, known$cellinfo %>% set_colnames(paste0("known_", colnames(known$cellinfo))), by=c("cell"="known_cell" )) %>% select(-mergedprogression)
+  plotdata = left_join(observation$cellinfo, known$cellinfo %>% set_colnames(paste0("known_", colnames(known$cellinfo))), by=c("cell"="known_cell" ))
   plotdata$mergedprogression = left_join(plotdata, observation$statenodes, by="state") %>% mutate(mergedprogression=mergedprogression+progression) %>% .$mergedprogression
 
 
@@ -59,7 +59,12 @@ randomize_sample_progression = function(observation, perc=0.1) {
 }
 
 score = function(observation, known) {
-  tibble(difference=mean(abs(get_cell_distances(known) - get_cell_distances(observation))))
+  cell_distances_known = get_cell_distances(known)
+  cell_distances_observed = get_cell_distances(observation)
+  tibble(
+    difference=mean(abs(cell_distances_known - cell_distances_observed)),
+    cor=cor(get_cell_distances(known) %>% as.numeric, get_cell_distances(observation) %>% as.numeric)
+  )
 }
 known = dambiutils::named_list(cellinfo=cellinfo_known, statenet=statenet_known, statenodes=statenodes_known)
 
@@ -72,4 +77,5 @@ map2(cases, names(cases), ~plot_observation(.x, known) + ggtitle(.y)) %>% cowplo
 cases2 = tibble(perc=rep(seq(0, 1, 0.05), 10)) %>% rowwise() %>% mutate(case=map(perc, ~randomize_sample_progression(known, .)))
 scores = map(cases2$case, ~score(., known)) %>% bind_rows()
 cases2 = bind_cols(cases2, scores)
-ggplot(cases2) + geom_boxplot(aes(factor(perc), difference, group=perc))
+ggplot(cases2) + geom_boxplot(aes(factor(perc), cor, group=perc))
+
