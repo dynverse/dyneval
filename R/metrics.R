@@ -8,10 +8,9 @@
 #' @importFrom transport transport
 #' @import dplyr
 compute_emlike_dist <- function(traj) {
-  state_network <- traj$state_network %>% mutate(from = paste0("state_", from), to = paste0("state_", to))
-  state_names <- traj$state_names %>% paste0("state_", .)
+  state_network <- traj$state_network
+  state_names <- traj$state_names
   state_percentages <- traj$state_percentages
-  colnames(state_percentages)[-1] <- paste0("state_", colnames(state_percentages)[-1])
 
   # calculate the shortest path distances between milestones
   phantom_edges <- bind_rows(lapply(state_names, function(sn) {
@@ -62,7 +61,8 @@ compute_emlike_dist <- function(traj) {
       sample_pcts <- pct[sample_node, milestones, drop = F]
       closest_to_nodes <-
         sample_pcts %*% dist_milestones %>%
-        reshape2::melt(varnames = c("from", "to"), value.name = "length")
+        reshape2::melt(varnames = c("from", "to"), value.name = "length") %>%
+        mutate(from = as.character(from), to = as.character(to))
 
       closest_to_samples <-
         expand.grid(from = rownames(sample_pcts), to = rownames(sample_pcts), stringsAsFactors = F) %>%
