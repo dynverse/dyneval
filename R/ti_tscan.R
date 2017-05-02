@@ -9,10 +9,9 @@ makeRLearner.ti.tscan <- function() {
       makeIntegerLearningParam(id = "preprocess_logbase", lower = 2, upper=10 ,default = 2),
       makeIntegerLearningParam(id = "preprocess_pseudocount", lower = 1, upper=5 ,default = 1),
       makeIntegerLearningParam(id = "preprocess_minexpr_value", lower = 1, upper=5 ,default = 1),
-      makeIntegerLearningParam(id = "preprocess_minexpr_percent", lower = 1, upper=5 ,default = 1),
+      makeIntegerLearningParam(id = "preprocess_minexpr_percent", lower = 1, upper=5 ,default = .5),
       makeIntegerLearningParam(id = "preprocess_cvcutoff", lower = 1, upper=5 ,default = 1),
       makeIntegerLearningParam(id = "clustering_min_clusternum", lower = 2, upper=5 ,default = 2),
-      makeIntegerLearningParam(id = "clustering_max_clusternum", lower = 7, upper=15 ,default = 9),
       makeIntegerLearningParam(id = "clustering_max_clusternum", lower = 7, upper=15 ,default = 9),
       makeLogicalLearningParam(id = "clustering_reduce", default = TRUE)
       #makeNumericVectorLearningParam(id = "ordering_MSTorder", default = TRUE),
@@ -36,32 +35,36 @@ trainLearner.ti.tscan <- function(.task, num_dimensions,preprocess_clusternum, p
 
   expression <- data$expression
 
-  cds_1 <- TSCAN::preprocess(t(as.matrix(expression)),clusternum = preprocess_clusternum,
-                             takelog =preprocess_takelog, logbase = preprocess_logbase,
-                             pseudocount =preprocess_pseudocount, minexpr_value = preprocess_minexpr_value,
-                             minexpr_percent = preprocess_minexpr_percent, cvcutoff = preprocess_cvcutoff)
-  cds_2 <- TSCAN::exprmclust(cds_1, clusternum= c(clustering_min_clusternum:clustering_max_clusternum),
-                             reduce=clustering_reduce)
-  cds_3 <- TSCAN::TSCANorder(cds_2)
-  len<-length(cds_3)
+  # cds_1 <- TSCAN::preprocess(t(as.matrix(expression)),clusternum = preprocess_clusternum,
+  #                            takelog = F, logbase = preprocess_logbase,
+  #                            pseudocount =preprocess_pseudocount, minexpr_value = preprocess_minexpr_value,
+  #                            minexpr_percent = preprocess_minexpr_percent, cvcutoff = preprocess_cvcutoff)
 
-  state_network<-data_frame(from=cds_3[1],to=cds_3[len],dist=1)
-  state_percentages<-matrix(rep(0,len*2),ncol=2)
-  state_percentages[,1]<-1-(1:len/len)
-  state_percentages[,2]<-1:len/len
-  colnames(state_percentages)<-c(cds_3[1],cds_3[len])
-  rownames(state_percentages)<-cds_3
-  state_percentages <- state_percentages[colnames(expression),]
+  cds_2 <- TSCAN::exprmclust(t(as.matrix(expression)), clusternum= 2:9,reduce=clustering_reduce)
+
+  cds_3 <- TSCAN::TSCANorder(cds_2)
+  len <- length(cds_3)
+
+  state_network <- data_frame(from = paste0("state_", cds_3[1]), to = paste0("state_", cds_3[len]), length = 1)
+  state_percentages <- matrix(rep(0,len*2),ncol=2)
+  state_percentages[,1] <- 1-(1:len/len)
+  state_percentages[,2] <- 1:len/len
+  state_names <- paste0("state_", c(cds_3[1],cds_3[len]))
+  colnames(state_percentages) <- state_names
+  rownames(state_percentages) <- cds_3
+  state_percentages <- state_percentages[rownames(expression),]
+  state_percentages_df <- data.frame(id = rownames(state_percentages), state_percentages, row.names = NULL, stringsAsFactors = F)
 
   wrap_ti_prediction(
     ti_type = "linear",
     name = "TSCAN",
-    state_network,
-    state_percentages,
+    state_names = state_names,
+    state_network = state_network,
+    state_percentages = state_percentages_df,
     task_id = get_task_identifier(.task),
     dimred_samples = cds_2$pcareduceres,
     dimred_clust = cds_2$clusterid,
-    clust_centers=cds_2$clucenter,
+    clust_centers = cds_2$clucenter,
     cds = cds_3
   )
 }
