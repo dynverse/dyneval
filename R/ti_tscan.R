@@ -27,7 +27,10 @@ makeRLearner.ti.tscan <- function() {
 #' @import TSCAN
 #'
 #' @export
-trainLearner.ti.tscan <- function(.task, num_dimensions) {
+trainLearner.ti.tscan <- function(.task, num_dimensions,preprocess_clusternum, preprocess_takelog,
+                                  preprocess_logbase, preprocess_pseudocount,preprocess_minexpr_value,
+                                  preprocess_minexpr_percent, preprocess_cvcutoff, clustering_min_clusternum,
+                                  clustering_max_clusternum, clustering_reduce ) {
   # subsetting will not work yet, but the function is already provided
   data <- get_task_data(.task)
 
