@@ -14,10 +14,11 @@ makeRLearner.ti.monocle <- function() {
   )
 }
 
-#' @import monocle
+
 #' @importFrom igraph degree all_shortest_paths distances
 #' @importFrom reshape2 melt
 #' @import dplyr
+#' @import monocle
 #'
 #' @export
 trainLearner.ti.monocle <- function(.task, .subset, num_dimensions) {
@@ -69,12 +70,12 @@ trainLearner.ti.monocle <- function(.task, .subset, num_dimensions) {
 
   state_percentages <- state_percentages[,c("id", state_names)]
 
-  #' rename states
+  # rename states
   state_network <- state_network %>% mutate(from = paste0("state_", from), to = paste0("state_", to))
   state_names <- paste0("state_", state_names)
   colnames(state_percentages) <- c("id", state_names)
 
-  #' wrap output
+  # wrap output
   wrap_ti_prediction(
     ti_type = "tree",
     name = "monocle",
