@@ -3,7 +3,7 @@
 #' @import mlr
 #' @export
 #' @rdname RLearner
-RLearnerTI <- function(cl, package, par.set, par.vals = list(), properties = character(0L), name = cl, short.name = cl, note = "", callees = character(0L)) {
+makeRLearnerTI <- function(cl, package, par.set, par.vals = list(), properties = character(0L), name = cl, short.name = cl, note = "", callees = character(0L)) {
   addClasses(
     mlr:::makeRLearnerInternal(cl, "ti", package, par.set, par.vals, properties, name, short.name, note, callees),
     c(cl, "RLearnerTI")
