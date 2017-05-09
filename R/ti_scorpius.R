@@ -1,13 +1,15 @@
+#' @import ParamHelpers
+#' @import mlr
 #' @export
 makeRLearner.ti.scorpius <- function() {
   makeRLearnerTI(
     cl = "ti.scorpius",
     package = c("SCORPIUS"),
     par.set = makeParamSet(
-      makeIntegerLearningParam(id = "num_dimensions", lower = 1L, default = 3L),
-      makeIntegerLearningParam(id = "num_clusters", lower = 2L, default = 4L)
+      makeIntegerLearnerParam(id = "num_dimensions", lower = 1L, default = 3L),
+      makeIntegerLearnerParam(id = "num_clusters", lower = 2L, default = 4L)
     ),
-    properties = c("linear", "dimred_samples", "dimred_traj", "pseudotime"), # What to add?
+    properties = c("numerics", "dimred", "dimred_traj", "pseudotime"),
     name = "SCORPIUS",
     short.name = "SCORPIUS"
   )
@@ -59,3 +61,9 @@ plotLearner.ti.scorpius <- function(ti_predictions) {
     coord_equal() +
     scale_color_viridis()
 }
+
+# registerS3method("makeRLearner", "ti.scorpius", makeRLearner.ti.scorpius)
+# registerS3method("trainLearner", "ti.scorpius", trainLearner.ti.scorpius)
+# registerS3method("plotLearner", "ti.scorpius", plotLearner.ti.scorpius)
+
+

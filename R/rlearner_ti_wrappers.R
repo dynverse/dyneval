@@ -1,15 +1,3 @@
-#' TI R Learner
-#'
-#' @import mlr
-#' @export
-#' @rdname RLearner
-makeRLearnerTI <- function(cl, package, par.set, par.vals = list(), properties = character(0L), name = cl, short.name = cl, note = "", callees = character(0L)) {
-  addClasses(
-    mlr:::makeRLearnerInternal(cl, "ti", package, par.set, par.vals, properties, name, short.name, note, callees),
-    c(cl, "RLearnerTI")
-  )
-}
-
 #' @export
 read_task_data <- function(type, ti_type, name, data_directory = "data") {
   readRDS(paste0(data_directory, "/", type, "/", ti_type, "/", name, ".rds"))
