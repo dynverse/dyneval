@@ -28,7 +28,8 @@ trainLearner.ti.monocle <- function(.task, .subset, num_dimensions) {
   expression <- t(SCORPIUS::quant.scale(t(data$expression), 0))
 
   cds_1 <- monocle::newCellDataSet(t(as.matrix(expression)))
-  cds_2 <- monocle::reduceDimension(cds_1, max_components = num_dimensions)
+  sizeFactors(cds_1) = 1 # set size factors to 1, otherwise they will be NA
+  cds_2 <- monocle::reduceDimension(cds_1, max_components = num_dimensions, scaling=F, norm_method = "none") # no normalization
   cds_3 <- monocle::orderCells(cds_2, reverse = FALSE)
 
   gr <- cds_3@auxOrderingData$DDRTree$pr_graph_cell_proj_tree
