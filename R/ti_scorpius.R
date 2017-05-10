@@ -6,8 +6,8 @@ makeRLearner.ti.scorpius <- function() {
     cl = "ti.scorpius",
     package = c("SCORPIUS"),
     par.set = makeParamSet(
-      makeIntegerLearnerParam(id = "num_dimensions", lower = 1L, default = 3L),
-      makeIntegerLearnerParam(id = "num_clusters", lower = 2L, default = 4L)
+      makeIntegerLearnerParam(id = "num_dimensions", lower = 2L, default = 3L, upper = 20L),
+      makeIntegerLearnerParam(id = "num_clusters", lower = 2L, default = 4L, upper = 20L)
     ),
     properties = c("numerics", "dimred", "dimred_traj", "pseudotime"),
     name = "SCORPIUS",
@@ -18,11 +18,10 @@ makeRLearner.ti.scorpius <- function() {
 #' @importFrom SCORPIUS correlation.distance reduce.dimensionality infer.trajectory
 #' @importFrom tibble data_frame
 #' @export
-trainLearner.ti.scorpius <- function(.task, .subset, num_dimensions, num_clusters) {
-  # subsetting will not work yet, but the function is already provided
-  data <- get_task_data(.task, .subset)
+trainLearner.ti.scorpius <- function(.learner, .task, .subset, num_dimensions = 3, num_clusters = 4) {
+  data <- getTaskData(.task, .subset)
 
-  expression <- data[["expression"]]
+  expression <- as.matrix(data)
   dist <- SCORPIUS::correlation.distance(expression)
   space <- SCORPIUS::reduce.dimensionality(dist, ndim = num_dimensions)
   traj <- SCORPIUS::infer.trajectory(space, k = num_clusters)
@@ -62,8 +61,8 @@ plotLearner.ti.scorpius <- function(ti_predictions) {
     scale_color_viridis()
 }
 
-# registerS3method("makeRLearner", "ti.scorpius", makeRLearner.ti.scorpius)
-# registerS3method("trainLearner", "ti.scorpius", trainLearner.ti.scorpius)
-# registerS3method("plotLearner", "ti.scorpius", plotLearner.ti.scorpius)
-
-
+#' @export
+predictLearner.ti.scorpius <- function(.learner, .model, .newdata, ...) {
+  # .model$pseudotime
+  NULL
+}
