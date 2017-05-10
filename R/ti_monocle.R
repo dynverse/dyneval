@@ -1,11 +1,11 @@
+#' @import ParamHelpers
 #' @export
 makeRLearner.ti.monocle <- function() {
   makeRLearnerTI(
     cl = "ti.mococle",
     package = c("monocle"),
     par.set = makeParamSet(
-      makeIntegerLearningParam(id = "num_dimensions", lower = 1L, default = 2L)
-      # makeIntegerLearningParam(id = "num_clusters", lower = 2L, default = 4L)
+      makeIntegerLearnerParam(id = "num_dimensions", lower = 1L, default = 2L)
     ),
     # properties = c("linear", "dimred_samples", "dimred_traj", "pseudotime"), # What to add?
     properties = c(),
