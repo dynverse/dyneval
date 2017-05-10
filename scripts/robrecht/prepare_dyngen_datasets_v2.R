@@ -35,14 +35,14 @@ for (dataset_num in seq_len(nrow(datasets_info))) {
     cat("  Running SCORPIUS\n")
     pred_output1 <- trainLearner.ti.scorpius(task, .subset = NULL, num_dimensions = 3, num_clusters = 4)
     cat("  Running Monocle\n")
-    pred_output2 <- dyneval:::trainLearner.ti.monocle(task, .subset = NULL, num_dimensions = 3)
-    cat("  Running TSCAN\n")
-    pred_output3 <- trainLearner.ti.tscan(task, num_dimensions = 2, preprocess_clusternum = NULL,
-                                          preprocess_takelog = T, preprocess_logbase = 2,
-                                          preprocess_pseudocount = 1, preprocess_minexpr_value = 1,
-                                          preprocess_minexpr_percent = 1, preprocess_cvcutoff = 1,
-                                          clustering_min_clusternum = 2, clustering_max_clusternum = 9,
-                                          clustering_reduce = T)
+    pred_output2 <- trainLearner.ti.monocle(task, .subset = NULL, num_dimensions = 3)
+    # cat("  Running TSCAN\n")
+    # pred_output3 <- trainLearner.ti.tscan(task, num_dimensions = 2, preprocess_clusternum = NULL,
+    #                                       preprocess_takelog = T, preprocess_logbase = 2,
+    #                                       preprocess_pseudocount = 1, preprocess_minexpr_value = 1,
+    #                                       preprocess_minexpr_percent = 1, preprocess_cvcutoff = 1,
+    #                                       clustering_min_clusternum = 2, clustering_max_clusternum = 9,
+    #                                       clustering_reduce = T)
 
     ## calculate EM distances
     cat("  Computing EM distances: gold\n")
@@ -51,23 +51,31 @@ for (dataset_num in seq_len(nrow(datasets_info))) {
     pred_emdist1 <- compute_emlike_dist(pred_output1)
     cat("  Computing EM distances: Monocle\n")
     pred_emdist2 <- compute_emlike_dist(pred_output2)
-    cat("  Computing EM distances: TSCAN\n")
-    pred_emdist3 <- compute_emlike_dist(pred_output3)
+    # cat("  Computing EM distances: TSCAN\n")
+    # pred_emdist3 <- compute_emlike_dist(pred_output3)
 
     cat("  Computing coranking: SCORPIUS\n")
     corank1 <- compute_coranking(task_emdist, pred_emdist1)
     cat("  Computing coranking: Monocle\n")
     corank2 <- compute_coranking(task_emdist, pred_emdist2)
-    cat("  Computing coranking: TSCAN\n")
-    corank3 <- compute_coranking(task_emdist, pred_emdist3)
+    # cat("  Computing coranking: TSCAN\n")
+    # corank3 <- compute_coranking(task_emdist, pred_emdist3)
 
     cat("  Saving data\n")
-    scores <- data.frame(
-      method = c("SCORPIUS", "monocle", "TSCAN"),
-      bind_rows(corank1$summary, corank2$summary, corank3$summary),
-      cor = cor(task_emdist %>% as.vector, cbind(pred_emdist1 %>% as.vector, pred_emdist2 %>% as.vector, pred_emdist3 %>% as.vector))[1,])
+    # scores <- data.frame(
+    #   method = c("SCORPIUS", "monocle", "TSCAN"),
+    #   bind_rows(corank1$summary, corank2$summary, corank3$summary),
+    #   cor = cor(task_emdist %>% as.vector, cbind(pred_emdist1 %>% as.vector, pred_emdist2 %>% as.vector, pred_emdist3 %>% as.vector))[1,])
+    #
+    # save(task, pred_output1, pred_output2, pred_output3, task_emdist, pred_emdist1, pred_emdist2, pred_emdist3, corank1, corank2, corank3, scores,
+    #      file = data_file)
 
-    save(task, pred_output1, pred_output2, pred_output3, task_emdist, pred_emdist1, pred_emdist2, pred_emdist3, corank1, corank2, corank3, scores,
+    scores <- data.frame(
+      method = c("SCORPIUS", "monocle"),
+      bind_rows(corank1$summary, corank2$summary),
+      cor = cor(task_emdist %>% as.vector, cbind(pred_emdist1 %>% as.vector, pred_emdist2 %>% as.vector))[1,])
+
+    save(task, pred_output1, pred_output2,  task_emdist, pred_emdist1, pred_emdist2, corank1, corank2, scores,
          file = data_file)
   }
 }
@@ -99,9 +107,9 @@ for (dataset_num in seq_len(nrow(datasets_info))) {
     png(paste0(data_dir, "/plot1c.png"), plsz, plsz, res = 300)
     print(plotLearner.ti.default(plotdata_output2) + labs(title = "monocle prediction"))
     dev.off()
-    png(paste0(data_dir, "/plot1d.png"), plsz, plsz, res = 300)
-    print(plotLearner.ti.default(plotdata_output3) + labs(title = "TSCAN prediction"))
-    dev.off()
+    # png(paste0(data_dir, "/plot1d.png"), plsz, plsz, res = 300)
+    # print(plotLearner.ti.default(plotdata_output3) + labs(title = "TSCAN prediction"))
+    # dev.off()
 
     # row 2
     png(paste0(data_dir, "/plot2a.png"), plsz, plsz, res = 300)
@@ -113,9 +121,9 @@ for (dataset_num in seq_len(nrow(datasets_info))) {
     png(paste0(data_dir, "/plot2c.png"), plsz, plsz, res = 300)
     print(plotLearner.ti.combined(plotdata_task, plotdata_output2) + labs(title = "monocle prediction"))
     dev.off()
-    png(paste0(data_dir, "/plot2cdpng"), plsz, plsz, res = 300)
-    print(plotLearner.ti.combined(plotdata_task, plotdata_output3) + labs(title = "TSCAN prediction"))
-    dev.off()
+    # png(paste0(data_dir, "/plot2d.png"), plsz, plsz, res = 300)
+    # print(plotLearner.ti.combined(plotdata_task, plotdata_output3) + labs(title = "TSCAN prediction"))
+    # dev.off()
 
     # row 3
     png(paste0(data_dir, "/plot3a.png"), plsz, plsz, res = 300)
@@ -127,15 +135,15 @@ for (dataset_num in seq_len(nrow(datasets_info))) {
     png(paste0(data_dir, "/plot3c.png"), plsz, plsz, res = 300)
     print(plotLearner.ti.monocle(pred_output2) + coord_equal() + labs(title = "monocle own plot") + theme(legend.position = "none"))
     dev.off()
-    png(paste0(data_dir, "/plot3d.png"), plsz, plsz, res = 300)
-    plot.new()
-    dev.off()
+    # png(paste0(data_dir, "/plot3d.png"), plsz, plsz, res = 300)
+    # plot.new()
+    # dev.off()
 
     # row 4
     plot_emdist(task, task_emdist, plotdata_task, filename = paste0(data_dir, "/plot4a.png"), width = plsz / 300, height = plsz / 300)
     plot_emdist(pred_output1, pred_emdist1, plotdata_output1, filename = paste0(data_dir, "/plot4b.png"), width = plsz / 300, height = plsz / 300)
     plot_emdist(pred_output2, pred_emdist2, plotdata_output2, filename = paste0(data_dir, "/plot4c.png"), width = plsz / 300, height = plsz / 300)
-    plot_emdist(pred_output3, pred_emdist3, plotdata_output3, filename = paste0(data_dir, "/plot4d.png"), width = plsz / 300, height = plsz / 300)
+    # plot_emdist(pred_output3, pred_emdist3, plotdata_output3, filename = paste0(data_dir, "/plot4d.png"), width = plsz / 300, height = plsz / 300)
 
     # row 5
     png(paste0(data_dir, "/plot5a.png"), plsz, plsz, res = 300)
@@ -147,9 +155,9 @@ for (dataset_num in seq_len(nrow(datasets_info))) {
     png(paste0(data_dir, "/plot5c.png"), plsz, plsz, res = 300)
     coRanking::imageplot(corank2$corank)
     dev.off()
-    png(paste0(data_dir, "/plot5d.png"), plsz, plsz, res = 300)
-    coRanking::imageplot(corank3$corank)
-    dev.off()
+    # png(paste0(data_dir, "/plot5d.png"), plsz, plsz, res = 300)
+    # coRanking::imageplot(corank3$corank)
+    # dev.off()
 
     # row 6
     png(paste0(data_dir, "/plot6a.png"), plsz, plsz, res = 300)
@@ -161,9 +169,9 @@ for (dataset_num in seq_len(nrow(datasets_info))) {
     png(paste0(data_dir, "/plot6c.png"), plsz, plsz, res = 300)
     (ggplot() + geom_point(aes(as.vector(task_emdist), as.vector(pred_emdist2)), alpha = .1, size = .5) + labs(x = "original EM dist", y = "monocle EM dist")) %>% print
     dev.off()
-    png(paste0(data_dir, "/plot6d.png"), plsz, plsz, res = 300)
-    (ggplot() + geom_point(aes(as.vector(task_emdist), as.vector(pred_emdist3)), alpha = .1, size = .5) + labs(x = "original EM dist", y = "TSCAN EM dist")) %>% print
-    dev.off()
+    # png(paste0(data_dir, "/plot6d.png"), plsz, plsz, res = 300)
+    # (ggplot() + geom_point(aes(as.vector(task_emdist), as.vector(pred_emdist3)), alpha = .1, size = .5) + labs(x = "original EM dist", y = "TSCAN EM dist")) %>% print
+    # dev.off()
 
     system(paste0(
       "cd ", data_dir, "\n",
