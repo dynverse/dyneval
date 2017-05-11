@@ -1,22 +1,10 @@
 #' @export
-read_task_data <- function(type, ti_type, name, data_directory = "data") {
-  readRDS(paste0(data_directory, "/", type, "/", ti_type, "/", name, ".rds"))
-}
-
-#' @export
 get_task_identifier <- function(task) {
   task[c("type", "ti_type", "name")]
 }
 
 #' @export
-get_task_data <- function(.task, .subset) {
-  # does not work as it should yet
-  # can we use mlr::getTaskData for this?
-  .task
-}
-
-#' @export
-wrap_ti_task_data <- function(ti_type, name, expression, state_names, state_network, state_percentages, sample_info = NULL, feature_info = NULL, ...) {
+wrap_ti_task_data <- function(ti_type, name, counts, state_names, state_network, state_percentages, sample_info = NULL, feature_info = NULL, ...) {
   abstract_wrapper(
     "ti",
     ti_type,
@@ -24,7 +12,7 @@ wrap_ti_task_data <- function(ti_type, name, expression, state_names, state_netw
     state_names,
     state_network,
     state_percentages,
-    expression = expression,
+    counts = counts,
     sample_info = sample_info,
     feature_info = feature_info,
     ...
@@ -32,7 +20,7 @@ wrap_ti_task_data <- function(ti_type, name, expression, state_names, state_netw
 }
 
 #' @export
-wrap_ti_prediction <- function(ti_type, name, state_names, state_network, state_percentages, task_id, ...) {
+wrap_ti_prediction <- function(ti_type, name, state_names, state_network, state_percentages, ...) {
   abstract_wrapper(
     "ti_pred",
     ti_type,
@@ -40,7 +28,6 @@ wrap_ti_prediction <- function(ti_type, name, state_names, state_network, state_
     state_names,
     state_network,
     state_percentages,
-    task_id = task_id,
     ...
   )
 }
@@ -73,6 +60,7 @@ abstract_wrapper <- function(type, ti_type, name, state_names, state_network, st
     ...
   )
   class(l) <- paste0("dyneval::ti_wrapper")
+  l$geodesic_dist <- compute_emlike_dist(l)
   l
 }
 
