@@ -154,9 +154,6 @@ compute_coranking <- function(gold_dist, pred_dist) {
 
   corank <- coRanking::coranking(gold_dist, pred_dist, input = "dist")
 
-  # coRanking::imageplot(corank)
-  # pheatmap::pheatmap(corank, cluster_rows = F, cluster_cols = F, color = colorRampPalette(c("white", "black"))(100), show_rownames = F, show_colnames = F)
-
   lcmc <- coRanking::LCMC(corank)
 
   summary <- data_frame(
