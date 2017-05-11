@@ -1,26 +1,27 @@
 #' @import ParamHelpers
 #' @export
-makeRLearner.ti.monocleDDRtree <- function() {
-  makeRLearnerTI(
-    cl = "ti.monocleDDRtree",
+description_monocle_ddrtree <- function() {
+  list(
+    cl = "monocle_ddrtree",
     package = c("monocle"),
-    par.set = makeParamSet(
-      makeIntegerLearnerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
-      makeDiscreteLearnerParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
-      makeIntegerLearnerParam(id = "maxIter", lower = 1L, default = 20L, upper = 100L),
-      makeNumericLearnerParam(id = "sigma", lower = 0, default = .001, upper = 100),
-      makeNumericLearnerParam(id = "lambda", lower = 0, default = NULL, upper = 100, special.vals = list(NULL)),
-      makeIntegerLearnerParam(id = "ncenter", lower = 3, default = NULL, upper = 20, special.vals = list(NULL)),
-      makeNumericLearnerParam(id = "param.gamma", lower = 0, default = 20, upper = 1e5),
-      makeNumericLearnerParam(id = "tol", lower = 0, default = .001, upper = 10),
-      makeLogicalLearnerParam(id = "auto_param_selection", default = T)
+    par_set = makeParamSet(
+      makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
+      makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
+      makeIntegerParam(id = "maxIter", lower = 1L, default = 20L, upper = 100L),
+      makeNumericParam(id = "sigma", lower = 0, default = .001, upper = 100),
+      makeNumericParam(id = "lambda", lower = 0, default = NULL, upper = 100, special.vals = list(NULL)),
+      makeIntegerParam(id = "ncenter", lower = 3, default = NULL, upper = 20, special.vals = list(NULL)),
+      makeNumericParam(id = "param.gamma", lower = 0, default = 20, upper = 1e5),
+      makeNumericParam(id = "tol", lower = 0, default = .001, upper = 10),
+      makeLogicalParam(id = "auto_param_selection", default = T)
     ),
     properties = c("tibble"),#, "dimred", "dimred_traj", "pseudotime"), # todo: implement other outputs
-    name = "monocleDDRtree",
-    short.name = "monocleDDRtree"
+    name = "monocle DDRtree",
+    short_name = "monocle DDRtree",
+    run_fun = run_monocle_ddrtree,
+    plot_fun = plot_monocle_ddrtree
   )
 }
-
 
 #' @importFrom igraph degree all_shortest_paths distances
 #' @importFrom reshape2 melt
@@ -28,21 +29,10 @@ makeRLearner.ti.monocleDDRtree <- function() {
 #' @import monocle
 #'
 #' @export
-trainLearner.ti.monocleDDRtree <- function(.learner, .task, .subset, ...) {
-  NULL
-}
-
-#' @export
-predictLearner.ti.monocleDDRtree <- function(.learner, .model, .newdata, ...) {
-  outs <- lapply(.newdata$counts, run.ti.monocleDDRtree, ...)
-  outs_tib <- to_tibble(outs)
-  outs_tib
-}
-
-run.ti.monocleDDRtree <- function(counts, num_dimensions = 2, norm_method = "vstExprs",
-                                  maxIter = 20, sigma = 0.001, lambda = NULL, ncenter = NULL, param.gamma = 20, tol = 0.001,
-                                  auto_param_selection = T) {
-  library(monocle)
+run_monocle_ddrtree <- function(counts, num_dimensions = 2, norm_method = "vstExprs",
+                               maxIter = 20, sigma = 0.001, lambda = NULL, ncenter = NULL, param.gamma = 20, tol = 0.001,
+                               auto_param_selection = T) {
+  library(monocle) # grr
 
   cds_1 <- monocle::newCellDataSet(t(as.matrix(counts)))
   cds_2 <- monocle::reduceDimension(cds_1, max_components = num_dimensions, norm_method = norm_method,
@@ -107,6 +97,6 @@ run.ti.monocleDDRtree <- function(counts, num_dimensions = 2, norm_method = "vst
 
 #' @importFrom monocle plot_cell_trajectory
 #' @export
-plotLearner.ti.monocleDDRtree <- function(ti_predictions) {
+plot_monocle_ddrtree <- function(ti_predictions) {
   monocle::plot_cell_trajectory(ti_predictions$cds)
 }
