@@ -1,22 +1,24 @@
 #' @import ParamHelpers
 #' @importFrom mclust mclust.options
 #' @export
-makeRLearner.ti.tscan <- function() {
-  makeRLearnerTI(
-    cl = "ti.tscan",
+description_tscan <- function() {
+  list(
+    cl = "tscan",
     package = c("TSCAN"),
-    par.set = makeParamSet(
-      makeIntegerLearnerParam(id = "pseudocount", lower = 1, upper = 5, default = 1),
-      makeNumericLearnerParam(id = "minexpr_value", lower = 0, upper = 20, default = 1),
-      makeNumericLearnerParam(id = "minexpr_percent", lower = 0, upper = 1, default = .5),
-      makeNumericLearnerParam(id = "cvcutoff", lower = 0, upper = 20, default = 1),
-      makeIntegerVectorLearnerParam(id = "clusternum", len = as.integer(NA), lower = 2, upper = 5, default = 2),
-      makeDiscreteLearnerParam(id = "modelNames", default = "VVV", values = mclust::mclust.options("emModelNames"))
+    par_set = makeParamSet(
+      makeIntegerParam(id = "pseudocount", lower = 1, upper = 5, default = 1),
+      makeNumericParam(id = "minexpr_value", lower = 0, upper = 20, default = 1),
+      makeNumericParam(id = "minexpr_percent", lower = 0, upper = 1, default = .5),
+      makeNumericParam(id = "cvcutoff", lower = 0, upper = 20, default = 1),
+      makeIntegerVectorParam(id = "clusternum", len = as.integer(NA), lower = 2, upper = 5, default = 2),
+      makeDiscreteParam(id = "modelNames", default = "VVV", values = mclust::mclust.options("emModelNames"))
     ),
     #properties = c("dimred", "pseudotime"),
     properties = c("tibble"),#, "dimred", "dimred_traj", "pseudotime"), # todo: implement other outputs
     name = "TSCAN",
-    short.name = "TSCAN"
+    short_name = "TSCAN",
+    run_fun = run_tscan,
+    plot_fun = plot_tscan
   )
 }
 
@@ -24,19 +26,8 @@ makeRLearner.ti.tscan <- function() {
 #' @import TSCAN
 #'
 #' @export
-trainLearner.ti.tscan <- function(.learner, .task, .subset, ...) {
-  NULL
-}
-
-#' @export
-predictLearner.ti.tscan <- function(.learner, .model, .newdata, ...) {
-  outs <- lapply(.newdata$expression, run.ti.tscan, ...)
-  outs_tib <- to_tibble(outs)
-  outs_tib
-}
-
-run.ti.tscan <- function(count, num_dimensions, pseudocount, minexpr_percent,
-                         minexpr_value, cvcutoff, clusternum, modelNames) {
+run_tscan <- function(count, num_dimensions, pseudocount, minexpr_percent,
+                      minexpr_value, cvcutoff, clusternum, modelNames) {
   cds_1 <- TSCAN::preprocess(
     t(as.matrix(count)), takelog = T, logbase = 2,
     clusternum = NULL , pseudocount = pseudocount, # clusternum needs to be added
@@ -69,7 +60,7 @@ run.ti.tscan <- function(count, num_dimensions, pseudocount, minexpr_percent,
 }
 
 #' @export
-plotLearner.ti.TSCAN <- function(ti_predictions) {
+plot_tscan <- function(ti_predictions) {
   qplot(percent_rank(ti_predictions$state_percentages[,1]), ti_predictions$state_percentages[,1], colour = data$sample_info$group.name)
 }
 

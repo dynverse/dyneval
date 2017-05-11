@@ -1,16 +1,18 @@
 #' @export
-makeRLearner.ti.celltree <- function() {
-  makeRLearnerTI(
-    cl = "ti.celltree",
+description_celltree <- function() {
+  list(
+    cl = "celltree",
     package = c("cellTree"),
-    par.set = makeParamSet(
-      makeIntegerLearningParam(id = "num_topics", lower = 3L, default = 10L)
-      # makeIntegerLearningParam(id = "num_clusters", lower = 2L, default = 4L)
+    par_set = makeParamSet(
+      makeIntegerParam(id = "num_topics", lower = 3L, default = 10L)
+      # makeIntegerParam(id = "num_clusters", lower = 2L, default = 4L)
     ),
     # properties = c("linear", "dimred_samples", "dimred_traj", "pseudotime"), # What to add?
     properties = c(),
     name = "celltree",
-    short.name = "celltree"
+    short_name = "celltree",
+    run_fun = run_celltree,
+    plot_fun = plot_celltree
   )
 }
 
@@ -22,10 +24,8 @@ makeRLearner.ti.celltree <- function() {
 #' @import magrittr
 #'
 #' @export
-trainLearner.ti.celltree <- function(.task, .subset, num_topics, width_scale_factor) {
-  # subsetting will not work yet, but the function is already provided
-  data <- get_task_data(.task, .subset)
-  expression = data$expression
+run_celltree <- function(counts, num_topics, width_scale_factor) {
+  expression <- log2(counts+1)
 
   #expression <- t(SCORPIUS::quant.scale(t(data$expression), 0))
 
@@ -101,9 +101,8 @@ trainLearner.ti.celltree <- function(.task, .subset, num_topics, width_scale_fac
   )
 }
 
-#' @importFrom celltree plot_cell_trajectory
+#' @importFrom cellTree ct.plot.topics
 #' @export
-plotLearner.ti.celltree <- function(ti_predictions) {
+plot_celltree <- function(ti_predictions) {
   cellTree::ct.plot.topics(ti_predictions$mst.tree)
-  #monocle::plot_cell_trajectory(ti_predictions$cds)
 }
