@@ -1,36 +1,26 @@
 #' @import ParamHelpers
 #' @import mlr
 #' @export
-makeRLearner.ti.scorpius <- function() {
-  makeRLearnerTI(
-    cl = "ti.scorpius",
+description_scorpius <- function() {
+  list(
+    cl = "scorpius",
     package = c("SCORPIUS"),
-    par.set = makeParamSet(
-      makeIntegerLearnerParam(id = "num_dimensions", lower = 2L, default = 3L, upper = 20L),
-      makeIntegerLearnerParam(id = "num_clusters", lower = 2L, default = 4L, upper = 20L),
-      makeDiscreteLearnerParam(id = "distance_method", default = "spearman", values = c("spearman", "pearson", "kendall"))
+    par_set = makeParamSet(
+      makeIntegerParam(id = "num_dimensions", lower = 2L, default = 3L, upper = 20L),
+      makeIntegerParam(id = "num_clusters", lower = 2L, default = 4L, upper = 20L),
+      makeDiscreteParam(id = "distance_method", default = "spearman", values = c("spearman", "pearson", "kendall"))
     ),
     properties = c("tibble", "dimred", "dimred_traj", "pseudotime"),
     name = "SCORPIUS",
-    short.name = "SCORPIUS"
+    short_name = "SCORPIUS",
+    run_fun = run_scorpius,
+    plot_fun = plot_scorpius
   )
-}
-
-#' @export
-trainLearner.ti.scorpius <- function(.learner, .task, .subset, ...) {
-  NULL
-}
-
-#' @export
-predictLearner.ti.scorpius <- function(.learner, .model, .newdata, ...) {
-  outs <- lapply(.newdata$counts, run.ti.scorpius, ...)
-  outs_tib <- to_tibble(outs)
-  outs_tib
 }
 
 #' @importFrom SCORPIUS correlation.distance reduce.dimensionality infer.trajectory
 #' @importFrom tibble data_frame
-run.ti.scorpius <- function(counts, num_dimensions = 3, num_clusters = 4, distance_method = "spearman") {
+run_scorpius <- function(counts, num_dimensions = 3, num_clusters = 4, distance_method = "spearman") {
   expression <- log2(as.matrix(counts)+1)
 
   dist <- SCORPIUS::correlation.distance(expression, method = distance_method)
@@ -56,7 +46,7 @@ run.ti.scorpius <- function(counts, num_dimensions = 3, num_clusters = 4, distan
 #' @import ggplot2
 #' @importFrom viridis scale_color_viridis
 #' @export
-plotLearner.ti.scorpius <- function(ti_predictions) {
+plot_scorpius <- function(ti_predictions) {
   sample_df <- data.frame(
     ti_predictions$dimred_samples,
     pseudotime = ti_predictions$pseudotime
