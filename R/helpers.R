@@ -16,3 +16,24 @@ to_tibble <- function(list_of_rows) {
 
   list_of_cols %>% as.tibble()
 }
+
+#' @export
+load_datasets <- function() {
+  datasets_info <- readRDS(paste0(.datasets_location, "/datasets.rds"))
+
+  task_wrapped <- lapply(seq_len(nrow(datasets_info)), function(dataset_num) {
+    dataset_id <- datasets_info$id[[dataset_num]]
+    dataset <- dyngen::load_dataset(dataset_id, contents = dyngen::contents_dataset(experiment = F))
+
+    with(dataset, dyneval::wrap_ti_task_data(
+      ti_type = model$modulenetname,
+      name = info$id,
+      counts = counts,
+      state_names = gs$milestone_names,
+      state_net = gs$milestone_net,
+      state_percentages = gs$milestone_percentages %>% slice(match(rownames(counts), id))
+    ))
+  })
+  task_tib <- to_tibble(task_wrapped)
+  task_tib
+}

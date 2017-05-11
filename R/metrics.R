@@ -1,3 +1,23 @@
+#' @export
+make_obj_fun <- function(method) {
+  makeSingleObjectiveFunction(
+    name = "TItrain",
+    vectorized = F,
+    minimize = F,
+    noisy = T,
+    has.simple.signature = F,
+    par.set = method$par_set,
+    fn = function(x, tasks) {
+      outs <- lapply(seq_len(nrow(tasks)), function(i) {
+        arglist <- c(list(counts = tasks$counts[[i]]), x)
+        model <- do.call(method$run_fun, arglist)
+        coranking <- compute_coranking(tasks$geodesic_dist[[i]], model$geodesic_dist)
+        list(model = model, coranking = coranking)
+      })
+      outs %>% map_dbl(~ .$coranking$summary$max_lcmc) %>% mean
+    })
+}
+
 #' Calculate Earth Mover's Distance between cells in a trajectory
 #'
 #' @param traj the trajectory
