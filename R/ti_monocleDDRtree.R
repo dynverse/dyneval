@@ -1,0 +1,112 @@
+#' @import ParamHelpers
+#' @export
+makeRLearner.ti.monocleDDRtree <- function() {
+  makeRLearnerTI(
+    cl = "ti.monocleDDRtree",
+    package = c("monocle"),
+    par.set = makeParamSet(
+      makeIntegerLearnerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
+      makeDiscreteLearnerParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
+      makeIntegerLearnerParam(id = "maxIter", lower = 1L, default = 20L, upper = 100L),
+      makeNumericLearnerParam(id = "sigma", lower = 0, default = .001, upper = 100),
+      makeNumericLearnerParam(id = "lambda", lower = 0, default = NULL, upper = 100, special.vals = list(NULL)),
+      makeIntegerLearnerParam(id = "ncenter", lower = 3, default = NULL, upper = 20, special.vals = list(NULL)),
+      makeNumericLearnerParam(id = "param.gamma", lower = 0, default = 20, upper = 1e5),
+      makeNumericLearnerParam(id = "tol", lower = 0, default = .001, upper = 10),
+      makeLogicalLearnerParam(id = "auto_param_selection", default = T)
+    ),
+    properties = c("tibble"),#, "dimred", "dimred_traj", "pseudotime"), # todo: implement other outputs
+    name = "monocleDDRtree",
+    short.name = "monocleDDRtree"
+  )
+}
+
+
+#' @importFrom igraph degree all_shortest_paths distances
+#' @importFrom reshape2 melt
+#' @import dplyr
+#' @import monocle
+#'
+#' @export
+trainLearner.ti.monocleDDRtree <- function(.learner, .task, .subset, ...) {
+  NULL
+}
+
+#' @export
+predictLearner.ti.monocleDDRtree <- function(.learner, .model, .newdata, ...) {
+  outs <- lapply(.newdata$counts, run.ti.monocleDDRtree, ...)
+  outs_tib <- to_tibble(outs)
+  outs_tib
+}
+
+run.ti.monocleDDRtree <- function(counts, num_dimensions = 2, norm_method = "vstExprs",
+                                  maxIter = 20, sigma = 0.001, lambda = NULL, ncenter = NULL, param.gamma = 20, tol = 0.001,
+                                  auto_param_selection = T) {
+  library(monocle)
+
+  cds_1 <- monocle::newCellDataSet(t(as.matrix(counts)))
+  cds_2 <- monocle::reduceDimension(cds_1, max_components = num_dimensions, norm_method = norm_method,
+                                    maxIter = maxIter, sigma = sigma, lambda = lambda, ncenter = ncenter,
+                                    param.gamma = param.gamma, tol = tol, auto_param_selection = auto_param_selection)
+  cds_3 <- monocle::orderCells(cds_2, reverse = FALSE)
+
+  gr <- cds_3@auxOrderingData$DDRTree$pr_graph_cell_proj_tree
+  root <- cds_3@auxOrderingData$DDRTree$root_cell
+
+  deg <- igraph::degree(gr, mode = c("all"))
+  state_names <- names(deg)[deg != 2]
+
+  asp <- igraph::all_shortest_paths(gr, from = root, to = state_names, mode = c("all"))
+  asp2 <- lapply(asp$res, function(path) {
+    last_bit <- tail(which(path$name %in% state_names), 2)
+    if (length(last_bit) == 1) {
+      path[last_bit]
+    } else {
+      path[last_bit[[1]]:last_bit[[2]]]
+    }
+  })
+  asp2 <- asp2[sapply(asp2, length) > 1]
+  dist_m <- igraph::distances(gr, v = state_names, to = state_names)
+
+  state_network <- bind_rows(lapply(asp2, function(p) {
+    from <- p %>% head(1) %>% .$name
+    to <- p %>% tail(1) %>% .$name
+    data_frame(from, to, length = dist_m[[from, to]])
+  })) %>% mutate(length = length / max(length))
+
+  pct_melted <- bind_rows(lapply(asp2, function(path) {
+    dists <- t(igraph::distances(gr, v = path[c(1, length(path))], to = path))
+    pct <- 1 - t(apply(dists, 1, function(x) x / sum(x)))
+    pct %>%
+      reshape2::melt(varnames = c("id", "waypoint")) %>%
+      mutate(id = as.character(id), waypoint = as.character(waypoint))
+  }))
+
+  state_percentages <- pct_melted %>%
+    unique %>%
+    spread(waypoint, value, fill = 0) %>%
+    slice(match(rownames(counts), id))
+
+  state_percentages <- state_percentages[,c("id", state_names)]
+
+  # rename states
+  state_network <- state_network %>% mutate(from = paste0("state_", from), to = paste0("state_", to))
+  state_names <- paste0("state_", state_names)
+  colnames(state_percentages) <- c("id", state_names)
+
+  # wrap output
+  wrap_ti_prediction(
+    ti_type = "tree",
+    name = "monocleDDRtree",
+    state_names,
+    state_network,
+    state_percentages,
+    cds = cds_3
+  )
+}
+
+#' @importFrom monocle plot_cell_trajectory
+#' @export
+plotLearner.ti.monocleDDRtree <- function(ti_predictions) {
+  monocle::plot_cell_trajectory(ti_predictions$cds)
+}

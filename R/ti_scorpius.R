@@ -7,22 +7,33 @@ makeRLearner.ti.scorpius <- function() {
     package = c("SCORPIUS"),
     par.set = makeParamSet(
       makeIntegerLearnerParam(id = "num_dimensions", lower = 2L, default = 3L, upper = 20L),
-      makeIntegerLearnerParam(id = "num_clusters", lower = 2L, default = 4L, upper = 20L)
+      makeIntegerLearnerParam(id = "num_clusters", lower = 2L, default = 4L, upper = 20L),
+      makeDiscreteLearnerParam(id = "distance_method", default = "spearman", values = c("spearman", "pearson", "kendall"))
     ),
-    properties = c("numerics", "dimred", "dimred_traj", "pseudotime"),
+    properties = c("tibble", "dimred", "dimred_traj", "pseudotime"),
     name = "SCORPIUS",
     short.name = "SCORPIUS"
   )
 }
 
+#' @export
+trainLearner.ti.scorpius <- function(.learner, .task, .subset, ...) {
+  NULL
+}
+
+#' @export
+predictLearner.ti.scorpius <- function(.learner, .model, .newdata, ...) {
+  outs <- lapply(.newdata$counts, run.ti.scorpius, ...)
+  outs_tib <- to_tibble(outs)
+  outs_tib
+}
+
 #' @importFrom SCORPIUS correlation.distance reduce.dimensionality infer.trajectory
 #' @importFrom tibble data_frame
-#' @export
-trainLearner.ti.scorpius <- function(.learner, .task, .subset, num_dimensions = 3, num_clusters = 4) {
-  data <- getTaskData(.task, .subset)
+run.ti.scorpius <- function(counts, num_dimensions = 3, num_clusters = 4, distance_method = "spearman") {
+  expression <- log2(as.matrix(counts)+1)
 
-  expression <- as.matrix(data)
-  dist <- SCORPIUS::correlation.distance(expression)
+  dist <- SCORPIUS::correlation.distance(expression, method = distance_method)
   space <- SCORPIUS::reduce.dimensionality(dist, ndim = num_dimensions)
   traj <- SCORPIUS::infer.trajectory(space, k = num_clusters)
 
@@ -36,7 +47,6 @@ trainLearner.ti.scorpius <- function(.learner, .task, .subset, num_dimensions = 
     state_names,
     state_network,
     state_percentages,
-    task_id = get_task_identifier(.task),
     dimred_samples = space,
     dimred_traj = traj$path,
     pseudotime = traj$time
@@ -59,10 +69,4 @@ plotLearner.ti.scorpius <- function(ti_predictions) {
     geom_path(aes(Comp1, Comp2), traj_df) +
     coord_equal() +
     scale_color_viridis()
-}
-
-#' @export
-predictLearner.ti.scorpius <- function(.learner, .model, .newdata, ...) {
-  # .model$pseudotime
-  NULL
 }
