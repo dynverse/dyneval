@@ -4,7 +4,7 @@ make_obj_fun <- function(method) {
     name = "TItrain",
     vectorized = F,
     minimize = F,
-    noisy = T,
+    noisy = F,
     has.simple.signature = F,
     par.set = method$par_set,
     fn = function(x, tasks) {
@@ -14,9 +14,21 @@ make_obj_fun <- function(method) {
         coranking <- compute_coranking(tasks$geodesic_dist[[i]], model$geodesic_dist)
         list(model = model, coranking = coranking)
       })
-      outs %>% map_dbl(~ .$coranking$summary$max_lcmc) %>% mean
+      df <- outs %>% map_df(~ .$coranking$summary) %>% mutate(task_name = tasks$name)
+
+      score <- mean(df$max_lcmc)
+      attr(score, "extras") <- list(.summary = df)
+      score
     })
 }
+
+#' @export
+impute_y_fun <- function(x, y, opt.path, ...) {
+  val <- 0
+  attr(val, "extras") <- list(.summary = NA)
+  val
+}
+
 
 #' Calculate Earth Mover's Distance between cells in a trajectory
 #'
