@@ -3,22 +3,22 @@
 #' @export
 description_tscan <- function() {
   list(
-    cl = "tscan",
+    name = "TSCAN",
+    short_name = "TSCAN",
     package = c("TSCAN"),
     par_set = makeParamSet(
       makeIntegerParam(id = "pseudocount", lower = 1, upper = 5, default = 1),
       makeNumericParam(id = "minexpr_value", lower = 0, upper = 20, default = 1),
       makeNumericParam(id = "minexpr_percent", lower = 0, upper = 1, default = .5),
       makeNumericParam(id = "cvcutoff", lower = 0, upper = 20, default = 1),
-      makeIntegerVectorParam(id = "clusternum", len = as.integer(NA), lower = 2, upper = 5, default = 2),
+      makeIntegerParam(id = "clusternum_lower", lower = 2L, upper = 20L, default = 0, special.vals = list(0)),
+      makeIntegerParam(id = "clusternum_upper", lower = 2L, upper = 20L, default = 0, special.vals = list(0)),
       makeDiscreteParam(id = "modelNames", default = "VVV", values = mclust::mclust.options("emModelNames"))
     ),
-    #properties = c("dimred", "pseudotime"),
-    properties = c("tibble"),#, "dimred", "dimred_traj", "pseudotime"), # todo: implement other outputs
-    name = "TSCAN",
-    short_name = "TSCAN",
+    properties = c(),
     run_fun = run_tscan,
-    plot_fun = plot_tscan
+    plot_fun = plot_tscan,
+    forbidden = quote(clusternum_lower > clusternum_upper)
   )
 }
 
@@ -27,10 +27,16 @@ description_tscan <- function() {
 #'
 #' @export
 run_tscan <- function(count, num_dimensions, pseudocount, minexpr_percent,
-                      minexpr_value, cvcutoff, clusternum, modelNames) {
+                      minexpr_value, cvcutoff, clusternum_lower, clusternum_upper, modelNames) {
+  if (clusternum_lower == 0 || clusternum_upper == 0) {
+    clusternum <- NULL
+  } else {
+    clusternum <- seq(clusternum_lower, clusternum_upper, by = 1)
+  }
+
   cds_1 <- TSCAN::preprocess(
     t(as.matrix(count)), takelog = T, logbase = 2,
-    clusternum = NULL , pseudocount = pseudocount, # clusternum needs to be added
+    clusternum = clusternum, pseudocount = pseudocount,
     minexpr_value = preprocess_minexpr_value, minexpr_percent = minexpr_value,
     cvcutoff = cvcutoff)
 
