@@ -39,7 +39,7 @@ imp_distance_to_space <- list(
     method_name = "mds_smacof",
     method_type = "distance_dimensionality_reduction",
     method_function = function(distance, num_dimensions) {
-      sp <- smacof::mds(distance, ndim = num_dimensions)$points
+      sp <- smacof::mds(distance, ndim = num_dimensions)$conf
       list(
         space = clean_dimred_output(sp, rownames(distance))
       )
