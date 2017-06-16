@@ -12,7 +12,7 @@ make_obj_fun <- function(method) {
 
       outs <- lapply(seq_len(nrow(tasks)), function(i) {
         arglist <- c(list(counts = tasks$counts[[i]]), x)
-        model <- do.call(method$run_fun, arglist)
+        capture.output({ model <- do.call(method$run_fun, arglist) })
         coranking <- compute_coranking(tasks$geodesic_dist[[i]], model$geodesic_dist)
         list(model = model, coranking = coranking)
       })
