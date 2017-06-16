@@ -8,6 +8,8 @@ make_obj_fun <- function(method) {
     has.simple.signature = F,
     par.set = method$par_set,
     fn = function(x, tasks) {
+      for (pack in method$package) do.call(library, list(pack))
+
       outs <- lapply(seq_len(nrow(tasks)), function(i) {
         arglist <- c(list(counts = tasks$counts[[i]]), x)
         model <- do.call(method$run_fun, arglist)
