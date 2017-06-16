@@ -3,9 +3,9 @@ description_celltree_maptpx <- function() {
   list(
     name = "celltree",
     short_name = "celltree",
-    package = c("cellTree"),
+    package = c("cellTree", "purrr"),
     par_set = makeParamSet(
-      makeDiscreteParam(id = "method", values = "maptpx"),
+      makeDiscreteParam(id = "method", values = "maptpx", default = "maptpx"),
       makeIntegerParam(id = "num_topics_lower", lower = 2L, upper = 15L, default = 2),
       makeIntegerParam(id = "num_topics_upper", lower = 2L, upper = 15L, default = 15),
       makeNumericParam(id = "sd_filter", lower = log(.01), upper = log(5.0), default = log(.5), special.vals = list(F), trafo = exp),
