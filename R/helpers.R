@@ -35,5 +35,5 @@ load_datasets <- function() {
     ))
   })
   task_tib <- to_tibble(task_wrapped)
-  task_tib
+  task_tib %>% left_join(datasets_info, by = c("name"="id"))
 }
