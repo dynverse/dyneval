@@ -26,7 +26,7 @@ make_obj_fun <- function(method) {
 
 #' @export
 impute_y_fun <- function(x, y, opt.path, ...) {
-  val <- NA
+  val <- -1
   attr(val, "extras") <- list(.summary = NA)
   val
 }
