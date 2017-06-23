@@ -4,19 +4,33 @@ make_obj_fun <- function(method) {
     name = "TItrain",
     vectorized = F,
     minimize = F,
-    noisy = T,
+    noisy = F,
     has.simple.signature = F,
     par.set = method$par_set,
     fn = function(x, tasks) {
+      for (pack in method$package) do.call(library, list(pack))
+
       outs <- lapply(seq_len(nrow(tasks)), function(i) {
         arglist <- c(list(counts = tasks$counts[[i]]), x)
-        model <- do.call(method$run_fun, arglist)
+        capture.output({ model <- do.call(method$run_fun, arglist) })
         coranking <- compute_coranking(tasks$geodesic_dist[[i]], model$geodesic_dist)
         list(model = model, coranking = coranking)
       })
-      outs %>% map_dbl(~ .$coranking$summary$max_lcmc) %>% mean
+      df <- outs %>% map_df(~ .$coranking$summary) %>% mutate(task_name = tasks$name)
+
+      score <- mean(df$max_lcmc)
+      attr(score, "extras") <- list(.summary = df)
+      score
     })
 }
+
+#' @export
+impute_y_fun <- function(x, y, opt.path, ...) {
+  val <- NA
+  attr(val, "extras") <- list(.summary = NA)
+  val
+}
+
 
 #' Calculate Earth Mover's Distance between cells in a trajectory
 #'
@@ -189,25 +203,25 @@ compute_coranking <- function(gold_dist, pred_dist) {
 }
 
 #' Convert percentages to a unique edge assignment
-cal_branch_assignment = function(percentages, network) {
+cal_branch_assignment <- function(percentages, network) {
   branch_assignment <- apply(percentages, 1, function(x) {
-    positives = names(which(x > 0))
+    positives <- names(which(x > 0))
     if(length(intersect(positives, network$from)) > 0) {
       intersect(positives, network$from)[[1]]
     } else {
-      network %>% filter(to==positives[[1]]) %>% .$from %>% .[[1]]
+      network %>% filter(to == positives[[1]]) %>% .$from %>% .[[1]]
     }
   }) %>% factor() %>% as.numeric()
 }
 
 #' Compute the F1rr based on two set of assignment labels
-F1rr = function(labels1, labels2) {
-  overlaps = map(unique(labels1), function(label1) {
+F1rr <- function(labels1, labels2) {
+  overlaps <- map(unique(labels1), function(label1) {
     map_dbl(unique(labels2), function(label2) {
       sum((labels1 == label1) & (labels2 == label2)) / sum((labels1 == label1) | (labels2 == label2))
     })
   }) %>% invoke(cbind, .)
-  print(overlaps)
+  # print(overlaps)
   2/(1/mean(apply(overlaps, 1, max)) + 1/mean(apply(overlaps, 2, max)))
 }
 
@@ -216,8 +230,8 @@ F1rr = function(labels1, labels2) {
 #' Can currently not handle multiple linear edges without branching, which should be merged in the future
 #'
 #' @export
-score_prediction_F1rr = function(task, pred_output) {
-  branch_assignment_true = cal_branch_assignment(task$state_percentages %>% select(-id), task$state_network)
-  branch_assignment_observed = cal_branch_assignment(pred_output$state_percentages %>% select(-id), pred_output$state_network)
+score_prediction_F1rr <- function(task, pred_output) {
+  branch_assignment_true <- cal_branch_assignment(task$state_percentages %>% select(-id), task$state_network)
+  branch_assignment_observed <- cal_branch_assignment(pred_output$state_percentages %>% select(-id), pred_output$state_network)
   F1rr(branch_assignment_true, branch_assignment_observed)
 }

@@ -1,20 +1,73 @@
 #' @export
-description_celltree <- function() {
+description_celltree_maptpx <- function() {
   list(
-    cl = "celltree",
-    package = c("cellTree"),
+    name = "cellTree",
+    short_name = "cellTree",
+    package = c("cellTree", "purrr"),
     par_set = makeParamSet(
-      makeIntegerParam(id = "num_topics", lower = 3L, default = 10L)
-      # makeIntegerParam(id = "num_clusters", lower = 2L, default = 4L)
+      makeDiscreteParam(id = "method", values = "maptpx", default = "maptpx"),
+      makeIntegerParam(id = "num_topics_lower", lower = 2L, upper = 15L, default = 2),
+      makeIntegerParam(id = "num_topics_upper", lower = 2L, upper = 15L, default = 15),
+      makeNumericParam(id = "sd_filter", lower = log(.01), upper = log(5.0), default = log(.5), special.vals = list(F), trafo = exp),
+      makeNumericParam(id = "tot_iter", lower = log(10^4), upper = log(10^7), default = log(10^6), trafo = function(x) round(exp(x))),
+      makeNumericParam(id = "tolerance", lower = log(.001), upper = log(.5), default = log(.05), trafo = exp),
+      makeNumericParam(id = "width_scale_factor", lower = 1.01, default = 1.2, upper = 2),
+      makeNumericParam(id = "outlier_tolerance_factor", lower = log(.01), upper = log(.5), default = log(.1), trafo = exp),
+      # makeLogicalParam(id = "only_mst", default = F),
+      # makeLogicalParam(id = "merge_sequential_backbone", default = F),
+      forbidden = quote(num_topics_lower > num_topics_upper)
     ),
-    # properties = c("linear", "dimred_samples", "dimred_traj", "pseudotime"), # What to add?
     properties = c(),
-    name = "celltree",
-    short_name = "celltree",
     run_fun = run_celltree,
     plot_fun = plot_celltree
   )
 }
+
+#' #' @export
+#' description_celltree_gibbs <- function() {
+#'   list(
+#'     name = "celltree",
+#'     short_name = "celltree",
+#'     package = c("cellTree"),
+#'     par_set = makeParamSet(
+#'       makeDiscreteParam(id = "method", values = "Gibbs"),
+#'       makeIntegerParam(id = "num_topics", lower = 2L, default = 4L, upper = 15L),
+#'       makeNumericParam(id = "sd_filter", lower = log(.01), upper = log(5.0), default = log(.5), special.vals = list(F), trafo = exp),
+#'       makeNumericParam(id = "tot_iter", lower = log(50), upper = log(500), default = log(200), trafo = function(x) round(exp(x))),
+#'       makeNumericParam(id = "tolerance", lower = log(10^-7), upper = log(10^-3), default = log(10^-5), trafo = exp),
+#'       makeNumericParam(id = "width_scale_factor", lower = log(.1), default = log(1.2), upper = log(100), trafo = exp),
+#'       makeNumericParam(id = "outlier_tolerance_factor", lower = log(.01), upper = log(.5), default = log(.1), trafo = exp),
+#'       # makeLogicalParam(id = "only_mst", default = F),
+#'       makeLogicalParam(id = "merge_sequential_backbone", default = F)
+#'     ),
+#'     properties = c(),
+#'     run_fun = run_celltree,
+#'     plot_fun = plot_celltree
+#'   )
+#' }
+#'
+#' #' @export
+#' description_celltree_vem <- function() {
+#'   list(
+#'     name = "celltree",
+#'     short_name = "celltree",
+#'     package = c("cellTree"),
+#'     par_set = makeParamSet(
+#'       makeDiscreteParam(id = "method", values = "VEM"),
+#'       makeIntegerParam(id = "num_topics", lower = 2L, default = 4L, upper = 15L),
+#'       makeNumericParam(id = "sd_filter", lower = log(.01), upper = log(5.0), default = log(.5), special.vals = list(F), trafo = exp),
+#'       makeNumericParam(id = "tot_iter", lower = log(10^4), upper = log(10^7), default = log(10^6), trafo = function(x) round(exp(x))),
+#'       makeNumericParam(id = "tolerance", lower = log(10^-7), upper = log(10^-3), default = log(10^-5), trafo = exp),
+#'       makeNumericParam(id = "width_scale_factor", lower = log(.1), default = log(1.5), upper = log(100), trafo = exp),
+#'       makeNumericParam(id = "outlier_tolerance_factor", lower = log(.01), upper = log(.5), default = log(.1), trafo = exp),
+#'       # makeLogicalParam(id = "only_mst", default = F),
+#'       makeLogicalParam(id = "merge_sequential_backbone", default = F)
+#'     ),
+#'     properties = c(),
+#'     run_fun = run_celltree,
+#'     plot_fun = plot_celltree
+#'   )
+#' }
 
 
 #' @importFrom igraph degree distances get.vertex.attribute induced_subgraph
@@ -24,26 +77,32 @@ description_celltree <- function() {
 #' @import magrittr
 #'
 #' @export
-run_celltree <- function(counts, num_topics, width_scale_factor) {
+run_celltree <- function(counts, method = "maptpx",
+                         num_topics_lower = 2, num_topics_upper = 15, num_topics = num_topics_lower:num_topics_upper,
+                         sd_filter = .5, tot_iter = 1e6, tolerance = .05, width_scale_factor = 1.5,
+                         outlier_tolerance_factor = .5, only_mst = F, merge_sequential_backbone = F) {
   expression <- log2(counts+1)
 
-  #expression <- t(SCORPIUS::quant.scale(t(data$expression), 0))
+  lda_out <- cellTree::compute.lda(
+    t(expression) + min(expression) + 1,
+    k.topics = num_topics,
+    method = method,
+    log.scale = F,
+    sd.filter = sd_filter,
+    tot.iter = tot_iter,
+    tol = tolerance)
 
-  #num_topics = 4;width_scale_factor=1.5
+  mst_tree <- cellTree::compute.backbone.tree(
+    lda_out,
+    width.scale.factor = width_scale_factor,
+    only.mst = only_mst,
+    merge.sequential.backbone = merge_sequential_backbone)
 
-  lda.results <- compute.lda(t(expression) + min(expression) + 1, k.topics=num_topics, method="maptpx", log.scale=F, sd.filter=0)
-  dists <- get.cell.dists(lda.results)
-  #mst.tree <- compute.backbone.tree(lda.results, grouping = goldstandard$cellinfo$piecestateid, width.scale.factor=1.5, start.group.label = "1")
-  #mst.tree <- compute.backbone.tree(lda.results, only.mst = T)
-  mst.tree <- compute.backbone.tree(lda.results, width.scale.factor=width_scale_factor)
-  #ct.plot.topics(mst.tree)
-  #ct.plot.grouping(mst.tree)
+  backbone_gr <- igraph::induced_subgraph(mst_tree, igraph::get.vertex.attribute(mst_tree, "is.backbone"))
+  tomerge <- names(igraph::V(backbone_gr))[igraph::degree(backbone_gr) == 2]
+  backbone <- igraph::as_long_data_frame(backbone_gr) %>% select(from = from_name, to = to_name, weight, arrow.mode)
 
-
-  backbone <- induced_subgraph(mst.tree, get.vertex.attribute(mst.tree, "is.backbone"))
-  tomerge <- names(V(backbone))[igraph::degree(backbone) == 2]
-  backbone <- backbone %>% as_data_frame
-  for(node in tomerge) {
+  for (node in tomerge) {
     subgraph <- backbone %>% filter((from == node) | (to == node))
     includeds <- unlist(subgraph$included)
     newnodes <- subgraph %>% {c(.$from, .$to)} %>% keep(~.!=node)
@@ -52,14 +111,14 @@ run_celltree <- function(counts, num_topics, width_scale_factor) {
   }
   backbone <- backbone %>% tidyr::unnest()
 
-  backbonenodes <- names(V(mst.tree))[get.vertex.attribute(mst.tree, "is.backbone")]
-  sidenodes <- names(V(mst.tree))[!get.vertex.attribute(mst.tree, "is.backbone")]
+  backbonenodes <- names(igraph::V(mst_tree))[igraph::get.vertex.attribute(mst_tree, "is.backbone")]
+  sidenodes <- names(igraph::V(mst_tree))[!igraph::get.vertex.attribute(mst_tree, "is.backbone")]
   centralnodes <- unique(c(backbone$from, backbone$to))
   names(centralnodes) <- seq_along(centralnodes)
-  sidenodes2backbone <- mst.tree %>% as_data_frame %>% filter(to %in% sidenodes) %$% set_names(from, to)
+  sidenodes2backbone <-  igraph::as_long_data_frame(mst_tree) %>% select(from = from_name, to = to_name, weight, arrow.mode) %>% filter(to %in% sidenodes) %$% set_names(from, to)
 
   percentages <- tibble()
-  for(node in names(V(mst.tree))) {
+  for(node in names(igraph::V(mst_tree))) {
     if (node %in% names(sidenodes2backbone)) {
       realnode <- as.character(sidenodes2backbone[[node]])
     } else {
@@ -70,7 +129,7 @@ run_celltree <- function(counts, num_topics, width_scale_factor) {
       percentages <- percentages %>% bind_rows(tibble(milestone=as.character(which(centralnodes == realnode)), cell=node, percentage=1))
     } else {
       centralnodesoi <- backbone %>% filter(included == realnode) %>% {c(.$from, .$to)}
-      distances <- igraph::distances(mst.tree, realnode, centralnodesoi)
+      distances <- igraph::distances(mst_tree, realnode, centralnodesoi)
       percentages <- percentages %>% bind_rows(tibble(milestone=as.character(match(centralnodesoi, centralnodes)), cell=node, percentage=1-distances[1, ]/sum(distances)))
     }
   }
@@ -96,13 +155,12 @@ run_celltree <- function(counts, num_topics, width_scale_factor) {
     state_names,
     state_network,
     state_percentages,
-    task_id = get_task_identifier(.task),
-    mst.tree = mst.tree
+    mst_tree = mst_tree
   )
 }
 
 #' @importFrom cellTree ct.plot.topics
 #' @export
 plot_celltree <- function(ti_predictions) {
-  cellTree::ct.plot.topics(ti_predictions$mst.tree)
+  cellTree::ct.plot.topics(ti_predictions$mst_tree)
 }

@@ -11,12 +11,11 @@ output_root_folder <- "results/output_dyngentest/"
 tasks <- load_datasets()
 
 ## choose a method
-method <- description_scorpius()
-# method <- description_monocle_ddrtree()
+# method <- description_scorpius()
+method <- description_monocle_ddrtree()
 
 ## MBO settings
-control <- makeMBOControl(propose.points = 8)
-control <- setMBOControlTermination(control, iters = 2L)
+control <- makeMBOControl(propose.points = 8) %>% setMBOControlTermination(iters = 2L)
 design <- generateDesign(n = 8, par.set = method$par_set)
 
 ## start parameter optimisation
