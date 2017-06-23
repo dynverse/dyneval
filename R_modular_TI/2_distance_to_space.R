@@ -60,6 +60,18 @@ imp_distance_to_space <- list(
     required_namespaces = c("tsne")
   ),
   wrap_method(
+    method_name = "Rtsne_Rtsne",
+    method_type = "distance_dimensionality_reduction",
+    method_function = function(distance, num_dimensions) {
+      sp <- Rtsne::Rtsne(as.dist(distance), dims = num_dimensions, is_distance = T)
+      list(
+        space = clean_dimred_output(sp, rownames(distance))
+      )
+    },
+    parameter_sets = list(list(num_dimensions = seq(2, 10))),
+    required_namespaces = c("Rtsne")
+  ),
+  wrap_method(
     method_name = "diffusionmap_diffusionMap",
     method_type = "distance_dimensionality_reduction",
     method_function = function(distance, num_dimensions, num_eigen) {
