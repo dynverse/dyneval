@@ -22,26 +22,31 @@ dp<-DPT(dm)
 plot(dp)#,col_by="branch")
 summary(as.factor(dp$branch))
 
-## state_network ##
-branches<-unique(dp$branch)
-#br<-branches[complete.cases(branches),]
-dp_tips<-which(dp@tips==T)
-br[br==1]<-dp_tips[1]
-
-dim(branches)
-
 # find terminal points:
 term<-find_tips(dp)
 
+## state_network ##
+state_network<-data_frame(from=rownames(ginhoux_data)[term[1]],to=rownames(ginhoux_data)[term[2]], dist=dm@transitions[term[1],term[2]])
+state_network[2,]<-data_frame(from=rownames(ginhoux_data)[term[1]],to=rownames(ginhoux_data)[term[3]],
+                              dist=dm@transitions[term[1],term[3]])
+state_network[3,]<-data_frame(from=rownames(ginhoux_data)[term[2]],to=rownames(ginhoux_data)[term[3]],
+                              dist=dm@transitions[term[2],term[3]])
+
+## state_percentage ##
+state_percentage<-matrix(rep(0, nrow(ginhoux_data)*3), ncol=3)
+
+for (i in 1:nrow(ginhoux_data)){
+  state_percentage[i,]<-c(dm@transitions[i,term[1]],dm@transitions[i,term[2]],dm@transitions[i,term[3]])
+  row_sum<-sum(state_percentage[i,])
+  state_percentage[i,]<-state_percentage[i,]/row_sum
+}
+rownames(state_percentage)<-rownames(ginhoux_data)
+colnames(state_percentage)<-c(rownames(ginhoux_data)[term[1]],rownames(ginhoux_data)[term[2]],
+                              rownames(ginhoux_data)[term[3]])
+
+## taking into account which branch DPT assigned the cell to :
+br[br==1]<-dp_tips[1]
+
+## nb of branches:
 length(unique(dp$Branch[!is.na(unique(dp$Branch))]))
-
-#tips of branch 2:
-trues<-which(dp@tips==T)
-plot(dp,col_by="branch") # shows only 3 tips
-
-ggplot(data=dp)+
-  geom_point(mapping=aes(x=DC1,y=DC2))
-
-ggplot(data=dp)+
-  geom_smooth(mapping=aes(x=DC1,y=DC2,linetype=branch)) # doesn't find Branch !!
 
