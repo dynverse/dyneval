@@ -1,8 +1,8 @@
 #' @export
 description_celltree_maptpx <- function() {
   list(
-    name = "celltree",
-    short_name = "celltree",
+    name = "cellTree",
+    short_name = "cellTree",
     package = c("cellTree", "purrr"),
     par_set = makeParamSet(
       makeDiscreteParam(id = "method", values = "maptpx", default = "maptpx"),
