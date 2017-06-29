@@ -1,36 +1,65 @@
 #' @export
-make_obj_fun <- function(method) {
-  makeSingleObjectiveFunction(
+make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output = T, metrics = c("Q_global", "Q_local", "correlation")) {
+  if (length(metrics) > 1) {
+    make_fun <- function(...) makeMultiObjectiveFunction(..., n.objectives = length(metrics))
+  } else {
+    make_fun <- makeSingleObjectiveFunction
+  }
+
+  make_fun(
     name = "TItrain",
     vectorized = F,
-    minimize = F,
-    noisy = F,
+    minimize = rep(F, length(metrics)),
+    noisy = noisy,
     has.simple.signature = F,
     par.set = method$par_set,
     fn = function(x, tasks) {
-      for (pack in method$package) do.call(library, list(pack))
+      if (load_packages) {
+        for (pack in method$package) {
+          do.call(library, list(pack))
+        }
+      }
 
       outs <- lapply(seq_len(nrow(tasks)), function(i) {
         arglist <- c(list(counts = tasks$counts[[i]]), x)
-        capture.output({ model <- do.call(method$run_fun, arglist) })
-        coranking <- compute_coranking(tasks$geodesic_dist[[i]], model$geodesic_dist)
-        list(model = model, coranking = coranking)
-      })
-      df <- outs %>% map_df(~ .$coranking$summary) %>% mutate(task_name = tasks$name)
+        if (suppress_output) {
+          capture.output({
+            model <- do.call(method$run_fun, arglist)
+          })
+        } else {
+          model <- do.call(method$run_fun, arglist)
+        }
 
-      score <- mean(df$max_lcmc)
-      attr(score, "extras") <- list(.summary = df)
+        task_geo <- tasks$geodesic_dist[[i]]
+        model_geo <- model$geodesic_dist
+
+        coranking <- compute_coranking(task_geo, model_geo)
+        correlation <- cor(task_geo %>% as.vector, model_geo %>% as.vector)
+
+        summary <- data.frame(task_name = tasks$name[[i]], coranking$summary, correlation, stringsAsFactors = F, check.names = F)
+
+        lst(model = model, coranking = coranking, summary = summary)
+      })
+
+      models <- outs %>% map(~ .$model)
+      corankings <- outs %>% map(~ .$coranking)
+      summary <- outs %>% map_df(~ .$summary)
+
+      score <- summary %>% summarise_at(metrics, funs(mean)) %>% as.matrix %>% as.vector %>% setNames(metrics)
+      attr(score, "extras") <- list(.models = models, .corankings = corankings, .summary = summary)
       score
     })
 }
 
 #' @export
-impute_y_fun <- function(x, y, opt.path, ...) {
-  val <- -1
-  attr(val, "extras") <- list(.summary = NA)
-  val
+impute_y_fun <- function(obj_fun) {
+  num_objectives <- attr(method_fun, "n.objectives")
+  function(x, y, opt.path, ...) {
+    val <- rep(-1, num_objectives)
+    attr(val, "extras") <- list(.summary = NA)
+    val
+  }
 }
-
 
 #' Calculate Earth Mover's Distance between cells in a trajectory
 #'
@@ -180,25 +209,47 @@ plot_emdist <- function(traj, dist, dimred = NULL, ...) {
 #' @export
 #'
 #' @importFrom coRanking coranking LCMC
+#' @importFrom tibble lst
 compute_coranking <- function(gold_dist, pred_dist) {
   gold_dist <- gold_dist + runif(length(gold_dist), 0, 1e-20)
   pred_dist <- pred_dist + runif(length(pred_dist), 0, 1e-20)
   diag(gold_dist) <- 0
   diag(pred_dist) <- 0
 
-  corank <- coRanking::coranking(gold_dist, pred_dist, input = "dist")
+  Q <- coRanking::coranking(gold_dist, pred_dist, input = "dist")
 
-  lcmc <- coRanking::LCMC(corank)
+  nQ <- nrow(Q)
+  N <- nQ + 1
 
-  summary <- data_frame(
-    auc_lcmc = mean(lcmc),
-    max_lcmc = max(lcmc)
-  )
+  # calculating Q_nx
+  LCMC <- coRanking::LCMC(Q)
+  Q_nx <- LCMC + seq_len(nQ) / nQ
 
-  list(
-    corank = corank,
-    lcmc = lcmc,
-    summary = summary
+  # calculating R_nx
+  R_nx <- (nQ * Q_nx - seq_len(nQ)) / seq(nQ - 1, 0, -1)
+  R_nx <- R_nx[-nQ]
+
+  # calculating mean R_nx
+  mean_R_nx <- mean(R_nx)
+
+  # calculating AUC (space under R_nx curve)
+  Ks <- seq_along(R_nx)
+  auc_R_nx <- sum(R_nx / Ks) / sum(1 / Ks)
+
+  # calculating Q_global and Q_local
+  Kmax <- which.max(LCMC)
+  ix <- seq(1, Kmax)
+  Q_global <- mean(LCMC[-ix])
+  Q_local <- mean(LCMC[ix])
+
+  summary <- data_frame(mean_R_nx, auc_R_nx, Q_global, Q_local)
+
+  lst(
+    Q,
+    LCMC,
+    Q_nx,
+    R_nx,
+    summary
   )
 }
 
