@@ -8,53 +8,62 @@ library(PRISM)
 output_root_folder <- "results/output_dyngen_paramtraincv/"
 dir.create(output_root_folder)
 
-# ## load datasets
-# .datasets_location = "../dyngen/results" # needs to be defined, to let dyngen know where the datasets are
-# tasks <- load_datasets()
-# tasks <- tasks %>% group_by(ti_type) %>% mutate(i = seq_len(n())) %>% ungroup
-#
-# ## choose a method
-# # method <- description_scorpius()
-# # method <- description_monocle_ddrtree()
+## load datasets
+.datasets_location = "../dyngen/results" # needs to be defined, to let dyngen know where the datasets are
+tasks <- load_datasets()
+tasks <- tasks %>% group_by(ti_type) %>% mutate(i = seq_len(n())) %>% ungroup
+
+## choose a method
+method <- description_scorpius()
+# method <- description_monocle_ddrtree()
 # method <- description_celltree_maptpx()
-# obj_fun <- make_obj_fun(method)
-#
-# ## select datasets
-# select_tasks <- tasks %>% arrange(ti_type, i)
-#
-# ## MBO settings
-# num_cores <- 24
-# control_train <- makeMBOControl(propose.points = num_cores, impute.y.fun = impute_y_fun) %>% setMBOControlTermination(iters = 20L)
-# control_eval <- makeMBOControl(propose.points = 2, impute.y.fun = impute_y_fun) %>% setMBOControlTermination(iters = 1L)
-#
-# grid <- expand.grid(repeat_i = 1, fold_i = seq_len(4))
-#
-# ## Run MBO
-# qsub_handle <- qsub_lapply(
-#   # X = 1:4, # adjust this first
-#   qsub_environment = c("method", "obj_fun", "select_tasks", "num_cores", "control_train", "control_eval", "design", "test_set"),
-#   qsub_config = override_qsub_config(wait = F, num_cores = num_cores, memory = "10G", name = "dyneval", remove_tmp_folder = F, max_wall_time = "24:00:00"),
-#   FUN = function(test_set) {
-#   library(dplyr)
-#   library(purrr)
-#   library(dyneval)
-#   library(mlrMBO)
-#   library(parallelMap)
-#
-#   design <- bind_rows(
-#     generateDesignOfDefaults(method$par_set),
-#     generateDesign(n = num_cores * 4, par.set = method$par_set)
-#   )
-#   ## start parameter optimisation
-#   parallelStartMulticore(cpus = num_cores, show.info = TRUE)
-#   tune_train <- mbo(obj_fun, design = design, control = control_train, show.info = T, more.args = list(tasks = select_tasks %>% filter(!i %in% test_set)))
-#   tune_test <- mbo(obj_fun, design = tune_train$opt.path$env$path %>% select(-y), control = control_eval, show.info = T, more.args = list(tasks = select_tasks %>% filter(i %in% test_set)))
-#   parallelStop()
-#
-#   list(design = design, tune_train = tune_train, tune_test = tune_test)
-# })
-#
-# save.image(paste0(output_root_folder, "temp.RData"))
+# method <- description_celltree_gibbs()
+# method <- description_celltree_vem()
+
+## select datasets
+select_tasks <- tasks %>% arrange(ti_type, i)
+
+## MBO settings
+num_cores <- 24
+
+## set up evaluation
+metrics <- c("Q_global", "Q_local", "correlation")
+method_fun <- make_obj_fun(method, metrics = metrics)
+impute_fun <- impute_y_fun(method_fun)
+
+## MBO settings
+control_train <- makeMBOControl(n.objectives = length(metrics), propose.points = num_cores, impute.y.fun = impute_fun) %>% setMBOControlTermination(iters = 20L) %>% setMBOControlInfill(makeMBOInfillCritDIB())
+control_test <- makeMBOControl(n.objectives = length(metrics), propose.points = 1, impute.y.fun = impute_fun) %>% setMBOControlTermination(iters = 1L) %>% setMBOControlInfill(makeMBOInfillCritDIB())
+design <- generateDesign(n = 8, par.set = method$par_set)
+
+grid <- expand.grid(repeat_i = 1, fold_i = seq_len(4))
+
+## Run MBO
+qsub_handle <- qsub_lapply(
+  # X = 1:4, # adjust this first
+  qsub_environment = c("method", "obj_fun", "select_tasks", "num_cores", "control_train", "control_eval", "design", "test_set"),
+  qsub_config = override_qsub_config(wait = F, num_cores = num_cores, memory = "10G", name = "dyneval", remove_tmp_folder = F, max_wall_time = "24:00:00"),
+  FUN = function(test_set) {
+  library(dplyr)
+  library(purrr)
+  library(dyneval)
+  library(mlrMBO)
+  library(parallelMap)
+
+  design <- bind_rows(
+    generateDesignOfDefaults(method$par_set),
+    generateDesign(n = num_cores * 4, par.set = method$par_set)
+  )
+  ## start parameter optimisation
+  parallelStartMulticore(cpus = num_cores, show.info = TRUE)
+  tune_train <- mbo(obj_fun, design = design, control = control_train, show.info = T, more.args = list(tasks = select_tasks %>% filter(!i %in% test_set)))
+  tune_test <- mbo(obj_fun, design = tune_train$opt.path$env$path %>% select(-y), control = control_eval, show.info = T, more.args = list(tasks = select_tasks %>% filter(i %in% test_set)))
+  parallelStop()
+
+  list(design = design, tune_train = tune_train, tune_test = tune_test)
+})
+
+save.image(paste0(output_root_folder, "temp.RData"))
 load(paste0(output_root_folder, "temp.RData"))
 
 # output <- qsub_retrieve(qsub_handle)

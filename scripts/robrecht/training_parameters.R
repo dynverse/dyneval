@@ -12,15 +12,19 @@ tasks <- load_datasets() %>% mutate(dataset_i = seq_len(n())) %>% group_by(ti_ty
 
 ## choose a method
 method <- description_scorpius()
-# method <- description_ddrtree()
+# method <- description_monocle_ddrtree()
 # method <- description_celltree_maptpx()
 # method <- description_celltree_gibbs()
 # method <- description_celltree_vem()
-method_fun <- make_obj_fun(method)
+
+## set up evaluation
+metrics <- c("Q_global", "Q_local", "correlation")
+method_fun <- make_obj_fun(method, metrics = metrics)
+impute_fun <- impute_y_fun(method_fun)
 
 ## MBO settings
-control_train <- makeMBOControl(propose.points = 8, impute.y.fun = impute_y_fun) %>% setMBOControlTermination(iters = 2L)
-control_test <- makeMBOControl(propose.points = 1, impute.y.fun = impute_y_fun) %>% setMBOControlTermination(iters = 1L)
+control_train <- makeMBOControl(n.objectives = length(metrics), propose.points = 8, impute.y.fun = impute_fun) %>% setMBOControlTermination(iters = 2L) %>% setMBOControlInfill(makeMBOInfillCritDIB())
+control_test <- makeMBOControl(n.objectives = length(metrics), propose.points = 1, impute.y.fun = impute_fun) %>% setMBOControlTermination(iters = 1L) %>% setMBOControlInfill(makeMBOInfillCritDIB())
 design <- generateDesign(n = 8, par.set = method$par_set)
 
 ## start parameter optimisation
@@ -34,7 +38,7 @@ train_out <- mbo(
 )
 test_out <- mbo(
   fun = method_fun,
-  design = train_out$opt.path$env$path %>% dplyr::select(-y), # evaluate the parameters that have been evaluated in the training
+  design = train_out$opt.path$env$path %>% dplyr::select(-starts_with("y_")), # evaluate the parameters that have been evaluated in the training
   control = control_test,
   show.info = T,
   more.args = list(tasks = tasks %>% filter(ti_type == "linear", subdataset_i == 4)) # use test datasets
