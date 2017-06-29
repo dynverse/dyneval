@@ -13,8 +13,6 @@ description_celltree_maptpx <- function() {
       makeNumericParam(id = "tolerance", lower = log(.001), upper = log(.5), default = log(.05), trafo = exp),
       makeNumericParam(id = "width_scale_factor", lower = 1.01, default = 1.2, upper = 2),
       makeNumericParam(id = "outlier_tolerance_factor", lower = log(.01), upper = log(.5), default = log(.1), trafo = exp),
-      # makeLogicalParam(id = "only_mst", default = F),
-      # makeLogicalParam(id = "merge_sequential_backbone", default = F),
       forbidden = quote(num_topics_lower > num_topics_upper)
     ),
     properties = c(),
@@ -23,51 +21,47 @@ description_celltree_maptpx <- function() {
   )
 }
 
-#' #' @export
-#' description_celltree_gibbs <- function() {
-#'   list(
-#'     name = "celltree",
-#'     short_name = "celltree",
-#'     package = c("cellTree"),
-#'     par_set = makeParamSet(
-#'       makeDiscreteParam(id = "method", values = "Gibbs"),
-#'       makeIntegerParam(id = "num_topics", lower = 2L, default = 4L, upper = 15L),
-#'       makeNumericParam(id = "sd_filter", lower = log(.01), upper = log(5.0), default = log(.5), special.vals = list(F), trafo = exp),
-#'       makeNumericParam(id = "tot_iter", lower = log(50), upper = log(500), default = log(200), trafo = function(x) round(exp(x))),
-#'       makeNumericParam(id = "tolerance", lower = log(10^-7), upper = log(10^-3), default = log(10^-5), trafo = exp),
-#'       makeNumericParam(id = "width_scale_factor", lower = log(.1), default = log(1.2), upper = log(100), trafo = exp),
-#'       makeNumericParam(id = "outlier_tolerance_factor", lower = log(.01), upper = log(.5), default = log(.1), trafo = exp),
-#'       # makeLogicalParam(id = "only_mst", default = F),
-#'       makeLogicalParam(id = "merge_sequential_backbone", default = F)
-#'     ),
-#'     properties = c(),
-#'     run_fun = run_celltree,
-#'     plot_fun = plot_celltree
-#'   )
-#' }
-#'
-#' #' @export
-#' description_celltree_vem <- function() {
-#'   list(
-#'     name = "celltree",
-#'     short_name = "celltree",
-#'     package = c("cellTree"),
-#'     par_set = makeParamSet(
-#'       makeDiscreteParam(id = "method", values = "VEM"),
-#'       makeIntegerParam(id = "num_topics", lower = 2L, default = 4L, upper = 15L),
-#'       makeNumericParam(id = "sd_filter", lower = log(.01), upper = log(5.0), default = log(.5), special.vals = list(F), trafo = exp),
-#'       makeNumericParam(id = "tot_iter", lower = log(10^4), upper = log(10^7), default = log(10^6), trafo = function(x) round(exp(x))),
-#'       makeNumericParam(id = "tolerance", lower = log(10^-7), upper = log(10^-3), default = log(10^-5), trafo = exp),
-#'       makeNumericParam(id = "width_scale_factor", lower = log(.1), default = log(1.5), upper = log(100), trafo = exp),
-#'       makeNumericParam(id = "outlier_tolerance_factor", lower = log(.01), upper = log(.5), default = log(.1), trafo = exp),
-#'       # makeLogicalParam(id = "only_mst", default = F),
-#'       makeLogicalParam(id = "merge_sequential_backbone", default = F)
-#'     ),
-#'     properties = c(),
-#'     run_fun = run_celltree,
-#'     plot_fun = plot_celltree
-#'   )
-#' }
+#' @export
+description_celltree_gibbs <- function() {
+  list(
+    name = "celltree",
+    short_name = "celltree",
+    package = c("cellTree"),
+    par_set = makeParamSet(
+      makeDiscreteParam(id = "method", values = "Gibbs", default = "Gibbs"),
+      makeIntegerParam(id = "num_topics", lower = 2L, default = 4L, upper = 15L),
+      makeNumericParam(id = "sd_filter", lower = log(.01), upper = log(5.0), default = log(.5), special.vals = list(F), trafo = exp),
+      makeNumericParam(id = "tot_iter", lower = log(50), upper = log(500), default = log(200), trafo = function(x) round(exp(x))),
+      makeNumericParam(id = "tolerance", lower = log(10^-7), upper = log(10^-3), default = log(10^-5), trafo = exp),
+      makeNumericParam(id = "width_scale_factor", lower = log(.1), default = log(1.2), upper = log(100), trafo = exp),
+      makeNumericParam(id = "outlier_tolerance_factor", lower = log(.01), upper = log(.5), default = log(.1), trafo = exp)
+    ),
+    properties = c(),
+    run_fun = run_celltree,
+    plot_fun = plot_celltree
+  )
+}
+
+#' @export
+description_celltree_vem <- function() {
+  list(
+    name = "celltree",
+    short_name = "celltree",
+    package = c("cellTree"),
+    par_set = makeParamSet(
+      makeDiscreteParam(id = "method", values = "VEM", default = "VEM"),
+      makeIntegerParam(id = "num_topics", lower = 2L, default = 4L, upper = 15L),
+      makeNumericParam(id = "sd_filter", lower = log(.01), upper = log(5.0), default = log(.5), special.vals = list(F), trafo = exp),
+      makeNumericParam(id = "tot_iter", lower = log(10^4), upper = log(10^7), default = log(10^6), trafo = function(x) round(exp(x))),
+      makeNumericParam(id = "tolerance", lower = log(10^-7), upper = log(10^-3), default = log(10^-5), trafo = exp),
+      makeNumericParam(id = "width_scale_factor", lower = log(.1), default = log(1.5), upper = log(100), trafo = exp),
+      makeNumericParam(id = "outlier_tolerance_factor", lower = log(.01), upper = log(.5), default = log(.1), trafo = exp)
+    ),
+    properties = c(),
+    run_fun = run_celltree,
+    plot_fun = plot_celltree
+  )
+}
 
 
 #' @importFrom igraph degree distances get.vertex.attribute induced_subgraph
