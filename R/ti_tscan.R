@@ -5,20 +5,19 @@ description_tscan <- function() {
   list(
     name = "TSCAN",
     short_name = "TSCAN",
-    package = c("TSCAN"),
+    package = c("TSCAN", "mclust", "igraph"),
     par_set = makeParamSet(
-      makeIntegerParam(id = "pseudocount", lower = 1, upper = 5, default = 1),
-      makeNumericParam(id = "minexpr_value", lower = 0, upper = 20, default = 1),
-      makeNumericParam(id = "minexpr_percent", lower = 0, upper = 1, default = .5),
-      makeNumericParam(id = "cvcutoff", lower = 0, upper = 20, default = 1),
-      makeIntegerParam(id = "clusternum_lower", lower = 2L, upper = 20L, default = 0, special.vals = list(0)),
-      makeIntegerParam(id = "clusternum_upper", lower = 2L, upper = 20L, default = 0, special.vals = list(0)),
+      # makeNumericParam(id = "minexpr_value", lower = 0, upper = 5, default = 1),
+      # makeNumericParam(id = "minexpr_percent", lower = 0, upper = .5, default = .5),
+      # makeNumericParam(id = "cvcutoff", lower = 0, upper = 5, default = 1),
+      makeIntegerParam(id = "exprmclust_clusternum_lower", lower = 2L, upper = 20L, default = 2),
+      makeIntegerParam(id = "exprmclust_clusternum_upper", lower = 2L, upper = 20L, default = 9),
       makeDiscreteParam(id = "modelNames", default = "VVV", values = mclust::mclust.options("emModelNames"))
     ),
     properties = c(),
     run_fun = run_tscan,
     plot_fun = plot_tscan,
-    forbidden = quote(clusternum_lower > clusternum_upper)
+    forbidden = quote(exprmclust_clusternum_lower < exprmclust_clusternum_upper)
   )
 }
 
@@ -26,30 +25,47 @@ description_tscan <- function() {
 #' @import TSCAN
 #'
 #' @export
-run_tscan <- function(count, num_dimensions, pseudocount, minexpr_percent,
-                      minexpr_value, cvcutoff, clusternum_lower, clusternum_upper, modelNames) {
-  if (clusternum_lower == 0 || clusternum_upper == 0) {
-    clusternum <- NULL
-  } else {
-    clusternum <- seq(clusternum_lower, clusternum_upper, by = 1)
-  }
-
+run_tscan <- function(counts,
+                      minexpr_percent = 1,
+                      minexpr_value = .5,
+                      cvcutoff = 1,
+                      exprmclust_clusternum_lower = 2,
+                      exprmclust_clusternum_upper = 9,
+                      modelNames = "VVV") {
+  expr <- t(as.matrix(counts))
+  # cds_1 <- TSCAN::preprocess(
+  #   expr,
+  #   takelog = T,
+  #   logbase = 2,
+  #   clusternum = preprocess_clusternum,
+  #   pseudocount = pseudocount,
+  #   minexpr_value = minexpr_value,
+  #   minexpr_percent = minexpr_percent,
+  #   cvcutoff = cvcutoff)
   cds_1 <- TSCAN::preprocess(
-    t(as.matrix(count)), takelog = T, logbase = 2,
-    clusternum = clusternum, pseudocount = pseudocount,
-    minexpr_value = preprocess_minexpr_value, minexpr_percent = minexpr_value,
-    cvcutoff = cvcutoff)
+    expr,
+    takelog = T,
+    logbase = 2,
+    pseudocount = 1,
+    clusternum = NULL,
+    minexpr_value = 0,
+    minexpr_percent = 0,
+    cvcutoff = 0)
 
-  cds_2 <- TSCAN::exprmclust(cds_1, clusternum = clusternum, modelNames = modelNames, reduce = T)
+  exprmclust_clusternum <- seq(exprmclust_clusternum_lower, exprmclust_clusternum_upper, 1)
+  cds_2 <- TSCAN::exprmclust(
+    cds_1,
+    clusternum = exprmclust_clusternum,
+    modelNames = modelNames,
+    reduce = T)
 
   cds_3 <- TSCAN::TSCANorder(cds_2)
-  # problem: not all cells are in cds_3!
 
   state_names <- paste0("state_", c(head(cds_3, 1), tail(cds_3, 1)))
   state_network <- data_frame(from = state_names[[1]], to = state_names[[2]], length = 1)
 
-  pseudotime <- setNames(percent_rank(match(rownames(expression), cds_3)), rownames(expression))
-  state_percentages <- data.frame(id = names(pseudotime), from = 1-pseudotime, to = pseudotime)
+  pseudotime <- setNames(percent_rank(match(rownames(counts), cds_3)), rownames(counts))
+  state_percentages <- data.frame(id = names(pseudotime), from = 1-pseudotime, to = pseudotime, check.names = F, stringsAsFactors = F)
   colnames(state_percentages) <- c("id", state_names)
 
   wrap_ti_prediction(
