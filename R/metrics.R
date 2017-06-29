@@ -22,6 +22,7 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
 
       outs <- lapply(seq_len(nrow(tasks)), function(i) {
         arglist <- c(list(counts = tasks$counts[[i]]), x)
+
         if (suppress_output) {
           capture.output({
             model <- do.call(method$run_fun, arglist)
@@ -41,9 +42,9 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
         lst(model = model, coranking = coranking, summary = summary)
       })
 
-      models <- outs %>% map(~ .$model)
-      corankings <- outs %>% map(~ .$coranking)
-      summary <- outs %>% map_df(~ .$summary)
+      models <- outs %>% purrr::map(~ .$model)
+      corankings <- outs %>% purrr::map(~ .$coranking)
+      summary <- outs %>% purrr::map_df(~ .$summary)
 
       score <- summary %>% summarise_at(metrics, funs(mean)) %>% as.matrix %>% as.vector %>% setNames(metrics)
       attr(score, "extras") <- list(.models = models, .corankings = corankings, .summary = summary)
