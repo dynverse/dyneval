@@ -50,6 +50,18 @@ abstract_wrapper <- function(type, ti_type, name, state_names, state_network, st
     stop("Not all states in ", sQuote("state_percentages"), " are in ", sQuote("state_names"), ".")
   }
 
+  ## create a separate state if some cells have been filtered out
+  state_pct_nas <- apply(state_percentages, 1, function(x) any(is.na(x)))
+  if (any(state_pct_nas)) {
+    state_percentages[state_pct_nas,-1] <- 0
+    state_percentages[,"FILTERED_CELLS"] <- ifelse(state_pct_nas, 1, 0)
+    state_network <- dplyr::bind_rows(
+      state_network,
+      data.frame(from = state_names, to = "FILTERED_CELLS", length = max(state_network$length)*5, stringsAsFactors = F)
+    )
+    state_names <- c(state_names, "FILTERED_CELLS")
+  }
+
   l <- list(
     type = type,
     ti_type = ti_type,
@@ -60,7 +72,10 @@ abstract_wrapper <- function(type, ti_type, name, state_names, state_network, st
     ...
   )
   class(l) <- paste0("dyneval::ti_wrapper")
+
+  ## Precompute geodesic distances
   l$geodesic_dist <- compute_emlike_dist(l)
+
   l
 }
 
