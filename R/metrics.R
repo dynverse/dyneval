@@ -53,7 +53,7 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
 
 #' @export
 impute_y_fun <- function(obj_fun) {
-  num_objectives <- attr(method_fun, "n.objectives")
+  num_objectives <- attr(obj_fun, "n.objectives")
   function(x, y, opt.path, ...) {
     val <- rep(-1, num_objectives)
     attr(val, "extras") <- list(.summary = NA)
