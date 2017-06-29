@@ -6,9 +6,14 @@ description_scorpius <- function() {
     cl = "scorpius",
     package = c("SCORPIUS"),
     par_set = makeParamSet(
+      makeDiscreteParam(id = "distance_method", default = "spearman", values = c("spearman", "pearson", "kendall")),
       makeIntegerParam(id = "num_dimensions", lower = 2L, default = 3L, upper = 20L),
-      makeIntegerParam(id = "num_clusters", lower = 2L, default = 4L, upper = 20L),
-      makeDiscreteParam(id = "distance_method", default = "spearman", values = c("spearman", "pearson", "kendall"))
+      makeIntegerParam(id = "num_clusters", lower = 2L, default = 4L, upper = 20L, special.vals = list(NULL)),
+      makeNumericParam(id = "thresh", lower = -5L, upper = 5L, default = -3L, trafo = function(x) 10^x),
+      makeIntegerParam(id = "maxit", lower = 0, upper = 50, default = 10),
+      makeNumericParam(id = "stretch", lower = 0, upper = 5, default = 0),
+      makeDiscreteParam(id = "smoother", default = "smooth.spline", values = c("smooth.spline", "lowess", "periodic.lowess"))
+
     ),
     properties = c("tibble", "dimred", "dimred_traj", "pseudotime"),
     name = "SCORPIUS",
@@ -20,12 +25,15 @@ description_scorpius <- function() {
 
 #' @importFrom SCORPIUS correlation.distance reduce.dimensionality infer.trajectory
 #' @importFrom tibble data_frame
-run_scorpius <- function(counts, num_dimensions = 3, num_clusters = 4, distance_method = "spearman") {
+run_scorpius <- function(
+  counts,
+  num_dimensions = 3, num_clusters = 4, distance_method = "spearman",
+  thresh = .001, maxit = 10, stretch = 0, smoother = "smooth.spline") {
   expression <- log2(as.matrix(counts)+1)
 
   dist <- SCORPIUS::correlation.distance(expression, method = distance_method)
   space <- SCORPIUS::reduce.dimensionality(dist, ndim = num_dimensions)
-  traj <- SCORPIUS::infer.trajectory(space, k = num_clusters)
+  traj <- SCORPIUS::infer.trajectory(space, k = num_clusters, thresh = thresh, maxit = maxit, stretch = stretch, smoother = smoother)
 
   state_names <- c("A", "B")
   state_network <- tibble::data_frame(from = "A", to = "B", length = 1)
