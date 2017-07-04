@@ -12,12 +12,15 @@ dir.create(output_root_folder)
 .datasets_location = "../dyngen/results" # needs to be defined, to let dyngen know where the datasets are
 tasks <- load_datasets() %>% mutate(dataset_i = seq_len(n())) %>% group_by(ti_type) %>% mutate(subdataset_i = seq_len(n())) %>% ungroup
 
-## choose a method
-method <- description_scorpius()
-# method <- description_monocle_ddrtree()
-# method <- description_celltree_maptpx()
-# method <- description_celltree_gibbs()
-# method <- description_celltree_vem()
+## load methods
+methods <- list(
+  description_scorpius(),
+  description_monocle_ddrtree(),
+  description_celltree_maptpx(),
+  description_celltree_gibbs(),
+  description_celltree_vem(),
+  description_tscan()
+)
 
 ## select datasets
 select_tasks <- tasks %>% arrange(ti_type, subdataset_i)
@@ -27,8 +30,7 @@ num_cores <- 6
 
 ## set up evaluation
 metrics <- c("Q_global", "Q_local", "correlation")
-obj_fun <- make_obj_fun(method, metrics = metrics)
-impute_fun <- impute_y_fun(obj_fun)
+impute_fun <- impute_y_fun(length(metrics))
 
 ## MBO settings
 control_train <- makeMBOControl(
@@ -41,12 +43,13 @@ control_test <- control_train
 control_test$iters <- 1
 control_test$propose.points <- 1
 
-grid <- expand.grid(repeat_i = seq_len(4), fold_i = seq_len(4))
+grid <- expand.grid(repeat_i = seq_len(4), fold_i = seq_len(4), method_i = seq_along(methods))
 
 ## Run MBO
+shuffled_ind <- sample.int(nrow(grid))
 qsub_handle <- qsub_lapply(
-  X = seq_len(nrow(grid)),
-  qsub_environment = c("method", "select_tasks", "num_cores", "metrics", "obj_fun", "impute_fun", "control_train", "control_test", "design", "grid"),
+  X = shuffled_ind,
+  qsub_environment = c("methods", "select_tasks", "num_cores", "metrics", "impute_fun", "control_train", "control_test", "design", "grid"),
   qsub_config = override_qsub_config(wait = F, num_cores = num_cores, memory = "20G", name = "dyneval", remove_tmp_folder = F, max_wall_time = "24:00:00"),
   FUN = function(grid_i) {
 
@@ -58,6 +61,10 @@ qsub_handle <- qsub_lapply(
 
   repeat_i <- grid$repeat_i[[grid_i]]
   fold_i <- grid$fold_i[[grid_i]]
+  method_i <- grid$method_i[[grid_i]]
+
+  method <- methods[[method_i]]
+  obj_fun <- make_obj_fun(method, metrics = metrics)
 
   design <- bind_rows(
     generateDesignOfDefaults(method$par_set),

@@ -38,11 +38,11 @@ control_test$iters <- 1
 control_test$propose.points <- 1
 design <- bind_rows(
   generateDesignOfDefaults(method$par_set),
-  generateDesign(n = 100, par.set = method$par_set)
+  generateDesign(n = 2 * num_cores, par.set = method$par_set)
 )
 
 ## start parameter optimisation
-parallelStartMulticore(cpus = 8, show.info = TRUE)
+# parallelStartMulticore(cpus = 8, show.info = TRUE)
 train_out <- mbo(
   fun = obj_fun,
   design = design,
