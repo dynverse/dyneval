@@ -15,7 +15,7 @@ tasks <- load_datasets() %>% mutate(dataset_i = seq_len(n())) %>% group_by(ti_ty
 ## load methods
 methods <- list(
   description_scorpius(),
-  description_monocle_ddrtree(),
+  # description_monocle_ddrtree(),
   description_celltree_maptpx(),
   description_celltree_gibbs(),
   description_celltree_vem(),
