@@ -1,0 +1,93 @@
+#' @import ParamHelpers
+#' @importFrom mclust mclust.options
+#' @export
+description_scuba <- function() {
+  list(
+    name = "SCUBA",
+    short_name = "SCUBA",
+    package = c("SCUBA", "R.matlab", "readr", "tidyverse"),
+    par_set = makeParamSet(
+      makeDiscreteParam(id = "modelNames", default = "VVV", values = mclust::mclust.options("emModelNames"))
+    ),
+    properties = c(),
+    run_fun = run_scuba,
+    plot_fun = plot_scuba
+  )
+}
+
+#' @export
+run_scuba <- function(counts) {
+
+  # make a bunch of paths
+  code_path <- paste0(path.package("dyneval"), "/extra_code/SCUBA")
+  dataset_path <- tempdir()
+  data_file <- paste0(dataset_path, "/Data.txt")
+  projection_file <- paste0(dataset_path, "/intermediate_files/projection_all_data.txt")
+  tree_file <- paste0(dataset_path, "/intermediate_files/final_tree.txt")
+  bifurcation_file <- paste0(dataset_path, "/intermediate_files/bifurcation_direction.txt")
+  treemat_file <- paste0(dataset_path, "/intermediate_files/final_tree.mat")
+
+  # combine data
+  # combined_data <- data.frame(c("Stage", colnames(counts)), rbind(matrix(stage, nrow = 1), t(counts)), row.names = NULL)
+  # colnames(combined_data) <- c("Cell ID", rownames(counts))
+  # write.table(combined_data, data_file, sep = "\t", col.names = T, row.names = F)
+  combined_data <- data.frame(c("Stage", colnames(counts)), t(counts), row.names = NULL)
+  colnames(combined_data) <- c("Cell ID", rownames(counts))
+  write.table(combined_data, data_file, sep = "\t", col.names = T, row.names = F)
+
+  # run SCUBA
+  command <- paste0(
+    "module load matlab; ",
+    "matlab -nodisplay -nodesktop -r \"", {
+      "addpath('", code_path, "'); ",
+      "addpath('", code_path, "/drtoolbox'); ",
+      "RNAseq_preprocess('", dataset_path, "', 1, 1); ",
+      "SCUBA('", dataset_path, "'); ",
+      "exit;",
+    } "\"")
+  system(command)
+
+  # read data
+  header <- readr::read_tsv(data_file, n_max = 1, col_types = cols(`Cell ID` = "c", .default = "d"))
+  sample_info <- header %>% gather(name, value, -`Cell ID`) %>% spread(`Cell ID`, value)
+  data <- readr::read_tsv(data_file, skip = 2, col_names = colnames(header), col_types = cols(`Cell ID` = "c", .default = "d"))
+
+  # read output
+  projection_header <- readr::read_tsv(projection_file, n_max = 1, col_types = cols(Time = "c", .default = "d"))
+  projection_data <- readr::read_tsv(projection_file, skip = 2, col_names = colnames(projection_header), col_types = cols(Time = "c", .default = "d"))
+  tree_data <- readr::read_tsv(tree_file, col_types = cols(Time = "i", "Cluster ID" = "i", "Parent cluster" = "i", .default = "d"))
+  bifurcation_header <- readr::read_tsv(bifurcation_file, n_max = 1, col_types = cols(Time = "c", .default = "d"))
+  bifurcation_data <- readr::read_tsv(bifurcation_file, skip = 2, col_names = colnames(bifurcation_header), col_types = cols(Time = "c", .default = "d"))
+  treemat_data <- R.matlab::readMat(treemat_file)$T[,,1]
+
+  tree <- tree_data %>% select(cluster = `Cluster ID`, parent = `Parent cluster`, time_index = Time, cell_stage = `Cell Stage`) %>% mutate(cluster_name = paste0("Cluster", cluster))
+
+  # create final output
+  ids <- rownames(counts)
+  state_names <- tree$cluster_name
+  state_network <- tree %>%
+    filter(parent != 0) %>%
+    select(to = cluster_name, from_ix = parent) %>%
+    left_join(tree %>% select(from = cluster_name, from_ix = cluster), by = "from_ix") %>%
+    select(-from_ix)
+  state_percentages <- data_frame(id = projection_data$Time, state = paste0("Cluster", treemat_data$s[1,]), percentage = 1)
+
+  # remove temporary output
+  file.remove(dataset_path, recursive = T)
+
+  wrap_ti_prediction(
+    ti_type = "linear",
+    name = "SCUBA",
+    ids = ids,
+    state_names = state_names,
+    state_network = state_network,
+    state_percentages = state_percentages
+    # ... add more output
+  )
+}
+
+#' @export
+plot_scuba <- function(ti_predictions) {
+  #qplot(percent_rank(ti_predictions$state_percentages[,1]), ti_predictions$state_percentages[,1], colour = data$sample_info$group.name)
+}
+
