@@ -38,13 +38,13 @@ run_scuba <- function(counts) {
   # run SCUBA
   command <- paste0(
     "module load matlab; ",
-    "matlab -nodisplay -nodesktop -r \"", {
+    "matlab -nodisplay -nodesktop -r \"", paste0(
       "addpath('", code_path, "'); ",
       "addpath('", code_path, "/drtoolbox'); ",
       "RNAseq_preprocess('", dataset_path, "', 1, 1); ",
       "SCUBA('", dataset_path, "'); ",
       "exit;",
-    }, "\"")
+    ), "\"")
   system(command)
 
   # read data
