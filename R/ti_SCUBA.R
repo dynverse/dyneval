@@ -44,7 +44,7 @@ run_scuba <- function(counts) {
       "RNAseq_preprocess('", dataset_path, "', 1, 1); ",
       "SCUBA('", dataset_path, "'); ",
       "exit;",
-    } "\"")
+    }, "\"")
   system(command)
 
   # read data
