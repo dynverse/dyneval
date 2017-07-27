@@ -19,12 +19,15 @@ description_scuba <- function() {
 run_scuba <- function(counts) {
   # make a bunch of paths
   code_path <- paste0(path.package("dyneval"), "/extra_code/SCUBA")
-  dataset_path <- tempdir()
   data_file <- paste0(dataset_path, "/Data.txt")
   projection_file <- paste0(dataset_path, "/intermediate_files/projection_all_data.txt")
   tree_file <- paste0(dataset_path, "/intermediate_files/final_tree.txt")
   bifurcation_file <- paste0(dataset_path, "/intermediate_files/bifurcation_direction.txt")
   treemat_file <- paste0(dataset_path, "/intermediate_files/final_tree.mat")
+
+  # create new folder for data
+  dataset_path <- tempfile()
+  dir.create(dataset_path, recursive = T)
 
   # combine data
   # combined_data <- data.frame(c("Stage", colnames(counts)), rbind(matrix(stage, nrow = 1), t(counts)), row.names = NULL)
