@@ -1,8 +1,8 @@
 #' @export
 description_celltree_maptpx <- function() {
   list(
-    name = "cellTree",
-    short_name = "cellTree",
+    name = "cellTree_maptpx",
+    short_name = "cellTree with maptpx",
     package = c("cellTree", "purrr"),
     par_set = makeParamSet(
       makeDiscreteParam(id = "method", values = "maptpx", default = "maptpx"),
@@ -24,8 +24,8 @@ description_celltree_maptpx <- function() {
 #' @export
 description_celltree_gibbs <- function() {
   list(
-    name = "celltree",
-    short_name = "celltree",
+    name = "cellTree_gibbs",
+    short_name = "cellTree with Gibbs",
     package = c("cellTree"),
     par_set = makeParamSet(
       makeDiscreteParam(id = "method", values = "Gibbs", default = "Gibbs"),
@@ -45,8 +45,8 @@ description_celltree_gibbs <- function() {
 #' @export
 description_celltree_vem <- function() {
   list(
-    name = "celltree",
-    short_name = "celltree",
+    name = "cellTree_vem",
+    short_name = "cellTree with VEM",
     package = c("cellTree"),
     par_set = makeParamSet(
       makeDiscreteParam(id = "method", values = "VEM", default = "VEM"),
@@ -112,7 +112,7 @@ run_celltree <- function(counts, method = "maptpx",
   sidenodes2backbone <-  igraph::as_long_data_frame(mst_tree) %>% select(from = from_name, to = to_name, weight, arrow.mode) %>% filter(to %in% sidenodes) %$% set_names(from, to)
 
   percentages <- tibble()
-  for(node in names(igraph::V(mst_tree))) {
+  for (node in names(igraph::V(mst_tree))) {
     if (node %in% names(sidenodes2backbone)) {
       realnode <- as.character(sidenodes2backbone[[node]])
     } else {
@@ -127,28 +127,26 @@ run_celltree <- function(counts, method = "maptpx",
       percentages <- percentages %>% bind_rows(tibble(milestone=as.character(match(centralnodesoi, centralnodes)), cell=node, percentage=1-distances[1, ]/sum(distances)))
     }
   }
-  state_percentages <- reshape2::acast(percentages %>% mutate(cell=as.numeric(cell)) %>% arrange(cell), cell~milestone, value.var="percentage", fill=0) %>%
-    as.data.frame() %>% mutate(id=rownames(expression))
-  state_names <- names(centralnodes)
 
-  state_percentages <- state_percentages[,c("id", state_names)]
+  ids <- rownames(counts)
+  state_percentages <- percentages %>% mutate(cell = rownames(expression)[as.integer(cell)], state = paste0("state_", milestone)) %>% select(id = cell, state, percentage)
+  state_names <- paste0("state_", names(centralnodes))
 
   # rename states
   state_network <- backbone %>% tidyr::nest(included) %>% dplyr::select(from, to) %>% mutate(
-    from = names(centralnodes)[match(from, centralnodes)],
-    to = names(centralnodes)[match(to, centralnodes)]
+    from = state_names[match(from, centralnodes)],
+    to = state_names[match(to, centralnodes)],
+    length = 1
   )
-  state_network <- state_network %>% mutate(from = paste0("state_", from), to = paste0("state_", to), length=1)
-  state_names <- paste0("state_", state_names)
-  colnames(state_percentages) <- c("id", state_names)
 
   # wrap output
   wrap_ti_prediction(
     ti_type = "tree",
-    name = "celltree",
-    state_names,
-    state_network,
-    state_percentages,
+    name = "cellTree",
+    ids = ids,
+    state_names = state_names,
+    state_network = state_network,
+    state_percentages = state_percentages,
     mst_tree = mst_tree
   )
 }

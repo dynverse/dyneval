@@ -17,8 +17,7 @@ description_tscan <- function() {
     ),
     properties = c(),
     run_fun = run_tscan,
-    plot_fun = plot_tscan,
-    forbidden = quote(exprmclust_clusternum_lower < exprmclust_clusternum_upper)
+    plot_fun = plot_tscan
   )
 }
 
@@ -62,16 +61,20 @@ run_tscan <- function(counts,
 
   cds_3 <- TSCAN::TSCANorder(cds_2)
 
+  ids <- rownames(counts)
   state_names <- paste0("state_", c(head(cds_3, 1), tail(cds_3, 1)))
   state_network <- data_frame(from = state_names[[1]], to = state_names[[2]], length = 1)
 
   pseudotime <- setNames(percent_rank(match(rownames(counts), cds_3)), rownames(counts))
-  state_percentages <- data.frame(id = names(pseudotime), from = 1-pseudotime, to = pseudotime, check.names = F, stringsAsFactors = F)
-  colnames(state_percentages) <- c("id", state_names)
+  state_percentages <- bind_rows(
+    tibble::data_frame(id = rownames(counts), state = state_names[[1]], percentage = 1 - pseudotime),
+    tibble::data_frame(id = rownames(counts), state = state_names[[2]], percentage = pseudotime)
+  )
 
   wrap_ti_prediction(
     ti_type = "linear",
     name = "TSCAN",
+    ids = ids,
     state_names = state_names,
     state_network = state_network,
     state_percentages = state_percentages,

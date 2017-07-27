@@ -71,6 +71,7 @@ impute_y_fun <- function(num_objectives) {
 #' @importFrom transport transport
 #' @import dplyr
 compute_emlike_dist <- function(traj) {
+  ids <- traj$ids
   state_network <- traj$state_network
   state_names <- traj$state_names
   state_percentages <- traj$state_percentages
@@ -89,9 +90,8 @@ compute_emlike_dist <- function(traj) {
   milestone_distances <- igraph::distances(gr, weights = igraph::E(gr)$length, mode = "all")
 
   # transport percentages data
-  pct <- as.matrix(state_percentages[,-1])
-  ids <- as.character(state_percentages$id)
-  rownames(pct) <- ids
+  pct <- reshape2::acast(state_percentages, id ~ state, value.var = "percentage", fill = 0)
+  pct <- pct[ids, state_names]
 
   fromto_matrix <- matrix(0, nrow = length(state_names), ncol = length(state_names), dimnames = list(state_names, state_names))
   fromto2 <- state_network %>% reshape2::acast(from~to, value.var = "length", fun.aggregate = length)
