@@ -43,7 +43,7 @@ run_scuba <- function(counts) {
       "addpath('", code_path, "/drtoolbox'); ",
       "RNAseq_preprocess('", dataset_path, "', 1, 1); ",
       "SCUBA('", dataset_path, "'); ",
-      "exit;",
+      "exit;"
     ), "\"")
   system(command)
 
