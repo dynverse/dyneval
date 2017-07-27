@@ -31,7 +31,7 @@ run_scuba <- function(counts) {
   # combined_data <- data.frame(c("Stage", colnames(counts)), rbind(matrix(stage, nrow = 1), t(counts)), row.names = NULL)
   # colnames(combined_data) <- c("Cell ID", rownames(counts))
   # write.table(combined_data, data_file, sep = "\t", col.names = T, row.names = F)
-  combined_data <- data.frame(c("Stage", colnames(counts)), t(counts), row.names = NULL)
+  combined_data <- data.frame(colnames(counts), t(counts), row.names = NULL)
   colnames(combined_data) <- c("Cell ID", rownames(counts))
   write.table(combined_data, data_file, sep = "\t", col.names = T, row.names = F)
 
