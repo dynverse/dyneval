@@ -28,10 +28,11 @@ load_datasets <- function() {
     with(dataset, dyneval::wrap_ti_task_data(
       ti_type = model$modulenetname,
       name = info$id,
-      counts = counts,
+      ids = rownames(counts),
       state_names = gs$milestone_names,
       state_net = gs$milestone_net,
-      state_percentages = gs$milestone_percentages %>% slice(match(rownames(counts), id))
+      state_percentages = gs$milestone_percentages %>% slice(match(rownames(counts), id)) %>% gather(state, percentage, -id) %>% filter(percentage > 0), # temporary fix
+      counts = counts
     ))
   })
   task_tib <- to_tibble(task_wrapped)

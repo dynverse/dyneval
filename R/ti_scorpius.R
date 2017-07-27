@@ -3,7 +3,8 @@
 #' @export
 description_scorpius <- function() {
   list(
-    cl = "scorpius",
+    name = "SCORPIUS",
+    short_name = "SCORPIUS",
     package = c("SCORPIUS"),
     par_set = makeParamSet(
       makeDiscreteParam(id = "distance_method", default = "spearman", values = c("spearman", "pearson", "kendall")),
@@ -16,8 +17,6 @@ description_scorpius <- function() {
 
     ),
     properties = c("tibble", "dimred", "dimred_traj", "pseudotime"),
-    name = "SCORPIUS",
-    short_name = "SCORPIUS",
     run_fun = run_scorpius,
     plot_fun = plot_scorpius
   )
@@ -25,26 +24,30 @@ description_scorpius <- function() {
 
 #' @importFrom SCORPIUS correlation.distance reduce.dimensionality infer.trajectory
 #' @importFrom tibble data_frame
-run_scorpius <- function(
-  counts,
-  num_dimensions = 3, num_clusters = 4, distance_method = "spearman",
-  thresh = .001, maxit = 10, stretch = 0, smoother = "smooth.spline") {
+run_scorpius <- function(counts,
+                         num_dimensions = 3, num_clusters = 4, distance_method = "spearman",
+                         thresh = .001, maxit = 10, stretch = 0, smoother = "smooth.spline") {
   expression <- log2(as.matrix(counts)+1)
 
   dist <- SCORPIUS::correlation.distance(expression, method = distance_method)
   space <- SCORPIUS::reduce.dimensionality(dist, ndim = num_dimensions)
   traj <- SCORPIUS::infer.trajectory(space, k = num_clusters, thresh = thresh, maxit = maxit, stretch = stretch, smoother = smoother)
 
-  state_names <- c("A", "B")
-  state_network <- tibble::data_frame(from = "A", to = "B", length = 1)
-  state_percentages <- tibble::data_frame(id = rownames(expression), A = 1 - traj$time, B = 1 - A)
+  ids <- rownames(counts)
+  state_names <- c("state_A", "state_B")
+  state_network <- tibble::data_frame(from = state_names[[1]], to = state_names[[2]], length = 1)
+  state_percentages <- bind_rows(
+    tibble::data_frame(id = rownames(expression), state = state_names[[1]], percentage = 1 - traj$time),
+    tibble::data_frame(id = rownames(expression), state = state_names[[2]], percentage = traj$time)
+  )
 
   wrap_ti_prediction(
     ti_type = "linear",
     name = "SCORPIUS",
-    state_names,
-    state_network,
-    state_percentages,
+    ids = ids,
+    state_names = state_names,
+    state_network = state_network,
+    state_percentages = state_percentages,
     dimred_samples = space,
     dimred_traj = traj$path,
     pseudotime = traj$time
