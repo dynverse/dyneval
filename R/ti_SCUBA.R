@@ -47,11 +47,6 @@ run_scuba <- function(counts) {
     ), "\"")
   system(command)
 
-  # read data
-  header <- readr::read_tsv(data_file, n_max = 1, col_types = cols(`Cell ID` = "c", .default = "d"))
-  sample_info <- header %>% gather(name, value, -`Cell ID`) %>% spread(`Cell ID`, value)
-  data <- readr::read_tsv(data_file, skip = 2, col_names = colnames(header), col_types = cols(`Cell ID` = "c", .default = "d"))
-
   # read output
   projection_header <- readr::read_tsv(projection_file, n_max = 1, col_types = cols(Time = "c", .default = "d"))
   projection_data <- readr::read_tsv(projection_file, skip = 2, col_names = colnames(projection_header), col_types = cols(Time = "c", .default = "d"))
