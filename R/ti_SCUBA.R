@@ -17,7 +17,6 @@ description_scuba <- function() {
 
 #' @export
 run_scuba <- function(counts) {
-
   # make a bunch of paths
   code_path <- paste0(path.package("dyneval"), "/extra_code/SCUBA")
   dataset_path <- tempdir()
@@ -64,11 +63,12 @@ run_scuba <- function(counts) {
     filter(parent != 0) %>%
     select(to = cluster_name, from_ix = parent) %>%
     left_join(tree %>% select(from = cluster_name, from_ix = cluster), by = "from_ix") %>%
-    select(-from_ix)
+    mutate(length = 1) %>%
+    select(from, to, length)
   state_percentages <- data_frame(id = projection_data$Time, state = paste0("Cluster", treemat_data$s[1,]), percentage = 1)
 
   # remove temporary output
-  file.remove(dataset_path, recursive = T)
+  unlink(dataset_path, recursive = T)
 
   wrap_ti_prediction(
     ti_type = "linear",
