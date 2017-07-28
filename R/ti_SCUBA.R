@@ -6,9 +6,7 @@ description_scuba <- function() {
     name = "SCUBA",
     short_name = "SCUBA",
     package = c("SCUBA", "R.matlab", "readr", "tidyverse"),
-    par_set = makeParamSet(
-      makeDiscreteParam(id = "modelNames", default = "VVV", values = mclust::mclust.options("emModelNames"))
-    ),
+    par_set = makeParamSet(),
     properties = c(),
     run_fun = run_scuba,
     plot_fun = plot_scuba
