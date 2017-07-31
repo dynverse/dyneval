@@ -5,7 +5,7 @@ description_scuba <- function() {
   list(
     name = "SCUBA",
     short_name = "SCUBA",
-    package = c("SCUBA", "R.matlab", "readr", "tidyverse"),
+    package = c("R.matlab", "readr", "tidyverse"),
     par_set = makeParamSet(),
     properties = c(),
     run_fun = run_scuba,
@@ -15,6 +15,10 @@ description_scuba <- function() {
 
 #' @export
 run_scuba <- function(counts) {
+  # create new folder for data
+  dataset_path <- tempfile()
+  dir.create(dataset_path, recursive = T)
+
   # make a bunch of paths
   code_path <- paste0(path.package("dyneval"), "/extra_code/SCUBA")
   data_file <- paste0(dataset_path, "/Data.txt")
@@ -23,14 +27,7 @@ run_scuba <- function(counts) {
   bifurcation_file <- paste0(dataset_path, "/intermediate_files/bifurcation_direction.txt")
   treemat_file <- paste0(dataset_path, "/intermediate_files/final_tree.mat")
 
-  # create new folder for data
-  dataset_path <- tempfile()
-  dir.create(dataset_path, recursive = T)
-
   # combine data
-  # combined_data <- data.frame(c("Stage", colnames(counts)), rbind(matrix(stage, nrow = 1), t(counts)), row.names = NULL)
-  # colnames(combined_data) <- c("Cell ID", rownames(counts))
-  # write.table(combined_data, data_file, sep = "\t", col.names = T, row.names = F)
   combined_data <- data.frame(colnames(counts), t(counts), row.names = NULL)
   colnames(combined_data) <- c("Cell ID", rownames(counts))
   write.table(combined_data, data_file, sep = "\t", col.names = T, row.names = F)
@@ -45,6 +42,7 @@ run_scuba <- function(counts) {
       "SCUBA('", dataset_path, "'); ",
       "exit;"
     ), "\"")
+
   system(command)
 
   # read output

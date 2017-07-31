@@ -29,6 +29,7 @@ pca_analysis(dataFolder);
 %%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Initial estimation of the lineage tree.
+% rng(7) % setting seeds is frowned upon in dyneval
 initialize_tree(dataFolder, cluster_mode);
 
 % Refinement of tree structure by maximizing penalized likelihood function.
