@@ -1,5 +1,4 @@
 #' @import ParamHelpers
-#' @importFrom mclust mclust.options
 #' @export
 description_tscan <- function() {
   list(
