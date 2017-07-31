@@ -4,7 +4,7 @@ description_stemid <- function() {
   list(
     name = "StemID",
     short_name = "StemID",
-    package = c("R.matlab", "readr", "tidyverse"),
+    package = c("tidyverse"),
     par_set = makeParamSet(),
     properties = c(),
     run_fun = run_stemid,
@@ -97,8 +97,6 @@ run_stemid <- function(counts) {
   x <- compscore(ltr,nn=1)
   #plotting the StemID score
   plotscore(ltr,1)
-
-
 
 
   # create final output
