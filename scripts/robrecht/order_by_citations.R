@@ -14,11 +14,11 @@ num_citations_by_clusterid <- function(clusterid, scholar_file = script_file) {
 }
 
 method_df <- gs_key("1Mug0yz8BebzWt8cmEW306ie645SBh_tDHwjVw4OFhlE") %>%
-  gs_read(col_types = cols(GScholarClusterID = "c"))
+  gs_read(col_types = cols(GScholarClusterID = "c"), skip = 1)
 
 method_df <- method_df %>%
   filter(Pseudotime) %>%
   mutate(Citations = pbapply::pbsapply(GScholarClusterID, num_citations_by_clusterid)) %>%
   arrange(desc(Citations))
 
-method_df %>% select(Name, PubDate, Preprint, Journal, Citations) %>% as.data.frame
+method_df %>% dplyr::select(Name, Citations) %>% arrange(Name) %>% as.data.frame
