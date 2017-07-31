@@ -12,7 +12,7 @@ description_tscan <- function() {
       makeIntegerParam(id = "exprmclust_clusternum_lower", lower = 2L, upper = 20L, default = 2),
       makeIntegerParam(id = "exprmclust_clusternum_upper", lower = 2L, upper = 20L, default = 9),
       makeDiscreteParam(id = "modelNames", default = "VVV", values = mclust::mclust.options("emModelNames")),
-      forbidden = quote(exprmclust_clusternum_lower < exprmclust_clusternum_upper)
+      forbidden = quote(exprmclust_clusternum_lower > exprmclust_clusternum_upper)
     ),
     properties = c(),
     run_fun = run_tscan,
