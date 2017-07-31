@@ -1,11 +1,17 @@
+#' Used for wrapping an evaluation function around a TI method
+#'
+#' @importFrom smoof makeSingleObjectiveFunction makeMultiObjectiveFunction
+#' @importFrom purrr %>% map map_df
 #' @export
 make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output = T, metrics = c("Q_global", "Q_local", "correlation")) {
+  # Use different makefunction if there are multiple metrics versus one
   if (length(metrics) > 1) {
     make_fun <- function(...) makeMultiObjectiveFunction(..., n.objectives = length(metrics))
   } else {
     make_fun <- makeSingleObjectiveFunction
   }
 
+  # Wrap the method function in an evaluation function
   make_fun(
     name = "TItrain",
     vectorized = F,
@@ -14,15 +20,28 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
     has.simple.signature = F,
     par.set = method$par_set,
     fn = function(x, tasks) {
+      # Disable seed setting. Generate a warning if set.seed is called upon.
+      orig_set_seed <- base::set.seed
+      my_set_seed <- function(seed) {
+        msg <- "WARNING! This package is setting seeds."
+        warning(msg)
+        cat(msg, "\n", sep = "")
+      }
+      assignInNamespace("set.seed", my_set_seed, "base")
+
+      # Loading packages for the TI method
       if (load_packages) {
         for (pack in method$package) {
           do.call(library, list(pack))
         }
       }
 
+      # Run the method on each of the tasks
       outs <- lapply(seq_len(nrow(tasks)), function(i) {
+        # Add the counts to the parameters
         arglist <- c(list(counts = tasks$counts[[i]]), x)
 
+        # Suppress output if need be
         if (suppress_output) {
           capture.output({
             model <- do.call(method$run_fun, arglist)
@@ -31,23 +50,38 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
           model <- do.call(method$run_fun, arglist)
         }
 
+        # Get the geodesic distances of the predicted and the gold trajectories
         task_geo <- tasks$geodesic_dist[[i]]
         model_geo <- model$geodesic_dist
 
+        # Compute coranking metrics
         coranking <- compute_coranking(task_geo, model_geo)
+
+        # Compute the correlation of the geodesic distances
         correlation <- cor(task_geo %>% as.vector, model_geo %>% as.vector)
 
+        # Create summary statistics
         summary <- data.frame(task_name = tasks$name[[i]], coranking$summary, correlation, stringsAsFactors = F, check.names = F)
 
+        # Return the output
         lst(model = model, coranking = coranking, summary = summary)
       })
 
+      # Revert back to the original set.seed
+      assignInNamespace("set.seed", orig_set_seed, "base")
+
+      # Combine the different outputs in three lists/data frames
       models <- outs %>% purrr::map(~ .$model)
       corankings <- outs %>% purrr::map(~ .$coranking)
       summary <- outs %>% purrr::map_df(~ .$summary)
 
+      # Calculate the final score
       score <- summary %>% summarise_at(metrics, funs(mean)) %>% as.matrix %>% as.vector %>% setNames(metrics)
+
+      # Return extra information
       attr(score, "extras") <- list(.models = models, .corankings = corankings, .summary = summary)
+
+      # Return output
       score
     })
 }
