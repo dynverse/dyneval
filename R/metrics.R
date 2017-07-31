@@ -25,9 +25,11 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
       my_set_seed <- function(seed) {
         msg <- "WARNING! This package is setting seeds."
         warning(msg)
+        message(msg)
         cat(msg, "\n", sep = "")
       }
-      assignInNamespace("set.seed", my_set_seed, "base")
+
+      my_assignin_namespace("set.seed", my_set_seed, ns = "base", envir = .BaseNamespaceEnv)
 
       # Loading packages for the TI method
       if (load_packages) {
@@ -68,7 +70,7 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
       })
 
       # Revert back to the original set.seed
-      assignInNamespace("set.seed", orig_set_seed, "base")
+      my_assignin_namespace("set.seed", orig_set_seed, ns = "base", envir = .BaseNamespaceEnv)
 
       # Combine the different outputs in three lists/data frames
       models <- outs %>% purrr::map(~ .$model)
