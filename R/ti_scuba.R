@@ -6,7 +6,9 @@ description_scuba <- function() {
     name = "SCUBA",
     short_name = "SCUBA",
     package = c("R.matlab", "readr", "tidyverse"),
-    par_set = makeParamSet(),
+    par_set = makeParamSet(
+      makeDiscreteParam(id = "cluster_mode", default = "pca2", values = c("original", "pca", "pca2"))
+    ),
     properties = c(),
     run_fun = run_scuba,
     plot_fun = plot_scuba
@@ -14,7 +16,8 @@ description_scuba <- function() {
 }
 
 #' @export
-run_scuba <- function(counts) {
+run_scuba <- function(counts,
+                      cluster_mode = "pca2") {
   # create new folder for data
   dataset_path <- tempfile()
   dir.create(dataset_path, recursive = T)
@@ -39,7 +42,7 @@ run_scuba <- function(counts) {
     "matlab -nodisplay -nodesktop -r \"", paste0(
       "addpath(genpath('", code_path, "/drtoolbox')); ",
       "RNAseq_preprocess('", dataset_path, "', 1, 1); ",
-      "SCUBA('", dataset_path, "'); ",
+      "SCUBA('", dataset_path, "', '", cluster_mode, "'); ",
       "exit;"
     ), "\"")
 
