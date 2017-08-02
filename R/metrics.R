@@ -119,6 +119,8 @@ compute_emlike_dist <- function(traj) {
     phantom_edges <-
       expand.grid(from = sn_filt$to, to = sn_filt$to, stringsAsFactors = F) %>%
       filter(from < to) %>%
+      left_join(state_network, by = c("from", "to")) %>%
+      filter(is.na(length)) %>%
       mutate(length = dis_vec[from] + dis_vec[to])
     phantom_edges
   }))
