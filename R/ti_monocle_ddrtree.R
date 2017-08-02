@@ -4,7 +4,7 @@ description_monocle_ddrtree <- function() {
   list(
     name = "monocle_DDRtree",
     short_name = "monocle with DDRtree",
-    package = c("monocle"),
+    package = c("monocle", "igraph", "tidyverse", "reshape2"),
     par_set = makeParamSet(
       makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
       makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
@@ -35,26 +35,36 @@ run_monocle_ddrtree <- function(counts,
                                 maxIter = 20, sigma = 0.001, lambda_null = T, lambda = NULL,
                                 ncenter_null = T, ncenter = NULL, param.gamma = 20, tol = 0.001,
                                 auto_param_selection = T) {
-  library(monocle)
-
   if (lambda_null) lambda <- NULL
   if (ncenter_null) ncenter <- NULL
   if (is.factor(norm_method)) norm_method <- as.character(norm_method)
 
-  cds_1 <- monocle::newCellDataSet(t(as.matrix(counts)))
+  # load in the new dataset
+  cds_1 <- newCellDataSet(t(as.matrix(counts)))
+
+  # estimate sparameters
   cds_1 <- estimateSizeFactors(cds_1)
   cds_1 <- estimateDispersions(cds_1)
 
-  cds_2 <- monocle::reduceDimension(cds_1, max_components = num_dimensions, norm_method = norm_method,
-                                    maxIter = maxIter, sigma = sigma, lambda = lambda, ncenter = ncenter,
-                                    param.gamma = param.gamma, tol = tol, auto_param_selection = auto_param_selection)
-  cds_3 <- monocle::orderCells(cds_2, reverse = FALSE)
+  # reduce dimension
+  cds_2 <- reduceDimension(cds_1,
+                           max_components = num_dimensions, norm_method = norm_method,
+                           maxIter = maxIter, sigma = sigma, lambda = lambda, ncenter = ncenter,
+                           param.gamma = param.gamma, tol = tol, auto_param_selection = auto_param_selection)
 
+  # order the cells
+  cds_3 <- orderCells(cds_2, reverse = FALSE)
+
+  # retrieve the graph and the root cell
   gr <- cds_3@auxOrderingData$DDRTree$pr_graph_cell_proj_tree
   root <- cds_3@auxOrderingData$DDRTree$root_cell
 
+  # find the branching cells and the terminal cells using the degree
   deg <- igraph::degree(gr, mode = c("all"))
   state_names <- names(deg)[deg != 2]
+  branching <- names(deg)[deg > 2]
+  terminal <- names(deg)[deg == 1]
+
 
   asp <- igraph::all_shortest_paths(gr, from = root, to = state_names, mode = c("all"))
   asp2 <- lapply(asp$res, function(path) {
