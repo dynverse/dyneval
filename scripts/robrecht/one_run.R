@@ -10,11 +10,25 @@ output_root_folder <- "results/output_dyngentest/"
 .datasets_location = "../dyngen/results" # needs to be defined, to let dyngen know where the datasets are
 tasks <- load_datasets() %>% mutate(dataset_i = seq_len(n())) %>% group_by(ti_type) %>% mutate(subdataset_i = seq_len(n())) %>% ungroup
 
+## take one task
+counts <- tasks$counts[[1]]
+
 ## choose a method
-method <- description_scorpius()
+method <- description_scuba()
+#method <- description_monocle_ddrtree()
+# method <- description_scorpius()
 method_fun <- make_obj_fun(method)
 
-## apply it
-method_out <- method$run_fun(tasks$counts[[1]])
+## apply default params
+default_params <- generateDesignOfDefaults(method$par_set)
+params <- generateDesign(n = 20, par.set = method$par_set)
+
+#eval_out <- method_fun(default_params[1,] %>% as.list, tasks = tasks)
+eval_out <- method_fun(list(), tasks = tasks)
+attr(eval_out,"extras") <- NULL
+eval_out
+
+## apply it manually
+method_out <- method$run_fun(counts)
 
 corank_out <- compute_coranking(tasks$geodesic_dist[[1]], method_out$geodesic_dist)

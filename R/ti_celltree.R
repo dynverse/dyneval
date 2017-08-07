@@ -3,7 +3,8 @@ description_celltree_maptpx <- function() {
   list(
     name = "cellTree_maptpx",
     short_name = "cellTree with maptpx",
-    package = c("cellTree", "purrr"),
+    package_load = c("cellTree", "purrr", "tidyverse"),
+    package_installed = c(),
     par_set = makeParamSet(
       makeDiscreteParam(id = "method", values = "maptpx", default = "maptpx"),
       makeIntegerParam(id = "num_topics_lower", lower = 2L, upper = 15L, default = 2),

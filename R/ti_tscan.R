@@ -4,7 +4,8 @@ description_tscan <- function() {
   list(
     name = "TSCAN",
     short_name = "TSCAN",
-    package = c("TSCAN", "mclust", "igraph"),
+    package_load = c("mclust", "igraph", "ggplot2", "tidyverse"),
+    package_installed = c("TSCAN"),
     par_set = makeParamSet(
       # makeNumericParam(id = "minexpr_value", lower = 0, upper = 5, default = 1),
       # makeNumericParam(id = "minexpr_percent", lower = 0, upper = .5, default = .5),

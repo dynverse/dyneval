@@ -4,7 +4,8 @@ description_stemid <- function() {
   list(
     name = "StemID",
     short_name = "StemID",
-    package = c("tidyverse"),
+    package_load = c("tidyverse", "ggplot2"),
+    package_installed = c(),
     par_set = makeParamSet(
       makeIntegerParam(id = "clustnr", lower = 20L, default = 30L, upper = 100L),
       makeIntegerParam(id = "bootnr", lower = 20L, default = 50, upper = 100L),
