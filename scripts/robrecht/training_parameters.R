@@ -1,4 +1,3 @@
-library(cowplot)
 library(tidyverse)
 library(dyneval)
 library(mlrMBO)
@@ -16,7 +15,11 @@ tasks <- load_datasets() %>% mutate(dataset_i = seq_len(n())) %>% group_by(ti_ty
 # method <- description_celltree_maptpx()
 # method <- description_celltree_gibbs()
 # method <- description_celltree_vem()
-method <- description_tscan()
+# method <- description_tscan()
+# method <- description_stemid()
+# method <- description_scuba()
+# method <- description_dpt()
+method <- description_embeddr()
 
 ## MBO settings
 num_cores <- 8
@@ -24,7 +27,10 @@ num_cores <- 8
 ## set up evaluation
 metrics <- c("Q_global", "Q_local", "correlation")
 obj_fun <- make_obj_fun(method, metrics = metrics, suppress_output = T)
-impute_fun <- impute_y_fun(obj_fun)
+impute_fun <- impute_y_fun(length(metrics))
+
+# try first
+try <- obj_fun(list(), tasks = tasks)
 
 ## MBO settings
 control_train <- makeMBOControl(
@@ -38,11 +44,11 @@ control_test$iters <- 1
 control_test$propose.points <- 1
 design <- bind_rows(
   generateDesignOfDefaults(method$par_set),
-  generateDesign(n = 2 * num_cores, par.set = method$par_set)
+  generateDesign(n = 4 * num_cores, par.set = method$par_set)
 )
 
 ## start parameter optimisation
-# parallelStartMulticore(cpus = 8, show.info = TRUE)
+parallelStartMulticore(cpus = 8, show.info = TRUE)
 train_out <- mbo(
   fun = obj_fun,
   design = design,
@@ -57,7 +63,9 @@ test_out <- mbo(
   show.info = T,
   more.args = list(tasks = tasks %>% filter(ti_type == "linear", subdataset_i == 4)) # use test datasets
 )
-# parallelStop()
+parallelStop()
+
+library(cowplot)
 
 ## look at results
 train_out
@@ -75,9 +83,9 @@ eval_summ_gath <- bind_rows(
 ) %>% filter(param_i <= nrow(train_out$opt.path$env$path)) %>%
   dplyr::as_data_frame()
 
-eval_summ <- eval_summ_gath %>% gather(metric, score, y_1:y_3, time) %>%
-  mutate(comb = paste0(type, "_", metric)) %>%
-  select(-type, -metric) %>%
+eval_summ <- eval_summ_gath %>% gather(eval_metric, score, y_1:y_3, time) %>%
+  mutate(comb = paste0(type, "_", eval_metric)) %>%
+  select(-type, -eval_metric) %>%
   spread(comb, score) %>%
   mutate(iteration_i = train_out$opt.path$env$dob[param_i]) %>%
   arrange(param_i)
