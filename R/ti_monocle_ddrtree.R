@@ -4,7 +4,8 @@ description_monocle_ddrtree <- function() {
   list(
     name = "monocle_DDRtree",
     short_name = "monocle with DDRtree",
-    package = c("monocle", "igraph", "tidyverse", "reshape2"),
+    package_load = c("monocle", "igraph", "tidyverse", "reshape2"),
+    package_installed = c(),
     par_set = makeParamSet(
       makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
       makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
