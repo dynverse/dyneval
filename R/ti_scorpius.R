@@ -5,7 +5,8 @@ description_scorpius <- function() {
   list(
     name = "SCORPIUS",
     short_name = "SCORPIUS",
-    package = c("SCORPIUS"),
+    package_loaded = c("tidyverse", "ggplot2"),
+    package_installed = c("SCORPIUS"),
     par_set = makeParamSet(
       makeDiscreteParam(id = "distance_method", default = "spearman", values = c("spearman", "pearson", "kendall")),
       makeIntegerParam(id = "num_dimensions", lower = 2L, default = 3L, upper = 20L),

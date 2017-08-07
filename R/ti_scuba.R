@@ -5,7 +5,8 @@ description_scuba <- function() {
   list(
     name = "SCUBA",
     short_name = "SCUBA",
-    package = c("R.matlab", "readr", "tidyverse"),
+    package_load = c("R.matlab", "readr", "tidyverse"),
+    package_installed = c(),
     par_set = makeParamSet(
       makeDiscreteParam(id = "cluster_mode", default = "pca2", values = c("original", "pca", "pca2"))
     ),
@@ -85,6 +86,7 @@ run_scuba <- function(counts,
 
 #' @export
 plot_scuba <- function(ti_predictions) {
+  stop("TODO")
   #qplot(percent_rank(ti_predictions$state_percentages[,1]), ti_predictions$state_percentages[,1], colour = data$sample_info$group.name)
 }
 

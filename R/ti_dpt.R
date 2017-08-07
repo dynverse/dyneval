@@ -4,7 +4,8 @@ description_dpt <- function() {
   list(
     name = "DPT",
     short_name = "DPT",
-    package = c("destiny", "tidyverse"),
+    package_load = c("destiny", "tidyverse"),
+    package_installed = c(),
     par_set = makeParamSet(
       makeDiscreteParam(id = "sigma", default = "local", values = c("local", "global")),
       makeDiscreteParam(id = "distance", default = "euclidean", values = c("euclidean", "cosine", "rankcor")),
@@ -69,6 +70,6 @@ run_dpt <- function(counts,
 #' @export
 plot_dpt <- function(ti_predictions) {
   #qplot(percent_rank(ti_predictions$state_percentages[,1]), ti_predictions$state_percentages[,1], colour = data$sample_info$group.name)
-  # todo
+  stop("TODO!")
 }
 
