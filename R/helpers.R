@@ -21,15 +21,15 @@ load_datasets <- function() {
 
   task_wrapped <- lapply(seq_len(nrow(datasets_info)), function(dataset_num) {
     dataset_id <- datasets_info$id[[dataset_num]]
-    dataset <- dyngen::load_dataset(dataset_id, contents = dyngen::contents_dataset(experiment = F))
+    dataset <- dyngen::load_dataset(dataset_id)
 
     with(dataset, dyneval::wrap_ti_task_data(
       ti_type = model$modulenetname,
       name = info$id,
       ids = rownames(counts),
-      state_names = gs$milestone_names,
-      state_net = gs$milestone_net,
-      state_percentages = gs$milestone_percentages %>% slice(match(rownames(counts), id)) %>% gather(state, percentage, -id) %>% filter(percentage > 0), # temporary fix
+      state_names = as.character(unique(gs$percentages$milestone)),
+      state_net = gs$milestonenet %>% mutate(from=as.character(from), to=as.character(to)),
+      state_percentages = gs$percentages %>% filter(percentage > 0) %>% rename(id=cellid, state=milestone) %>% mutate(state=as.character(state)), # temporary fix
       counts = counts
     ))
   })
