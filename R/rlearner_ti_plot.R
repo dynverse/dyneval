@@ -27,7 +27,7 @@ plotdata_default <- function(traj_object, insert_phantom_edges = T) {
   state_network <- traj_object$state_network
 
   # retrieve information on samples
-  state_percentages <- traj_object$state_percentages
+  state_percentages <- traj_object$state_percentages %>% spread(state, percentage)
   state_percentages_m <- as.matrix(state_percentages[,state_names,drop=F])
   rownames(state_percentages_m) <- state_percentages$id
   colours_rgb_samples <- state_percentages_m %*% colours_rgb_states
