@@ -43,7 +43,7 @@ abstract_wrapper <- function(type, ti_type, name, ids, state_names, state_networ
     stop("Not all states in ", sQuote("state_network"), " are in ", sQuote("state_names"), ".")
   }
   if (!is.data.frame(state_percentages) || ncol(state_percentages) != 3 || any(colnames(state_percentages) != c("id", "state", "percentage"))) {
-    stop(sQuote("state_network"), " should be a data frame with exactly three columns named ", sQuote("id"),
+    stop(sQuote("state_percentages"), " should be a data frame with exactly three columns named ", sQuote("id"),
          ", ", sQuote("state"), " and ", sQuote("percentage"), ".")
   }
   state_nam <- unique(state_percentages$state)
