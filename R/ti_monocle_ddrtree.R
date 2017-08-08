@@ -40,8 +40,6 @@ run_monocle_ddrtree <- function(counts,
   if (ncenter_null) ncenter <- NULL
   if (is.factor(norm_method)) norm_method <- as.character(norm_method)
 
-  counts <- tasks$counts[[3]]
-
   # load in the new dataset
   expr <- log2(as.matrix(counts)+1)
   featureData <- new("AnnotatedDataFrame", data.frame(row.names = colnames(expr), gene_short_name = colnames(expr)))
