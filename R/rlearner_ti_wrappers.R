@@ -118,6 +118,7 @@ abstract_wrapper <- function(
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
     milestone_percentages = milestone_percentages,
+    progressions = progressions,
     ...
   )
   class(out) <- paste0("dyneval::ti_wrapper")
