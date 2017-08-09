@@ -1,5 +1,5 @@
-#' @export
-to_tibble <- function(list_of_rows) {
+#' Converts a list of lists to a tibblee.
+list_as_tibble <- function(list_of_rows) {
   list_names <- names(list_of_rows[[1]])
 
   list_of_cols <- lapply(seq_along(list_names), function(x) {
@@ -30,16 +30,34 @@ load_datasets <- function() {
       name = info$id,
       cell_ids = rownames(counts),
       milestone_ids = gs$percentages$milestone %>% unique %>% as.character,
-      milestone_net = gs$milestonenet %>% mutate(from = as.character(from), to = as.character(to)),
-      milestone_percentages = gs$percentages %>% filter(percentage > 0) %>% rename(id = cellid, state = milestone) %>% mutate(state=as.character(state)) %>% group_by(id, state) %>% slice(1) %>% ungroup, # temporary fixes
-      counts = counts
+      milestone_network = gs$milestonenet %>% mutate(from = as.character(from), to = as.character(to)),
+      milestone_percentages = cellinfo %>%
+        left_join(gs$percentages, by = c("stepid"="cellid")) %>%
+        filter(percentage > 0) %>%
+        rename(cell_id = cellid, milestone_id = milestone) %>% # temporary fix
+        mutate(milestone_id = as.character(milestone_id)) %>%
+        group_by(cell_id, milestone_id) %>%  # temporary fix
+        slice(1) %>%
+        ungroup %>%
+        select(cell_id, milestone_id, percentage),
+      counts = counts,
+      sample_info = cellinfo %>%
+        select(cell_id = cellid, step, simulation_time = simulationtime)
     )
   })
-  task_tib <- to_tibble(task_wrapped)
-  task_tib %>% left_join(datasets_info, by = c("name"="id")) %>% mutate(dataset_i = seq_len(n())) %>% group_by(ti_type) %>% mutate(subdataset_i = seq_len(n())) %>% ungroup
+  task_wrapped %>%
+    list_as_tibble %>%
+    left_join(datasets_info, by = c("name" = "id")) %>%
+    mutate(dataset_i = seq_len(n())) %>%
+    group_by(ti_type) %>%
+    mutate(subdataset_i = seq_len(n())) %>%
+    ungroup
 }
 
-# copied from assigninNamespace
+#' This function assigns an object in a different namespace.
+#'
+#' It was copied from \code{\link[utils]{assignInNamespace}},
+#' but without an extra check so that I can override the set.seed function.
 my_assignin_namespace <- function (x, value, ns, pos = -1, envir = as.environment(pos)) {
   nf <- sys.nframe()
   if (missing(ns)) {

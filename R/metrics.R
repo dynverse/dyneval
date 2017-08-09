@@ -128,11 +128,11 @@ compute_emlike_dist <- function(traj) {
   milestone_distances <- igraph::distances(gr, weights = igraph::E(gr)$length, mode = "all")
 
   # transport percentages data
-  pct <- reshape2::acast(milestone_percentages, id ~ milestone, value.var = "percentage", fill = 0)
+  pct <- reshape2::acast(milestone_percentages, cell_id ~ milestone_id, value.var = "percentage", fill = 0)
   pct <- pct[cell_ids, milestone_ids]
 
   fromto_matrix <- matrix(0, nrow = length(milestone_ids), ncol = length(milestone_ids), dimnames = list(milestone_ids, milestone_ids))
-  fromto2 <- milestone_network %>% reshape2::acast(from~to, value.var = "length", fun.aggregate = length)
+  fromto2 <- milestone_network %>% reshape2::acast(from ~ to, value.var = "length", fun.aggregate = length)
   fromto_matrix[rownames(fromto2), colnames(fromto2)] <- fromto2
   diag(fromto_matrix) <- 1
   fromto_matrix[fromto_matrix > 0] <- 1
@@ -151,13 +151,13 @@ compute_emlike_dist <- function(traj) {
     milestone_ids[wh]
   }), rownames(pct))
 
-  closest <- bind_rows(lapply(milestone_ids, function(milestone_name) {
-    # cat("Milestone ", milestone_name, "\n", sep="")
-    sample_node <- froms %>% map_lgl(~ milestone_name %in% .)
+  closest <- bind_rows(lapply(milestone_ids, function(mid) {
+    # cat("Milestone ", mid, "\n", sep="")
+    sample_node <- froms %>% map_lgl(~ mid %in% .)
     if (sum(sample_node) == 0) {
       NULL
     } else {
-      milestones <- which(fromto_matrix[milestone_name,] == 1)
+      milestones <- which(fromto_matrix[mid,] == 1)
       dist_milestones <- milestone_distances[milestones, milestones, drop = F]
       sample_pcts <- pct[sample_node, milestones, drop = F]
       closest_to_nodes <-
