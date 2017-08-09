@@ -34,21 +34,20 @@ run_scorpius <- function(counts,
   space <- SCORPIUS::reduce.dimensionality(dist, ndim = num_dimensions)
   traj <- SCORPIUS::infer.trajectory(space, k = num_clusters, thresh = thresh, maxit = maxit, stretch = stretch, smoother = smoother)
 
-  ids <- rownames(counts)
-  state_names <- c("state_A", "state_B")
-  state_network <- tibble::data_frame(from = state_names[[1]], to = state_names[[2]], length = 1)
-  state_percentages <- bind_rows(
-    tibble::data_frame(id = rownames(expression), state = state_names[[1]], percentage = 1 - traj$time),
-    tibble::data_frame(id = rownames(expression), state = state_names[[2]], percentage = traj$time)
+  milestone_ids <- c("milestone_A", "milestone_B")
+  milestone_network <- tibble::data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1)
+  milestone_percentages <- bind_rows(
+    tibble::data_frame(id = rownames(expression), state = milestone_ids[[1]], percentage = 1 - traj$time),
+    tibble::data_frame(id = rownames(expression), state = milestone_ids[[2]], percentage = traj$time)
   )
 
   wrap_ti_prediction(
     ti_type = "linear",
     name = "SCORPIUS",
-    ids = ids,
-    state_names = state_names,
-    state_network = state_network,
-    state_percentages = state_percentages,
+    cell_ids = rownames(counts),
+    milestone_ids = milestone_ids,
+    milestone_network = milestone_network,
+    milestone_percentages = milestone_percentages,
     dimred_samples = space,
     dimred_traj = traj$path,
     pseudotime = traj$time

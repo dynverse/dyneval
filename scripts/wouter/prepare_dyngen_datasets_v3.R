@@ -41,9 +41,9 @@ for (dataset_num in seq_len(nrow(datasets_info))) {
       ti_type = model$modulenetname,
       name = info$id,
       expression = log2(counts+1),
-      state_names = gs$milestone_names,
-      state_net = gs$milestone_net,
-      state_percentages = gs$milestone_percentages %>% slice(match(rownames(counts), id))
+      milestone_ids = gs$milestone_ids,
+      milestone_network = gs$milestone_network,
+      milestone_percentages = gs$milestone_percentages %>% slice(match(rownames(counts), cell_id))
     ))
 
     pred_outputs <- map(methods, ~do.call(.$func, c(list(.task=task, .subset=NULL), .$params)))
@@ -195,20 +195,20 @@ ggplot(scores) +
 # task <- dyngen_dataset_to_task(dataset, "freiu")
 # plotdata <- plotLearnerData.ti.default(task)
 # plotLearner.ti.default(plotdata)
-# space_states <- plotdata$space_states
+# space_milestones <- plotdata$space_milestones
 #
 # expr <- task$expression
 # ddr <- DDRTree::DDRTree(SCORPIUS::quant.scale(t(expr)), dimensions = 20, sigma = .001, maxIter = 20, lambda = NULL, param.gamma = 10, tol = .001)
 # sample_coord <- data.frame(t(ddr$Z))
 # traj_coord <- data.frame(t(ddr$Y))
 # colnames(sample_coord) <- colnames(traj_coord) <- paste0("Comp", seq_len(ncol(sample_coord)))
-# sample_coord$type <- task$state_names[apply(task$state_percentages[,-1], 1, which.max)]
+# sample_coord$type <- task$milestone_ids[apply(task$milestone_percentages[,-1], 1, which.max)]
 # tree_links <- ddr$stree %>% as.matrix %>% reshape2::melt(varnames=c("from", "to"), value.name = "value") %>% filter(value != 0)
 # tree_links_coord <- tree_links %>% left_join(data.frame(from = seq_len(nrow(traj_coord)), from=traj_coord)) %>% left_join(data.frame(to = seq_len(nrow(traj_coord)), to=traj_coord))
 #
 # ggplot() +
 #   geom_segment(aes(x = from.Comp1, xend = to.Comp1, y = from.Comp2, yend = to.Comp2), tree_links_coord) +
 #   geom_point(aes(Comp1, Comp2, colour = type), sample_coord) +
-#   scale_colour_manual(values = setNames(space_states$colour, space_states$id)) +
+#   scale_colour_manual(values = setNames(space_milestones$colour, space_milestones$id)) +
 #   theme(panel.background = element_rect(fill = "#777777"))
 # #

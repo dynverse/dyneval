@@ -99,24 +99,23 @@ run_stemid <- function(counts,
   # assembly of the lineage tree
   ltr <- lineagetree(ltr, pthr = pthr, nmode = nmode)
 
-  # get names of the states and the samples
-  state_names <- paste0("state_", ltr@ldata$m)
-  ids <- rownames(counts)
+  # get names of the milestones and the samples
+  milestone_ids <- paste0("milestone_", ltr@ldata$m)
 
   # can't find any cluster distances, so calculating manually
   medoids <- compmedoids(ltr@sc@fdata, ltr@sc@cpart)
   cent <- ltr@sc@fdata[,medoids]
   dc <- as.data.frame(1 - cor(cent))
-  dimnames(dc) <- list(state_names, state_names)
+  dimnames(dc) <- list(milestone_ids, milestone_ids)
   trl <- spantree(dc[ltr@ldata$m,ltr@ldata$m])
 
-  gr_df <- data_frame(from = state_names[seq_along(trl$kid)+1], to = state_names[trl$kid], weight = dc[cbind(from, to)])
-  gr <- igraph::graph_from_data_frame(gr, directed = F, vertices = state_names)
-  state_network <- igraph::distances(gr) %>% reshape2::melt(varnames = c("from", "to"), value.name = "length") %>% filter(from != to)
+  gr_df <- data_frame(from = milestone_ids[seq_along(trl$kid)+1], to = milestone_ids[trl$kid], weight = dc[cbind(from, to)])
+  gr <- igraph::graph_from_data_frame(gr, directed = F, vertices = milestone_ids)
+  milestone_network <- igraph::distances(gr) %>% reshape2::melt(varnames = c("from", "to"), value.name = "length") %>% filter(from != to)
 
   # calculating the cell-to-cluster distances manually
   trproj_res <- ltr@trproj$res %>% as_data_frame() %>% rownames_to_column("id") %>% dplyr::select(id, closest = o, furthest = l)
-  state_percentages <- bind_rows(lapply(seq_len(nrow(trproj_res)), function(i) {
+  milestone_percentages <- bind_rows(lapply(seq_len(nrow(trproj_res)), function(i) {
     id <- trproj_res$id[[i]]
     closest <- trproj_res$closest[[i]]
     furthest <- trproj_res$furthest[[i]]
@@ -125,19 +124,19 @@ run_stemid <- function(counts,
       dist_closest <- 1 - cor(cent[,closest], ltr@sc@fdata[,id])
       dist_furthest <- 1 - cor(cent[,furthest], ltr@sc@fdata[,id])
 
-      data_frame(id = id, state = state_names[c(closest, furthest)], percentage = 1 - c(dist_closest, dist_furthest) / (dist_closest + dist_furthest))
+      data_frame(cell_id = id, milestone_id = milestone_ids[c(closest, furthest)], percentage = 1 - c(dist_closest, dist_furthest) / (dist_closest + dist_furthest))
     } else {
-      data_frame(id = id, state = state_names[[closest]], percentage = 1)
+      data_frame(cell_id = id, milestone_id = milestone_ids[[closest]], percentage = 1)
     }
   }))
 
   wrap_ti_prediction(
     ti_type = "linear",
     name = "StemID",
-    ids = ids,
-    state_names = state_names,
-    state_network = state_network,
-    state_percentages = state_percentages,
+    cell_ids = rownames(counts),
+    milestone_ids = milestone_ids,
+    milestone_network = milestone_network,
+    milestone_percentages = milestone_percentages,
     dimred_samples = ltr@ltcoord,
     ltr = ltr
   )

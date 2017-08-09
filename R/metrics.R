@@ -107,32 +107,32 @@ impute_y_fun <- function(num_objectives) {
 #' @importFrom transport transport
 #' @import dplyr
 compute_emlike_dist <- function(traj) {
-  ids <- traj$ids
-  state_network <- traj$state_network
-  state_names <- traj$state_names
-  state_percentages <- traj$state_percentages
+  cell_ids <- traj$cell_ids
+  milestone_network <- traj$milestone_network
+  milestone_ids <- traj$milestone_ids
+  milestone_percentages <- traj$milestone_percentages
 
   # calculate the shortest path distances between milestones
-  phantom_edges <- bind_rows(lapply(state_names, function(sn) {
-    sn_filt <- state_network %>% filter(from == sn)
+  phantom_edges <- bind_rows(lapply(milestone_ids, function(sn) {
+    sn_filt <- milestone_network %>% filter(from == sn)
     dis_vec <- setNames(sn_filt$length, sn_filt$to)
     phantom_edges <-
       expand.grid(from = sn_filt$to, to = sn_filt$to, stringsAsFactors = F) %>%
       filter(from < to) %>%
-      left_join(state_network, by = c("from", "to")) %>%
+      left_join(milestone_network, by = c("from", "to")) %>%
       filter(is.na(length)) %>%
       mutate(length = dis_vec[from] + dis_vec[to])
     phantom_edges
   }))
-  gr <- igraph::graph_from_data_frame(bind_rows(state_network %>% mutate(length = 2 * length), phantom_edges), directed = F, vertices = state_names)
+  gr <- igraph::graph_from_data_frame(bind_rows(milestone_network %>% mutate(length = 2 * length), phantom_edges), directed = F, vertices = milestone_ids)
   milestone_distances <- igraph::distances(gr, weights = igraph::E(gr)$length, mode = "all")
 
   # transport percentages data
-  pct <- reshape2::acast(state_percentages, id ~ state, value.var = "percentage", fill = 0)
-  pct <- pct[ids, state_names]
+  pct <- reshape2::acast(milestone_percentages, id ~ milestone, value.var = "percentage", fill = 0)
+  pct <- pct[cell_ids, milestone_ids]
 
-  fromto_matrix <- matrix(0, nrow = length(state_names), ncol = length(state_names), dimnames = list(state_names, state_names))
-  fromto2 <- state_network %>% reshape2::acast(from~to, value.var = "length", fun.aggregate = length)
+  fromto_matrix <- matrix(0, nrow = length(milestone_ids), ncol = length(milestone_ids), dimnames = list(milestone_ids, milestone_ids))
+  fromto2 <- milestone_network %>% reshape2::acast(from~to, value.var = "length", fun.aggregate = length)
   fromto_matrix[rownames(fromto2), colnames(fromto2)] <- fromto2
   diag(fromto_matrix) <- 1
   fromto_matrix[fromto_matrix > 0] <- 1
@@ -148,16 +148,16 @@ compute_emlike_dist <- function(traj) {
           all(!notzero | y)
         })
       }
-    state_names[wh]
+    milestone_ids[wh]
   }), rownames(pct))
 
-  closest <- bind_rows(lapply(state_names, function(state_name) {
-    # cat("State ", state_name, "\n", sep="")
-    sample_node <- froms %>% map_lgl(~ state_name %in% .)
+  closest <- bind_rows(lapply(milestone_ids, function(milestone_name) {
+    # cat("Milestone ", milestone_name, "\n", sep="")
+    sample_node <- froms %>% map_lgl(~ milestone_name %in% .)
     if (sum(sample_node) == 0) {
       NULL
     } else {
-      milestones <- which(fromto_matrix[state_name,] == 1)
+      milestones <- which(fromto_matrix[milestone_name,] == 1)
       dist_milestones <- milestone_distances[milestones, milestones, drop = F]
       sample_pcts <- pct[sample_node, milestones, drop = F]
       closest_to_nodes <-
@@ -195,8 +195,8 @@ compute_emlike_dist <- function(traj) {
     }
   }))
 
-  gr2 <- igraph::graph_from_data_frame(closest, directed = F, vertices = c(state_names, ids))
-  gr2 %>% igraph::distances(v = ids, to = ids, weights = igraph::E(gr2)$length)
+  gr2 <- igraph::graph_from_data_frame(closest, directed = F, vertices = c(milestone_ids, cell_ids))
+  gr2 %>% igraph::distances(v = cell_ids, to = cell_ids, weights = igraph::E(gr2)$length)
 }
 
 #' Plot the Earth Mover's distances in a heatmap
@@ -209,15 +209,15 @@ compute_emlike_dist <- function(traj) {
 #' @importFrom reshape2 acast
 #' @importFrom pheatmap pheatmap
 plot_emdist <- function(traj, dist, dimred = NULL, ...) {
-  state_percentages <- traj$state_percentages
-  pct <- as.data.frame(state_percentages[,-1])
-  rownames(pct) <- state_percentages$id
+  milestone_percentages <- traj$milestone_percentages
+  pct <- as.data.frame(milestone_percentages[,-1])
+  rownames(pct) <- milestone_percentages$id
 
   if (is.null(dimred)) {
     dimred <- plotLearnerData.ti.default(traj)
   }
 
-  ann_colours <- setNames(lapply(dimred$space_states$colour, function(x) c("white", x)), dimred$space_states$id)
+  ann_colours <- setNames(lapply(dimred$milestone_states$colour, function(x) c("white", x)), dimred$milestone_states$id)
 
   pheatmap::pheatmap(
     dist,
@@ -235,7 +235,7 @@ plot_emdist <- function(traj, dist, dimred = NULL, ...) {
     annotation_legend = F,
     annotation_names_row = F,
     annotation_names_col = F,
-    fontsize = 20 / length(traj$state_names),
+    fontsize = 20 / length(traj$milestone_ids),
     ...)
 }
 
@@ -320,7 +320,7 @@ F1rr <- function(labels1, labels2) {
 #'
 #' @export
 score_prediction_F1rr <- function(task, pred_output) {
-  branch_assignment_true <- cal_branch_assignment(task$state_percentages %>% select(-id), task$state_network)
-  branch_assignment_observed <- cal_branch_assignment(pred_output$state_percentages %>% select(-id), pred_output$state_network)
+  branch_assignment_true <- cal_branch_assignment(task$milestone_percentages %>% select(-id), task$milestone_network)
+  branch_assignment_observed <- cal_branch_assignment(pred_output$milestone_percentages %>% select(-id), pred_output$milestone_network)
   F1rr(branch_assignment_true, branch_assignment_observed)
 }

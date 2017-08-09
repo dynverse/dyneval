@@ -23,18 +23,20 @@ load_datasets <- function() {
     dataset_id <- datasets_info$id[[dataset_num]]
     dataset <- dyngen::load_dataset(dataset_id)
 
-    with(dataset, dyneval::wrap_ti_task_data(
+    list2env(dataset, environment())
+
+    dyneval::wrap_ti_task_data(
       ti_type = model$modulenetname,
       name = info$id,
-      ids = rownames(counts),
-      state_names = as.character(unique(gs$percentages$milestone)),
-      state_net = gs$milestonenet %>% mutate(from=as.character(from), to=as.character(to)),
-      state_percentages = gs$percentages %>% filter(percentage > 0) %>% rename(id=cellid, state=milestone) %>% mutate(state=as.character(state)), # temporary fix
+      cell_ids = rownames(counts),
+      milestone_ids = gs$percentages$milestone %>% unique %>% as.character,
+      milestone_net = gs$milestonenet %>% mutate(from = as.character(from), to = as.character(to)),
+      milestone_percentages = gs$percentages %>% filter(percentage > 0) %>% rename(id = cellid, state = milestone) %>% mutate(state=as.character(state)) %>% group_by(id, state) %>% slice(1) %>% ungroup, # temporary fixes
       counts = counts
-    ))
+    )
   })
   task_tib <- to_tibble(task_wrapped)
-  task_tib %>% left_join(datasets_info, by = c("name"="id"))
+  task_tib %>% left_join(datasets_info, by = c("name"="id")) %>% mutate(dataset_i = seq_len(n())) %>% group_by(ti_type) %>% mutate(subdataset_i = seq_len(n())) %>% ungroup
 }
 
 # copied from assigninNamespace

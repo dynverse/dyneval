@@ -160,16 +160,15 @@ post_fun <- function(rds_i, out_rds) {
   dplyr::lst(eval_summ, eval_summ_gath, eval_ind, eval_grp)
 }
 
-output <- qsub_retrieve_(qsub_handle, post_fun = post_fun, wait = F)
+output <- qsub_retrieve(qsub_handle, post_fun = post_fun, wait = F)
 
-save(output, file = paste0(output_root_folder, "temp_output.RData"))
+# save(output, file = paste0(output_root_folder, "temp_output.RData"))
 load(paste0(output_root_folder, "temp_output.RData"))
 
 method_names <- methods %>% map_chr(~ .$name)
 grid %>% as_data_frame %>% mutate(method_str = method_names[method_i])
 
 output <- output[!sapply(output, function(x) length(x) == 1 && is.na(x))]
-
 
 scores <- output %>% map_df(~ .$eval_summ) %>% mutate(grid_str = paste0("Repeat ", repeat_i, ", fold ", fold_i), method_str = method_names[method_i])
 individual_scores <- output %>% map_df(~ .$eval_ind) %>% mutate(grid_str = paste0("Repeat ", repeat_i, ", fold ", fold_i), method_str = method_names[method_i])
@@ -179,14 +178,6 @@ scores %>% group_by(repeat_i, fold_i, method_i) %>% slice(1) %>% ungroup() %>% g
 scores %>% group_by(repeat_i, fold_i, method_str) %>% slice(1) %>% ungroup() %>% group_by(method_str) %>% summarise(n = n()) %>% ungroup()
 scores %>% group_by(repeat_i, fold_i, method_str) %>% slice(1) %>% ungroup() %>% group_by(method_str, fold_i) %>% summarise(n = n()) %>% ungroup() %>% spread(fold_i, n, fill = 0)
 
-# scores <- scores %>% filter(repeat_i == 1, fold_i == 4)
-# individual_scores <- individual_scores %>% filter(repeat_i == 1, fold_i == 4)
-# grouped_scores <- grouped_scores %>% filter(repeat_i == 1, fold_i == 4)
-
-scores <- scores %>% filter(repeat_i == 1, fold_i == 3)
-individual_scores <- individual_scores %>% filter(repeat_i == 1, fold_i == 3)
-grouped_scores <- grouped_scores %>% filter(repeat_i == 1, fold_i == 3)
-
 best_scores <- scores %>% group_by(repeat_i, fold_i, method_i) %>% arrange(desc(train_y_1)) %>% slice(1) %>% ungroup() %>%
   arrange(desc(train_y_1)) %>% mutate(method_rank = paste0("#", seq_len(n()), ": ", method_str), method_fac = factor(method_rank, levels = method_rank))
 best_param <- best_scores %>% select(repeat_i, fold_i, method_i, param_i, method_rank, method_fac)
@@ -194,14 +185,20 @@ best_individual_scores <- individual_scores %>% right_join(best_param, by = c("r
 best_grouped_scores <- grouped_scores %>% right_join(best_param, by = c("repeat_i", "fold_i", "method_i", "param_i"))
 
 ggplot(scores %>% filter(train_y_1 >= 0, test_y_1 >= 0)) +
-  geom_vline(aes(xintercept = train_y_1), scores %>% filter(param_i == 1)) +
-  geom_hline(aes(yintercept = test_y_1), scores %>% filter(param_i == 1)) +
-  geom_vline(aes(xintercept = train_y_1), best_scores, colour = "red") +
-  geom_hline(aes(yintercept = test_y_1), best_scores, colour = "red") +
+  geom_vline(aes(xintercept = train_y_1), scores %>% filter(param_i == 1, train_y_1 >= 0, test_y_1 >= 0)) +
+  geom_hline(aes(yintercept = test_y_1), scores %>% filter(param_i == 1, train_y_1 >= 0, test_y_1 >= 0)) +
+  geom_vline(aes(xintercept = train_y_1), best_scores %>% filter(train_y_1 >= 0, test_y_1 >= 0), colour = "red") +
+  geom_hline(aes(yintercept = test_y_1), best_scores %>% filter(train_y_1 >= 0, test_y_1 >= 0), colour = "red") +
   geom_point(aes(train_y_1, test_y_1, colour = iteration_i)) +
   scale_colour_distiller(palette = "RdBu") +
-  facet_wrap(~method_str) +
+  facet_grid(method_str~grid_str) +
   coord_equal()
+
+aggregated_scores <- best_scores %>% group_by(method_i) %>% mutate_at(c(paste0("train_y_", 1:3), paste0("test_y_", 1:3)), mean) %>% summarise_all(head1)
+aggregated_scores_spr <- aggregated_scores %>% gather(eval_metric, score, contains("_y_"))
+#ggplot(aggregated_scores) + geom_point(aes(train_y_1, test_y_1, colour = method_str))
+ggplot(aggregated_scores_spr %>% filter(eval_metric %in% c("train_y_1", "test_y_1")) %>% mutate(eval_metric = factor(eval_metric, levels = c("train_y_1", "test_y_1")))) +
+  geom_bar(aes(method_str, score, fill = eval_metric), stat = "identity", position = "dodge")
 
 grspr <- grouped_scores %>% select(-Q_local, -correlation) %>% spread(fold_type, Q_global)
 bgrspr <- best_grouped_scores %>% select(-Q_local, -correlation) %>% spread(fold_type, Q_global)

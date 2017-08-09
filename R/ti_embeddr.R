@@ -45,21 +45,21 @@ run_embeddr <- function(counts,
   dimred_samples <- sce@reducedDimension
   dimred_traj <- results %>% dplyr::arrange(pseudotime) %>% select(starts_with("trajectory"))
 
-  ids <- rownames(counts)
-  state_names <- c("state_A", "state_B")
-  state_network <- tibble::data_frame(from = state_names[[1]], to = state_names[[2]], length = 1)
-  state_percentages <- bind_rows(
-    tibble::data_frame(id = rownames(counts), state = state_names[[1]], percentage = 1 - pseudotime),
-    tibble::data_frame(id = rownames(counts), state = state_names[[2]], percentage = pseudotime)
+  milestone_names <- c("milestone_A", "milestone_B")
+  milestone_network <- tibble::data_frame(from = milestone_names[[1]], to = milestone_names[[2]], length = 1)
+  milestone_percentages <- tribble(
+    ~cell_id, milestone_id, percentage,
+    rownames(count), milestone_names[[1]], 1 - pseudotime,
+    rownames(count), milestone_names[[2]], pseudotime
   )
 
   wrap_ti_prediction(
     ti_type = "linear",
     name = "embeddr",
-    ids = ids,
-    state_names = state_names,
-    state_network = state_network,
-    state_percentages = state_percentages,
+    cell_ids = rownames(counts),
+    milestone_names = milestone_names,
+    milestone_network = milestone_network,
+    milestone_percentages = milestone_percentages,
     dimred_samples = dimred_samples,
     dimred_traj = dimred_traj
   )
