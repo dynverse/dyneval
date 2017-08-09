@@ -16,10 +16,10 @@ list_as_tibble <- function(list_of_rows) {
 }
 
 #' @export
-load_datasets <- function() {
+load_datasets <- function(mc_cores = 1) {
   datasets_info <- readRDS(paste0(.datasets_location, "/datasets.rds"))
 
-  task_wrapped <- lapply(seq_len(nrow(datasets_info)), function(dataset_num) {
+  task_wrapped <- parallel::mclapply(seq_len(nrow(datasets_info)), mc.cores = mc_cores, function(dataset_num) {
     dataset_id <- datasets_info$id[[dataset_num]]
     dataset <- dyngen::load_dataset(dataset_id)
 
@@ -27,7 +27,7 @@ load_datasets <- function() {
 
     dyneval::wrap_ti_task_data(
       ti_type = model$modulenetname,
-      name = info$id,
+      id = dataset_id,
       cell_ids = rownames(counts),
       milestone_ids = gs$percentages$milestone %>% unique %>% as.character,
       milestone_network = gs$milestonenet %>% mutate(from = as.character(from), to = as.character(to)),
@@ -47,10 +47,10 @@ load_datasets <- function() {
   })
   task_wrapped %>%
     list_as_tibble %>%
-    left_join(datasets_info, by = c("name" = "id")) %>%
-    mutate(dataset_i = seq_len(n())) %>%
+    left_join(datasets_info, by = c("id" = "id")) %>%
+    mutate(task_ix = seq_len(n())) %>%
     group_by(ti_type) %>%
-    mutate(subdataset_i = seq_len(n())) %>%
+    mutate(subtask_ix = seq_len(n())) %>%
     ungroup
 }
 

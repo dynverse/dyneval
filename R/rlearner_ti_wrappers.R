@@ -1,12 +1,12 @@
 #' @export
 get_task_identifier <- function(task) {
-  task[c("type", "ti_type", "name")]
+  task[c("type", "ti_type", "id")]
 }
 
 #' @export
 wrap_ti_task_data <- function(
   ti_type,
-  name,
+  id,
   counts,
   cell_ids,
   milestone_ids,
@@ -20,7 +20,7 @@ wrap_ti_task_data <- function(
   abstract_wrapper(
     "ti",
     ti_type,
-    name,
+    id,
     cell_ids,
     milestone_ids,
     milestone_network,
@@ -36,7 +36,7 @@ wrap_ti_task_data <- function(
 #' @export
 wrap_ti_prediction <- function(
   ti_type,
-  name,
+  id,
   cell_ids,
   milestone_ids,
   milestone_network,
@@ -47,7 +47,7 @@ wrap_ti_prediction <- function(
   abstract_wrapper(
     "ti_pred",
     ti_type,
-    name,
+    id,
     cell_ids,
     milestone_ids,
     milestone_network,
@@ -60,7 +60,7 @@ wrap_ti_prediction <- function(
 abstract_wrapper <- function(
   type,
   ti_type,
-  name,
+  id,
   cell_ids,
   milestone_ids,
   milestone_network,
@@ -113,7 +113,7 @@ abstract_wrapper <- function(
   out <- list(
     type = type,
     ti_type = ti_type,
-    name = name,
+    id = id,
     cell_ids = cell_ids,
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,

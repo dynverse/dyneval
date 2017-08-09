@@ -37,13 +37,13 @@ run_scorpius <- function(counts,
   milestone_ids <- c("milestone_A", "milestone_B")
   milestone_network <- tibble::data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1)
   milestone_percentages <- bind_rows(
-    tibble::data_frame(id = rownames(expression), state = milestone_ids[[1]], percentage = 1 - traj$time),
-    tibble::data_frame(id = rownames(expression), state = milestone_ids[[2]], percentage = traj$time)
+    tibble::data_frame(cell_id = rownames(expression), milestone_id = milestone_ids[[1]], percentage = 1 - traj$time),
+    tibble::data_frame(cell_id = rownames(expression), milestone_id = milestone_ids[[2]], percentage = traj$time)
   )
 
   wrap_ti_prediction(
     ti_type = "linear",
-    name = "SCORPIUS",
+    id = "SCORPIUS",
     cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,

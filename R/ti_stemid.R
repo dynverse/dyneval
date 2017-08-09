@@ -132,7 +132,7 @@ run_stemid <- function(counts,
 
   wrap_ti_prediction(
     ti_type = "linear",
-    name = "StemID",
+    id = "StemID",
     cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
