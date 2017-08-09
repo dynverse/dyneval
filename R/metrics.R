@@ -63,7 +63,7 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
         correlation <- cor(task_geo %>% as.vector, model_geo %>% as.vector)
 
         # Create summary statistics
-        summary <- data.frame(task_name = tasks$name[[i]], coranking$summary, correlation, stringsAsFactors = F, check.names = F)
+        summary <- data.frame(task_id = tasks$id[[i]], coranking$summary, correlation, stringsAsFactors = F, check.names = F)
 
         # Return the output
         lst(model = model, coranking = coranking, summary = summary)

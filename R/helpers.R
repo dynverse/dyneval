@@ -30,7 +30,12 @@ load_datasets <- function(mc_cores = 1) {
       id = dataset_id,
       cell_ids = rownames(counts),
       milestone_ids = gs$percentages$milestone %>% unique %>% as.character,
-      milestone_network = gs$milestonenet %>% mutate(from = as.character(from), to = as.character(to)),
+      milestone_network = gs$milestonenet %>%
+        mutate(
+          from = as.character(from),
+          to = as.character(to),
+          length = ifelse(!is.na(length), length, 1) # temporary fix
+        ),
       milestone_percentages = cellinfo %>%
         left_join(gs$percentages, by = c("stepid"="cellid")) %>%
         filter(percentage > 0) %>%
