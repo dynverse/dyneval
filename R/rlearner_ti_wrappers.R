@@ -123,7 +123,7 @@ abstract_wrapper <- function(
   class(out) <- paste0("dyneval::ti_wrapper")
 
   ## Precompute geodesic distances
-  out$geodesic_dist <- compute_emlike_dist(l)
+  out$geodesic_dist <- compute_emlike_dist(out)
 
   out
 }
