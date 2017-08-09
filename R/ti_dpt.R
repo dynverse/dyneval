@@ -57,7 +57,7 @@ run_dpt <- function(counts,
 
   wrap_ti_prediction(
     ti_type = "triangle",
-    name = "DPT",
+    id = "DPT",
     cell_ids = rownames(expr),
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,

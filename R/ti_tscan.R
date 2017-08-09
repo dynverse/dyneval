@@ -72,7 +72,7 @@ run_tscan <- function(counts,
 
   wrap_ti_prediction(
     ti_type = "linear",
-    name = "TSCAN",
+    id = "TSCAN",
     cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,

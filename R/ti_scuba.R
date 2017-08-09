@@ -74,7 +74,7 @@ run_scuba <- function(counts,
 
   wrap_ti_prediction(
     ti_type = "linear",
-    name = "SCUBA",
+    id = "SCUBA",
     cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,

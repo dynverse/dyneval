@@ -142,7 +142,7 @@ run_celltree <- function(counts, method = "maptpx",
   # wrap output
   wrap_ti_prediction(
     ti_type = "tree",
-    name = "cellTree",
+    id = "cellTree",
     cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,

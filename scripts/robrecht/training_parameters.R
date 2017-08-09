@@ -7,7 +7,7 @@ output_root_folder <- "results/output_dyngentest/"
 
 ## load datasets
 .datasets_location = "../dyngen/results" # needs to be defined, to let dyngen know where the datasets are
-tasks <- load_datasets()
+tasks <- load_datasets(mc_cores = 8)
 
 ## choose a method
 method <- description_scorpius()

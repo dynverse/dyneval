@@ -55,7 +55,7 @@ run_embeddr <- function(counts,
 
   wrap_ti_prediction(
     ti_type = "linear",
-    name = "embeddr",
+    id = "embeddr",
     cell_ids = rownames(counts),
     milestone_names = milestone_names,
     milestone_network = milestone_network,
