@@ -42,34 +42,32 @@ run_dpt <- function(counts,
   dpt <- destiny::DPT(dm, w_width = w_width)
 
   tips <- tips(dpt)
-  state_names <- paste0("DPT", tips)
+  milestone_ids <- paste0("DPT", tips)
 
-  state_percentages <- bind_rows(lapply(state_names, function(x) data_frame(id = rownames(expr), state = x, percentage = dpt[[x]]))) %>%
+  milestone_percentages <- bind_rows(lapply(milestone_ids, function(x) data_frame(id = rownames(expr), milestone = x, percentage = dpt[[x]]))) %>%
     group_by(id) %>%
     mutate(percentage = percentage / sum(percentage)) %>%
     ungroup()
 
-  state_network <- bind_rows(lapply(seq_along(state_names), function(i) {
-    state <- state_names[[i]]
+  milestone_network <- bind_rows(lapply(seq_along(milestone_ids), function(i) {
+    from <- milestone_ids[[i]]
     index <- tips[[i]]
-    data_frame(from = state, to = state_names, length = dpt[[state]][tips])
+    data_frame(from = from, to = milestone_ids, length = dpt[[from]][tips])
   })) %>% filter(from < to)
-
-  ids <- rownames(expr)
 
   wrap_ti_prediction(
     ti_type = "triangle",
     name = "DPT",
-    ids = ids,
-    state_names = state_names,
-    state_network = state_network,
-    state_percentages = state_percentages
+    cell_ids = rownames(expr),
+    milestone_ids = milestone_ids,
+    milestone_network = milestone_network,
+    milestone_percentages = milestone_percentages
   )
 }
 
 #' @export
 plot_dpt <- function(ti_predictions) {
-  #qplot(percent_rank(ti_predictions$state_percentages[,1]), ti_predictions$state_percentages[,1], colour = data$sample_info$group.name)
+  #qplot(percent_rank(ti_predictions$milestone_percentages[,1]), ti_predictions$milestone_percentages[,1], colour = data$sample_info$group.name)
   stop("TODO!")
 }
 

@@ -60,15 +60,14 @@ run_scuba <- function(counts,
   tree <- tree_data %>% select(cluster = `Cluster ID`, parent = `Parent cluster`, time_index = Time, cell_stage = `Cell Stage`) %>% mutate(cluster_name = paste0("Cluster", cluster))
 
   # create final output
-  ids <- rownames(counts)
-  state_names <- tree$cluster_name
-  state_network <- tree %>%
+  milestone_ids <- tree$cluster_name
+  milestone_network <- tree %>%
     filter(parent != 0) %>%
     select(to = cluster_name, from_ix = parent) %>%
     left_join(tree %>% select(from = cluster_name, from_ix = cluster), by = "from_ix") %>%
     mutate(length = 1) %>%
     select(from, to, length)
-  state_percentages <- data_frame(id = projection_data$Time, state = paste0("Cluster", treemat_data$s[1,]), percentage = 1)
+  milestone_percentages <- data_frame(cell_id = projection_data$Time, milestone_id = paste0("Cluster", treemat_data$s[1,]), percentage = 1)
 
   # remove temporary output
   unlink(dataset_path, recursive = T)
@@ -76,10 +75,10 @@ run_scuba <- function(counts,
   wrap_ti_prediction(
     ti_type = "linear",
     name = "SCUBA",
-    ids = ids,
-    state_names = state_names,
-    state_network = state_network,
-    state_percentages = state_percentages
+    cell_ids = rownames(counts),
+    milestone_ids = milestone_ids,
+    milestone_network = milestone_network,
+    milestone_percentages = milestone_percentages
     # ... add more output
   )
 }
@@ -87,6 +86,6 @@ run_scuba <- function(counts,
 #' @export
 plot_scuba <- function(ti_predictions) {
   stop("TODO")
-  #qplot(percent_rank(ti_predictions$state_percentages[,1]), ti_predictions$state_percentages[,1], colour = data$sample_info$group.name)
+  #qplot(percent_rank(ti_predictions$milestone_percentages[,1]), ti_predictions$milestone_percentages[,1], colour = data$sample_info$group.name)
 }
 

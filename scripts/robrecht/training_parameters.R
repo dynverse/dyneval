@@ -7,10 +7,10 @@ output_root_folder <- "results/output_dyngentest/"
 
 ## load datasets
 .datasets_location = "../dyngen/results" # needs to be defined, to let dyngen know where the datasets are
-tasks <- load_datasets() %>% mutate(dataset_i = seq_len(n())) %>% group_by(ti_type) %>% mutate(subdataset_i = seq_len(n())) %>% ungroup
+tasks <- load_datasets()
 
 ## choose a method
-# method <- description_scorpius()
+method <- description_scorpius()
 # method <- description_monocle_ddrtree()
 # method <- description_celltree_maptpx()
 # method <- description_celltree_gibbs()
@@ -19,7 +19,7 @@ tasks <- load_datasets() %>% mutate(dataset_i = seq_len(n())) %>% group_by(ti_ty
 # method <- description_stemid()
 # method <- description_scuba()
 # method <- description_dpt()
-method <- description_embeddr()
+# method <- description_embeddr()
 
 ## MBO settings
 num_cores <- 8
@@ -31,6 +31,10 @@ impute_fun <- impute_y_fun(length(metrics))
 
 # try first
 try <- obj_fun(list(), tasks = tasks)
+try_extra <- attr(try, "extras")
+attr(try, "extras") <- NULL
+try
+
 
 ## MBO settings
 control_train <- makeMBOControl(

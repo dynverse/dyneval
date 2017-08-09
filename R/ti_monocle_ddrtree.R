@@ -64,14 +64,14 @@ run_monocle_ddrtree <- function(counts,
 
   # find the branching cells and the terminal cells using the degree
   deg <- igraph::degree(gr, mode = c("all"))
-  state_names <- names(deg)[deg != 2]
+  milestone_ids <- names(deg)[deg != 2]
   branching <- names(deg)[deg > 2]
   terminal <- names(deg)[deg == 1]
 
 
-  asp <- igraph::all_shortest_paths(gr, from = root, to = state_names, mode = c("all"))
+  asp <- igraph::all_shortest_paths(gr, from = root, to = milestone_ids, mode = c("all"))
   asp2 <- lapply(asp$res, function(path) {
-    last_bit <- tail(which(path$name %in% state_names), 2)
+    last_bit <- tail(which(path$name %in% milestone_ids), 2)
     if (length(last_bit) == 1) {
       path[last_bit]
     } else {
@@ -79,32 +79,31 @@ run_monocle_ddrtree <- function(counts,
     }
   })
   asp2 <- asp2[sapply(asp2, length) > 1]
-  dist_m <- igraph::distances(gr, v = state_names, to = state_names)
+  dist_m <- igraph::distances(gr, v = milestone_ids, to = milestone_ids)
 
-  ids <- rownames(counts)
-  state_network <- bind_rows(lapply(asp2, function(p) {
+  milestone_network <- bind_rows(lapply(asp2, function(p) {
     from_ <- head(p, 1)$name
     to_ <- tail(p, 1)$name
-    data_frame(from = paste0("state_", from_), to = paste0("state_", to_), length = dist_m[[from_, to_]])
+    data_frame(from = paste0("milestone_", from_), to = paste0("milestone_", to_), length = dist_m[[from_, to_]])
   })) %>% mutate(length = length / max(length))
 
-  state_percentages <- bind_rows(lapply(asp2, function(path) {
+  milestone_percentages <- bind_rows(lapply(asp2, function(path) {
     dists <- t(igraph::distances(gr, v = path[c(1, length(path))], to = path))
     pct <- 1 - t(apply(dists, 1, function(x) x / sum(x)))
     pct %>%
-      reshape2::melt(varnames = c("id", "state"), value.name = "percentage") %>%
-      mutate(id = as.character(id), state = paste0("state_", as.character(state)))
+      reshape2::melt(varnames = c("cell_id", "milestone_id"), value.name = "percentage") %>%
+      mutate(cell_id = as.character(cell_id), milestone_id = paste0("milestone_", as.character(milestone_id)))
   })) %>% as_data_frame() %>% filter(percentage > 0)
-  state_names <- paste0("state_", state_names)
+  milestone_ids <- paste0("milestone_", milestone_ids)
 
   # wrap output
   wrap_ti_prediction(
     ti_type = "tree",
     name = "monocleDDRtree",
-    ids = ids,
-    state_names = state_names,
-    state_network = state_network,
-    state_percentages = state_percentages,
+    cell_ids = rownames(counts),
+    milestone_ids = milestone_ids,
+    milestone_network = milestone_network,
+    milestone_percentages = milestone_percentages,
     cds = cds_3
   )
 }

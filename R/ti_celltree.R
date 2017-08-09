@@ -129,14 +129,13 @@ run_celltree <- function(counts, method = "maptpx",
     }
   }
 
-  ids <- rownames(counts)
-  state_percentages <- percentages %>% mutate(cell = rownames(expression)[as.integer(cell)], state = paste0("state_", milestone)) %>% select(id = cell, state, percentage)
-  state_names <- paste0("state_", names(centralnodes))
+  milestone_percentages <- percentages %>% mutate(cell_id = rownames(expression)[as.integer(cell)], milestone_id = paste0("milestone_", milestone)) %>% select(cell_id, milestone_id, percentage)
+  milestone_ids <- paste0("milestone_", names(centralnodes))
 
-  # rename states
-  state_network <- backbone %>% tidyr::nest(included) %>% dplyr::select(from, to) %>% mutate(
-    from = state_names[match(from, centralnodes)],
-    to = state_names[match(to, centralnodes)],
+  # rename milestones
+  milestone_network <- backbone %>% tidyr::nest(included) %>% dplyr::select(from, to) %>% mutate(
+    from = milestone_ids[match(from, centralnodes)],
+    to = milestone_ids[match(to, centralnodes)],
     length = 1
   )
 
@@ -144,10 +143,10 @@ run_celltree <- function(counts, method = "maptpx",
   wrap_ti_prediction(
     ti_type = "tree",
     name = "cellTree",
-    ids = ids,
-    state_names = state_names,
-    state_network = state_network,
-    state_percentages = state_percentages,
+    cell_ids = rownames(counts),
+    milestone_ids = milestone_ids,
+    milestone_network = milestone_network,
+    milestone_percentages = milestone_percentages,
     mst_tree = mst_tree
   )
 }

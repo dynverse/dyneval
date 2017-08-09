@@ -4,15 +4,28 @@ get_task_identifier <- function(task) {
 }
 
 #' @export
-wrap_ti_task_data <- function(ti_type, name, counts, ids, state_names, state_network, state_percentages, sample_info = NULL, feature_info = NULL, ...) {
+wrap_ti_task_data <- function(
+  ti_type,
+  name,
+  counts,
+  cell_ids,
+  milestone_ids,
+  milestone_network,
+  milestone_percentages = NULL,
+  progressions = NULL,
+  sample_info = NULL,
+  feature_info = NULL,
+  ...
+) {
   abstract_wrapper(
     "ti",
     ti_type,
     name,
-    ids,
-    state_names,
-    state_network,
-    state_percentages,
+    cell_ids,
+    milestone_ids,
+    milestone_network,
+    milestone_percentages,
+    progressions,
     counts = counts,
     sample_info = sample_info,
     feature_info = feature_info,
@@ -21,66 +34,141 @@ wrap_ti_task_data <- function(ti_type, name, counts, ids, state_names, state_net
 }
 
 #' @export
-wrap_ti_prediction <- function(ti_type, name, ids, state_names, state_network, state_percentages, ...) {
+wrap_ti_prediction <- function(
+  ti_type,
+  name,
+  cell_ids,
+  milestone_ids,
+  milestone_network,
+  milestone_percentages = NULL,
+  progressions = NULL,
+  ...
+) {
   abstract_wrapper(
     "ti_pred",
     ti_type,
     name,
-    ids,
-    state_names,
-    state_network,
-    state_percentages,
+    cell_ids,
+    milestone_ids,
+    milestone_network,
+    milestone_percentages,
+    progressions,
     ...
   )
 }
 
-abstract_wrapper <- function(type, ti_type, name, ids, state_names, state_network, state_percentages, ...) {
-  if (!is.data.frame(state_network) || ncol(state_network) != 3 || any(colnames(state_network) != c("from", "to", "length"))) {
-    stop(sQuote("state_network"), " should be a data frame with exactly three columns named ", sQuote("from"),
+abstract_wrapper <- function(
+  type,
+  ti_type,
+  name,
+  cell_ids,
+  milestone_ids,
+  milestone_network,
+  milestone_percentages = NULL,
+  progressions = NULL,
+  ...
+) {
+  if (!is.data.frame(milestone_network) || ncol(milestone_network) != 3 || any(colnames(milestone_network) != c("from", "to", "length"))) {
+    stop(sQuote("milestone_network"), " should be a data frame with exactly three columns named ", sQuote("from"),
          ", ", sQuote("to"), " and ", sQuote("length"), ".")
   }
-  if (any(!state_network$from %in% state_names) || any(!state_network$to %in% state_names)) {
-    stop("Not all states in ", sQuote("state_network"), " are in ", sQuote("state_names"), ".")
+  if (any(!milestone_network$from %in% milestone_ids) || any(!milestone_network$to %in% milestone_ids)) {
+    stop("Not all states in ", sQuote("milestone_network"), " are in ", sQuote("milestone_ids"), ".")
   }
-  if (!is.data.frame(state_percentages) || ncol(state_percentages) != 3 || any(colnames(state_percentages) != c("id", "state", "percentage"))) {
-    stop(sQuote("state_percentages"), " should be a data frame with exactly three columns named ", sQuote("id"),
-         ", ", sQuote("state"), " and ", sQuote("percentage"), ".")
+
+  if (is.null(milestone_percentages) == is.null(progressions)) {
+    stop("Exactly one of ", sQuote("milestone_percentages"), " or ", sQuote("progressions"), " must be defined, the other must be NULL.")
   }
-  state_nam <- unique(state_percentages$state)
-  if (!setequal(state_nam, state_names)) {
-    stop("The set of all state names in ", sQuote("state_percentages"), " should be equal to ", sQuote("state_names"), ".")
+
+  if (is.null(progressions)) {
+    progressions <- convert_milestone_percentages_to_progressions(cell_ids, milestone_ids, milestone_network, milestone_percentages)
+  } else if (is.null(milestone_percentages)) {
+    milestone_percentages <- convert_progressions_to_milestone_percentages(cell_ids, milestone_ids, milestone_network, progressions)
+  }
+
+  if (!is.data.frame(milestone_percentages) || ncol(milestone_percentages) != 3 || any(colnames(milestone_percentages) != c("cell_id", "milestone_id", "percentage"))) {
+    stop(sQuote("milestone_percentages"), " should be a data frame with exactly three columns named ", sQuote("cell_id"),
+         ", ", sQuote("milestone_id"), " and ", sQuote("percentage"), ".")
+  }
+  if (!is.data.frame(progressions) || ncol(progressions) != 4 || any(colnames(progressions) != c("cell_id", "from", "to", "percentage"))) {
+    stop(sQuote("progressions"), " should be a data frame with exactly four columns named ", sQuote("cell_id"),
+         ", ", sQuote("from"), ", ", sQuote("to"), " and ", sQuote("percentage"), ".")
   }
 
   ## create a separate state if some cells have been filtered out
-  na_ids <- setdiff(ids, unique(state_percentages$id))
+  na_ids <- setdiff(cell_ids, unique(milestone_percentages$cell_id))
   if (length(na_ids) != 0) {
-    state_percentages <- bind_rows(
-      state_percentages,
-      data_frame(id = na_ids, state = "FILTERED_CELLS", percentage = 1)
+    milestone_percentages <- bind_rows(
+      milestone_percentages,
+      data_frame(cell_id = na_ids, milestone_id = "FILTERED_CELLS", percentage = 1)
     )
-    state_network <- dplyr::bind_rows(
-      state_network,
-      data_frame(from = state_names, to = "FILTERED_CELLS", length = max(state_network$length)*5)
+    milestone_network <- dplyr::bind_rows(
+      milestone_network,
+      data_frame(from = milestone_ids, to = "FILTERED_CELLS", length = max(milestone_network$length)*5)
     )
-    state_names <- c(state_names, "FILTERED_CELLS")
+    milestone_ids <- c(milestone_ids, "FILTERED_CELLS")
   }
 
-  l <- list(
+  # create output structure
+  out <- list(
     type = type,
     ti_type = ti_type,
     name = name,
-    ids = ids,
-    state_names = state_names,
-    state_network = state_network,
-    state_percentages = state_percentages,
+    cell_ids = cell_ids,
+    milestone_ids = milestone_ids,
+    milestone_network = milestone_network,
+    milestone_percentages = milestone_percentages,
     ...
   )
-  class(l) <- paste0("dyneval::ti_wrapper")
+  class(out) <- paste0("dyneval::ti_wrapper")
 
   ## Precompute geodesic distances
-  l$geodesic_dist <- compute_emlike_dist(l)
+  out$geodesic_dist <- compute_emlike_dist(l)
 
-  l
+  out
+}
+
+convert_milestone_percentages_to_progressions <- function(cell_ids, milestone_ids, milestone_network, milestone_percentages) {
+  bind_rows(lapply(cell_ids, function(cid) {
+    relevant_pct <- milestone_percentages %>% filter(cell_id == cid)
+
+    if (nrow(relevant_pct) >= 2) {
+      relevant_progr <- milestone_network %>%
+        filter(from %in% relevant_pct$milestone_id & to %in% relevant_pct$milestone_id) %>%
+        left_join(relevant_pct, by = c("to" = "milestone_id")) %>%
+        select(cell_id, from, to, percentage)
+    } else if (nrow(relevant_pct) == 1) {
+      relevant_net <- milestone_network %>% filter(to %in% relevant_pct$milestone_id)
+      if (nrow(relevant_net) == 0) {
+        relevant_net <- milestone_network %>% filter(from %in% relevant_pct$milestone_id)
+      }
+      relevant_progr <- relevant_net %>%
+        mutate(cell_id = cid, percentage = 1) %>%
+        select(cell_id, from, to, percentage)
+    } else {
+      relevant_progr <- NULL
+    }
+    relevant_progr
+  }))
+}
+
+convert_progressions_to_milestone_percentages <- function(cell_ids, milestone_ids, milestone_network, progressions) {
+  check_froms <- progressions %>% group_by(cell_id) %>% summarise(n = length(unique(from)))
+  if (any(check_froms$n > 1)) {
+    stop("In ", sQuote("progressions"), ", cells should only have 1 unique from milestone.")
+  }
+
+  bind_rows(lapply(cell_ids, function(cid) {
+    relevant_prg <- progressions %>% filter(cell_id == cid)
+
+    # there should be only 1 unique from, according to an earlier check.
+    from <- unique(relevant_prg$from)
+
+    bind_rows(
+      data_frame(cell_id = cid, milestone_id = from, percentage = 1 - sum(relevant_prg$percentage)),
+      data_frame(cell_id = cid, milestone_id = relevant_prg$to, percentage = relevant_prg$percentage)
+    )
+  })) %>% filter(percentage > 0)
 }
 
 is_ti_wrapper <- function(object) {

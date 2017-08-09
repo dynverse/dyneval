@@ -13,32 +13,32 @@
 plotdata_default <- function(traj_object, insert_phantom_edges = T) {
   name <- paste0(traj_object$type, "/", traj_object$ti_type, "/", traj_object$name)
 
-  # retrieve information on states
-  state_names <- traj_object$state_names
-  if (length(state_names) <= 12) {
-    colour_states <- RColorBrewer::brewer.pal(max(3, length(state_names)), "Set3")[seq_along(state_names)]
-    colours_states <- setNames(colour_states, state_names)
+  # retrieve information on milestones
+  milestone_ids <- traj_object$milestone_ids
+  if (length(milestone_ids) <= 12) {
+    colour_milestones <- RColorBrewer::brewer.pal(max(3, length(milestone_ids)), "Set3")[seq_along(milestone_ids)]
+    colours_milestones <- setNames(colour_milestones, milestone_ids)
   } else {
-    colours_states <- setNames(sample(rainbow(length(state_names))), state_names)
+    colours_milestones <- setNames(sample(rainbow(length(milestone_ids))), milestone_ids)
   }
-  colours_rgb_states <- t(col2rgb(colours_states))
+  colours_rgb_milestones <- t(col2rgb(colours_milestones))
 
-  # get state_network
-  state_network <- traj_object$state_network
+  # get milestone_network
+  milestone_network <- traj_object$milestone_network
 
   # retrieve information on samples
-  state_percentages <- traj_object$state_percentages %>% spread(state, percentage)
-  state_percentages_m <- as.matrix(state_percentages[,state_names,drop=F])
-  rownames(state_percentages_m) <- state_percentages$id
-  colours_rgb_samples <- state_percentages_m %*% colours_rgb_states
+  milestone_percentages <- traj_object$milestone_percentages %>% spread(milestone, percentage)
+  milestone_percentages_m <- as.matrix(milestone_percentages[,milestone_ids,drop=F])
+  rownames(milestone_percentages_m) <- milestone_percentages$id
+  colours_rgb_samples <- milestone_percentages_m %*% colours_rgb_milestones
   colours_samples <- mapply(colours_rgb_samples[,1], colours_rgb_samples[,2], colours_rgb_samples[,3], FUN = rgb, maxColorValue = 256)
 
   # add imaginary links, ifneedbe
   if (insert_phantom_edges) {
     structure <- bind_rows(
-      state_network,
-      bind_rows(lapply(state_names, function(x) {
-        strx <- state_network %>%
+      milestone_network,
+      bind_rows(lapply(milestone_ids, function(x) {
+        strx <- milestone_network %>%
           filter(from == x)
 
         if (nrow(strx) > 1) {
@@ -60,8 +60,8 @@ plotdata_default <- function(traj_object, insert_phantom_edges = T) {
           NULL
         }
       })),
-      bind_rows(lapply(state_names, function(x) {
-        strx <- state_network %>%
+      bind_rows(lapply(milestone_ids, function(x) {
+        strx <- milestone_network %>%
           filter(to == x)
 
         if (nrow(strx) > 1) {
@@ -84,44 +84,44 @@ plotdata_default <- function(traj_object, insert_phantom_edges = T) {
         }
       })))
   } else {
-    structure <- state_network
+    structure <- milestone_network
   }
 
-  # reduce dimensionality on state_network
-  gr <- graph_from_data_frame(structure, vertices = state_names)
+  # reduce dimensionality on milestone_network
+  gr <- graph_from_data_frame(structure, vertices = milestone_ids)
   lengths <- E(gr)$length
   if (min(lengths) * 3 < max(lengths)) {
     lengths <- ((lengths - min(lengths)) / (max(lengths) - min(lengths)) + .5) %>% sqrt
   }
 
-  gr_space_states <- layout_with_kk(gr, weights = lengths, maxiter = 200) %>% SCORPIUS::rescale.and.center()
-  dimnames(gr_space_states) <- list(state_names, paste0("Comp", seq_len(ncol(gr_space_states))))
+  gr_space_milestones <- layout_with_kk(gr, weights = lengths, maxiter = 200) %>% SCORPIUS::rescale.and.center()
+  dimnames(gr_space_milestones) <- list(milestone_ids, paste0("Comp", seq_len(ncol(gr_space_milestones))))
 
   # project dimensionality to samples
-  gr_space_samples <- state_percentages_m %*% gr_space_states
+  gr_space_samples <- milestone_percentages_m %*% gr_space_milestones
 
   # format data
-  space_states <- data.frame(
+  space_milestones <- data.frame(
     name,
-    id = state_names,
-    gr_space_states,
-    colour = colours_states,
+    id = milestone_ids,
+    gr_space_milestones,
+    colour = colours_milestones,
     stringsAsFactors = F)
   space_lines <- data.frame(
     name,
-    from = gr_space_states[state_network$from,,drop=F],
-    to = gr_space_states[state_network$to,,drop=F],
+    from = gr_space_milestones[milestone_network$from,,drop=F],
+    to = gr_space_milestones[milestone_network$to,,drop=F],
     row.names = NULL,
     stringsAsFactors = F)
   space_samples <- data.frame(
     name,
-    id = state_percentages$id,
+    id = milestone_percentages$id,
     gr_space_samples,
     colour = colours_samples,
     stringsAsFactors = F)
 
   l <- list(
-    space_states = space_states,
+    space_milestones = space_milestones,
     space_lines = space_lines,
     space_samples = space_samples
   )
@@ -155,8 +155,8 @@ plot_default <- function(object, insert_phantom_edges = T) {
       geom_segment(aes(x = from.Comp1, xend = to.Comp1, y = from.Comp2, yend = to.Comp2), space_lines,
                    size = 10, colour = "#444444", arrow = arrow(length = unit(.5, "cm"), type="closed")) +
       geom_point(aes(Comp1, Comp2, colour = colour), space_samples, size = 3) +
-      geom_point(aes(Comp1, Comp2, colour = colour, fill = colour), space_states, size = 5, shape = 4, stroke = 2) +
-      geom_text(aes(Comp1, Comp2, label = id), space_states, nudge_y = .05) +
+      geom_point(aes(Comp1, Comp2, colour = colour, fill = colour), space_milestones, size = 5, shape = 4, stroke = 2) +
+      geom_text(aes(Comp1, Comp2, label = id), space_milestones, nudge_y = .05) +
       scale_colour_identity() +
       scale_fill_identity() +
       scale_x_continuous(limits = c(-.55, .55)) +

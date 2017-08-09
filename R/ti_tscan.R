@@ -61,23 +61,22 @@ run_tscan <- function(counts,
 
   cds_3 <- TSCAN::TSCANorder(cds_2)
 
-  ids <- rownames(counts)
-  state_names <- paste0("state_", c(head(cds_3, 1), tail(cds_3, 1)))
-  state_network <- data_frame(from = state_names[[1]], to = state_names[[2]], length = 1)
+  milestone_ids <- paste0("milestone_", c(head(cds_3, 1), tail(cds_3, 1)))
+  milestone_network <- data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1)
 
   pseudotime <- setNames(percent_rank(match(rownames(counts), cds_3)), rownames(counts))
-  state_percentages <- bind_rows(
-    tibble::data_frame(id = rownames(counts), state = state_names[[1]], percentage = 1 - pseudotime),
-    tibble::data_frame(id = rownames(counts), state = state_names[[2]], percentage = pseudotime)
+  milestone_percentages <- bind_rows(
+    tibble::data_frame(id = rownames(counts), state = milestone_ids[[1]], percentage = 1 - pseudotime),
+    tibble::data_frame(id = rownames(counts), state = milestone_ids[[2]], percentage = pseudotime)
   )
 
   wrap_ti_prediction(
     ti_type = "linear",
     name = "TSCAN",
-    ids = ids,
-    state_names = state_names,
-    state_network = state_network,
-    state_percentages = state_percentages,
+    cell_ids = rownames(counts),
+    milestone_ids = milestone_ids,
+    milestone_network = milestone_network,
+    milestone_percentages = milestone_percentages,
     dimred_samples = cds_2$pcareduceres,
     dimred_clust = cds_2$clusterid,
     clust_centers = cds_2$clucenter,
@@ -87,6 +86,6 @@ run_tscan <- function(counts,
 
 #' @export
 plot_tscan <- function(ti_predictions) {
-  qplot(percent_rank(ti_predictions$state_percentages[,1]), ti_predictions$state_percentages[,1], colour = data$sample_info$group.name)
+  qplot(percent_rank(ti_predictions$milestone_percentages[,1]), ti_predictions$milestone_percentages[,1], colour = data$sample_info$group.name)
 }
 

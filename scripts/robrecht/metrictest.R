@@ -59,9 +59,9 @@ read_trajectory_ods <- function(name) {
   dyneval::wrap_ti_prediction(
     ti_type = "*",
     name = name,
-    state_names = milestones,
-    state_network = structure,
-    state_percentages = cells,
+    milestone_ids = milestones,
+    milestone_network = structure,
+    milestone_percentages = cells,
     task_id = NULL
   )
 }
