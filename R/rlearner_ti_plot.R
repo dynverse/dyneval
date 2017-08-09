@@ -115,7 +115,7 @@ plotdata_default <- function(traj_object, insert_phantom_edges = T) {
     stringsAsFactors = F)
   space_samples <- data.frame(
     name,
-    id = milestone_percentages$id,
+    id = milestone_percentages$cell_id,
     gr_space_samples,
     colour = colours_samples,
     stringsAsFactors = F)
