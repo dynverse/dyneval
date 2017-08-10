@@ -1,4 +1,4 @@
-library(matrixStats);library(rgl);library(pheatmap);library(limma);library(MASS);library(ape); library(RColorBrewer);library(RHmm)
+# library(matrixStats);library(rgl);library(pheatmap);library(limma);library(MASS);library(ape); library(RColorBrewer);library(RHmm)
 
 description_waterfall <- function() {
   list(
@@ -15,9 +15,9 @@ description_waterfall <- function() {
   )
 }
 
-setwd("~/Documents/VIB/Projects/dyneval")
-bla<-readRDS("data/ti/linear/ginhoux.rds")
-matr<-t(bla$expression)
+# setwd("~/Documents/VIB/Projects/dyneval")
+# bla<-readRDS("data/ti/linear/ginhoux.rds")
+# matr<-t(bla$expression)
 
 `%notin%` <- function(x,y) !(x %in% y)
 new.foo <-function(x,y){x[which(x %notin% y)]}
