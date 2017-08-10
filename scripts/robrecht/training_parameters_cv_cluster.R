@@ -8,211 +8,244 @@ library(PRISM)
 output_root_folder <- "results/output_dyngen_paramtraincv/"
 dir.create(output_root_folder)
 
-# ## load datasets
-# .datasets_location = "../dyngen/results" # needs to be defined, to let dyngen know where the datasets are
-# tasks <- load_datasets() %>% mutate(dataset_i = seq_len(n())) %>% group_by(ti_type) %>% mutate(subdataset_i = seq_len(n())) %>% ungroup
-#
-# ## load methods
-# methods <- list(
-#   description_scorpius(),
-#   description_monocle_ddrtree(),
-#   description_celltree_maptpx(),
-#   description_celltree_gibbs(),
-#   description_celltree_vem(),
-#   description_tscan(),
-#   description_scuba(),
-#   description_stemid()
-# )
-#
-# ## select datasets
-# select_tasks <- tasks %>% arrange(ti_type, subdataset_i)
-#
-# ## MBO settings
-# num_cores <- 6
-#
-# ## set up evaluation
-# metrics <- c("Q_global", "Q_local", "correlation")
-# impute_fun <- impute_y_fun(length(metrics))
-#
-# ## MBO settings
-# control_train <- makeMBOControl(
-#   n.objectives = length(metrics),
-#   propose.points = num_cores,
-#   impute.y.fun = impute_fun) %>%
-#   setMBOControlTermination(iters = 20L) %>%
-#   setMBOControlInfill(makeMBOInfillCritDIB())
-# control_test <- control_train
-# control_test$iters <- 1
-# control_test$propose.points <- 1
-#
-# grid <- expand.grid(method_i = seq_along(methods), fold_i = seq_len(4), repeat_i = seq_len(4))
-#
-# ## Run MBO
-# qsub_handle <- qsub_lapply(
-#   X = seq_len(nrow(grid)),
-#   qsub_environment = c("methods", "select_tasks", "num_cores", "metrics", "impute_fun", "control_train", "control_test", "design", "grid"),
-#   qsub_config = override_qsub_config(wait = F, num_cores = num_cores, memory = "20G", name = "dyneval", remove_tmp_folder = F, max_wall_time = "24:00:00"),
-#   FUN = function(grid_i) {
-#
-#   library(dplyr)
-#   library(purrr)
-#   library(dyneval)
-#   library(mlrMBO)
-#   library(parallelMap)
-#
-#   repeat_i <- grid$repeat_i[[grid_i]]
-#   fold_i <- grid$fold_i[[grid_i]]
-#   method_i <- grid$method_i[[grid_i]]
-#
-#   method <- methods[[method_i]]
-#   obj_fun <- make_obj_fun(method, metrics = metrics)
-#
-#   design <- bind_rows(
-#     generateDesignOfDefaults(method$par_set),
-#     generateDesign(n = 100, par.set = method$par_set)
-#   )
-#   ## start parameter optimisation
-#   parallelStartMulticore(cpus = num_cores, show.info = TRUE)
-#   tune_train <- mbo(
-#     obj_fun,
-#     design = design,
-#     control = control_train,
-#     show.info = T,
-#     more.args = list(tasks = select_tasks %>% filter(!subdataset_i %in% fold_i))
-#   )
-#   tune_test <- mbo(
-#     obj_fun,
-#     design = tune_train$opt.path$env$path %>% dplyr::select(-starts_with("y_"), -one_of("y")),
-#     control = control_test,
-#     show.info = T,
-#     more.args = list(tasks = select_tasks %>% filter(subdataset_i %in% fold_i))
-#   )
-#   parallelStop()
-#
-#   list(design = design, tune_train = tune_train, tune_test = tune_test)
-# })
-#
-# save.image(paste0(output_root_folder, "temp.RData"))
-load(paste0(output_root_folder, "temp.RData"))
+## load datasets
+.datasets_location = "../dyngen/results/4/" # needs to be defined, to let dyngen know where the datasets are
+# tasks <- load_datasets(8)
+# saveRDS(tasks, paste0(.datasets_location, "tasks.rds"))
+tasks <- readRDS(paste0(.datasets_location, "tasks.rds")) %>% mutate(group = paste0(platform_id, "_", experiment_type)) %>% group_by(group, ti_type) %>% mutate(subtask_ix = seq_len(n())) %>% ungroup()
 
-qsub_handle$stop_on_error <- F
-qsub_handle$verbose <- F
+## load methods
+methods <- list(
+  description_scorpius(),
+  description_celltree_maptpx(),
+  description_celltree_gibbs(),
+  description_celltree_vem(),
+  description_dpt(),
+  description_embeddr(),
+  description_monocle_ddrtree(),
+  description_scuba(),
+  description_stemid(),
+  description_tscan()
+)
 
-post_fun <- function(rds_i, out_rds) {
-  grid_i <- rds_i
-  fold_i <- grid$fold_i[[rds_i]]
-  repeat_i <- grid$repeat_i[[rds_i]]
-  method_i <- grid$method_i[[rds_i]]
-  design <- out_rds$design
-  train_out <- out_rds$tune_train
-  test_out <- out_rds$tune_test
+## select datasets # limit for now
+select_tasks <- tasks %>% filter(platform_id == "fluidigm_c1", experiment_type == "synchronized") %>% arrange(ti_type, subtask_ix)
 
-  eval_summ_gath <- bind_rows(
-    data.frame(type = "train", train_out$opt.path$env$path) %>% mutate(
-      grid_i, repeat_i, fold_i, method_i,
-      param_i = seq_len(n()),
-      time = train_out$opt.path$env$exec.time
-    ),
-    data.frame(type = "test", test_out$opt.path$env$path) %>% mutate(
-      grid_i, repeat_i, fold_i, method_i,
-      param_i = seq_len(n()),
-      time = test_out$opt.path$env$exec.time
+## MBO settings
+num_cores <- 8
+
+## set up evaluation
+metrics <- c("Q_global", "Q_local", "correlation")
+impute_fun <- impute_y_fun(length(metrics))
+
+## MBO settings
+control_train <- makeMBOControl(
+  n.objectives = length(metrics),
+  propose.points = num_cores,
+  impute.y.fun = impute_fun) %>%
+  setMBOControlTermination(iters = 20L) %>%
+  setMBOControlInfill(makeMBOInfillCritDIB())
+control_test <- control_train
+control_test$iters <- 1
+control_test$propose.points <- 1
+
+grid <- expand.grid(
+  fold_i = unique(select_tasks$subtask_ix),
+  group_sel = unique(select_tasks$group),
+  repeat_i = seq_len(1),
+  stringsAsFactors = F
+)
+
+## Run MBO
+for (method in methods) {
+  method_folder <- paste0(output_root_folder, method$name)
+  output_file <- paste0(method_folder, "/output.rds")
+  qsubhandle_file <- paste0(method_folder, "/qsubhandle.rds")
+
+  dir.create(method_folder, showWarnings = F)
+
+  if (!file.exists(output_file) && !file.exists(qsubhandle_file)) {
+    cat("Submitting ", method$name, "\n", sep="")
+
+    obj_fun <- make_obj_fun(method, metrics = metrics)
+
+    design <- bind_rows(
+      generateDesignOfDefaults(method$par_set),
+      generateDesign(n = 100, par.set = method$par_set)
     )
-  ) %>% filter(param_i <= nrow(train_out$opt.path$env$path)) %>%
-    dplyr::as_data_frame()
 
-  if (!all(eval_summ_gath$y_1 == -1)) {
-    eval_summ <- eval_summ_gath %>%
-      gather(eval_metric, score, y_1:y_3, time) %>%
-      mutate(comb = paste0(type, "_", eval_metric)) %>%
-      select(-type, -eval_metric) %>%
-      spread(comb, score) %>%
-      mutate(iteration_i = train_out$opt.path$env$dob[param_i]) %>%
-      arrange(param_i)
+    qsub_handle <- qsub_lapply(
+      X = seq_len(nrow(grid)),
+      qsub_environment = c("method", "obj_fun", "design", "select_tasks", "num_cores", "metrics", "impute_fun", "control_train", "control_test", "grid"),
+      qsub_config = override_qsub_config(
+        wait = F,
+        num_cores = num_cores,
+        memory = "10G",
+        name = paste0("ev_", method$name),
+        remove_tmp_folder = F,
+        stop_on_error = F,
+        verbose = F,
+        max_wall_time = "99:00:00",
+        execute_before = " export R_MAX_NUM_DLLS=200"
+      ),
+      FUN = function(grid_i) {
+        library(dplyr)
+        library(purrr)
+        library(dyneval)
+        library(mlrMBO)
+        library(parallelMap)
 
-    ## collect the scores per dataset individually
-    eval_ind <- bind_rows(lapply(seq_len(nrow(eval_summ)), function(param_i) {
-      iteration_i <- eval_summ$iteration_i[[param_i]]
-      bind_rows(
-        if (eval_summ$train_y_1[[param_i]] >= 0) { # did this execution finish correctly?
-          train_out$opt.path$env$extra[[param_i]]$.summary %>% mutate(grid_i, repeat_i, fold_i, method_i, param_i, iteration_i, fold_type = "train")
-        } else {
-          NULL
-        },
-        if (eval_summ$test_y_1[[param_i]] >= 0) { # did this execution finish correctly?
-          test_out$opt.path$env$extra[[param_i]]$.summary %>% mutate(grid_i, repeat_i, fold_i, method_i, param_i, iteration_i, fold_type = "test")
-        } else {
-          NULL
-        }
-      )
-    })) %>% left_join(tasks %>% dplyr::select(type, ti_type, name, experimentid, platformname, version, dataset_i, subdataset_i), by = c("task_name" = "name")) %>%
-      as_data_frame
+        fold_i <- grid[grid_i,]$fold_i
+        group_sel <- grid[grid_i,]$group_sel
+        repeat_i <- grid[grid_i,]$repeat_i
 
-    ## group them together per ti_type
-    eval_grp <- eval_ind %>% group_by(ti_type, grid_i, repeat_i, fold_i, method_i, iteration_i, param_i, fold_type) %>% summarise_at(metrics, mean) %>% ungroup()
-  } else {
-    eval_summ <- NULL
-    eval_summ_gath <- NULL
-    eval_ind <- NULL
-    eval_grp <- NULL
+        ## start parameter optimisation
+        parallelStartMulticore(cpus = num_cores, show.info = TRUE)
+        tune_train <- mbo(
+          obj_fun,
+          design = design,
+          control = control_train,
+          show.info = T,
+          more.args = list(tasks = select_tasks %>% filter(group == group_sel, subtask_ix != fold_i))
+        )
+        tune_test <- mbo(
+          obj_fun,
+          design = tune_train$opt.path$env$path %>% dplyr::select(-starts_with("y_"), -one_of("y")),
+          control = control_test,
+          show.info = T,
+          more.args = list(tasks = select_tasks %>% filter(group == group_sel, subtask_ix == fold_i))
+        )
+        parallelStop()
+
+        list(design = design, tune_train = tune_train, tune_test = tune_test)
+      })
+
+    #saveRDS(lst(method, select_tasks, num_cores, metrics, impute_fun, control_train, control_test, grid, qsub_handle), qsubhandle_file)
+    saveRDS(qsub_handle, qsubhandle_file)
   }
-
-  dplyr::lst(eval_summ, eval_summ_gath, eval_ind, eval_grp)
 }
 
-output <- qsub_retrieve(qsub_handle, post_fun = post_fun, wait = F)
 
-# save(output, file = paste0(output_root_folder, "temp_output.RData"))
-load(paste0(output_root_folder, "temp_output.RData"))
-
-method_names <- methods %>% map_chr(~ .$name)
-grid %>% as_data_frame %>% mutate(method_str = method_names[method_i])
-
-output <- output[!sapply(output, function(x) length(x) == 1 && is.na(x))]
-
-scores <- output %>% map_df(~ .$eval_summ) %>% mutate(grid_str = paste0("Repeat ", repeat_i, ", fold ", fold_i), method_str = method_names[method_i])
-individual_scores <- output %>% map_df(~ .$eval_ind) %>% mutate(grid_str = paste0("Repeat ", repeat_i, ", fold ", fold_i), method_str = method_names[method_i])
-grouped_scores <- output %>% map_df(~ .$eval_grp) %>% mutate(grid_str = paste0("Repeat ", repeat_i, ", fold ", fold_i), method_str = method_names[method_i])
-
-scores %>% group_by(repeat_i, fold_i, method_i) %>% slice(1) %>% ungroup() %>% group_by(repeat_i, fold_i) %>% summarise(n = n()) %>% ungroup()
-scores %>% group_by(repeat_i, fold_i, method_str) %>% slice(1) %>% ungroup() %>% group_by(method_str) %>% summarise(n = n()) %>% ungroup()
-scores %>% group_by(repeat_i, fold_i, method_str) %>% slice(1) %>% ungroup() %>% group_by(method_str, fold_i) %>% summarise(n = n()) %>% ungroup() %>% spread(fold_i, n, fill = 0)
-
-best_scores <- scores %>% group_by(repeat_i, fold_i, method_i) %>% arrange(desc(train_y_1)) %>% slice(1) %>% ungroup() %>%
-  arrange(desc(train_y_1)) %>% mutate(method_rank = paste0("#", seq_len(n()), ": ", method_str), method_fac = factor(method_rank, levels = method_rank))
-best_param <- best_scores %>% select(repeat_i, fold_i, method_i, param_i, method_rank, method_fac)
-best_individual_scores <- individual_scores %>% right_join(best_param, by = c("repeat_i", "fold_i", "method_i", "param_i"))
-best_grouped_scores <- grouped_scores %>% right_join(best_param, by = c("repeat_i", "fold_i", "method_i", "param_i"))
-
-ggplot(scores %>% filter(train_y_1 >= 0, test_y_1 >= 0)) +
-  geom_vline(aes(xintercept = train_y_1), scores %>% filter(param_i == 1, train_y_1 >= 0, test_y_1 >= 0)) +
-  geom_hline(aes(yintercept = test_y_1), scores %>% filter(param_i == 1, train_y_1 >= 0, test_y_1 >= 0)) +
-  geom_vline(aes(xintercept = train_y_1), best_scores %>% filter(train_y_1 >= 0, test_y_1 >= 0), colour = "red") +
-  geom_hline(aes(yintercept = test_y_1), best_scores %>% filter(train_y_1 >= 0, test_y_1 >= 0), colour = "red") +
-  geom_point(aes(train_y_1, test_y_1, colour = iteration_i)) +
-  scale_colour_distiller(palette = "RdBu") +
-  facet_grid(method_str~grid_str) +
-  coord_equal()
-
-aggregated_scores <- best_scores %>% group_by(method_i) %>% mutate_at(c(paste0("train_y_", 1:3), paste0("test_y_", 1:3)), mean) %>% summarise_all(head1)
-aggregated_scores_spr <- aggregated_scores %>% gather(eval_metric, score, contains("_y_"))
-#ggplot(aggregated_scores) + geom_point(aes(train_y_1, test_y_1, colour = method_str))
-ggplot(aggregated_scores_spr %>% filter(eval_metric %in% c("train_y_1", "test_y_1")) %>% mutate(eval_metric = factor(eval_metric, levels = c("train_y_1", "test_y_1")))) +
-  geom_bar(aes(method_str, score, fill = eval_metric), stat = "identity", position = "dodge")
-
-grspr <- grouped_scores %>% select(-Q_local, -correlation) %>% spread(fold_type, Q_global)
-bgrspr <- best_grouped_scores %>% select(-Q_local, -correlation) %>% spread(fold_type, Q_global)
-ggplot(grspr) +
-  geom_vline(aes(xintercept = train), grspr %>% filter(param_i == 1)) +
-  geom_hline(aes(yintercept = test), grspr %>% filter(param_i == 1)) +
-  geom_vline(aes(xintercept = train), bgrspr, colour = "red") +
-  geom_hline(aes(yintercept = test), bgrspr, colour = "red") +
-  geom_point(aes(train, test, colour = iteration_i)) +
-  scale_colour_distiller(palette = "RdBu") +
-  facet_grid(ti_type~method_str) +
-  coord_equal()
-
-ggplot(best_grouped_scores) + geom_bar(aes(method_fac, Q_global, fill = method_fac), stat = "identity", position = "dodge") + facet_grid(fold_type~ti_type)
+# load(paste0(output_root_folder, "temp.RData"))
+#
+# qsub_handle$stop_on_error <- F
+# qsub_handle$verbose <- F
+#
+# post_fun <- function(rds_i, out_rds) {
+#   grid_i <- rds_i
+#   fold_i <- grid$fold_i[[rds_i]]
+#   repeat_i <- grid$repeat_i[[rds_i]]
+#   method_i <- grid$method_i[[rds_i]]
+#   design <- out_rds$design
+#   train_out <- out_rds$tune_train
+#   test_out <- out_rds$tune_test
+#
+#   eval_summ_gath <- bind_rows(
+#     data.frame(type = "train", train_out$opt.path$env$path) %>% mutate(
+#       grid_i, repeat_i, fold_i, method_i,
+#       param_i = seq_len(n()),
+#       time = train_out$opt.path$env$exec.time
+#     ),
+#     data.frame(type = "test", test_out$opt.path$env$path) %>% mutate(
+#       grid_i, repeat_i, fold_i, method_i,
+#       param_i = seq_len(n()),
+#       time = test_out$opt.path$env$exec.time
+#     )
+#   ) %>% filter(param_i <= nrow(train_out$opt.path$env$path)) %>%
+#     dplyr::as_data_frame()
+#
+#   if (!all(eval_summ_gath$y_1 == -1)) {
+#     eval_summ <- eval_summ_gath %>%
+#       gather(eval_metric, score, y_1:y_3, time) %>%
+#       mutate(comb = paste0(type, "_", eval_metric)) %>%
+#       select(-type, -eval_metric) %>%
+#       spread(comb, score) %>%
+#       mutate(iteration_i = train_out$opt.path$env$dob[param_i]) %>%
+#       arrange(param_i)
+#
+#     ## collect the scores per dataset individually
+#     eval_ind <- bind_rows(lapply(seq_len(nrow(eval_summ)), function(param_i) {
+#       iteration_i <- eval_summ$iteration_i[[param_i]]
+#       bind_rows(
+#         if (eval_summ$train_y_1[[param_i]] >= 0) { # did this execution finish correctly?
+#           train_out$opt.path$env$extra[[param_i]]$.summary %>% mutate(grid_i, repeat_i, fold_i, method_i, param_i, iteration_i, fold_type = "train")
+#         } else {
+#           NULL
+#         },
+#         if (eval_summ$test_y_1[[param_i]] >= 0) { # did this execution finish correctly?
+#           test_out$opt.path$env$extra[[param_i]]$.summary %>% mutate(grid_i, repeat_i, fold_i, method_i, param_i, iteration_i, fold_type = "test")
+#         } else {
+#           NULL
+#         }
+#       )
+#     })) %>% left_join(tasks %>% dplyr::select(type, ti_type, name, experimentid, platformname, version, dataset_i, subdataset_i), by = c("task_name" = "name")) %>%
+#       as_data_frame
+#
+#     ## group them together per ti_type
+#     eval_grp <- eval_ind %>% group_by(ti_type, grid_i, repeat_i, fold_i, method_i, iteration_i, param_i, fold_type) %>% summarise_at(metrics, mean) %>% ungroup()
+#   } else {
+#     eval_summ <- NULL
+#     eval_summ_gath <- NULL
+#     eval_ind <- NULL
+#     eval_grp <- NULL
+#   }
+#
+#   dplyr::lst(eval_summ, eval_summ_gath, eval_ind, eval_grp)
+# }
+#
+# output <- qsub_retrieve(qsub_handle, post_fun = post_fun, wait = F)
+#
+# # save(output, file = paste0(output_root_folder, "temp_output.RData"))
+# load(paste0(output_root_folder, "temp_output.RData"))
+#
+# method_names <- methods %>% map_chr(~ .$name)
+# grid %>% as_data_frame %>% mutate(method_str = method_names[method_i])
+#
+# output <- output[!sapply(output, function(x) length(x) == 1 && is.na(x))]
+#
+# scores <- output %>% map_df(~ .$eval_summ) %>% mutate(grid_str = paste0("Repeat ", repeat_i, ", fold ", fold_i), method_str = method_names[method_i])
+# individual_scores <- output %>% map_df(~ .$eval_ind) %>% mutate(grid_str = paste0("Repeat ", repeat_i, ", fold ", fold_i), method_str = method_names[method_i])
+# grouped_scores <- output %>% map_df(~ .$eval_grp) %>% mutate(grid_str = paste0("Repeat ", repeat_i, ", fold ", fold_i), method_str = method_names[method_i])
+#
+# scores %>% group_by(repeat_i, fold_i, method_i) %>% slice(1) %>% ungroup() %>% group_by(repeat_i, fold_i) %>% summarise(n = n()) %>% ungroup()
+# scores %>% group_by(repeat_i, fold_i, method_str) %>% slice(1) %>% ungroup() %>% group_by(method_str) %>% summarise(n = n()) %>% ungroup()
+# scores %>% group_by(repeat_i, fold_i, method_str) %>% slice(1) %>% ungroup() %>% group_by(method_str, fold_i) %>% summarise(n = n()) %>% ungroup() %>% spread(fold_i, n, fill = 0)
+#
+# best_scores <- scores %>% group_by(repeat_i, fold_i, method_i) %>% arrange(desc(train_y_1)) %>% slice(1) %>% ungroup() %>%
+#   arrange(desc(train_y_1)) %>% mutate(method_rank = paste0("#", seq_len(n()), ": ", method_str), method_fac = factor(method_rank, levels = method_rank))
+# best_param <- best_scores %>% select(repeat_i, fold_i, method_i, param_i, method_rank, method_fac)
+# best_individual_scores <- individual_scores %>% right_join(best_param, by = c("repeat_i", "fold_i", "method_i", "param_i"))
+# best_grouped_scores <- grouped_scores %>% right_join(best_param, by = c("repeat_i", "fold_i", "method_i", "param_i"))
+#
+# ggplot(scores %>% filter(train_y_1 >= 0, test_y_1 >= 0)) +
+#   geom_vline(aes(xintercept = train_y_1), scores %>% filter(param_i == 1, train_y_1 >= 0, test_y_1 >= 0)) +
+#   geom_hline(aes(yintercept = test_y_1), scores %>% filter(param_i == 1, train_y_1 >= 0, test_y_1 >= 0)) +
+#   geom_vline(aes(xintercept = train_y_1), best_scores %>% filter(train_y_1 >= 0, test_y_1 >= 0), colour = "red") +
+#   geom_hline(aes(yintercept = test_y_1), best_scores %>% filter(train_y_1 >= 0, test_y_1 >= 0), colour = "red") +
+#   geom_point(aes(train_y_1, test_y_1, colour = iteration_i)) +
+#   scale_colour_distiller(palette = "RdBu") +
+#   facet_grid(method_str~grid_str) +
+#   coord_equal()
+#
+# aggregated_scores <- best_scores %>% group_by(method_i) %>% mutate_at(c(paste0("train_y_", 1:3), paste0("test_y_", 1:3)), mean) %>% summarise_all(head1)
+# aggregated_scores_spr <- aggregated_scores %>% gather(eval_metric, score, contains("_y_"))
+# #ggplot(aggregated_scores) + geom_point(aes(train_y_1, test_y_1, colour = method_str))
+# ggplot(aggregated_scores_spr %>% filter(eval_metric %in% c("train_y_1", "test_y_1")) %>% mutate(eval_metric = factor(eval_metric, levels = c("train_y_1", "test_y_1")))) +
+#   geom_bar(aes(method_str, score, fill = eval_metric), stat = "identity", position = "dodge")
+#
+# grspr <- grouped_scores %>% select(-Q_local, -correlation) %>% spread(fold_type, Q_global)
+# bgrspr <- best_grouped_scores %>% select(-Q_local, -correlation) %>% spread(fold_type, Q_global)
+# ggplot(grspr) +
+#   geom_vline(aes(xintercept = train), grspr %>% filter(param_i == 1)) +
+#   geom_hline(aes(yintercept = test), grspr %>% filter(param_i == 1)) +
+#   geom_vline(aes(xintercept = train), bgrspr, colour = "red") +
+#   geom_hline(aes(yintercept = test), bgrspr, colour = "red") +
+#   geom_point(aes(train, test, colour = iteration_i)) +
+#   scale_colour_distiller(palette = "RdBu") +
+#   facet_grid(ti_type~method_str) +
+#   coord_equal()
+#
+# ggplot(best_grouped_scores) + geom_bar(aes(method_fac, Q_global, fill = method_fac), stat = "identity", position = "dodge") + facet_grid(fold_type~ti_type)
 
 #
 # pdf(paste0(output_root_folder, "1_celltree_overallscore.pdf"), 10, 4)
