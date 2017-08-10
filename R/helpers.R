@@ -29,25 +29,24 @@ load_datasets <- function(mc_cores = 1) {
       ti_type = model$modulenetname,
       id = dataset_id,
       cell_ids = rownames(counts),
-      milestone_ids = gs$percentages$milestone %>% unique %>% as.character,
-      milestone_network = gs$milestonenet %>%
+      milestone_ids = gs$milestone_percentages$milestone %>% unique %>% as.character, # change this to milestone_id in the future?
+      milestone_network = gs$milestone_network %>%
         mutate(
           from = as.character(from),
           to = as.character(to),
-          length = ifelse(!is.na(length), length, 1) # temporary fix
+          length = ifelse(!is.na(length), length, 1)
         ),
       milestone_percentages = cellinfo %>%
-        left_join(gs$percentages, by = c("stepid"="cellid")) %>%
+        left_join(gs$milestone_percentages, by = c("step_id"="cell_id")) %>%
         filter(percentage > 0) %>%
-        rename(cell_id = cellid, milestone_id = milestone) %>% # temporary fix
+        rename(milestone_id = milestone) %>% # change this to milestone_id
         mutate(milestone_id = as.character(milestone_id)) %>%
-        group_by(cell_id, milestone_id) %>%  # temporary fix
-        slice(1) %>%
-        ungroup %>%
         select(cell_id, milestone_id, percentage),
       counts = counts,
       sample_info = cellinfo %>%
-        select(cell_id = cellid, step, simulation_time = simulationtime)
+        select(cell_id, step, simulation_time = simulationtime),
+      platform_id = platform$platform_id,
+      experiment_type = gsub(".*_[0-9]+_([^_]*)_.*", "\\1", dataset_id) # temporary fix
     )
   })
   task_wrapped %>%
