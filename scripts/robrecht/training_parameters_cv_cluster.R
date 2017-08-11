@@ -10,9 +10,9 @@ dir.create(output_root_folder)
 
 ## load datasets
 .datasets_location = "../dyngen/results/4/" # needs to be defined, to let dyngen know where the datasets are
-# tasks <- load_datasets(8)
+# tasks <- load_datasets(8) # this function takes way too long due to the geodesic distances being calculated
 # saveRDS(tasks, paste0(.datasets_location, "tasks.rds"))
-tasks <- readRDS(paste0(.datasets_location, "tasks.rds")) %>% mutate(group = paste0(platform_id, "_", experiment_type)) %>% group_by(group, ti_type) %>% mutate(subtask_ix = seq_len(n())) %>% ungroup()
+tasks <- readRDS(paste0(.datasets_location, "tasks.rds")) %>% mutate(group = paste0(platform_id, "_", takesetting_type)) %>% group_by(group, ti_type) %>% mutate(subtask_ix = seq_len(n())) %>% ungroup()
 
 ## load methods
 methods <- list(
