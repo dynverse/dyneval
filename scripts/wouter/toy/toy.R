@@ -94,8 +94,9 @@ scores_summary %>%
 
 scores_summary %>%
   ggplot() +
-  geom_boxplot(aes(toy_category, diff)) +
-  facet_wrap(~score_id)
+  geom_boxplot(aes(toy_category, diff, color=perturbator_id)) +
+  facet_wrap(~score_id) +
+  coord_flip()
 
 rules <- tibble()
 add_rule <- function(rule) {
