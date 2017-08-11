@@ -32,7 +32,7 @@ run_waterfall <- function(counts, k = 10) {
   # wrap and return
   wrap_ti_prediction(
     ti_type = "linear",
-    id = "WATERFALL",
+    id = "Waterfall",
     cell_ids = cell_ids,
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
@@ -43,7 +43,7 @@ run_waterfall <- function(counts, k = 10) {
 }
 
 #' @importFrom ggplot2 ggplot geom_point aes scale_colour_distiller theme
-plot_waterfall <- function(ti_predictions, k = 10) {
+plot_waterfall <- function(ti_predictions) {
   ps <- ti_predictions$ps
   ggplot() +
     geom_point(aes(pseudotime, pseudotime.y, colour = pseudotime), ps, size = 5) +
