@@ -3,8 +3,6 @@ perturb_gs <- function(task) {
   task
 }
 
-
-
 # Switch cells
 perturb_switch_n_cells <- function(task, n=length(task$cell_ids)) {
   the_chosen_ones <- sample(task$cell_ids, n)
@@ -68,6 +66,7 @@ perturb_break_cycles <- function(task) {
 
 # Join linear
 perturb_join_linear <- function(task) {
+  # task <- generate_linear()
   if(nrow(task$milestone_network) != 1) {stop("joining non-linear trajectories not supported")}
 
   length <- task$milestone_network$length
@@ -91,6 +90,33 @@ perturb_join_linear <- function(task) {
   recreate_task(task)
 }
 
+
+# Split linear to bifurcation
+perturb_split_linear <- function(task) {
+  # task <- generate_linear()
+  if(nrow(task$milestone_network) != 1) {stop("joining non-linear trajectories not supported")}
+
+  length <- task$milestone_network$length
+
+  task$milestone_network <- tibble::tribble(
+    ~from, ~to, ~length,
+    "M1", "M2", length/2,
+    "M2", "M3", length/2,
+    "M2", "M4", length/2
+  )
+
+  task$milestone_ids <- c("M1", "M2", "M3", "M4")
+
+  task$progressions <- task$progressions %>%
+    mutate(
+      from = ifelse(percentage > 0.5, "M2", "M1"),
+      to = ifelse(percentage > 0.5, sample(c("M3", "M4"), n(), replace=TRUE), "M2"),
+      percentage = (percentage * 2) %% 1
+    )
+  recreate_task(task)
+}
+
+### Some helper functions-------------------
 
 # Recreate task, forcing a reculaculation of geodesic distances
 recreate_task <- function(task) {
