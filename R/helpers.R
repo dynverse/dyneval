@@ -25,37 +25,40 @@ load_datasets <- function(mc_cores = 1) {
 
     list2env(dataset, environment())
 
+    cell_ids <- rownames(counts)
+    milestone_ids <- gs$milestone_percentages$milestone_id %>% unique %>% as.character
+    milestone_network <- gs$milestone_network %>%
+      mutate(
+        from = as.character(from),
+        to = as.character(to)
+      )
+    milestone_percentages <- cellinfo %>%
+      left_join(gs$milestone_percentages, by = c("step_id" = "cell_id")) %>%
+      filter(percentage > 0) %>%
+      mutate(milestone_id = as.character(milestone_id)) %>%
+      select(cell_id, milestone_id, percentage)
+    sample_info <- cellinfo %>%
+      select(cell_id, step, simulation_time = simulationtime)
+
     dyneval::wrap_ti_task_data(
       ti_type = model$modulenetname,
       id = dataset_id,
-      cell_ids = rownames(counts),
-      milestone_ids = gs$milestone_percentages$milestone %>% unique %>% as.character, # change this to milestone_id in the future?
-      milestone_network = gs$milestone_network %>%
-        mutate(
-          from = as.character(from),
-          to = as.character(to),
-          length = ifelse(!is.na(length), length, 1)
-        ),
-      milestone_percentages = cellinfo %>%
-        left_join(gs$milestone_percentages, by = c("step_id"="cell_id")) %>%
-        filter(percentage > 0) %>%
-        rename(milestone_id = milestone) %>% # change this to milestone_id
-        mutate(milestone_id = as.character(milestone_id)) %>%
-        select(cell_id, milestone_id, percentage),
+      cell_ids = cell_ids,
+      milestone_ids = milestone_ids,
+      milestone_network = milestone_network,
+      milestone_percentages = milestone_percentages,
       counts = counts,
-      sample_info = cellinfo %>%
-        select(cell_id, step, simulation_time = simulationtime),
+      sample_info = sample_info,
+      task_ix = dataset_num,
+      modulenet_id = model$modulenetname,
       platform_id = platform$platform_id,
-      experiment_type = gsub(".*_[0-9]+_([^_]*)_.*", "\\1", dataset_id) # temporary fix
+      takesetting_type = dataset$takesetting$type,
+      model_replicate = model$modelsetting$replicate
     )
   })
   task_wrapped %>%
     list_as_tibble %>%
-    left_join(datasets_info, by = c("id" = "id")) %>%
-    mutate(task_ix = seq_len(n())) %>%
-    group_by(ti_type) %>%
-    mutate(subtask_ix = seq_len(n())) %>%
-    ungroup
+    left_join(datasets_info, by = c("id" = "id"))
 }
 
 #' This function assigns an object in a different namespace.
@@ -66,11 +69,13 @@ my_assignin_namespace <- function (x, value, ns, pos = -1, envir = as.environmen
   nf <- sys.nframe()
   if (missing(ns)) {
     nm <- attr(envir, "name", exact = TRUE)
-    if (is.null(nm) || substr(nm, 1L, 8L) != "package:")
+    if (is.null(nm) || substr(nm, 1L, 8L) != "package:") {
       stop("environment specified is not a package")
+    }
     ns <- asNamespace(substring(nm, 9L))
+  } else {
+    ns <- asNamespace(ns)
   }
-  else ns <- asNamespace(ns)
   ns_name <- getNamespaceName(ns)
   if (bindingIsLocked(x, ns)) {
     in_load <- Sys.getenv("_R_NS_LOAD_")
@@ -81,8 +86,7 @@ my_assignin_namespace <- function (x, value, ns, pos = -1, envir = as.environmen
         if (!in_load %in% c("Matrix", "SparseM"))
           warning(msg, call. = FALSE, domain = NA, immediate. = TRUE)
       }
-    }
-    else if (nzchar(Sys.getenv("_R_WARN_ON_LOCKED_BINDINGS_"))) {
+    } else if (nzchar(Sys.getenv("_R_WARN_ON_LOCKED_BINDINGS_"))) {
       warning(gettextf("changing locked binding for %s in %s",
                        sQuote(x), sQuote(ns_name)), call. = FALSE,
               domain = NA, immediate. = TRUE)
@@ -93,24 +97,27 @@ my_assignin_namespace <- function (x, value, ns, pos = -1, envir = as.environmen
     on.exit(options(w))
     options(warn = -1)
     lockBinding(x, ns)
-  }
-  else {
+  } else {
     assign(x, value, envir = ns, inherits = FALSE)
   }
   if (!isBaseNamespace(ns)) {
     S3 <- .getNamespaceInfo(ns, "S3methods")
-    if (!length(S3))
+    if (!length(S3)) {
       return(invisible(NULL))
+    }
     S3names <- S3[, 3L]
     if (x %in% S3names) {
       i <- match(x, S3names)
       genfun <- get(S3[i, 1L], mode = "function", envir = parent.frame())
-      if (.isMethodsDispatchOn() && methods::is(genfun,
-                                                "genericFunction"))
+      if (.isMethodsDispatchOn() && methods::is(genfun, "genericFunction")) {
         genfun <- methods::slot(genfun, "default")@methods$ANY
-      defenv <- if (typeof(genfun) == "closure")
-        environment(genfun)
-      else .BaseNamespaceEnv
+      }
+      defenv <-
+        if (typeof(genfun) == "closure") {
+          environment(genfun)
+        } else {
+          .BaseNamespaceEnv
+        }
       S3Table <- get(".__S3MethodsTable__.", envir = defenv)
       remappedName <- paste(S3[i, 1L], S3[i, 2L], sep = ".")
       if (exists(remappedName, envir = S3Table, inherits = FALSE))

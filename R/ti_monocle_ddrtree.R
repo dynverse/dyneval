@@ -2,8 +2,8 @@
 #' @export
 description_monocle_ddrtree <- function() {
   list(
-    name = "monocle_DDRtree",
-    short_name = "monocle with DDRtree",
+    name = "monocle with DDRtree",
+    short_name = "monocDDR",
     package_load = c("monocle", "igraph", "tidyverse", "reshape2"),
     package_installed = c(),
     par_set = makeParamSet(
