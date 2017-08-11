@@ -116,6 +116,19 @@ perturb_split_linear <- function(task) {
   recreate_task(task)
 }
 
+
+
+# Warping the times
+# very quick and dirty way to wrap, but it works :p
+perturb_warp <- function(task) {
+  # task <- generate_linear()
+
+  task$progressions$percentage <- task$progressions$percentage^(2^runif(1, -2, 2))
+
+  recreate_task(task)
+}
+
+
 ### Some helper functions-------------------
 
 # Recreate task, forcing a reculaculation of geodesic distances
