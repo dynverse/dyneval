@@ -10,6 +10,7 @@ toys_blueprint <- tribble(
   "linear", "gs",
   "linear", "switch_two_cells",
   "linear", "switch_all_cells",
+  "linear", "join_linear",
   "bifurcating", "gs",
   "bifurcating", "switch_two_cells",
   "bifurcating", "switch_all_cells",
@@ -142,12 +143,37 @@ scores_summary %>%
   geom_boxplot(aes(is_gs, diff, color=toy_category)) +
   facet_wrap(~score_id)
 
-## 3: Breaking of cycles should lower score
+## Linear vs cycle
+## 3a: Breaking of cycles should lower score
 scores_summary %>%
   filter(perturbator_id == "break_cycles") %>%
   group_by(score_id) %>%
   summarise(rule_id="3", rule = all(diff < 0)) %>%
   add_rule()
+
+## 3b: Joing a linear trajectory to a cycle should lower score
+
+
+## 4: Large perturbations should have a larger decrease compared to a small perturbations
+scores_summary_largevssmall <- scores_summary %>%
+  group_by(generator_id) %>%
+  filter(perturbator_id %in% c("switch_two_cells", "switch_all_cells")) %>%
+  filter(length(unique(perturbator_id)) == 2) %>%
+  ungroup() %>%
+  mutate(is_small = (perturbator_id == "switch_two_cells"))
+
+scores_summary_largevssmall %>%
+  group_by(score_id) %>%
+  summarise(
+    maxdiff = max(score[!is_small]) - min(score[is_small]),
+    rule_id = "4",
+    rule = all(maxdiff < 0)
+  ) %>%
+  add_rule()
+
+scores_summary_largevssmall %>% ggplot() +
+  geom_boxplot(aes(toy_category, score, color=perturbator_id)) +
+  facet_wrap(~score_id)
 
 ##
 rules %>% ggplot(aes(rule_id, score_id)) +

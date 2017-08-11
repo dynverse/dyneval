@@ -66,6 +66,31 @@ perturb_break_cycles <- function(task) {
   recreate_task(task)
 }
 
+# Join linear
+perturb_join_linear <- function(task) {
+  if(nrow(task$milestone_network) != 1) {stop("joining non-linear trajectories not supported")}
+
+  length <- task$milestone_network$length
+
+  task$milestone_network <- tibble::tribble(
+    ~from, ~to, ~length,
+    "M1", "M2", length/3,
+    "M2", "M3", length/3,
+    "M3", "M1", length/3
+  )
+
+  task$milestone_ids <- c("M1", "M2", "M3")
+
+  task$progressions <- task$progressions %>%
+    mutate(
+      from = task$milestone_ids[as.numeric(percentage*3) + 1],
+      to = task$milestone_ids[((as.numeric(percentage*3) +1) %% 3 + 1)],
+      percentage = (percentage * 3) %% 1
+    )
+
+  recreate_task(task)
+}
+
 
 # Recreate task, forcing a reculaculation of geodesic distances
 recreate_task <- function(task) {
