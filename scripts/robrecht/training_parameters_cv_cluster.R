@@ -80,7 +80,7 @@ for (method in methods) {
       qsub_config = override_qsub_config(
         wait = F,
         num_cores = num_cores,
-        memory = "10G",
+        memory = "20G",
         name = paste0("ev_", method$name),
         remove_tmp_folder = F,
         stop_on_error = F,
