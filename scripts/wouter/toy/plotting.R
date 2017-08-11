@@ -7,9 +7,11 @@ plot_strip <- function(task1, task2) {
 
   prog <- full_join(prog1, prog2, by=c("cell_id"))
 
+  print(task2$milestone_network)
+
   ggplot(prog) +
     geom_point(aes(cumpercentage1, cumpercentage2)) +
-    geom_hline(aes(yintercept=cumlength), data=task1$milestone_network) +
-    geom_vline(aes(xintercept=cumlength), data=task2$milestone_network) +
+    geom_vline(aes(xintercept=cumlength), data=task1$milestone_network) +
+    geom_hline(aes(yintercept=cumlength), data=task2$milestone_network) +
     ggtitle(paste0(task1$id, " -> ", task2$id))
 }
