@@ -6,7 +6,7 @@ library(parallelMap)
 output_root_folder <- "results/output_dyngentest/"
 
 ## load datasets
-.datasets_location = "../dyngen/results" # needs to be defined, to let dyngen know where the datasets are
+.datasets_location = "../dyngen/results/4/" # needs to be defined, to let dyngen know where the datasets are
 tasks <- load_datasets(mc_cores = 8)
 
 ## choose a method
@@ -22,7 +22,7 @@ method <- description_scorpius()
 # method <- description_embeddr()
 
 ## MBO settings
-num_cores <- 8
+num_cores <- 6
 
 ## set up evaluation
 metrics <- c("Q_global", "Q_local", "correlation")
@@ -30,10 +30,10 @@ obj_fun <- make_obj_fun(method, metrics = metrics, suppress_output = T)
 impute_fun <- impute_y_fun(length(metrics))
 
 # try first
-try <- obj_fun(list(), tasks = tasks)
-try_extra <- attr(try, "extras")
-attr(try, "extras") <- NULL
-try
+try_out <- obj_fun(list(), tasks = tasks)
+try_extra <- attr(try_out, "extras")
+attr(try_out, "extras") <- NULL
+try_out
 
 
 ## MBO settings
