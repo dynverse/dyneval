@@ -1,8 +1,8 @@
 #' @export
 description_celltree_maptpx <- function() {
   list(
-    name = "cellTree_maptpx",
-    short_name = "cellTree with maptpx",
+    name = "cellTree with maptpx",
+    short_name = "CTmaptpx", # max 8 char
     package_load = c("cellTree", "purrr", "tidyverse"),
     package_installed = c(),
     par_set = makeParamSet(
@@ -25,8 +25,8 @@ description_celltree_maptpx <- function() {
 #' @export
 description_celltree_gibbs <- function() {
   list(
-    name = "cellTree_gibbs",
-    short_name = "cellTree with Gibbs",
+    name = "cellTree with Gibbs",
+    short_name = "CTGibbs",
     package = c("cellTree", "purrr"),
     par_set = makeParamSet(
       makeDiscreteParam(id = "method", values = "Gibbs", default = "Gibbs"),
@@ -46,8 +46,8 @@ description_celltree_gibbs <- function() {
 #' @export
 description_celltree_vem <- function() {
   list(
-    name = "cellTree_vem",
-    short_name = "cellTree with VEM",
+    name = "cellTree with VEM",
+    short_name = "CTVEM",
     package = c("cellTree", "purrr"),
     par_set = makeParamSet(
       makeDiscreteParam(id = "method", values = "VEM", default = "VEM"),
