@@ -1,4 +1,5 @@
 library(tidyverse)
+library(dyneval)
 
 source("scripts/wouter/toy/generation.R")
 source("scripts/wouter/toy/perturbation.R")
@@ -11,7 +12,10 @@ toys_blueprint <- tribble(
   "linear", "switch_all_cells",
   "bifurcating", "gs",
   "bifurcating", "switch_two_cells",
-  "bifurcating", "switch_all_cells"
+  "bifurcating", "switch_all_cells",
+  "cycle", "gs",
+  "cycle", "switch_all_cells",
+  "cycle", "break_cycles"
 ) %>% rowwise() %>% mutate(
   generator=list(get(paste0("generate_", generator_id))),
   perturbator=list(get(paste0("perturb_", perturbator_id)))
@@ -25,12 +29,11 @@ toys <- toys_blueprint %>% slice(rep(1:n(), each=nreplicates)) %>% mutate(
   toy_id=paste0(toy_category, "-", replicate)
 ) %>% mutate(ncells=runif(n(), 10, 200))
 
-# generate gold standards and toys
-toys <- toys %>% rowwise() %>% mutate(
-  gs=list(generator(ncells)),
-  toy=list(perturbator(gs)),
-  toy=list(rename_toy(toy, toy_id))
-)
+# generate gold standards and toys, can take some time (for computing the geodesic distances)
+# I choose to not do this using mutate because it is much easier to debug
+toys$gs <- map2(toys$generator, toys$ncells, ~.x(.y))
+toys$toy <- map2(toys$perturbator, toys$gs, ~.x(.y))
+toys$toy <- map2(toys$toy, toys$toy_id, ~rename_toy(.x, .y))
 
 # plot toys
 toys <- toys %>% rowwise() %>% mutate(plot_strip=list(plot_strip(gs, toy)))
@@ -77,8 +80,9 @@ scores_summary <- scores %>% gather(score_id, score, -toy_id, -comparison) %>%
 
 scores_summary %>%
   ggplot() +
-    geom_boxplot(aes(toy_category, score)) +
-    facet_wrap(~score_id)
+    geom_boxplot(aes(toy_category, score, color=perturbator_id)) +
+    facet_wrap(~score_id) +
+    coord_flip()
 
 scores_summary %>%
   ggplot() +
@@ -91,6 +95,7 @@ add_rule <- function(rule) {
     group_by(rule_id, score_id) %>%
     filter(row_number() == n()) %>%
     ungroup()
+  rule
 }
 
 ### A good score...
@@ -109,18 +114,18 @@ scores_summary %>%
   ggbeeswarm::geom_beeswarm(aes(score_id, score, color=toy_category))
 
 ### Gold standard versus prediction
-## 2a: Score should be equal or lower before and after perturbation (direct gs comparison)
+## 2a: Score should be lower before and after perturbation (direct gs comparison)
 scores_summary %>%
+  filter(perturbator_id != "gs") %>%
   group_by(score_id) %>%
-  summarise(rule_id = "2a", rule = all(diff <= 0)) %>%
+  summarise(rule_id = "2a", rule = all(diff < 0)) %>%
   add_rule()
 
 scores_summary %>%
   ggplot() +
     ggbeeswarm::geom_beeswarm(aes(score_id, diff, color=toy_category))
 
-
-## 2b: Score should be equal or lower before and after perturbation, irrespective of structure or number of cells (indirect gs comparison)
+## 2b: Score should be lower before and after perturbation, irrespective of structure or number of cells (indirect gs comparison)
 scores_summary %>%
   mutate(is_gs = (perturbator_id == "gs")) %>%
   group_by(score_id) %>%
@@ -134,9 +139,17 @@ scores_summary %>%
 scores_summary %>%
   mutate(is_gs = (perturbator_id == "gs")) %>%
   ggplot() +
-    geom_boxplot(aes(is_gs, diff, color=toy_category)) +
-    facet_wrap(~score_id)
+  geom_boxplot(aes(is_gs, diff, color=toy_category)) +
+  facet_wrap(~score_id)
 
+## 3: Breaking of cycles should lower score
+scores_summary %>%
+  filter(perturbator_id == "break_cycles") %>%
+  group_by(score_id) %>%
+  summarise(rule_id="3", rule = all(diff < 0)) %>%
+  add_rule()
+
+##
 rules %>% ggplot(aes(rule_id, score_id)) +
   geom_raster(aes(fill = c("red", "green")[as.numeric(rule)+1])) +
   geom_text(aes(label = c("✘", "✔")[as.numeric(rule)+1]), color="white") +
