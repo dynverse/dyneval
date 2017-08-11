@@ -11,6 +11,7 @@ toys_blueprint <- tribble(
   "linear", "switch_two_cells",
   "linear", "switch_all_cells",
   "linear", "join_linear",
+  "linear", "split_linear",
   "bifurcating", "gs",
   "bifurcating", "switch_two_cells",
   "bifurcating", "switch_all_cells",
@@ -44,8 +45,10 @@ toys$toy <- toys %>% split(seq_len(nrow(toys))) %>% parallel::mclapply(function(
 toys$toy <- map2(toys$toy, toys$toy_id, ~rename_toy(.x, .y))
 
 # plot toys
-toys <- toys %>% rowwise() %>% mutate(plot_strip=list(plot_strip(gs, toy)))
-cowplot::plot_grid(plotlist=toys$plot_strip, ncol=nreplicates)
+toys <- toys %>% rowwise() %>% mutate(plot_strip=list(plot_strip(gs, toy))) %>% ungroup()
+cowplot::plot_grid(
+  plotlist=toys %>% group_by(toy_category) %>% filter(row_number()==1) %>% pull(plot_strip)
+)
 
 # get the scores when comparing the gs to toy
 compare_toy <- function(gs, toy, id=toy$id) {
@@ -151,7 +154,7 @@ scores_summary %>%
   geom_boxplot(aes(is_gs, diff, color=toy_category)) +
   facet_wrap(~score_id)
 
-## Linear vs cycle
+### Linear vs cycle
 ## 3a: Breaking of cycles should lower score
 scores_summary %>%
   filter(perturbator_id == "break_cycles") %>%
@@ -166,7 +169,7 @@ scores_summary %>%
   summarise(rule_id="3b", rule = all(diff < 0)) %>%
   add_rule()
 
-## 4: Large perturbations should have a larger decrease compared to a small perturbations
+### 4: Large perturbations should have a larger decrease compared to a small perturbations
 scores_summary_largevssmall <- scores_summary %>%
   group_by(generator_id) %>%
   filter(perturbator_id %in% c("switch_two_cells", "switch_all_cells")) %>%
@@ -186,6 +189,14 @@ scores_summary_largevssmall %>%
 scores_summary_largevssmall %>% ggplot() +
   geom_boxplot(aes(toy_category, score, color=perturbator_id)) +
   facet_wrap(~score_id)
+
+### 5: Splitting linear into bifurcating should lower score
+scores_summary %>%
+  filter(perturbator_id == "split_linear") %>%
+  group_by(score_id) %>%
+  summarise(rule_id="5", rule = all(diff < 0)) %>%
+  add_rule()
+
 
 ##
 rules %>% ggplot(aes(rule_id, score_id)) +
