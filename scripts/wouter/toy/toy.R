@@ -30,10 +30,17 @@ toys <- toys_blueprint %>% slice(rep(1:n(), each=nreplicates)) %>% mutate(
   toy_id=paste0(toy_category, "-", replicate)
 ) %>% mutate(ncells=runif(n(), 10, 200))
 
-# generate gold standards and toys, can take some time (for computing the geodesic distances)
+# generate gold standards and toys, can take some time (for computing the geodesic distances I presume)
 # I choose to not do this using mutate because it is much easier to debug
-toys$gs <- map2(toys$generator, toys$ncells, ~.x(.y))
-toys$toy <- map2(toys$perturbator, toys$gs, ~.x(.y))
+toys$gs <- toys %>% split(seq_len(nrow(toys))) %>% parallel::mclapply(function(row) {
+  row$generator[[1]](row$ncells)
+}, mc.cores=8)
+#toys$gs <- map2(toys$generator, toys$ncells, ~.x(.y))
+
+toys$toy <- toys %>% split(seq_len(nrow(toys))) %>% parallel::mclapply(function(row) {
+  row$perturbator[[1]](row$gs[[1]])
+}, mc.cores=8)
+#toys$toy <- map2(toys$perturbator, toys$gs, ~.x(.y))
 toys$toy <- map2(toys$toy, toys$toy_id, ~rename_toy(.x, .y))
 
 # plot toys
@@ -67,11 +74,11 @@ compare_gs_toy <- function(gs, toy) {
   )
 }
 
+scores <- toys %>% rowwise() %>% do(compare_gs_toy(.$gs, .$toy))
+
 # summarise the scores
 # get gs-toy score
 # get difference and fractions between gs-toy and gs-gs
-
-scores <- toys %>% rowwise() %>% do(compare_gs_toy(.$gs, .$toy))
 scores_summary <- scores %>% gather(score_id, score, -toy_id, -comparison) %>%
   spread(comparison, score) %>% mutate(
   score=`gs-toy`,
@@ -148,11 +155,15 @@ scores_summary %>%
 scores_summary %>%
   filter(perturbator_id == "break_cycles") %>%
   group_by(score_id) %>%
-  summarise(rule_id="3", rule = all(diff < 0)) %>%
+  summarise(rule_id="3a", rule = all(diff < 0)) %>%
   add_rule()
 
 ## 3b: Joing a linear trajectory to a cycle should lower score
-
+scores_summary %>%
+  filter(perturbator_id == "join_linear") %>%
+  group_by(score_id) %>%
+  summarise(rule_id="3b", rule = all(diff < 0)) %>%
+  add_rule()
 
 ## 4: Large perturbations should have a larger decrease compared to a small perturbations
 scores_summary_largevssmall <- scores_summary %>%
