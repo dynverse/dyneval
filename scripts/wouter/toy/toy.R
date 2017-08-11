@@ -12,12 +12,15 @@ toys_blueprint <- tribble(
   "linear", "switch_all_cells",
   "linear", "join_linear",
   "linear", "split_linear",
+  "linear", "warp",
   "bifurcating", "gs",
   "bifurcating", "switch_two_cells",
   "bifurcating", "switch_all_cells",
+  "bifurcating", "warp",
   "cycle", "gs",
   "cycle", "switch_all_cells",
-  "cycle", "break_cycles"
+  "cycle", "break_cycles",
+  "cycle", "warp"
 ) %>% rowwise() %>% mutate(
   generator=list(get(paste0("generate_", generator_id))),
   perturbator=list(get(paste0("perturb_", perturbator_id)))
@@ -135,7 +138,8 @@ scores_summary %>%
 
 scores_summary %>%
   ggplot() +
-    ggbeeswarm::geom_beeswarm(aes(score_id, diff, color=toy_category))
+    ggbeeswarm::geom_beeswarm(aes(score_id, diff, color=toy_category)) +
+    facet_wrap(~perturbator_id)
 
 ## 2b: Score should be lower before and after perturbation, irrespective of structure or number of cells (indirect gs comparison)
 scores_summary %>%
@@ -197,6 +201,17 @@ scores_summary %>%
   summarise(rule_id="5", rule = all(diff < 0)) %>%
   add_rule()
 
+### 6: Warping should lower score
+scores_summary %>%
+  filter(perturbator_id == "warp") %>%
+  group_by(score_id) %>%
+  summarise(rule_id="5", rule = all(diff < 0)) %>%
+  add_rule()
+
+scores_summary %>%
+  filter(perturbator_id == "warp") %>%
+  ggplot() +
+    ggbeeswarm::geom_beeswarm(aes(score_id, diff, color=generator_id))
 
 ##
 rules %>% ggplot(aes(rule_id, score_id)) +
