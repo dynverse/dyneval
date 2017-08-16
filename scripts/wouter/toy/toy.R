@@ -66,7 +66,7 @@ compare_toy <- function(gs, toy, id=toy$id) {
     plot_fun = function(task) plot(1:10)
   )
   toy$counts <- "dummy"
-  fun <- make_obj_fun(dummy_method(gs))
+  fun <- make_obj_fun(dummy_method(gs), metrics = c("Q_global", "Q_local", "correlation"))
   result <- fun(list(), dyneval:::list_as_tibble(list(toy)))
   scores <- attr(result, "extras")$.summary
   scores %>% select(-task_id) %>% mutate(toy_id=id)
@@ -138,8 +138,8 @@ scores_summary %>%
 
 scores_summary %>%
   ggplot() +
-    ggbeeswarm::geom_beeswarm(aes(score_id, diff, color=toy_category)) +
-    facet_wrap(~perturbator_id)
+    ggbeeswarm::geom_beeswarm(aes(score_id, diff, color=perturbator_id)) +
+    facet_wrap(~toy_category)
 
 ## 2b: Score should be lower before and after perturbation, irrespective of structure or number of cells (indirect gs comparison)
 scores_summary %>%
