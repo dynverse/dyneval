@@ -62,8 +62,14 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
         # Compute the correlation of the geodesic distances
         correlation <- cor(task_geo %>% as.vector, model_geo %>% as.vector)
 
+        # Compute the milestone network isomorphic
+        isomorphic <- igraph::is_isomorphic_to(
+          igraph::graph_from_data_frame(model$milestone_network),
+          igraph::graph_from_data_frame(tasks$milestone_network[[1]]),
+        )
+
         # Create summary statistics
-        summary <- data.frame(task_id = tasks$id[[i]], coranking$summary, correlation, stringsAsFactors = F, check.names = F)
+        summary <- data.frame(task_id = tasks$id[[i]], coranking$summary, correlation, isomorphic, stringsAsFactors = F, check.names = F)
 
         # Return the output
         lst(model = model, coranking = coranking, summary = summary)
