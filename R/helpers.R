@@ -53,7 +53,8 @@ load_datasets <- function(mc_cores = 1) {
       modulenet_id = model$modulenetname,
       platform_id = platform$platform_id,
       takesetting_type = dataset$takesetting$type,
-      model_replicate = model$modelsetting$replicate
+      model_replicate = model$modelsetting$replicate,
+      special_cells = dataset$special_cells
     )
   })
   task_wrapped %>%
