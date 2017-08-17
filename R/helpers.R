@@ -16,10 +16,10 @@ list_as_tibble <- function(list_of_rows) {
 }
 
 #' @export
-load_datasets <- function(mc_cores = 1) {
+load_datasets <- function(mc_cores = 1, ndatasets=Inf) {
   datasets_info <- readRDS(paste0(.datasets_location, "/datasets.rds"))
 
-  task_wrapped <- parallel::mclapply(seq_len(nrow(datasets_info)), mc.cores = mc_cores, function(dataset_num) {
+  task_wrapped <- parallel::mclapply(seq_len(min(nrow(datasets_info), ndatasets)), mc.cores = mc_cores, function(dataset_num) {
     dataset_id <- datasets_info$id[[dataset_num]]
     dataset <- dyngen::load_dataset(dataset_id)
 
