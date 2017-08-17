@@ -117,6 +117,92 @@ perturb_split_linear <- function(task) {
 }
 
 
+# Make a trajectory hairy
+#task <- generate_linear()
+
+perturb_hairy <- function(task, nhairs=10) {
+  newmilestone_network <- task$milestone_network
+  newprogressions <- task$progressions
+
+  new_milestone_i <- 1
+
+  for (i in seq_len(nhairs)) {
+    chosen_milestone_edge <- sample(seq_len(nrow(newmilestone_network)), 1, prob=newmilestone_network$length)
+    chosen_edge <- as.list(newmilestone_network[chosen_milestone_edge, ])
+    hair_length <- runif(1, 0.1, 0.2)
+    window_start <- runif(1, 0, 1-hair_length)
+    window_end <- window_start + hair_length
+
+    new_from <- paste0("NM_", new_milestone_i)
+    new_to <- paste0("NM_", new_milestone_i + 1)
+    new_milestone_i <- new_milestone_i + 2
+
+    subset_window <- (
+      newprogressions$from == chosen_edge$from &
+        newprogressions$to == chosen_edge$to &
+        newprogressions$percentage >= window_start &
+        newprogressions$percentage <= window_end
+    )
+    newprogressions[subset_window, ] <- newprogressions[subset_window, ] %>%
+      mutate(
+        from = new_from,
+        to = new_to,
+        percentage = (percentage - min(percentage)) / (window_end - window_start)
+      )
+
+    subset_before <- (
+      newprogressions$from == chosen_edge$from &
+        newprogressions$to == chosen_edge$to &
+        newprogressions$percentage < window_start
+    )
+
+    newprogressions[subset_before, ] <- newprogressions[subset_before, ] %>%
+      mutate(
+        from = from,
+        to = new_from,
+        percentage = percentage / window_start
+      )
+
+
+    subset_after <- (
+      newprogressions$from == chosen_edge$from &
+        newprogressions$to == chosen_edge$to &
+        newprogressions$percentage > window_end
+    )
+
+    newprogressions[subset_after, ] <- newprogressions[subset_after, ] %>%
+      mutate(
+        from = new_from,
+        to = to,
+        percentage = (percentage - window_end) / (1 - window_end)
+      )
+
+    newmilestone_network <- newmilestone_network %>%
+      filter(!(from == chosen_edge$from & to == chosen_edge$to)) %>%
+      bind_rows(tibble(
+        from = c(chosen_edge$from, new_from, new_from),
+        to = c(new_from, new_to, chosen_edge$to),
+        length = chosen_edge$length * c(window_start, window_end - window_start, 1-window_end)
+      ))
+  }
+
+  newtask <- wrap_ti_prediction(
+    task$ti_type,
+    task$id,
+    task$cell_ids,
+    unique(c(newmilestone_network$from, newmilestone_network$to)),
+    newmilestone_network,
+    progressions = newprogressions
+  )
+
+  #dyneval::plot_default(task)
+  #dyneval::plot_default(newtask)
+
+  newtask
+}
+
+perturb_hairy_small <- function(task) {perturb_hairy(task, nhairs=2)}
+perturb_hairy_large <- function(task) {perturb_hairy(task, nhairs=20)}
 
 # Warping the times
 # very quick and dirty way to wrap, but it works :p

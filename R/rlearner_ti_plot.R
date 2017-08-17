@@ -27,7 +27,7 @@ plotdata_default <- function(traj_object, insert_phantom_edges = T) {
   milestone_network <- traj_object$milestone_network
 
   # retrieve information on samples
-  milestone_percentages <- traj_object$milestone_percentages %>% spread(milestone_id, percentage, fill=0)
+  milestone_percentages <- traj_object$milestone_percentages %>% mutate(milestone_id=factor(milestone_id, levels=milestone_ids)) %>% spread(milestone_id, percentage, fill=0, drop=FALSE)
   milestone_percentages_m <- as.matrix(milestone_percentages[,milestone_ids,drop=F])
   rownames(milestone_percentages_m) <- milestone_percentages$cell_id
   colours_rgb_samples <- milestone_percentages_m %*% colours_rgb_milestones

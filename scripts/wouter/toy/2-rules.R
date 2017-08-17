@@ -1,102 +1,18 @@
-library(tidyverse)
-library(dyneval)
-
-source("scripts/wouter/toy/generation.R")
-source("scripts/wouter/toy/perturbation.R")
-source("scripts/wouter/toy/plotting.R")
-
-toys_blueprint <- tribble(
-  ~generator_id, ~perturbator_id,
-  "linear", "gs",
-  "linear", "switch_two_cells",
-  "linear", "switch_all_cells",
-  "linear", "join_linear",
-  "linear", "split_linear",
-  "linear", "warp",
-  "bifurcating", "gs",
-  "bifurcating", "switch_two_cells",
-  "bifurcating", "switch_all_cells",
-  "bifurcating", "warp",
-  "cycle", "gs",
-  "cycle", "switch_all_cells",
-  "cycle", "break_cycles",
-  "cycle", "warp"
-) %>% rowwise() %>% mutate(
-  generator=list(get(paste0("generate_", generator_id))),
-  perturbator=list(get(paste0("perturb_", perturbator_id)))
-)
-
-# replicate
-nreplicates <- 5
-toys <- toys_blueprint %>% slice(rep(1:n(), each=nreplicates)) %>% mutate(
-  replicate=seq_len(nrow(.))%%nreplicates,
-  toy_category=paste0(generator_id, "-", perturbator_id),
-  toy_id=paste0(toy_category, "-", replicate)
-) %>% mutate(ncells=runif(n(), 10, 200))
-
-# generate gold standards and toys, can take some time (for computing the geodesic distances I presume)
-# I choose to not do this using mutate because it is much easier to debug
-toys$gs <- toys %>% split(seq_len(nrow(toys))) %>% parallel::mclapply(function(row) {
-  row$generator[[1]](row$ncells)
-}, mc.cores=8)
-#toys$gs <- map2(toys$generator, toys$ncells, ~.x(.y))
-
-toys$toy <- toys %>% split(seq_len(nrow(toys))) %>% parallel::mclapply(function(row) {
-  row$perturbator[[1]](row$gs[[1]])
-}, mc.cores=8)
-#toys$toy <- map2(toys$perturbator, toys$gs, ~.x(.y))
-toys$toy <- map2(toys$toy, toys$toy_id, ~rename_toy(.x, .y))
-
-# plot toys
-toys <- toys %>% rowwise() %>% mutate(plot_strip=list(plot_strip(gs, toy))) %>% ungroup()
-cowplot::plot_grid(
-  plotlist=toys %>% group_by(toy_category) %>% filter(row_number()==1) %>% pull(plot_strip)
-)
-
-# get the scores when comparing the gs to toy
-compare_toy <- function(gs, toy, id=toy$id) {
-  dummy_method <- function(pred) list(
-    name = "dummy",
-    short_name = "dummy",
-    package_load = c(),
-    package_installed = c(),
-    par_set = ParamHelpers::makeParamSet(),
-    properties = c(),
-    run_fun = function(counts) pred,
-    plot_fun = function(task) plot(1:10)
-  )
-  toy$counts <- "dummy"
-  fun <- make_obj_fun(dummy_method(gs), metrics = c("Q_global", "Q_local", "correlation"))
-  result <- fun(list(), dyneval:::list_as_tibble(list(toy)))
-  scores <- attr(result, "extras")$.summary
-  scores %>% select(-task_id) %>% mutate(toy_id=id)
-}
-
-# get the scores when both comparing gs to gs and comparing gs to toy
-compare_gs_toy <- function(gs, toy) {
-  bind_rows(
-    compare_toy(gs, toy) %>% mutate(comparison="gs-toy"),
-    compare_toy(gs, gs, id=toy$id) %>% mutate(comparison="gs-gs")
-  )
-}
-
-scores <- toys %>% rowwise() %>% do(compare_gs_toy(.$gs, .$toy))
-
 # summarise the scores
 # get gs-toy score
 # get difference and fractions between gs-toy and gs-gs
 scores_summary <- scores %>% gather(score_id, score, -toy_id, -comparison) %>%
   spread(comparison, score) %>% mutate(
-  score=`gs-toy`,
-  diff= `gs-toy`-`gs-gs`,
-  frac=`gs-toy`/`gs-gs`
-) %>% select(-`gs-toy`, -`gs-gs`) %>% left_join(toys, by="toy_id")
+    score=`gs-toy`,
+    diff= `gs-toy`-`gs-gs`,
+    frac=`gs-toy`/`gs-gs`
+  ) %>% select(-`gs-toy`, -`gs-gs`) %>% left_join(toys, by="toy_id")
 
 scores_summary %>%
   ggplot() +
-    geom_boxplot(aes(toy_category, score, color=perturbator_id)) +
-    facet_wrap(~score_id) +
-    coord_flip()
+  geom_boxplot(aes(toy_category, score, color=perturbator_id)) +
+  facet_wrap(~score_id) +
+  coord_flip()
 
 scores_summary %>%
   ggplot() +
@@ -138,8 +54,9 @@ scores_summary %>%
 
 scores_summary %>%
   ggplot() +
-    ggbeeswarm::geom_beeswarm(aes(score_id, diff, color=perturbator_id)) +
-    facet_wrap(~toy_category)
+  ggbeeswarm::geom_beeswarm(aes(toy_category, diff, color=perturbator_id)) +
+  geom_hline(yintercept = 0) +
+  facet_wrap(~score_id)
 
 ## 2b: Score should be lower before and after perturbation, irrespective of structure or number of cells (indirect gs comparison)
 scores_summary %>%
@@ -158,6 +75,12 @@ scores_summary %>%
   geom_boxplot(aes(is_gs, diff, color=toy_category)) +
   facet_wrap(~score_id)
 
+scores_summary %>%
+  mutate(is_gs = (perturbator_id == "gs")) %>%
+  ggplot() +
+  geom_boxplot(aes(is_gs, diff, color=perturbator_id)) +
+  facet_wrap(~score_id)
+
 ### Linear vs cycle
 ## 3a: Breaking of cycles should lower score
 scores_summary %>%
@@ -174,6 +97,7 @@ scores_summary %>%
   add_rule()
 
 ### 4: Large perturbations should have a larger decrease compared to a small perturbations
+## 4a Shuffling cells
 scores_summary_largevssmall <- scores_summary %>%
   group_by(generator_id) %>%
   filter(perturbator_id %in% c("switch_two_cells", "switch_all_cells")) %>%
@@ -185,7 +109,28 @@ scores_summary_largevssmall %>%
   group_by(score_id) %>%
   summarise(
     maxdiff = max(score[!is_small]) - min(score[is_small]),
-    rule_id = "4",
+    rule_id = "4a",
+    rule = all(maxdiff < 0)
+  ) %>%
+  add_rule()
+
+scores_summary_largevssmall %>% ggplot() +
+  geom_boxplot(aes(toy_category, score, color=perturbator_id)) +
+  facet_wrap(~score_id)
+
+## 4b Added states
+scores_summary_largevssmall <- scores_summary %>%
+  group_by(generator_id) %>%
+  filter(perturbator_id %in% c("hairy_small", "hairy_large")) %>%
+  filter(length(unique(perturbator_id)) == 2) %>%
+  ungroup() %>%
+  mutate(is_small = (perturbator_id == "hairy_small"))
+
+scores_summary_largevssmall %>%
+  group_by(score_id) %>%
+  summarise(
+    maxdiff = max(score[!is_small]) - min(score[is_small]),
+    rule_id = "4b",
     rule = all(maxdiff < 0)
   ) %>%
   add_rule()
@@ -211,10 +156,40 @@ scores_summary %>%
 scores_summary %>%
   filter(perturbator_id == "warp") %>%
   ggplot() +
-    ggbeeswarm::geom_beeswarm(aes(score_id, diff, color=generator_id))
+  ggbeeswarm::geom_beeswarm(aes(score_id, diff, color=generator_id))
 
-##
+
+### 7: Changes in the milestone network should affect the scores, even if they do not greatly impact the ordering of the cells
+## These are rules made to compare cell-based metrics with milestone network metrics
+
+scores_summary %>%
+  group_by(score_id) %>%
+  mutate(maxscore = max(score)) %>%
+  filter(perturbator_id == "hairy") %>%
+  summarise(rule_id="7a", rule = all(score < maxscore/2)) %>%
+  add_rule()
+
+
+
+
+
+
+## Plot all rules
 rules %>% ggplot(aes(rule_id, score_id)) +
   geom_raster(aes(fill = c("red", "green")[as.numeric(rule)+1])) +
-  geom_text(aes(label = c("✘", "✔")[as.numeric(rule)+1]), color="white") +
+  geom_text(aes(label = c("▼", "▲")[as.numeric(rule)+1], size=as.numeric(rule)), color="white") +
   scale_fill_identity()
+
+
+## Possible score combinations satisfying all rules
+allscores <-unique(rules$score_id)
+score_ids_combinations <- map(1:length(allscores), function(x) map(combn(length(allscores), x, simplify = FALSE), ~allscores[.])) %>% unlist(recursive=FALSE)
+
+map(score_ids_combinations, function(score_ids_combination) {
+  rules %>% filter(score_id %in% score_ids_combination) %>%
+    group_by(rule_id) %>%
+    summarise(any=any(rule), number=sum(rule, na.rm=TRUE)) %>%
+    group_by() %>%
+    summarise(all=all(any), avg_rules_retrieved=sum(number)/length(score_ids_combination), nscores = length(score_ids_combination)) %>%
+    mutate(score_ids_combination=list(score_ids_combination))
+}) %>% bind_rows() %>% filter(all) %>% arrange(nscores, -avg_rules_retrieved) %>% View
