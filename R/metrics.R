@@ -43,6 +43,10 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
         # Add the counts to the parameters
         arglist <- c(list(counts = tasks$counts[[i]]), x)
 
+        if ("start_cell_id" %in% formalArgs(method$run_fun)) {
+          arglist$start_cell_id <- tasks$special_cells[[i]]$start_cell_id
+        }
+
         # Suppress output if need be
         if (suppress_output) {
           capture.output({
@@ -135,7 +139,8 @@ compute_emlike_dist <- function(traj) {
   milestone_distances <- igraph::distances(gr, weights = igraph::E(gr)$length, mode = "all")
 
   # transport percentages data
-  pct <- reshape2::acast(milestone_percentages, cell_id ~ milestone_id, value.var = "percentage", fill = 0)
+  milestone_percentages$milestone_id = factor(milestone_percentages$milestone_id, levels=milestone_ids) # make sure all milestones are included, even if none of the cells have a value for the milestone
+  pct <- reshape2::acast(milestone_percentages, cell_id ~ milestone_id, value.var = "percentage", fill = 0, drop=FALSE)
   pct <- pct[cell_ids, milestone_ids]
 
   fromto_matrix <- matrix(0, nrow = length(milestone_ids), ncol = length(milestone_ids), dimnames = list(milestone_ids, milestone_ids))
