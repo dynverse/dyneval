@@ -4,7 +4,7 @@ description_monocle_ddrtree <- function() {
   list(
     name = "monocle with DDRtree",
     short_name = "monocDDR",
-    package_load = c("monocle", "igraph", "tidyverse", "reshape2"),
+    package_load = c("monocle", "igraph", "reshape2"),
     package_installed = c(),
     par_set = makeParamSet(
       makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
@@ -27,8 +27,6 @@ description_monocle_ddrtree <- function() {
 
 #' @importFrom igraph degree all_shortest_paths distances
 #' @importFrom reshape2 melt
-#' @import dplyr
-#' @import monocle
 #'
 #' @export
 run_monocle_ddrtree <- function(counts,

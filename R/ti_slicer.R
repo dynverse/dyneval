@@ -4,7 +4,8 @@ description_slicer <- function() {
   list(
     name = "SLICER",
     short_name = "SLICER",
-    package = c("SLICER"),
+    package_load = c("SLICER"),
+    package_installed = c(),
     par_set = makeParamSet(
       makeIntegerParam(id = "kmin", lower = 2L, upper = 20L, default = 10),
       makeIntegerParam(id = "m", lower = 2L, upper = 20L, default = 2),
@@ -19,8 +20,6 @@ description_slicer <- function() {
   )
 }
 
-#' @import tidyverse
-#'
 #' @export
 run_slicer <- function(counts,
                       start_cell_id = sample(rownames(counts), 1),
