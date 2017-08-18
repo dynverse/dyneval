@@ -43,6 +43,10 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
         # Add the counts to the parameters
         arglist <- c(list(counts = tasks$counts[[i]]), x)
 
+        if ("start_cell_id" %in% formalArgs(method$run_fun)) {
+          arglist$start_cell_id <- tasks$special_cells[[i]]$start_cell_id
+        }
+
         # Suppress output if need be
         if (suppress_output) {
           capture.output({
@@ -62,8 +66,17 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
         # Compute the correlation of the geodesic distances
         correlation <- cor(task_geo %>% as.vector, model_geo %>% as.vector)
 
+        # Compute the milestone network isomorphic
+        isomorphic <- igraph::is_isomorphic_to(
+          igraph::graph_from_data_frame(model$milestone_network),
+          igraph::graph_from_data_frame(tasks$milestone_network[[1]])
+        )
+
+        # Compute the GED
+        ged <- calculate_ged(model$milestone_network, tasks$milestone_network[[1]])
+
         # Create summary statistics
-        summary <- data.frame(task_id = tasks$id[[i]], coranking$summary, correlation, stringsAsFactors = F, check.names = F)
+        summary <- data.frame(task_id = tasks$id[[i]], coranking$summary, correlation, isomorphic, ged, stringsAsFactors = F, check.names = F)
 
         # Return the output
         lst(model = model, coranking = coranking, summary = summary)
@@ -129,7 +142,8 @@ compute_emlike_dist <- function(traj) {
   milestone_distances <- igraph::distances(gr, weights = igraph::E(gr)$length, mode = "all")
 
   # transport percentages data
-  pct <- reshape2::acast(milestone_percentages, cell_id ~ milestone_id, value.var = "percentage", fill = 0)
+  milestone_percentages$milestone_id = factor(milestone_percentages$milestone_id, levels=milestone_ids) # make sure all milestones are included, even if none of the cells have a value for the milestone
+  pct <- reshape2::acast(milestone_percentages, cell_id ~ milestone_id, value.var = "percentage", fill = 0, drop=FALSE)
   pct <- pct[cell_ids, milestone_ids]
 
   fromto_matrix <- matrix(0, nrow = length(milestone_ids), ncol = length(milestone_ids), dimnames = list(milestone_ids, milestone_ids))
@@ -324,4 +338,23 @@ score_prediction_F1rr <- function(task, pred_output) {
   branch_assignment_true <- cal_branch_assignment(task$milestone_percentages %>% select(-id), task$milestone_network)
   branch_assignment_observed <- cal_branch_assignment(pred_output$milestone_percentages %>% select(-id), pred_output$milestone_network)
   F1rr(branch_assignment_true, branch_assignment_observed)
+}
+
+
+#' Compute the graph edit distance using gedevo
+#' @export
+calculate_ged <- function(net1, net2) {
+  net1 <- net1 %>% mutate(dir="u") %>% select(from, dir, to)
+  net2 <- net2 %>% mutate(dir="u") %>% select(from, dir, to)
+
+  tempfolder <- tempdir()
+  write.table(net1, file.path(tempfolder, "net1.sif"), row.names = FALSE, col.names = FALSE)
+  write.table(net2, file.path(tempfolder, "net2.sif"), row.names = FALSE, col.names = FALSE)
+
+
+  system(glue::glue("~/Downloads/gedevo --groups a b --sif {tempfolder}/net1.sif a --sif {tempfolder}/net2.sif b --no-prematch --no-workfiles --save {tempfolder}/out --maxiter 100 --maxsecs 1 --maxsame 100"), ignore.stdout=TRUE)
+
+  score <- read_file(paste0(tempfolder, "/out.txt")) %>% gsub("^.*GED score:[ ]*([0-9\\.]*).*", "\\1", .) %>% as.numeric()
+
+  1-score
 }
