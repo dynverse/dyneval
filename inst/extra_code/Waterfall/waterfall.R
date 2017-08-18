@@ -1,14 +1,94 @@
-`%notin%` <- function(x,y) !(x %in% y)
-new.foo <-function(x,y){x[which(x %notin% y)]}
+pseudotime.foo <-function(gene_name, all=all, span=.75, unit=.025, all.col=all.col, ...){
 
-unit_vector.foo <-function(x,y){
-  x <-as.numeric(x);y <-as.numeric(y)
-  (y-x)/(dist(rbind(x,y)))
+  pdf(file=paste0(gene_name,"_pseudotime_exp.pdf"),width=5,height=4)
+  pseudotime_gene_plot(gene_name,span=span, all=all, all.col=all.col, ...)
+  dev.off()
+
+  # HMM
+  library(RHmm)
+  exp <-as.numeric(all[grep(gene_name,rownames(all)),match(rownames(pseudotime.df),colnames(all))])
+  onoff <-state.foo(exp,unit=unit)#; onoff[which(onoff==2/3)] <-1; onoff[which(onoff==4/3)] <-2
+
+  pdf(file=paste0(gene_name,"_pseudotime_HMM.pdf"),width=8,height=.5)
+  pheatmap(t(as.matrix(onoff)),cluster_row=F,cluster_col=F,color=c("#000000","#FFEE00"),legend=F,show_rownames=F,show_colnames=F,cellwidth=6.25,cellheight=6.25)
+  dev.off()
 }
 
-inside_check.foo <-function(tot1,tot2,ab){
-  int <-intersect.foo(tot1,tot2,ab)
-  all((tot1<=int& int<=tot2)|(tot2<=int& int<=tot1))
+
+pseudotime_gene_plot <-function(gene_name,span, all=all, all.col=all.col, ...){
+  xpt <-as.numeric(pseudotime.df$pseudotime)
+  ypt <-as.numeric(all[,match(rownames(pseudotime.df),colnames(all))][grep(gene_name,rownames(all)),])
+
+  y.loess <-loess(ypt~xpt,span=span)
+  ypt.predict <-predict(y.loess,data.frame(x=xpt),se=T)
+  plot(pseudotime.df$pseudotime,ypt,bty="n",xlab="Pseudotime",ylab="Expression (TPM)",pch=20,cex=1,col=paste0(all.col[rownames(pseudotime.df)],"99"),main=gene_name,...)
+  lines(xpt,ypt.predict$fit,lwd=1,col="#BC2B2B")
+
+  y.polygon <- c((ypt.predict$fit+1.96*ypt.predict$se.fit), rev(c(ypt.predict$fit-1.96*ypt.predict$se.fit)))
+  x.polygon <- c(xpt, rev(xpt))
+  polygon(x.polygon, y.polygon, col="#00529533", border=NA)
+}
+
+sin_scale2.foo <-function(m,limit=200){
+  scale_row.foo <-function(X){
+    medX <-max(median(X),200)
+    maxX <-max(max(X),2*200)
+    Y <-rep(0,length(X))
+    l.idx <-which(X>=medX)
+    s.idx <-which(X<medX)
+
+    Y[s.idx] <- 0.5*sin((X[s.idx]-medX)/medX*pi/2)+.5
+    Y[l.idx] <- 0.5*sin((X[l.idx]-medX)/(max(X)-medX)*pi/2)+.5
+
+    return(Y)
+  }
+  t(apply(m,1,scale_row.foo))
+}
+
+scale_row.foo <-function(X,limit=200){
+  medX <-max(median(X),limit)
+  maxX <-max(max(X),2*limit)
+  Y <-rep(0,length(X))
+  l.idx <-which(X>=medX)
+  s.idx <-which(X<medX)
+
+  Y[s.idx] <- 0.5*sin((X[s.idx]-medX)/medX*pi/2)+.5
+  Y[l.idx] <- 0.5*sin((X[l.idx]-medX)/(max(X)-medX)*pi/2)+.5
+
+  return(Y)
+}
+
+marker_plot.foo <-function(gene_name){
+  pdf(file=paste0("marker_",gene_name,".pdf"),height=5.3,width=5)
+  scala_exp <-as.numeric(all[grep(gene_name,rownames(all)),])
+  size_ramp <-scale_row.foo(scala_exp)*5+.01
+  plot(pca$x[,1:2],col=paste0(all.col,"90"),cex=size_ramp,pch=19)
+  dev.off()
+}
+
+mst.of.classification <- function (x, k=6,color,seed=1,...) {
+  #   x <- t(x)
+  #   x <- t( t(x) - apply(x,2,mean) )
+  # c <- cor(x, method="pearson"); d <- dist(c); hr <- hclust(d, method = "ward", members=NULL)
+  pca <- prcomp(as.data.frame(t(x)), cor=T)
+  y <- pca$x
+
+  r <- prcomp(t(x))
+
+  # kmeans
+  set.seed(seed)
+  r <- kmeans(y[,1:2],k)
+  z <- r$centers
+  z <- z[order(z[,1]),]
+  rownames(z) <-paste0("t",1:nrow(z))
+  m <- mst(dist(z))
+  plot(y[,1:2], col=paste0(color), cex=3, pch=20, bty="n", ...)
+  points(z[,1:2], col="#FF0000", pch=19,cex=1)
+  #    text(y[,1:2],labels=rownames(y))
+  w <- which(m!=0)
+  i <- as.vector(row(m))[w]
+  j <- as.vector(col(m))[w]
+  segments( z[i,1], z[i,2], z[j,1], z[j,2], col="#FF0000" ,lwd=5)
 }
 
 intersect.foo <-function(tot1,tot2,ab){
@@ -21,9 +101,22 @@ intersect.foo <-function(tot1,tot2,ab){
   return(c(int.x,int.y))
 }
 
+inside_check.foo <-function(tot1,tot2,ab){
+  int <-intersect.foo(tot1,tot2,ab)
+  all((tot1<=int& int<=tot2)|(tot2<=int& int<=tot1))
+}
+
 distance.foo <-function(tot1,tot2,ab){
   int <-intersect.foo(tot1,tot2,ab)
   return(dist(rbind(int,ab)))
+}
+
+`%notin%` <- function(x,y) !(x %in% y)
+new.foo <-function(x,y){x[which(x %notin% y)]}
+
+unit_vector.foo <-function(x,y){
+  x <-as.numeric(x);y <-as.numeric(y)
+  (y-x)/(dist(rbind(x,y)))
 }
 
 crossvec <- function(x,y){
@@ -150,4 +243,90 @@ pseudotimeprog.foo <- function(x, k=10, color, x.reverse=F, plot=F, ...){
   }
 
   return(data.frame(y[,1:2], pseudotime, pseudotime.y))
+}
+
+state.foo <-function(X,s_from=2,unit=.025){
+  set.seed(1)
+  s=s_from # number of states
+
+  time <-pseudotime.df$pseudotime
+  time.unit <-0:max(round((time-min(time))/unit))
+
+  onoff <-rep(.5,length(time.unit))
+
+
+  exp <-as.numeric(X)
+
+  onoff_determine.foo <-function(exp,s){
+    obs <-unlist(lapply(split(exp,round((time-min(time))/unit)),mean))
+    ResFit <- HMMFit(obs, nStates=s)# Baum-Welch
+    state <-viterbi(ResFit,obs)
+    names(onoff) <-time.unit
+    onoff[match(as.character(names(obs)),names(onoff))] <-state[[1]]
+
+    onoff[which(onoff==.5)] <-onoff[which(onoff==.5)+1]
+    onoff[which(onoff==.5)] <-onoff[which(onoff==.5)-1]
+    onoff[which(onoff==.5)] <-onoff[which(onoff==.5)+2]
+    onoff[which(onoff==.5)] <-onoff[which(onoff==.5)-2]
+
+    state_order <-order(ResFit$HMM$distribution$mean)
+    onoff <-sapply(onoff,function(X){state_order[X]})
+  }
+
+  onoff <-rep(.5,length(time.unit))
+  onoff <-onoff_determine.foo(exp,2)
+
+  endpoint=length(onoff)
+  onethird=round(length(onoff)*1/3)
+  twothird=round(length(onoff)*2/3)
+
+  if (min(onoff)==max(onoff)| # If there is only one state exists
+      !any(which(onoff==2) %in% (which(onoff==2)+1))| # No continuous state exists
+      (cor(time,exp)> 0.2& length(which(onoff[1:twothird]==2))/2>length(which(onoff[(twothird+1):endpoint]==2)))| # If state estimation is way too off
+      (cor(time,exp)< -.1& length(which(onoff[1:onethird]==2))<length(which(onoff[(onethird+1):endpoint]==2))/2) # If state estimation is way too off
+  ){
+    onoff <-rep(1,length(onoff))
+    onoff <-rep(.5,length(time.unit))
+    onoff <-onoff_determine.foo(exp,4)
+  }
+
+  if (min(onoff)==max(onoff)| # If there is only one state exists
+      !any(which(onoff==2) %in% (which(onoff==2)+1))| # No continuous state exists
+      (cor(time,exp)> 0.2& length(which(onoff[1:twothird]==2))/2>length(which(onoff[(twothird+1):endpoint]==2)))| # If state estimation is way too off
+      (cor(time,exp)< -.1& length(which(onoff[1:onethird]==2))<length(which(onoff[(onethird+1):endpoint]==2))/2) # If state estimation is way too off
+  ){
+    onoff <-rep(1,length(onoff))
+    onoff <-rep(.5,length(time.unit))
+    onoff <-onoff_determine.foo(exp,3)
+  }
+
+  onoff <-onoff/max(onoff)*2
+  onoff <-as.integer(ceiling(onoff))
+  return(onoff)
+}
+
+diff_gene.foo <-function(exp.df=all,group.name1,group.name2){
+  groupA.idx <-which(colnames(exp.df) %in% group.name1)
+  groupB.idx <-which(colnames(exp.df) %in% group.name2)
+
+  meanA <-rowMeans(exp.df[,groupA.idx])
+  meanB <-rowMeans(exp.df[,groupB.idx])
+  maxmean <-apply(cbind(meanA,meanB),1,max)
+
+  # coefficient of variation
+  covar1 <-apply(exp.df[,groupA.idx],1,sd)/meanA
+  covar2 <-apply(exp.df[,groupB.idx],1,sd)/meanB
+
+  test.wilcox <-function(X){
+    return(wilcox.test(X[groupA.idx],X[groupB.idx])$p.value)}
+  test.diff <-meanA/meanB
+
+  pval <-apply(exp.df,1,test.wilcox)
+  log2FC <-log2(test.diff)
+
+  #sig.idx <-which(pval<.05& log2FC>0& maxmean>50& covar1<=1& meanA>=50)
+
+  return(
+    data.frame(name=rownames(exp.df),pval=pval,log2FC=log2FC,covar1=covar1,covar2=covar2,meanA=meanA,meanB=meanB)
+  )
 }
