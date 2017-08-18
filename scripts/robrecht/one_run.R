@@ -8,13 +8,16 @@ output_root_folder <- "results/output_dyngentest/"
 
 ## load datasets
 .datasets_location = "../dyngen/results" # needs to be defined, to let dyngen know where the datasets are
-tasks <- load_datasets() %>% mutate(dataset_i = seq_len(n())) %>% group_by(ti_type) %>% mutate(subdataset_i = seq_len(n())) %>% ungroup
+# tasks <- load_datasets(8) # this function takes way too long due to the geodesic distances being calculated
+# saveRDS(tasks, paste0(.datasets_location, "tasks.rds"))
+tasks <- readRDS(paste0(.datasets_location, "tasks.rds")) %>% mutate(group = paste0(platform_id, "_", takesetting_type)) %>% group_by(group, ti_type) %>% mutate(subtask_ix = seq_len(n())) %>% ungroup()
 
 ## take one task
 counts <- tasks$counts[[1]]
 
 ## choose a method
-method <- description_scuba()
+# method <- description_scuba()
+method <- description_waterfall()
 #method <- description_monocle_ddrtree()
 # method <- description_scorpius()
 method_fun <- make_obj_fun(method)
@@ -24,7 +27,7 @@ default_params <- generateDesignOfDefaults(method$par_set)
 params <- generateDesign(n = 20, par.set = method$par_set)
 
 #eval_out <- method_fun(default_params[1,] %>% as.list, tasks = tasks)
-eval_out <- method_fun(list(), tasks = tasks)
+eval_out <- method_fun(list(), tasks = tasks[1:10,])
 attr(eval_out,"extras") <- NULL
 eval_out
 

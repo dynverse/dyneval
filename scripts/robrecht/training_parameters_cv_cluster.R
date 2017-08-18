@@ -25,14 +25,15 @@ methods <- list(
   description_monocle_ddrtree(),
   description_scuba(),
   description_stemid(),
-  description_tscan()
+  description_tscan(),
+  description_waterfall()
 )
 
 ## select datasets # limit for now
-select_tasks <- tasks %>% filter(platform_id == "fluidigm_c1", experiment_type == "synchronized") %>% arrange(ti_type, subtask_ix)
+select_tasks <- tasks %>% filter(platform_id == "fluidigm_c1", takesetting_type == "snapshot") %>% arrange(ti_type, subtask_ix)
 
 ## MBO settings
-num_cores <- 8
+num_cores <- 4
 
 ## set up evaluation
 metrics <- c("Q_global", "Q_local", "correlation")
@@ -58,7 +59,7 @@ grid <- expand.grid(
 
 ## Run MBO
 for (method in methods) {
-  method_folder <- paste0(output_root_folder, method$name)
+  method_folder <- paste0(output_root_folder, method$short_name)
   output_file <- paste0(method_folder, "/output.rds")
   qsubhandle_file <- paste0(method_folder, "/qsubhandle.rds")
 
@@ -81,7 +82,7 @@ for (method in methods) {
         wait = F,
         num_cores = num_cores,
         memory = "20G",
-        name = paste0("ev_", method$name),
+        name = paste0("DE", method$short_name),
         remove_tmp_folder = F,
         stop_on_error = F,
         verbose = F,
@@ -124,6 +125,88 @@ for (method in methods) {
     saveRDS(qsub_handle, qsubhandle_file)
   }
 }
+
+## Post process fun
+post_fun <- function(rds_i, out_rds) {
+  grid_i <- rds_i
+  fold_i <- grid$fold_i[[rds_i]]
+  group_sel <- grid$group_sel[[rds_i]]
+  repeat_i <- grid$repeat_i[[rds_i]]
+  design <- out_rds$design
+  train_out <- out_rds$tune_train
+  test_out <- out_rds$tune_test
+
+  eval_summ_gath <- bind_rows(
+    data.frame(type = "train", train_out$opt.path$env$path) %>% mutate(
+      grid_i, repeat_i, fold_i, group_sel,
+      param_i = seq_len(n()),
+      time = train_out$opt.path$env$exec.time
+    ),
+    data.frame(type = "test", test_out$opt.path$env$path) %>% mutate(
+      grid_i, repeat_i, fold_i, group_sel,
+      param_i = seq_len(n()),
+      time = test_out$opt.path$env$exec.time
+    )
+  ) %>% filter(param_i <= nrow(train_out$opt.path$env$path)) %>%
+    dplyr::as_data_frame()
+
+  if (!all(eval_summ_gath$y_1 == -1)) {
+    eval_summ <- eval_summ_gath %>%
+      gather(eval_metric, score, y_1:y_3, time) %>%
+      mutate(comb = paste0(type, "_", eval_metric)) %>%
+      select(-type, -eval_metric) %>%
+      spread(comb, score) %>%
+      mutate(iteration_i = train_out$opt.path$env$dob[param_i]) %>%
+      arrange(param_i)
+
+    ## collect the scores per dataset individually
+    eval_ind <- bind_rows(lapply(seq_len(nrow(eval_summ)), function(param_i) {
+      iteration_i <- eval_summ$iteration_i[[param_i]]
+      bind_rows(
+        if (eval_summ$train_y_1[[param_i]] >= 0) { # did this execution finish correctly?
+          train_out$opt.path$env$extra[[param_i]]$.summary %>% mutate(grid_i, repeat_i, fold_i, group_sel, param_i, iteration_i, fold_type = "train")
+        } else {
+          NULL
+        },
+        if (eval_summ$test_y_1[[param_i]] >= 0) { # did this execution finish correctly?
+          test_out$opt.path$env$extra[[param_i]]$.summary %>% mutate(grid_i, repeat_i, fold_i, group_sel, param_i, iteration_i, fold_type = "test")
+        } else {
+          NULL
+        }
+      )
+    })) %>% left_join(tasks %>% dplyr::select(type, ti_type, id, experiment_id, platform_id, version, task_ix, subtask_ix), by = c("task_id" = "id")) %>%
+      as_data_frame
+
+    ## group them together per ti_type
+    eval_grp <- eval_ind %>% group_by(ti_type, grid_i, repeat_i, fold_i, group_sel, iteration_i, param_i, fold_type) %>% summarise_at(metrics, mean) %>% ungroup()
+  } else {
+    eval_summ <- NULL
+    eval_summ_gath <- NULL
+    eval_ind <- NULL
+    eval_grp <- NULL
+  }
+
+  dplyr::lst(eval_summ, eval_summ_gath, eval_ind, eval_grp)
+}
+
+## Process results
+for (method in methods) {
+  method_folder <- paste0(output_root_folder, method$short_name)
+  output_file <- paste0(method_folder, "/output.rds")
+  qsubhandle_file <- paste0(method_folder, "/qsubhandle.rds")
+
+  dir.create(method_folder, showWarnings = F)
+
+  if (!file.exists(output_file) && file.exists(qsubhandle_file)) {
+    qsub_handle <- readRDS(qsubhandle_file)
+
+    load(qsub_handle$src_rdata)
+
+    output <- qsub_retrieve(qsub_handle, post_fun = post_fun, wait = F)
+  }
+}
+
+
 
 
 # load(paste0(output_root_folder, "temp.RData"))
