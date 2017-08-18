@@ -97,7 +97,7 @@ run_monocle_ddrtree <- function(counts,
   # wrap output
   wrap_ti_prediction(
     ti_type = "tree",
-    name = "monocleDDRtree",
+    id = "monocleDDRtree",
     cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
