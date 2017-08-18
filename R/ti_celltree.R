@@ -27,7 +27,8 @@ description_celltree_gibbs <- function() {
   list(
     name = "cellTree with Gibbs",
     short_name = "CTGibbs",
-    package = c("cellTree"),
+    package_load = c("cellTree"),
+    package_installed = c(),
     par_set = makeParamSet(
       makeDiscreteParam(id = "method", values = "Gibbs", default = "Gibbs"),
       makeIntegerParam(id = "num_topics", lower = 2L, default = 4L, upper = 15L),
@@ -48,7 +49,8 @@ description_celltree_vem <- function() {
   list(
     name = "cellTree with VEM",
     short_name = "CTVEM",
-    package = c("cellTree"),
+    package_load = c("cellTree"),
+    package_installed = c(),
     par_set = makeParamSet(
       makeDiscreteParam(id = "method", values = "VEM", default = "VEM"),
       makeIntegerParam(id = "num_topics", lower = 2L, default = 4L, upper = 15L),
