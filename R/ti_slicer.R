@@ -20,7 +20,6 @@ description_slicer <- function() {
 }
 
 #' @import tidyverse
-#' @import SLICER
 #'
 #' @export
 run_slicer <- function(counts,
