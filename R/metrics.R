@@ -3,7 +3,8 @@
 #' @importFrom smoof makeSingleObjectiveFunction makeMultiObjectiveFunction
 #' @importFrom purrr %>% map map_df
 #' @export
-make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output = T, metrics = c("Q_global", "Q_local", "correlation")) {
+make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output = T,
+                         metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "ged")) {
   # Use different makefunction if there are multiple metrics versus one
   if (length(metrics) > 1) {
     make_fun <- function(...) makeMultiObjectiveFunction(..., n.objectives = length(metrics))
@@ -60,23 +61,32 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
         task_geo <- tasks$geodesic_dist[[i]]
         model_geo <- model$geodesic_dist
 
+        # Create summary statistics
+        summary <- data_frame(task_id = tasks$id[[i]])
+
         # Compute coranking metrics
-        coranking <- compute_coranking(task_geo, model_geo)
+        if (any(c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global") %in% metrics)) {
+          coranking <- compute_coranking(task_geo, model_geo)
+          summary <- bind_cols(summary, coranking$summary)
+        }
 
         # Compute the correlation of the geodesic distances
-        correlation <- cor(task_geo %>% as.vector, model_geo %>% as.vector)
+        if ("correlation" %in% metrics) {
+          summary$correlation <- cor(task_geo %>% as.vector, model_geo %>% as.vector)
+        }
 
         # Compute the milestone network isomorphic
-        isomorphic <- igraph::is_isomorphic_to(
-          igraph::graph_from_data_frame(model$milestone_network),
-          igraph::graph_from_data_frame(tasks$milestone_network[[1]])
-        )
+        if ("isomorphic" %in% metrics) {
+          summary$isomorphic <- igraph::is_isomorphic_to(
+            igraph::graph_from_data_frame(model$milestone_network),
+            igraph::graph_from_data_frame(tasks$milestone_network[[1]])
+          )
+        }
 
         # Compute the GED
-        ged <- calculate_ged(model$milestone_network, tasks$milestone_network[[1]])
-
-        # Create summary statistics
-        summary <- data.frame(task_id = tasks$id[[i]], coranking$summary, correlation, isomorphic, ged, stringsAsFactors = F, check.names = F)
+        if ("ged" %in% metrics) {
+          summary$ged <- calculate_ged(model$milestone_network, tasks$milestone_network[[1]])
+        }
 
         # Return the output
         lst(model = model, coranking = coranking, summary = summary)
@@ -344,6 +354,8 @@ score_prediction_F1rr <- function(task, pred_output) {
 #' Compute the graph edit distance using gedevo
 #' @export
 calculate_ged <- function(net1, net2) {
+  gedevo_path <- paste0(path.package("dyneval"), "/extra_code/GEDEVO/linux-x64/gedevo")
+
   net1 <- net1 %>% mutate(dir="u") %>% select(from, dir, to)
   net2 <- net2 %>% mutate(dir="u") %>% select(from, dir, to)
 
@@ -352,8 +364,7 @@ calculate_ged <- function(net1, net2) {
   write.table(net1, file.path(tempfolder, "net1.sif"), row.names = FALSE, col.names = FALSE)
   write.table(net2, file.path(tempfolder, "net2.sif"), row.names = FALSE, col.names = FALSE)
 
-
-  system(glue::glue("~/Downloads/gedevo --groups a b --sif {tempfolder}/net1.sif a --sif {tempfolder}/net2.sif b --no-prematch --no-workfiles --save {tempfolder}/out --maxiter 100 --maxsecs 1 --maxsame 100"), ignore.stdout=TRUE)
+  system(glue::glue("{gedevo_path} --groups a b --sif {tempfolder}/net1.sif a --sif {tempfolder}/net2.sif b --no-prematch --no-workfiles --save {tempfolder}/out --maxiter 100 --maxsecs 1 --maxsame 100"), ignore.stdout=TRUE)
 
   score <- read_file(paste0(tempfolder, "/out.txt")) %>% gsub("^.*GED score:[ ]*([0-9\\.]*).*", "\\1", .) %>% as.numeric()
 
