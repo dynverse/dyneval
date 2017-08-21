@@ -44,55 +44,26 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
 
       # Run the method on each of the tasks
       outs <- lapply(seq_len(nrow(tasks)), function(i) {
-        # Add the counts to the parameters
-        arglist <- c(list(counts = tasks$counts[[i]]), x)
+        task_list <- tasks[i,] %>% as.list
 
-        if ("start_cell_id" %in% formalArgs(method$run_fun)) {
-          arglist$start_cell_id <- tasks$special_cells[[i]]$start_cell_id
-        }
+        # Run method and calculate geodesic distances
+        method_out <- run_method(task_list, method, x)
+        model <- method_out$model
 
-        # Suppress output if need be
-        if (suppress_output) {
-          capture.output({
-            model <- do.call(method$run_fun, arglist)
-          })
-        } else {
-          model <- do.call(method$run_fun, arglist)
-        }
-
-        # Get the geodesic distances of the predicted and the gold trajectories
-        task_geo <- tasks$geodesic_dist[[i]]
-        model_geo <- model$geodesic_dist
+        # Calculate metrics
+        metrics_output <- calculate_metrics(task_list, model, metrics)
 
         # Create summary statistics
-        summary <- data_frame(task_id = tasks$id[[i]])
-
-        # Compute coranking metrics
-        if (any(c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global") %in% metrics)) {
-          coranking <- compute_coranking(task_geo, model_geo)
-          summary <- bind_cols(summary, coranking$summary)
-        }
-
-        # Compute the correlation of the geodesic distances
-        if ("correlation" %in% metrics) {
-          summary$correlation <- cor(task_geo %>% as.vector, model_geo %>% as.vector)
-        }
-
-        # Compute the milestone network isomorphic
-        if ("isomorphic" %in% metrics) {
-          summary$isomorphic <- igraph::is_isomorphic_to(
-            igraph::graph_from_data_frame(model$milestone_network),
-            igraph::graph_from_data_frame(tasks$milestone_network[[1]])
-          )
-        }
-
-        # Compute the milestone network GED
-        if ("ged" %in% metrics) {
-          summary$ged <- calculate_ged(model$milestone_network, tasks$milestone_network[[1]])
-        }
+        summary <- data.frame(
+          task_id = task_list$id,
+          method_out$summary,
+          metrics_out$summary,
+          stringsAsFactors = F,
+          check.names = F
+        )
 
         # Return the output
-        lst(model = model, coranking = coranking, summary = summary)
+        lst(model, summary)
       })
 
       # Revert back to the original set.seed
@@ -112,6 +83,84 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
       # Return output
       score
     })
+}
+
+run_method <- function(task, method, arguments) {
+  summary <- data.frame(row.names = 1)
+
+  # Add the counts to the parameters
+  arglist <- c(list(counts = task$counts), arguments)
+
+  # Include start cell if method requires it
+  if ("start_cell_id" %in% formalArgs(method$run_fun)) {
+    arglist$start_cell_id <- task$special_cells$start_cell_id
+  }
+
+  # Run model on task with given parameters. Suppress output if need be.
+  time0 <- Sys.time()
+  if (suppress_output) {
+    capture.output({
+      model <- do.call(method$run_fun, arglist)
+    })
+  } else {
+    model <- do.call(method$run_fun, arglist)
+  }
+  time1 <- Sys.time()
+  summary$time_method <- as.numeric(difftime(time1, time0, units = "sec"))
+
+  # Calculate geodesic distances
+  time0 <- Sys.time()
+  model$geodesic_dist <- compute_emlike_dist(model)
+  time1 <- Sys.time()
+  summary$time_geodesic <- as.numeric(difftime(time1, time0, units = "sec"))
+
+  rownames(summary) <- NULL
+
+  lst(model, summary)
+}
+
+calculate_metrics <- function(task, model, metrics) {
+  summary <- data.frame(row.names = 1)
+
+  # Compute coranking metrics
+  if (any(c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global") %in% metrics)) {
+    time0 <- Sys.time()
+    coranking <- compute_coranking(task$geodesic_dist, model$geodesic_dist)
+    summary <- bind_cols(summary, coranking$summary)
+    time1 <- Sys.time()
+    summary$time_coranking <- as.numeric(difftime(time1, time0, units = "sec"))
+  }
+
+  # Compute the correlation of the geodesic distances
+  if ("correlation" %in% metrics) {
+    time0 <- Sys.time()
+    summary$correlation <- cor(task$geodesic_dist %>% as.vector, model$geodesic_dist %>% as.vector)
+    time1 <- Sys.time()
+    summary$time_correlation <- as.numeric(difftime(time1, time0, units = "sec"))
+  }
+
+  # Compute the milestone network isomorphic
+  if ("isomorphic" %in% metrics) {
+    time0 <- Sys.time()
+    summary$isomorphic <- igraph::is_isomorphic_to(
+      igraph::graph_from_data_frame(model$milestone_network),
+      igraph::graph_from_data_frame(task$milestone_network)
+    )
+    time1 <- Sys.time()
+    summary$time_isomorphic <- as.numeric(difftime(time1, time0, units = "sec"))
+  }
+
+  # Compute the milestone network GED
+  if ("ged" %in% metrics) {
+    time0 <- Sys.time()
+    summary$ged <- calculate_ged(model$milestone_network, task$milestone_network)
+    time1 <- Sys.time()
+    summary$time_ged <- as.numeric(difftime(time1, time0, units = "sec"))
+  }
+
+  rownames(summary) <- NULL
+
+  lst(coranking, summary)
 }
 
 #' @export
@@ -212,10 +261,12 @@ compute_emlike_dist <- function(traj) {
         } else if (num_from == 0) {
           0
         } else {
-          transport::transport(a, b, costm = dist_milestones) %>%
-            mutate(dist = dist_milestones[cbind(from,to)], mult = mass * dist) %>%
-            .$mult %>%
-            sum
+          suppressWarnings({
+            transport::transport(a, b, costm = dist_milestones) %>%
+              mutate(dist = dist_milestones[cbind(from,to)], mult = mass * dist) %>%
+              .$mult %>%
+              sum
+          })
         }
       })
 
