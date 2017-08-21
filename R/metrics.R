@@ -71,14 +71,13 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
 
       # Combine the different outputs in three lists/data frames
       models <- outs %>% purrr::map(~ .$model)
-      corankings <- outs %>% purrr::map(~ .$coranking)
       summary <- outs %>% purrr::map_df(~ .$summary)
 
       # Calculate the final score
       score <- summary %>% summarise_at(metrics, funs(mean)) %>% as.matrix %>% as.vector %>% setNames(metrics)
 
       # Return extra information
-      attr(score, "extras") <- list(.models = models, .corankings = corankings, .summary = summary)
+      attr(score, "extras") <- list(.models = models, .summary = summary)
 
       # Return output
       score
