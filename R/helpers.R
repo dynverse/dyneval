@@ -16,7 +16,7 @@ list_as_tibble <- function(list_of_rows) {
 }
 
 #' @export
-load_datasets <- function(mc_cores = 1, ndatasets=Inf) {
+load_datasets <- function(mc_cores = 1, ndatasets = Inf) {
   datasets_info <- readRDS(paste0(.datasets_location, "/datasets.rds"))
 
   task_wrapped <- parallel::mclapply(seq_len(min(nrow(datasets_info), ndatasets)), mc.cores = mc_cores, function(dataset_num) {
@@ -40,7 +40,7 @@ load_datasets <- function(mc_cores = 1, ndatasets=Inf) {
     sample_info <- cellinfo %>%
       select(cell_id, step, simulation_time = simulationtime)
 
-    dyneval::wrap_ti_task_data(
+    out <- wrap_ti_task_data(
       ti_type = model$modulenetname,
       id = dataset_id,
       cell_ids = cell_ids,
@@ -56,6 +56,8 @@ load_datasets <- function(mc_cores = 1, ndatasets=Inf) {
       model_replicate = model$modelsetting$replicate,
       special_cells = dataset$special_cells
     )
+    out$geodesic_dist <- compute_emlike_dist(out)
+    out
   })
   task_wrapped %>%
     list_as_tibble %>%
