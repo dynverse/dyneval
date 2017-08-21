@@ -5,7 +5,7 @@ description_embeddr <- function() {
   list(
     name = "embeddr",
     short_name = "embeddr",
-    package_load = c("tidyverse", "ggplot2"),
+    package_load = c("ggplot2"),
     package_installed = c("scater", "embeddr"),
     par_set = makeParamSet(
       makeDiscreteParam(id = "kernel", default = "nn", values = c("nn", "dist", "heat")),
@@ -27,7 +27,7 @@ description_embeddr <- function() {
   )
 }
 
-#' @importFrom tibble data_frame
+#' @export
 run_embeddr <- function(counts,
                         kernel = "nn", metric = "correlation",
                         nn_pct = 1, eps = 1, t = 1,

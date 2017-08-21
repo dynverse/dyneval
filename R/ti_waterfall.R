@@ -3,7 +3,7 @@ description_waterfall <- function() {
   list(
     name = "Waterfall",
     short_name = "Waterf", # max 8 chars
-    package_load = c("matrixStats","rgl","pheatmap","limma","MASS","ape","RColorBrewer","RHmm"),
+    package_load = c("matrixStats", "limma", "MASS", "ape", "RColorBrewer", "RHmm"),
     package_installed = c(),
     par_set = makeParamSet(
       makeIntegerParam(id = "num_clusters", lower = 2, default = 10, upper = 20)

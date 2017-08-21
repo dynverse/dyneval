@@ -3,7 +3,7 @@ description_celltree_maptpx <- function() {
   list(
     name = "cellTree with maptpx",
     short_name = "CTmaptpx", # max 8 char
-    package_load = c("cellTree", "purrr", "tidyverse"),
+    package_load = c("cellTree"),
     package_installed = c(),
     par_set = makeParamSet(
       makeDiscreteParam(id = "method", values = "maptpx", default = "maptpx"),
@@ -27,7 +27,8 @@ description_celltree_gibbs <- function() {
   list(
     name = "cellTree with Gibbs",
     short_name = "CTGibbs",
-    package = c("cellTree", "purrr"),
+    package_load = c("cellTree"),
+    package_installed = c(),
     par_set = makeParamSet(
       makeDiscreteParam(id = "method", values = "Gibbs", default = "Gibbs"),
       makeIntegerParam(id = "num_topics", lower = 2L, default = 4L, upper = 15L),
@@ -48,7 +49,8 @@ description_celltree_vem <- function() {
   list(
     name = "cellTree with VEM",
     short_name = "CTVEM",
-    package = c("cellTree", "purrr"),
+    package_load = c("cellTree"),
+    package_installed = c(),
     par_set = makeParamSet(
       makeDiscreteParam(id = "method", values = "VEM", default = "VEM"),
       makeIntegerParam(id = "num_topics", lower = 2L, default = 4L, upper = 15L),
@@ -67,9 +69,6 @@ description_celltree_vem <- function() {
 
 #' @importFrom igraph degree distances get.vertex.attribute induced_subgraph
 #' @importFrom reshape2 melt
-#' @import dplyr
-#' @import cellTree
-#' @import magrittr
 #'
 #' @export
 run_celltree <- function(counts, method = "maptpx",
