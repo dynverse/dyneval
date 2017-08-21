@@ -86,7 +86,7 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
           )
         }
 
-        # Compute the GED
+        # Compute the milestone network GED
         if ("ged" %in% metrics) {
           summary$ged <- calculate_ged(model$milestone_network, tasks$milestone_network[[1]])
         }
