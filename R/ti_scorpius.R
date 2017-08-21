@@ -5,7 +5,7 @@ description_scorpius <- function() {
   list(
     name = "SCORPIUS",
     short_name = "SCORPIUS",
-    package_loaded = c("tidyverse", "ggplot2"),
+    package_loaded = c("ggplot2"),
     package_installed = c("SCORPIUS"),
     par_set = makeParamSet(
       makeDiscreteParam(id = "distance_method", default = "spearman", values = c("spearman", "pearson", "kendall")),
@@ -23,8 +23,7 @@ description_scorpius <- function() {
   )
 }
 
-#' @importFrom SCORPIUS correlation.distance reduce.dimensionality infer.trajectory
-#' @importFrom tibble data_frame
+#' @export
 run_scorpius <- function(counts,
                          num_dimensions = 3, num_clusters = 4, distance_method = "spearman",
                          thresh = .001, maxit = 10, stretch = 0, smoother = "smooth.spline") {

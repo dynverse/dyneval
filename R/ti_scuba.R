@@ -5,7 +5,7 @@ description_scuba <- function() {
   list(
     name = "SCUBA",
     short_name = "SCUBA",
-    package_load = c("R.matlab", "readr", "tidyverse"),
+    package_load = c("R.matlab", "readr"),
     package_installed = c(),
     par_set = makeParamSet(
       makeDiscreteParam(id = "cluster_mode", default = "pca2", values = c("original", "pca", "pca2"))

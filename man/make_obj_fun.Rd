@@ -5,7 +5,8 @@
 \title{Used for wrapping an evaluation function around a TI method}
 \usage{
 make_obj_fun(method, noisy = F, load_packages = T, suppress_output = T,
-  metrics = c("Q_global", "Q_local", "correlation"))
+  metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation",
+  "isomorphic", "ged"))
 }
 \description{
 Used for wrapping an evaluation function around a TI method

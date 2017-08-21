@@ -4,7 +4,7 @@ description_dpt <- function() {
   list(
     name = "DPT",
     short_name = "DPT",
-    package_load = c("destiny", "tidyverse"),
+    package_load = c("destiny"),
     package_installed = c(),
     par_set = makeParamSet(
       makeDiscreteParam(id = "sigma", default = "local", values = c("local", "global")),
@@ -22,9 +22,6 @@ description_dpt <- function() {
   )
 }
 
-#' @import tidyverse
-#' @import destiny
-#'
 #' @export
 run_dpt <- function(counts,
                     sigma = "local",
