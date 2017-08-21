@@ -35,7 +35,10 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
       # Loading packages for the TI method
       if (load_packages) {
         for (pack in method$package_load) {
-          do.call(library, list(pack))
+          suppressMessages(do.call(library, list(pack)))
+        }
+        for (pack in method$package_required) {
+          suppressMessages(do.call(requireNamespace, list(pack)))
         }
       }
 
