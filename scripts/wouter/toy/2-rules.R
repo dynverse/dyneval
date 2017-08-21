@@ -177,7 +177,7 @@ scores_summary %>%
 ## Plot all rules
 rules %>% ggplot(aes(rule_id, score_id)) +
   geom_raster(aes(fill = c("red", "green")[as.numeric(rule)+1])) +
-  geom_text(aes(label = c("▼", "▲")[as.numeric(rule)+1], size=as.numeric(rule)), color="white") +
+  geom_text(aes(label = c("▼", "▲")[as.numeric(rule)+1]), color="white") +
   scale_fill_identity()
 
 
