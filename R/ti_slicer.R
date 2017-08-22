@@ -19,6 +19,7 @@ description_slicer <- function() {
   )
 }
 
+#' @import dplyr
 #' @export
 run_slicer <- function(counts,
                       start_cell_id = sample(rownames(counts), 1),
@@ -131,6 +132,7 @@ run_slicer <- function(counts,
   )
 }
 
+#' @import ggplot2 dplyr
 #' @export
 plot_slicer <- function(ti_predictions) {
   ggplot(as.data.frame(ti_predictions$dimred_samples) %>% mutate(branch=ti_predictions$dimred_clust)) + geom_point(aes(V1, V2, color=branch))
