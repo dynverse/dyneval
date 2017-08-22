@@ -15,6 +15,13 @@ list_as_tibble <- function(list_of_rows) {
   list_of_cols %>% as.tibble()
 }
 
+#' Extracts one row, and reduces list-columns to their contents
+extract_row_to_list <- function(df, row_id) {
+  row <- as.list(df[row_id, ])
+  row <- map(row, function(x) ifelse(is.list(x), x, x[[1]]))
+  row
+}
+
 #' @export
 load_datasets <- function(mc_cores = 1, ndatasets = Inf) {
   datasets_info <- readRDS(paste0(.datasets_location, "/datasets.rds"))
