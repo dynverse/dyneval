@@ -84,7 +84,7 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
     })
 }
 
-run_method <- function(task, method, arguments) {
+run_method <- function(task, method, arguments, suppress_output=TRUE) {
   summary <- data.frame(row.names = 1)
 
   # Add the counts to the parameters
