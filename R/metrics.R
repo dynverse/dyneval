@@ -47,8 +47,8 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
         task <- extract_row_to_list(tasks, i)
 
         # Run method and calculate geodesic distances
-        method_out <- run_method(task, method, x)
-        model <- method_out$model
+        method_output <- run_method(task, method, x)
+        model <- method_output$model
 
         # Calculate metrics
         metrics_output <- calculate_metrics(task, model, metrics)
@@ -56,8 +56,8 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
         # Create summary statistics
         summary <- data.frame(
           task_id = task$id,
-          method_out$summary,
-          metrics_out$summary,
+          method_output$summary,
+          metrics_output$summary,
           stringsAsFactors = F,
           check.names = F
         )
