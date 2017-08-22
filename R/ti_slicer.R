@@ -11,8 +11,7 @@ description_slicer <- function() {
       makeIntegerParam(id = "m", lower = 2L, upper = 20L, default = 2),
       makeNumericParam(id = "min_branch_len", lower = 0.5, upper = 20, default = 5),
       makeNumericParam(id = "min_representative_percentage", lower = 0.5, upper = 1, default = 0.8),
-      makeNumericParam(id = "max_same_milestone_distance", lower = 0.1, upper = 10, default = 0.1),
-      forbidden = quote(exprmclust_clusternum_lower > exprmclust_clusternum_upper)
+      makeNumericParam(id = "max_same_milestone_distance", lower = 0.1, upper = 10, default = 0.1)
     ),
     properties = c(),
     run_fun = run_slicer,
