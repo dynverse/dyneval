@@ -44,7 +44,7 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
 
       # Run the method on each of the tasks
       outs <- lapply(seq_len(nrow(tasks)), function(i) {
-        task_list <- tasks[i,] %>% as.list
+        task_list <- extract_row_to_list(tasks, i)
 
         # Run method and calculate geodesic distances
         method_out <- run_method(task_list, method, x)
