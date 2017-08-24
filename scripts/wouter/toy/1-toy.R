@@ -36,7 +36,8 @@ toys <- toys_blueprint %>% slice(rep(1:n(), each=nreplicates)) %>% mutate(
   replicate=seq_len(nrow(.))%%nreplicates,
   toy_category=paste0(generator_id, "-", perturbator_id),
   toy_id=paste0(toy_category, "-", replicate)
-) %>% mutate(ncells=runif(n(), 10, 200))
+) %>%
+  mutate(ncells=sample(50:500, n(), replace=TRUE))
 
 # generate gold standards and toys, can take some time (for computing the geodesic distances I presume)
 # I choose to not do this using mutate because it is much easier to debug using loops
@@ -55,6 +56,10 @@ toys$toy <- map2(toys$toy, toys$toy_id, ~rename_toy(.x, .y))
 toyplots <- toys %>% group_by(toy_category) %>% filter(row_number()==1) %>%
   {split(., seq_len(nrow(.)))} %>% parallel::mclapply(function(row) dynplot::plot_strip_connections(row$gs[[1]], row$toy[[1]]), mc.cores = 8)
 
+write_rds(toys, "toys.rds")
+
+toys <- read_rds("toys.rds")
+
 # get the scores when comparing the gs to toy
 metrics <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "isomorphic", "ged")
 compare_toy <- function(gs, toy, id=toy$id) {
@@ -71,3 +76,5 @@ compare_gs_toy <- function(gs, toy) {
 }
 
 scores <- toys %>% rowwise() %>% do(compare_gs_toy(.$gs, .$toy)) %>% select(-starts_with("time"))
+
+write_rds(scores, "scores.rds")
