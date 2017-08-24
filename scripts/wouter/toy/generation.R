@@ -15,6 +15,8 @@ generate_linear <- function(ncells = 100) {
     progressions = progressions
   )
 
+  task$geodesic_dist <- compute_emlike_dist(task)
+
   task
 }
 
@@ -34,6 +36,8 @@ generate_bifurcating <- function(ncells = 100) {
     milestone_network,
     progressions = progressions
   )
+
+  task$geodesic_dist <- compute_emlike_dist(task)
 
   task
 }
@@ -55,6 +59,8 @@ generate_cycle <- function(ncells = 100) {
     milestone_network,
     progressions = progressions
   )
+
+  task$geodesic_dist <- compute_emlike_dist(task)
 
   task
 }

@@ -170,7 +170,7 @@ scores_summary %>%
   add_rule()
 
 
-
+### 8: Score should always be defined
 
 
 

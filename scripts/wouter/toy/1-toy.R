@@ -3,7 +3,6 @@ library(dyneval)
 
 source("scripts/wouter/toy/generation.R")
 source("scripts/wouter/toy/perturbation.R")
-source("scripts/wouter/toy/plotting.R")
 
 toys_blueprint <- tribble(
   ~generator_id, ~perturbator_id,
@@ -40,7 +39,7 @@ toys <- toys_blueprint %>% slice(rep(1:n(), each=nreplicates)) %>% mutate(
 ) %>% mutate(ncells=runif(n(), 10, 200))
 
 # generate gold standards and toys, can take some time (for computing the geodesic distances I presume)
-# I choose to not do this using mutate because it is much easier to debug
+# I choose to not do this using mutate because it is much easier to debug using loops
 toys$gs <- toys %>% split(seq_len(nrow(toys))) %>% parallel::mclapply(function(row) {
   row$generator[[1]](row$ncells)
 }, mc.cores=8)
@@ -53,28 +52,14 @@ toys$toy <- toys %>% split(seq_len(nrow(toys))) %>% parallel::mclapply(function(
 toys$toy <- map2(toys$toy, toys$toy_id, ~rename_toy(.x, .y))
 
 # plot toys
-toys <- toys %>% rowwise() %>% mutate(plot_strip=list(plot_strip(gs, toy))) %>% ungroup()
-cowplot::plot_grid(
-  plotlist=toys %>% group_by(toy_category) %>% filter(row_number()==1) %>% pull(plot_strip)
-)
+toyplots <- toys %>% group_by(toy_category) %>% filter(row_number()==1) %>%
+  {split(., seq_len(nrow(.)))} %>% parallel::mclapply(function(row) dynplot::plot_strip_connections(row$gs[[1]], row$toy[[1]]), mc.cores = 8)
 
 # get the scores when comparing the gs to toy
+metrics <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "isomorphic", "ged")
 compare_toy <- function(gs, toy, id=toy$id) {
-  dummy_method <- function(pred) list(
-    name = "dummy",
-    short_name = "dummy",
-    package_load = c(),
-    package_installed = c(),
-    par_set = ParamHelpers::makeParamSet(),
-    properties = c(),
-    run_fun = function(counts) pred,
-    plot_fun = function(task) plot(1:10)
-  )
-  toy$counts <- "dummy"
-  fun <- make_obj_fun(dummy_method(gs), metrics = c("Q_global", "Q_local", "correlation"))
-  result <- fun(list(), dyneval:::list_as_tibble(list(toy)))
-  scores <- attr(result, "extras")$.summary
-  scores %>% select(-task_id) %>% mutate(toy_id=id)
+  scores <- dyneval:::calculate_metrics(gs, toy, metrics=metrics)$summary
+  scores %>% mutate(toy_id=id)
 }
 
 # get the scores when both comparing gs to gs and comparing gs to toy
@@ -85,19 +70,4 @@ compare_gs_toy <- function(gs, toy) {
   )
 }
 
-scores <- toys %>% rowwise() %>% do(compare_gs_toy(.$gs, .$toy))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-scores_summary %>% filter(is.na(score)) %>% pull(toy_id)
+scores <- toys %>% rowwise() %>% do(compare_gs_toy(.$gs, .$toy)) %>% select(-starts_with("time"))

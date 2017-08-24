@@ -195,6 +195,8 @@ perturb_hairy <- function(task, nhairs=10) {
     progressions = newprogressions
   )
 
+  newtask$geodesic_dist <- compute_emlike_dist(newtask)
+
   #dyneval::plot_default(task)
   #dyneval::plot_default(newtask)
 
@@ -214,6 +216,10 @@ perturb_warp <- function(task) {
   recreate_task(task)
 }
 
+## Extreme trajectories
+# all cells
+perturb_extreme_beginning <- functon()
+
 
 ### Some helper functions-------------------
 
@@ -227,6 +233,9 @@ recreate_task <- function(task) {
     task$milestone_network,
     progression=task$progression
   )
+  task$geodesic_dist <- compute_emlike_dist(task)
+
+  task
 }
 
 
