@@ -1,3 +1,7 @@
+load("toys.rds")
+
+source("scripts/wouter/toy/rules.R")
+
 # summarise the scores
 # get gs-toy score
 # get difference and fractions between gs-toy and gs-gs
@@ -20,159 +24,19 @@ scores_summary %>%
   facet_wrap(~score_id) +
   coord_flip()
 
-rules <- tibble()
-add_rule <- function(rule) {
-  rules <<- bind_rows(rules, select(rule, score_id, rule_id, rule)) %>%
-    group_by(rule_id, score_id) %>%
-    filter(row_number() == n()) %>%
-    ungroup()
-  rule
-}
 
-### A good score...
-### 1: Same score on any gold standard, irrespective of structure or number of cells
-equal_tol <- function(a, b, tol = 1e-5) {abs(a-b) < tol}
+library(googlesheets)
+rules_info <- gs_title("Metrics rules") %>% gs_read() %>% mutate(id=factor(id, levels=id))
+rules_info$check_func <- map(paste0("check_", rules_info$id), get)
 
-scores_summary %>%
-  filter(perturbator_id == "gs") %>%
-  group_by(score_id) %>%
-  summarise(rule_id = "1", rule = equal_tol(max(score), min(score))) %>%
-  add_rule()
+scores <- read_rds("scores.rds")
 
-scores_summary %>%
-  filter(perturbator_id == "gs") %>%
-  ggplot() +
-  ggbeeswarm::geom_beeswarm(aes(score_id, score, color=toy_category))
-
-### Gold standard versus prediction
-## 2a: Score should be lower before and after perturbation (direct gs comparison)
-scores_summary %>%
-  filter(perturbator_id != "gs") %>%
-  group_by(score_id) %>%
-  summarise(rule_id = "2a", rule = all(diff < 0)) %>%
-  add_rule()
-
-scores_summary %>%
-  ggplot() +
-  ggbeeswarm::geom_beeswarm(aes(toy_category, diff, color=perturbator_id)) +
-  geom_hline(yintercept = 0) +
-  facet_wrap(~score_id)
-
-## 2b: Score should be lower before and after perturbation, irrespective of structure or number of cells (indirect gs comparison)
-scores_summary %>%
-  mutate(is_gs = (perturbator_id == "gs")) %>%
-  group_by(score_id) %>%
-  summarise(
-    maxdiff = max(score[!is_gs]) - min(score[is_gs]),
-    rule_id = "2b",
-    rule = maxdiff <= 0
-  ) %>%
-  add_rule()
-
-scores_summary %>%
-  mutate(is_gs = (perturbator_id == "gs")) %>%
-  ggplot() +
-  geom_boxplot(aes(is_gs, diff, color=toy_category)) +
-  facet_wrap(~score_id)
-
-scores_summary %>%
-  mutate(is_gs = (perturbator_id == "gs")) %>%
-  ggplot() +
-  geom_boxplot(aes(is_gs, diff, color=perturbator_id)) +
-  facet_wrap(~score_id)
-
-### Linear vs cycle
-## 3a: Breaking of cycles should lower score
-scores_summary %>%
-  filter(perturbator_id == "break_cycles") %>%
-  group_by(score_id) %>%
-  summarise(rule_id="3a", rule = all(diff < 0)) %>%
-  add_rule()
-
-## 3b: Joing a linear trajectory to a cycle should lower score
-scores_summary %>%
-  filter(perturbator_id == "join_linear") %>%
-  group_by(score_id) %>%
-  summarise(rule_id="3b", rule = all(diff < 0)) %>%
-  add_rule()
-
-### 4: Large perturbations should have a larger decrease compared to a small perturbations
-## 4a Shuffling cells
-scores_summary_largevssmall <- scores_summary %>%
-  group_by(generator_id) %>%
-  filter(perturbator_id %in% c("switch_two_cells", "switch_all_cells")) %>%
-  filter(length(unique(perturbator_id)) == 2) %>%
-  ungroup() %>%
-  mutate(is_small = (perturbator_id == "switch_two_cells"))
-
-scores_summary_largevssmall %>%
-  group_by(score_id) %>%
-  summarise(
-    maxdiff = max(score[!is_small]) - min(score[is_small]),
-    rule_id = "4a",
-    rule = all(maxdiff < 0)
-  ) %>%
-  add_rule()
-
-scores_summary_largevssmall %>% ggplot() +
-  geom_boxplot(aes(toy_category, score, color=perturbator_id)) +
-  facet_wrap(~score_id)
-
-## 4b Added states
-scores_summary_largevssmall <- scores_summary %>%
-  group_by(generator_id) %>%
-  filter(perturbator_id %in% c("hairy_small", "hairy_large")) %>%
-  filter(length(unique(perturbator_id)) == 2) %>%
-  ungroup() %>%
-  mutate(is_small = (perturbator_id == "hairy_small"))
-
-scores_summary_largevssmall %>%
-  group_by(score_id) %>%
-  summarise(
-    maxdiff = max(score[!is_small]) - min(score[is_small]),
-    rule_id = "4b",
-    rule = all(maxdiff < 0)
-  ) %>%
-  add_rule()
-
-scores_summary_largevssmall %>% ggplot() +
-  geom_boxplot(aes(toy_category, score, color=perturbator_id)) +
-  facet_wrap(~score_id)
-
-### 5: Splitting linear into bifurcating should lower score
-scores_summary %>%
-  filter(perturbator_id == "split_linear") %>%
-  group_by(score_id) %>%
-  summarise(rule_id="5", rule = all(diff < 0)) %>%
-  add_rule()
-
-### 6: Warping should lower score
-scores_summary %>%
-  filter(perturbator_id == "warp") %>%
-  group_by(score_id) %>%
-  summarise(rule_id="5", rule = all(diff < 0)) %>%
-  add_rule()
-
-scores_summary %>%
-  filter(perturbator_id == "warp") %>%
-  ggplot() +
-  ggbeeswarm::geom_beeswarm(aes(score_id, diff, color=generator_id))
-
-
-### 7: Changes in the milestone network should affect the scores, even if they do not greatly impact the ordering of the cells
-## These are rules made to compare cell-based metrics with milestone network metrics
-
-scores_summary %>%
-  group_by(score_id) %>%
-  mutate(maxscore = max(score)) %>%
-  filter(perturbator_id == "hairy") %>%
-  summarise(rule_id="7a", rule = all(score < maxscore/2)) %>%
-  add_rule()
-
-
-### 8: Score should always be defined
-
-
+rules <- map2(
+  rules_info$check_func,
+  rules_info$id,
+  ~.(scores_summary) %>%
+    mutate(rule_id=.y)
+  ) %>% bind_rows() %>% left_join(rules_info, by=c("rule_id"="id"))
 
 ## Plot all rules
 rules %>% ggplot(aes(rule_id, score_id)) +

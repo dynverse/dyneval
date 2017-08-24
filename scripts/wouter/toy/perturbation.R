@@ -218,7 +218,7 @@ perturb_warp <- function(task) {
 
 ## Extreme trajectories
 # all cells
-perturb_extreme_beginning <- functon()
+perturb_extreme_beginning <- function() {}
 
 
 ### Some helper functions-------------------
