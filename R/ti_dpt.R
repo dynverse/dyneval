@@ -41,8 +41,8 @@ run_dpt <- function(counts,
   tips <- tips(dpt)
   milestone_ids <- paste0("DPT", tips)
 
-  milestone_percentages <- bind_rows(lapply(milestone_ids, function(x) data_frame(id = rownames(expr), milestone = x, percentage = dpt[[x]]))) %>%
-    group_by(id) %>%
+  milestone_percentages <- bind_rows(lapply(milestone_ids, function(x) data_frame(cell_id = rownames(expr), milestone = x, percentage = dpt[[x]]))) %>%
+    group_by(cell_id) %>%
     mutate(percentage = percentage / sum(percentage)) %>%
     ungroup()
 
