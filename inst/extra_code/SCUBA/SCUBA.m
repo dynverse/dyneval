@@ -1,4 +1,4 @@
-function SCUBA(dataFolder, cluster_mode)
+function SCUBA(dataset, cluster_mode)
 %Main function.
 %dataset      -- name of the dataset
 %cluster_mode -- metric used for clustering data. 'original': Euclidean
@@ -7,7 +7,8 @@ function SCUBA(dataFolder, cluster_mode)
 %applied the samples selected from the last cell-stage.
 
 if 0,
-    HD = helpdlg(sprintf(['SCUBA will now analyze the dataset']));
+    HD = helpdlg(sprintf(['SCUBA will now analyze the dataset ' dataset ' in the sample_data folder.\n' ...
+        'Results and figures will be saved in new folders created in the ' dataset ' folder.']));
     waitfor(HD)
     pause(0.1)
 end
@@ -17,23 +18,26 @@ if ~exist('cluster_mode'),
 end
 
 % initialization of file names
-[dataFile processDataMat processDataTxt PCAdataFile dataFolder resultsDir intermediate_filesDir figuresDir] = initialization(dataFolder);
+[dataFile processDataMat processDataTxt PCAdataFile dataFolder resultsDir intermediate_filesDir figuresDir] = initialization(dataset);
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % additional preprocessing %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pca_analysis(dataFolder);
+pca_analysis(dataset);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 % 1) Dynamic Clustering %
 %%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Initial estimation of the lineage tree.
-% rng(7) % setting seeds is frowned upon in dyneval
-initialize_tree(dataFolder, cluster_mode);
+
+rng(7)
+initialize_tree(dataset, cluster_mode);
 
 % Refinement of tree structure by maximizing penalized likelihood function.
-refine_tree(dataFolder, cluster_mode);
+
+refine_tree(dataset, cluster_mode);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -41,11 +45,11 @@ refine_tree(dataFolder, cluster_mode);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Project data along bifurcation directions.
-bifurcation_direction(dataFolder, cluster_mode);
+bifurcation_direction(dataset, cluster_mode);
 
 % Model the dynamic change of gene expression pattern along the bifurcation
 % direction by fitting the Fokker-Planck equation.
-bifurcation_analysis(dataFolder)
+bifurcation_analysis(dataset)
 
 end
 

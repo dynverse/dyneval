@@ -1,8 +1,8 @@
 %Refine tree structure by maximizing penalized likelihood method
 
-function refine_tree(dataFolder, cluster_mode);
+function refine_tree(dataset, cluster_mode);
 
-[dataFile processDataMat processDataTxt PCAdataFile dataFolder resultsDir intermediate_filesDir figuresDir] = initialization(dataFolder);
+[dataFile processDataMat processDataTxt PCAdataFile dataFolder resultsDir intermediate_filesDir figuresDir] = initialization(dataset);
 
 infile = fullfile(intermediate_filesDir,'initial_tree.mat');
 outfile = fullfile(intermediate_filesDir,'final_tree.mat');
@@ -183,7 +183,7 @@ end
 
 if license('test', 'bioinformatics_toolbox')
     % Using biograph to plot the Tree
-    plotTree(T, dataFolder)
+    plotTree(T, dataset)
 else
     disp('Bioinformatics toolbox not present. Tree will not be plotted.')
 end

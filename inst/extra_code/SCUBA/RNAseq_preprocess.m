@@ -4,9 +4,9 @@
 %3. Select highly variable geness
 %4. if needed, infer cell stage by using prinicipal curve analysis.
 
-function RNAseq_preprocess(dataFolder, log_mode, pseudotime_mode);
+function RNAseq_preprocess(dataset, log_mode, pseudotime_mode);
 
-[dataFile processDataMat processDataTxt PCAdataFile dataFolder resultsDir intermediate_filesDir figuresDir] = initialization(dataFolder);
+[dataFile processDataMat processDataTxt PCAdataFile dataFolder resultsDir intermediate_filesDir figuresDir] = initialization(dataset);
 
 lowgene_threshold = 1; %threshold value for low expressed genes
 lowgene_fraction_max = 0.7; % maximum fraction of low-expressed cells allowed for each gene
@@ -76,7 +76,7 @@ end
 save(processDataMat, 'pro');
 
 if pseudotime_mode == 1,
-    EstimatePseudotime(dataFolder);
+    EstimatePseudotime(dataset);
 end
 
 if txtout_mode == 1,

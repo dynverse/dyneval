@@ -1,4 +1,4 @@
-function plotTree(T, dataFolder)
+function plotTree(T, dataset)
 
 adjMatrix = zeros(max(T.clu_id));
 
@@ -38,7 +38,7 @@ copyobj(g.biograph.hgAxes,f);
 delete(BGH)
 delete(g)
 
-[~, ~, ~, ~, ~, ~, ~, figuresDir] = initialization(dataFolder);
+[~, ~, ~, ~, ~, ~, ~, figuresDir] = initialization(dataset);
 
 
 filenameFigure = fullfile(figuresDir, 'tree.jpg');

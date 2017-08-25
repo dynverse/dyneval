@@ -1,4 +1,4 @@
-function EstimatePseudotime(dataFolder, pcvmethod, anchorGene)
+function EstimatePseudotime(dataset, pcvmethod, anchorGene)
 % options for pcvmethod are 'Rprincurve' and 'ksegments'
 % use anchorGene to order pseudotime so that the average value of 
 % anchorGene in the first 1000 cells is higher than for the last 1000 cells
@@ -13,7 +13,7 @@ if ~exist('anchorGene', 'var')
     anchorGene = false;
 end
 
-[~, processDataMat, ~, ~, ~, ~, intermediate_filesDir, ~] = initialization(dataFolder);
+[~, processDataMat, ~, ~, ~, ~, intermediate_filesDir, ~] = initialization(dataset);
 
 load(processDataMat);
 
@@ -31,7 +31,7 @@ if strcmp(pcvmethod, 'Rprincurve')
     
     % save csv file to process with R's princurve
     ncell = size(pro.expr, 1);
-    csvout = fullfile(intermediate_filesDir, ['tsne_d' num2str(ndim) '.csv']);
+    csvout = fullfile(intermediate_filesDir, [dataset '_tsne_d' num2str(ndim) '.csv']);
     fout = fopen(csvout, 'w+');
     ntsne = size(pro.tsne, 2);
     for k = 1:ntsne-1,
@@ -57,12 +57,13 @@ end
 switch pcvmethod
     case 'Rprincurve'
         % Calling R's principal curve
-        % system(['Rscript principal_curve_analysis_tsne_d3.R ' dataFolder]);  %old
+        % system(['Rscript principal_curve_analysis_tsne_d3.R ' dataset]);  %old
         % Replace the following line by the appropriate path for Rscript
-        eval([' system([', '''', 'Rscript principal_curve_analysis_tsne_d3.R ', '''', ' dataFolder]);']);
+        Rscript = '"C:\Program Files\R\R-3.2.5\bin\Rscript"';
+        eval([' system([', '''', Rscript, ' principal_curve_analysis_tsne_d3.R ', '''', ' dataset]);']);
         
-        % pcvin = fullfile(intermediate_filesDir, ['tsne_d' num2str(ndim) '_pcv.csv']);
-        parin = fullfile(intermediate_filesDir, ['tsne_d' num2str(ndim) '_lambda.csv']);
+        % pcvin = fullfile(intermediate_filesDir, [dataset '_tsne_d' num2str(ndim) '_pcv.csv']);
+        parin = fullfile(intermediate_filesDir, [dataset '_tsne_d' num2str(ndim) '_lambda.csv']);
         fin3 = fopen(parin);
         s = fgetl(fin3);
         c3 = textscan(fin3, '%s%f', 'delimiter', ',');

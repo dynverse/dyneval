@@ -1,9 +1,9 @@
 %Identify the bifurcation directions.
 %Project data along the bifurcation directions.
 
-function bifurcation_direction(dataFolder, cluster_mode);
+function bifurcation_direction(dataset, cluster_mode);
 
-[dataFile processDataMat processDataTxt PCAdataFile dataFolder resultsDir intermediate_filesDir figuresDir] = initialization(dataFolder);
+[dataFile processDataMat processDataTxt PCAdataFile dataFolder resultsDir intermediate_filesDir figuresDir] = initialization(dataset);
 
 load(PCAdataFile);
 
