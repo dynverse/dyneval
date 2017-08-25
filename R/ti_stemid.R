@@ -110,7 +110,7 @@ run_stemid <- function(counts,
   trl <- spantree(dc[ltr@ldata$m,ltr@ldata$m])
 
   gr_df <- data_frame(from = milestone_ids[seq_along(trl$kid)+1], to = milestone_ids[trl$kid], weight = dc[cbind(from, to)])
-  gr <- igraph::graph_from_data_frame(gr, directed = F, vertices = milestone_ids)
+  gr <- igraph::graph_from_data_frame(gr_df, directed = F, vertices = milestone_ids)
   milestone_network <- igraph::distances(gr) %>% reshape2::melt(varnames = c("from", "to"), value.name = "length") %>% filter(from != to)
 
   # calculating the cell-to-cluster distances manually
