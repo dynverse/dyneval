@@ -1,0 +1,3 @@
+[submodule "inst/extra_code/SCUBA"]
+	path = inst/extra_code/SCUBA
+	url = https://github.com/gcyuan/SCUBA
