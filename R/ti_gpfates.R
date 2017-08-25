@@ -16,7 +16,8 @@ description_gpfates <- function() {
     par_set = makeParamSet(
       makeNumericParam(id = "log_expression_cutoff", lower = 0.5, upper = 5, default = 2),
       makeNumericParam(id = "min_cells_expression_cutoff", lower = 0, upper = 20, default = 2),
-      makeIntegerParam(id="nfates", lower=1, upper=20, default=1)
+      makeIntegerParam(id="nfates", lower=1, upper=20, default=1),
+      makeIntegerParam(id="ndims", lower=1, upper=5, default=2)
     ),
     properties = c(),
     run_fun = run_gpfates,
@@ -39,7 +40,8 @@ run_gpfates <- function(
   counts,
   log_expression_cutoff=2,
   min_cells_expression_cutoff=2,
-  nfates=2
+  nfates=2,
+  ndims=2
 ) {
   if(!dir.exists(glue::glue("{path.package('dyneval')}/extra_code/GPfates/gpfates"))) {
     warning("gpfates not installed, installing now")
@@ -58,13 +60,15 @@ run_gpfates <- function(
 
   system(glue::glue(
     "cd {path.package('dyneval')}/extra_code/GPfates/gpfates",
-    "python3 ..//gpfates_wrapper.py {temp_folder} {log_expression_cutoff} {min_cells_expression_cutoff} {nfates}"
+    "python3 ..//gpfates_wrapper.py {temp_folder} {log_expression_cutoff} {min_cells_expression_cutoff} {nfates} {ndims}"
 ,
   .sep = ";"))
 
   pseudotime <- read_csv(glue::glue("{temp_folder}pseudotimes.csv"), col_names = c("cell_id", "time"))
 
   phi <- read_csv(glue::glue("{temp_folder}phi.csv"), col_names = c("cell_id", glue::glue("M{seq_len(nfates)}")), skip = 1)
+
+  dr <- read_csv(glue::glue("{temp_folder}dr.csv"), col_names = c("cell_id", glue::glue("Comp{seq_len(5)}")), skip = 1)
 
   pseudotime <- pseudotime %>% mutate(time=(time-min(time))/(max(time) - min(time)))
 
@@ -91,13 +95,20 @@ run_gpfates <- function(
     cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
-    milestone_percentages = milestone_percentages
+    milestone_percentages = milestone_percentages,
+    dimred_samples = dr,
+    pseudotime = pseudotime
   )
 }
 
-
-
+## TODO extract OMGP
 #' @export
 plot_gpfates <- function(ti_predictions) {
-  print("TODO =D")
+  sample_df <- data.frame(
+    ti_predictions$dimred_samples
+  ) %>% left_join(pseudotime, by="cell_id")
+  ggplot() +
+    geom_point(aes(Comp1, Comp2, colour = time), sample_df) +
+    coord_equal() +
+    viridis::scale_color_viridis()
 }
