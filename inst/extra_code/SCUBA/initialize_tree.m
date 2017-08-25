@@ -1,8 +1,8 @@
 %Initial guess of cell hierarchy, using k-means clustering.
 
-function initialize_tree(dataFolder, cluster_mode);
+function initialize_tree(dataset, cluster_mode);
 
-[dataFile processDataMat processDataTxt PCAdataFile dataFolder resultsDir intermediate_filesDir figuresDir] = initialization(dataFolder);
+[dataFile processDataMat processDataTxt PCAdataFile dataFolder resultsDir intermediate_filesDir figuresDir] = initialization(dataset);
 
 load(PCAdataFile);
 

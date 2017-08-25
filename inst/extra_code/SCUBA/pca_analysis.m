@@ -1,8 +1,8 @@
 %Process gene expression data by PCA analysis.
 
-function pca_analysis(dataFolder)
+function pca_analysis(dataset)
 
-[dataFile processDataMat processDataTxt PCAdataFile dataFolder resultsDir intermediate_filesDir figuresDir] = initialization(dataFolder);
+[dataFile processDataMat processDataTxt PCAdataFile dataFolder resultsDir intermediate_filesDir figuresDir] = initialization(dataset);
 
 load(processDataMat);
 

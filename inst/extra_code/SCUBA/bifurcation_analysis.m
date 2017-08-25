@@ -1,4 +1,4 @@
-function bifurcation_analysis(dataFolder)
+function bifurcation_analysis(dataset)
 % Date 5/13/14: written by Eugenio Marco
 %
 % This code takes sthe gene expression data for several cell stages projected
@@ -14,7 +14,7 @@ options.parentLevelFit = 'parentParent';
 options.normalizeLikelihoodLevelCellCounts = 1;
 % options.normalizeLikelihoodLevelCellCounts = 0;
 
-[~, ~, ~, PCAdataFile, dataFolder, ~, intermediate_filesDir, figuresDir] = initialization(dataFolder);
+[~, ~, ~, PCAdataFile, dataFolder, ~, intermediate_filesDir, figuresDir] = initialization(dataset);
 
 treefile = fullfile(intermediate_filesDir,'final_tree.mat');
 
@@ -129,6 +129,8 @@ function results = fitDistribution(results,dataFolder,makePlot,options)
 %             mixtureTree.X64(results.bifurcation(3)) ...
 %             mean(mixtureTree.X64(results.bifurcation(4:5)))];
 % end
+
+[~, dataset, ~] = fileparts(dataFolder);
 
 % Sizes of parentParent, parent and after bifurcation
 switch options.parentLevelFit
