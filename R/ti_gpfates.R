@@ -9,6 +9,11 @@ install_gpfates <- function() {
 #' @import ParamHelpers
 #' @export
 description_gpfates <- function() {
+  if(!dir.exists(glue::glue("{path.package('dyneval')}/extra_code/GPfates/gpfates"))) {
+    warning("gpfates not installed, installing now")
+    install_gpfates()
+  }
+
   list(
     name = "GPfates",
     short_name = "GPfates",
@@ -43,10 +48,6 @@ run_gpfates <- function(
   nfates=2,
   ndims=2
 ) {
-  if(!dir.exists(glue::glue("{path.package('dyneval')}/extra_code/GPfates/gpfates"))) {
-    warning("gpfates not installed, installing now")
-    install_gpfates()
-  }
 
   temp_folder <- tempdir()
 
