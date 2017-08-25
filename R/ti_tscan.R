@@ -63,8 +63,8 @@ run_tscan <- function(counts,
 
   pseudotime <- setNames(percent_rank(match(rownames(counts), cds_3)), rownames(counts))
   milestone_percentages <- bind_rows(
-    tibble::data_frame(id = rownames(counts), state = milestone_ids[[1]], percentage = 1 - pseudotime),
-    tibble::data_frame(id = rownames(counts), state = milestone_ids[[2]], percentage = pseudotime)
+    tibble::data_frame(cell_id = rownames(counts), milestone_id = milestone_ids[[1]], percentage = 1 - pseudotime),
+    tibble::data_frame(cell_id = rownames(counts), milestone_id = milestone_ids[[2]], percentage = pseudotime)
   )
 
   wrap_ti_prediction(
