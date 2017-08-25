@@ -58,6 +58,9 @@ run_tscan <- function(counts,
 
   cds_3 <- TSCAN::TSCANorder(cds_2)
 
+  # sometimes this method won't order some cells, add these here to the end of the traj
+  cds_3 <- c(cds_3, rownames(counts)[!(rownames(counts) %in% cds_3)])
+
   milestone_ids <- paste0("milestone_", c(head(cds_3, 1), tail(cds_3, 1)))
   milestone_network <- data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1)
 
