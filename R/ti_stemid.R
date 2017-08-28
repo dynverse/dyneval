@@ -111,7 +111,10 @@ run_stemid <- function(counts,
 
   gr_df <- data_frame(from = milestone_ids[seq_along(trl$kid)+1], to = milestone_ids[trl$kid], weight = dc[cbind(from, to)])
   gr <- igraph::graph_from_data_frame(gr_df, directed = F, vertices = milestone_ids)
-  milestone_network <- igraph::distances(gr) %>% reshape2::melt(varnames = c("from", "to"), value.name = "length") %>% filter(from != to)
+  milestone_network <- igraph::distances(gr) %>%
+    reshape2::melt(varnames = c("from", "to"), value.name = "length") %>%
+    filter(from != to) %>%
+    mutate(from = as.character(from), to = as.character(to))
 
   # calculating the cell-to-cluster distances manually
   trproj_res <- ltr@trproj$res %>% as_data_frame() %>% rownames_to_column("id") %>% dplyr::select(id, closest = o, furthest = l)
