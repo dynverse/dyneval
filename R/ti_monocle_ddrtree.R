@@ -106,7 +106,6 @@ run_monocle_ddrtree <- function(counts,
   )
 }
 
-#' @importFrom monocle plot_cell_trajectory
 #' @export
 plot_monocle_ddrtree <- function(ti_predictions) {
   monocle::plot_cell_trajectory(ti_predictions$cds)
