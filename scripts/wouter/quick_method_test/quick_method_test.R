@@ -31,7 +31,7 @@ method_descriptions <- list(
   # waterfall=list(), # broken
   scorpius=list(),
   slingshot=list(),
-  #  slicer=list(max_same_milestone_distance=0.2, start_cell_id=progressions$percentage %>% which.min, min_branch_len=0.1, kmin=30, m=2), # broken it is inconceiveble really
+  # slicer=list(max_same_milestone_distance=0.2, start_cell_id=progressions$percentage %>% which.min, min_branch_len=0.1, kmin=30, m=2), # broken it is inconceiveble really
   # gpfates=list(nfates=1),
   stemid=list(),
   tscan=list(),
