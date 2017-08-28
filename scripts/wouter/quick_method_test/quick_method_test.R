@@ -4,7 +4,7 @@ library(dyneval)
 source("scripts/wouter/toy/generation.R")
 source("scripts/wouter/toy/perturbation.R")
 
-
+# generate a simple linear toy dataset
 task <- generate_linear()
 
 timepoints <- task$progressions$percentage
@@ -24,7 +24,7 @@ counts <- round((2^expression) * 10)
 task$counts <- counts
 
 
-
+# choose certain parameters for each method, at which we know this method will perform well for the toy dataset
 method_descriptions <- list(
   # waterfall=list(), # broken
   scorpius=list(),
@@ -39,6 +39,7 @@ method_descriptions <- list(
   celltree_vem=list(sd_filter = 0)
 )
 
+# test the methods and get the scores
 scores <- map(names(method_descriptions), function(method_name) {
   method <- get(paste0("description_", method_name))()
   method_params <- method_descriptions[[method_name]]
@@ -47,12 +48,13 @@ scores <- map(names(method_descriptions), function(method_name) {
 
   method_out <- invoke(method$run_fun, c(list(counts=counts), method_params))
   method_out$geodesic_dist <- compute_emlike_dist(method_out)
-  method$plot_fun(method_out)
 
-  dynplot::plot_strip_connections(task, method_out)
+  #method$plot_fun(method_out)
+  #dynplot::plot_strip_connections(task, method_out)
 
   metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "ged", "isomorphic")
-  subscores <- dyneval:::calculate_metrics(task, method_out, metric_names)$summary %>% mutate(method_name=method_name)
+  subscores <- dyneval:::calculate_metrics(task, method_out, metric_names)$summary %>%
+    mutate(method_name=method_name)
   subscores
 }) %>% bind_rows()
 
