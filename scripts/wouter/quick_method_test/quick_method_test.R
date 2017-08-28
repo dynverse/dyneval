@@ -13,6 +13,7 @@ cell_ids <- task$progressions$cell_id
 ngenes <- 200
 coefs <- runif(ngenes, -1, 1)
 intercepts <- runif(ngenes, -2, 2)
+metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "ged", "isomorphic")
 
 expression <- t(coefs %*% t(timepoints)) %>% apply(1, function(x) x + intercepts) %>% t
 expression <- expression + rnorm(length(expression), mean = 0, sd=0.1)
@@ -41,8 +42,6 @@ method_descriptions <- list(
 )
 
 # test the methods and get the scores
-metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "ged", "isomorphic")
-
 scores <- purrr::map(names(method_descriptions), function(method_name) {
   cat("Processing ", method_name, "\n", sep="")
   method <- get(paste0("description_", method_name))()
