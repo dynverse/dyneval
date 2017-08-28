@@ -26,6 +26,7 @@ task$counts <- counts
 
 # choose certain parameters for each method, at which we know this method will perform well for the toy dataset
 method_descriptions <- list(
+  random_linear=list(),
   # waterfall=list(), # broken
   scorpius=list(),
   slingshot=list(),
@@ -40,7 +41,7 @@ method_descriptions <- list(
 )
 
 # test the methods and get the scores
-scores <- map(names(method_descriptions), function(method_name) {
+scores <- purrr::map(names(method_descriptions), function(method_name) {
   method <- get(paste0("description_", method_name))()
   method_params <- method_descriptions[[method_name]]
 
