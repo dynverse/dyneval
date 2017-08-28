@@ -84,6 +84,7 @@ make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output =
     })
 }
 
+#' @export
 run_method <- function(task, method, arguments, suppress_output=TRUE) {
   summary <- data.frame(row.names = 1)
 
