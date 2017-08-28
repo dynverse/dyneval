@@ -37,6 +37,7 @@ impute_y_fun <- function(num_objectives) {
   }
 }
 
+#' @export
 #' @importFrom future future value plan
 execute_evaluation <- function(tasks, method, parameters,
                                metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "ged"),
