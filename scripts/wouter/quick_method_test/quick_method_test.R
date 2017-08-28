@@ -26,11 +26,11 @@ tasks <- dyneval:::list_as_tibble(list(task))
 
 # choose certain parameters for each method, at which we know this method will perform well for the toy dataset
 method_descriptions <- list(
-  #random_linear=list(),
+  # random_linear=list(),
   # waterfall=list(), # broken
   scorpius=list(),
   slingshot=list(),
-  #  slicer=list(max_same_milestone_distance=0.2, start_cell_id=progressions$percentage %>% which.min, min_branch_len=0.1, kmin=30, m=2), # broken it is inconceiveble really
+  # slicer=list(max_same_milestone_distance=0.2, start_cell_id=progressions$percentage %>% which.min, min_branch_len=0.1, kmin=30, m=2), # broken it is inconceiveble really
   # gpfates=list(nfates=1),
   stemid=list(),
   tscan=list(),
