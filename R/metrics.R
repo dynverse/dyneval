@@ -1,134 +1,4 @@
-#' Used for wrapping an evaluation function around a TI method
-#'
-#' @importFrom smoof makeSingleObjectiveFunction makeMultiObjectiveFunction
-#' @export
-make_obj_fun <- function(method, noisy = F, load_packages = T, suppress_output = T,
-                         metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "ged")) {
-  # Use different makefunction if there are multiple metrics versus one
-  if (length(metrics) > 1) {
-    make_fun <- function(...) makeMultiObjectiveFunction(..., n.objectives = length(metrics))
-  } else {
-    make_fun <- makeSingleObjectiveFunction
-  }
-
-  # Wrap the method function in an evaluation function
-  make_fun(
-    name = "TItrain",
-    vectorized = F,
-    minimize = rep(F, length(metrics)),
-    noisy = noisy,
-    has.simple.signature = F,
-    par.set = method$par_set,
-    fn = function(x, tasks)
-      execute_evaluation(
-        tasks = tasks,
-        method = method,
-        parameters = x,
-        metrics = metrics,
-        load_packages = load_packages,
-        suppress_output = suppress_output))
-}
-
-execute_evaluation <- function(tasks, method, parameters,
-                               metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "ged"),
-                               load_packages = T, suppress_output = T) {
-  # Disable seed setting. Generate a warning if set.seed is called upon.
-  orig_set_seed <- base::set.seed
-  my_set_seed <- function(seed) {
-    msg <- "WARNING! This package is setting seeds."
-    warning(msg)
-    message(msg)
-    cat(msg, "\n", sep = "")
-  }
-
-  my_assignin_namespace("set.seed", my_set_seed, ns = "base", envir = .BaseNamespaceEnv)
-
-  # Loading packages for the TI method
-  if (load_packages) {
-    for (pack in method$package_load) {
-      suppressMessages(do.call(library, list(pack)))
-    }
-    for (pack in method$package_required) {
-      suppressMessages(do.call(requireNamespace, list(pack)))
-    }
-  }
-
-  # Run the method on each of the tasks
-  outs <- lapply(seq_len(nrow(tasks)), function(i) {
-    task <- extract_row_to_list(tasks, i)
-
-    # Run method and calculate geodesic distances
-    method_output <- run_method(task, method, parameters)
-    model <- method_output$model
-
-    # Calculate metrics
-    metrics_output <- calculate_metrics(task, model, metrics)
-
-    # Create summary statistics
-    summary <- data.frame(
-      task_id = task$id,
-      method_output$summary,
-      metrics_output$summary,
-      stringsAsFactors = F,
-      check.names = F
-    )
-
-    # Return the output
-    lst(model, summary)
-  })
-
-  # Revert back to the original set.seed
-  my_assignin_namespace("set.seed", orig_set_seed, ns = "base", envir = .BaseNamespaceEnv)
-
-  # Combine the different outputs in three lists/data frames
-  models <- outs %>% purrr::map(~ .$model)
-  summary <- outs %>% purrr::map_df(~ .$summary)
-
-  # Calculate the final score
-  score <- summary %>% summarise_at(metrics, funs(mean)) %>% as.matrix %>% as.vector %>% setNames(metrics)
-
-  # Return extra information
-  attr(score, "extras") <- list(.models = models, .summary = summary)
-
-  # Return output
-  score
-}
-
-#' @export
-run_method <- function(task, method, parameters, suppress_output=TRUE) {
-  summary <- data.frame(row.names = 1)
-
-  # Add the counts to the parameters
-  arglist <- c(list(counts = task$counts), parameters)
-
-  # Include start cell if method requires it
-  if ("start_cell_id" %in% formalArgs(method$run_fun)) {
-    arglist$start_cell_id <- task$special_cells$start_cell_id
-  }
-
-  # Run model on task with given parameters. Suppress output if need be.
-  time0 <- Sys.time()
-  if (suppress_output) {
-    capture.output({
-      model <- do.call(method$run_fun, arglist)
-    })
-  } else {
-    model <- do.call(method$run_fun, arglist)
-  }
-  time1 <- Sys.time()
-  summary$time_method <- as.numeric(difftime(time1, time0, units = "sec"))
-
-  # Calculate geodesic distances
-  time0 <- Sys.time()
-  model$geodesic_dist <- compute_emlike_dist(model)
-  time1 <- Sys.time()
-  summary$time_geodesic <- as.numeric(difftime(time1, time0, units = "sec"))
-
-  rownames(summary) <- NULL
-
-  lst(model, summary)
-}
-
+#' @importFrom igraph is_isomorphic_to graph_from_data_frame
 calculate_metrics <- function(task, model, metrics) {
   summary <- data.frame(row.names = 1)
 
@@ -152,10 +22,10 @@ calculate_metrics <- function(task, model, metrics) {
   # Compute the milestone network isomorphic
   if ("isomorphic" %in% metrics) {
     time0 <- Sys.time()
-    summary$isomorphic <- igraph::is_isomorphic_to(
-      igraph::graph_from_data_frame(model$milestone_network),
-      igraph::graph_from_data_frame(task$milestone_network)
-    )
+    summary$isomorphic <- (is_isomorphic_to(
+      graph_from_data_frame(model$milestone_network),
+      graph_from_data_frame(task$milestone_network)
+    ))+0
     time1 <- Sys.time()
     summary$time_isomorphic <- as.numeric(difftime(time1, time0, units = "sec"))
   }
@@ -171,15 +41,6 @@ calculate_metrics <- function(task, model, metrics) {
   rownames(summary) <- NULL
 
   lst(coranking, summary)
-}
-
-#' @export
-impute_y_fun <- function(num_objectives) {
-  function(x, y, opt.path, ...) {
-    val <- rep(-1, num_objectives)
-    attr(val, "extras") <- list(.summary = NA)
-    val
-  }
 }
 
 #' Calculate Earth Mover's Distance between cells in a trajectory

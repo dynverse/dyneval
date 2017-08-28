@@ -150,7 +150,6 @@ run_celltree <- function(counts, method = "maptpx",
   )
 }
 
-#' @importFrom cellTree ct.plot.topics
 #' @export
 plot_celltree <- function(ti_predictions) {
   cellTree::ct.plot.topics(ti_predictions$mst_tree)

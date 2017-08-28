@@ -2,7 +2,9 @@
 #'
 #' @import dplyr
 #' @import methods
-#' @importFrom purrr %>% map map_df map_chr map_lgl map_int map_dbl
+#' @import tibble
+#' @importFrom purrr %>% map map_df map_chr map_lgl map_int map_dbl keep
+#' @importFrom magrittr %<>%
 #'
 #' @docType package
 #' @name dyneval

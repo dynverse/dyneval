@@ -5,7 +5,7 @@ description_embeddr <- function() {
   list(
     name = "embeddr",
     short_name = "embeddr",
-    package_load = c("ggplot2"),
+    package_load = c("ggplot2", "scater"),
     package_installed = c("scater", "embeddr"),
     par_set = makeParamSet(
       makeDiscreteParam(id = "kernel", default = "nn", values = c("nn", "dist", "heat")),
