@@ -61,6 +61,7 @@ run_gpfates <- function(
 
   system(glue::glue(
     "cd {path.package('dyneval')}/extra_code/GPfates/gpfates",
+    "source bin/activate",
     "python3 ..//gpfates_wrapper.py {temp_folder} {log_expression_cutoff} {min_cells_expression_cutoff} {nfates} {ndims}"
 ,
   .sep = ";"))
