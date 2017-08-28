@@ -101,7 +101,6 @@ trainLearner.ti.celltree <- function(.task, .subset, num_topics, width_scale_fac
   )
 }
 
-#' @importFrom celltree plot_cell_trajectory
 #' @export
 plotLearner.ti.celltree <- function(ti_predictions) {
   cellTree::ct.plot.grouping(ti_predictions$mst.tree)

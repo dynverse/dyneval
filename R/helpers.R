@@ -12,7 +12,7 @@ list_as_tibble <- function(list_of_rows) {
     }
   }) %>% setNames(list_names)
 
-  list_of_cols %>% as.tibble()
+  list_of_cols %>% as_tibble()
 }
 
 
