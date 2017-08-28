@@ -59,12 +59,18 @@ run_gpfates <- function(
     {data.frame(cell_id=rownames(.), row.names=rownames(.))} %>%
     write.table(paste0(temp_folder, "cellinfo.csv"), sep="\t")
 
-  system(glue::glue(
-    "cd {path.package('dyneval')}/extra_code/GPfates/gpfates",
-    "source bin/activate",
-    "python3 ..//gpfates_wrapper.py {temp_folder} {log_expression_cutoff} {min_cells_expression_cutoff} {nfates} {ndims}"
+  system2(
+    "bash",
+    args = c(
+      "-c",
+      glue::glue(
+        "cd {path.package('dyneval')}/extra_code/GPfates/gpfates",
+        "source bin/activate",
+      "python3 ..//gpfates_wrapper.py {temp_folder} {log_expression_cutoff} {min_cells_expression_cutoff} {nfates} {ndims}"
 ,
-  .sep = ";"))
+        .sep = ";")
+    )
+  )
 
   pseudotime <- read_csv(glue::glue("{temp_folder}pseudotimes.csv"), col_names = c("cell_id", "time"))
 
