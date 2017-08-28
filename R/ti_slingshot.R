@@ -23,8 +23,6 @@ description_slingshot <- function() {
 #.datasets_location = "../dyngen/results/4/"
 #counts <- dyngen::load_dataset(dyngen::overviewer("datasets")$id[[1]])$counts
 
-#' @import dplyr
-#' @importFrom magrittr %<>%
 run_slingshot <- function(
   counts,
   ndim = 3,

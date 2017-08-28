@@ -13,6 +13,7 @@ cell_ids <- task$progressions$cell_id
 ngenes <- 200
 coefs <- runif(ngenes, -1, 1)
 intercepts <- runif(ngenes, -2, 2)
+metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "ged", "isomorphic")
 
 expression <- t(coefs %*% t(timepoints)) %>% apply(1, function(x) x + intercepts) %>% t
 expression <- expression + rnorm(length(expression), mean = 0, sd=0.1)
@@ -26,7 +27,7 @@ tasks <- dyneval:::list_as_tibble(list(task))
 
 # choose certain parameters for each method, at which we know this method will perform well for the toy dataset
 method_descriptions <- list(
-  # random_linear=list(),
+  random_linear=list(),
   # waterfall=list(), # broken
   scorpius=list(),
   slingshot=list(),
@@ -41,23 +42,18 @@ method_descriptions <- list(
 )
 
 # test the methods and get the scores
-metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "ged", "isomorphic")
-
 scores <- purrr::map(names(method_descriptions), function(method_name) {
+  cat("Processing ", method_name, "\n", sep="")
   method <- get(paste0("description_", method_name))()
   method_params <- method_descriptions[[method_name]]
 
-  walk(method$package_load, ~require(., character.only=TRUE))
-
-  method_out <- dyneval:::execute_evaluation(tasks, method, method_params, metrics = metric_names)
-  out_extras <- attr(method_out, "extras")
-
-  out_extras$.summary %>% mutate(method_name = method_name)
+  method_out <- dyneval:::execute_evaluation(tasks, method, method_params, metrics = metric_names, suppress_output = T)
+  attr(method_out, "extras")$.summary
 }) %>% bind_rows()
 
 scores$correlation
 
 scores %>%
   dplyr::select(-starts_with("time")) %>%
-  gather(score_id, score, -method_name) %>%
+  gather(score_id, score, -method_name, -method_short_name, -task_id) %>%
   ggplot() + geom_bar(aes(method_name, score), stat="identity") + facet_wrap(~score_id)
