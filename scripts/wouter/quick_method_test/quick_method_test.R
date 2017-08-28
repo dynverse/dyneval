@@ -47,18 +47,20 @@ scores <- purrr::map(names(method_descriptions), function(method_name) {
 
   walk(method$package_load, ~require(., character.only=TRUE))
 
-  method_out <- invoke(method$run_fun, c(list(counts=counts), method_params))
-  method_out$geodesic_dist <- compute_emlike_dist(method_out)
+  method_out <- run_method(task, method, method_params)
 
-  #method$plot_fun(method_out)
-  #dynplot::plot_strip_connections(task, method_out)
+  #method$plot_fun(method_out$model)
+  #dynplot::plot_strip_connections(task, method_out$model)
 
   metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "ged", "isomorphic")
-  subscores <- dyneval:::calculate_metrics(task, method_out, metric_names)$summary %>%
+  subscores <- dyneval:::calculate_metrics(task, method_out$model, metric_names)$summary %>%
     mutate(method_name=method_name)
   subscores
 }) %>% bind_rows()
 
 scores$correlation
 
-
+scores %>%
+  dplyr::select(-starts_with("time")) %>%
+  gather(score_id, score, -method_name) %>%
+  ggplot() + geom_bar(aes(method_name, score), stat="identity") + facet_wrap(~score_id)
