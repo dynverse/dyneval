@@ -41,6 +41,7 @@ description_gpfates <- function() {
 
 
 ## TODO: give simulationtime as prior
+#' @import dplyr
 run_gpfates <- function(
   counts,
   log_expression_cutoff=2,
@@ -81,7 +82,7 @@ run_gpfates <- function(
 
   # first get percentages of all final milestones, by getting their phi values, and multiplying by the pseudotime
   milestone_percentages <- phi %>%
-    gather(milestone_id, percentage, -cell_id) %>%
+    tidyr::gather(milestone_id, percentage, -cell_id) %>%
     left_join(pseudotime, by="cell_id") %>%
     mutate(percentage=percentage*time)
 
