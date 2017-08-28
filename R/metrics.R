@@ -58,7 +58,7 @@ execute_evaluation <- function(tasks, method, parameters,
     task <- extract_row_to_list(tasks, i)
 
     # Run method and calculate geodesic distances
-    method_output <- run_method(task, method, x)
+    method_output <- run_method(task, method, parameters)
     model <- method_output$model
 
     # Calculate metrics
@@ -94,11 +94,12 @@ execute_evaluation <- function(tasks, method, parameters,
   score
 }
 
-run_method <- function(task, method, arguments, suppress_output=TRUE) {
+#' @export
+run_method <- function(task, method, parameters, suppress_output=TRUE) {
   summary <- data.frame(row.names = 1)
 
   # Add the counts to the parameters
-  arglist <- c(list(counts = task$counts), arguments)
+  arglist <- c(list(counts = task$counts), parameters)
 
   # Include start cell if method requires it
   if ("start_cell_id" %in% formalArgs(method$run_fun)) {
