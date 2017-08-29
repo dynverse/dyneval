@@ -1,3 +1,4 @@
+
 #' @export
 get_task_identifier <- function(task) {
   task[c("type", "ti_type", "id")]
@@ -122,11 +123,6 @@ abstract_wrapper <- function(
     ...
   )
   class(out) <- paste0("dyneval::ti_wrapper")
-
-  ## Precompute geodesic distances
-  #out$geodesic_dist <- compute_emlike_dist(out)
-  # do not precompute geodesic distances :)
-
   out
 }
 

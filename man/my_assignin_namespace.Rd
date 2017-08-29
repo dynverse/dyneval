@@ -2,11 +2,15 @@
 % Please edit documentation in R/helpers.R
 \name{my_assignin_namespace}
 \alias{my_assignin_namespace}
-\title{This function assigns an object in a different namespace.}
+\title{Assigning an object in a different namespace.}
 \usage{
 my_assignin_namespace(x, value, ns, pos = -1, envir = as.environment(pos))
 }
 \description{
 It was copied from \code{\link[utils]{assignInNamespace}},
-but without an extra check so that I can override the set.seed function.
+but a certain check was removed so that the set.seed function can be overwritten.
+}
+\details{
+This function is not to be used aside from overriding the set.seed function within the
+TI evaluation.
 }

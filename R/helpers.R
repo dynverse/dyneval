@@ -1,4 +1,14 @@
-#' Converts a list of lists to a tibblee.
+#' Attempts to convert a list of lists to a tibble
+#'
+#' @param list_of_rows The list to be converted to a tibble
+#'
+#' @return A tibble with the same number of rows as there were elements in \code{list_of_rows}
+#' @export
+#'
+#' @examples
+#' l <- list(list(a = 1, b = log10), list(a = 2, b = sqrt))
+#' tib <- list_as_tibble(l)
+#' tib
 list_as_tibble <- function(list_of_rows) {
   list_names <- names(list_of_rows[[1]])
 
@@ -15,76 +25,37 @@ list_as_tibble <- function(list_of_rows) {
   list_of_cols %>% as_tibble()
 }
 
-
-# df <- tibble(a = list(c(1), c(2), c(3)))
-
-
-#' Extracts one row, and reduces list-columns to their contents
-extract_row_to_list <- function(df, row_id) {
-  row <- as.list(df[row_id, ])
-  row <- map(row, function(x) {
+#' Extracts one row from a tibble and converts it to a list
+#'
+#' @param tib the tibble
+#' @param row_id the index of the row to be selected
+#'
+#' @return the corresponding row from the tibble as a list
+#' @export
+#'
+#' @examples
+#' l <- list(list(a = 1, b = log10), list(a = 2, b = sqrt))
+#' tib <- list_as_tibble(l)
+#'
+#' extract_row_to_list(tib, 2)
+extract_row_to_list <- function(tib, row_id) {
+  tib[row_id, ] %>% as.list %>% map(function(x) {
     if (is.null(x) | !is.list(x)) {
       x
     } else {
       x[[1]]
     }
   })
-  row
 }
 
-#' @export
-load_datasets <- function(mc_cores = 1, ndatasets = Inf) {
-  datasets_info <- readRDS(paste0(.datasets_location, "/datasets.rds"))
 
-  task_wrapped <- parallel::mclapply(seq_len(min(nrow(datasets_info), ndatasets)), mc.cores = mc_cores, function(dataset_num) {
-    dataset_id <- datasets_info$id[[dataset_num]]
-    dataset <- dyngen::load_dataset(dataset_id)
-
-    list2env(dataset, environment())
-
-    cell_ids <- rownames(counts)
-    milestone_ids <- gs$milestone_percentages$milestone_id %>% unique %>% as.character
-    milestone_network <- gs$milestone_network %>%
-      mutate(
-        from = as.character(from),
-        to = as.character(to)
-      )
-    milestone_percentages <- cellinfo %>%
-      left_join(gs$milestone_percentages, by = c("step_id" = "cell_id")) %>%
-      filter(percentage > 0) %>%
-      mutate(milestone_id = as.character(milestone_id)) %>%
-      select(cell_id, milestone_id, percentage)
-    sample_info <- cellinfo %>%
-      select(cell_id, step, simulation_time = simulationtime)
-
-    out <- wrap_ti_task_data(
-      ti_type = model$modulenetname,
-      id = dataset_id,
-      cell_ids = cell_ids,
-      milestone_ids = milestone_ids,
-      milestone_network = milestone_network,
-      milestone_percentages = milestone_percentages,
-      counts = counts,
-      sample_info = sample_info,
-      task_ix = dataset_num,
-      modulenet_id = model$modulenetname,
-      platform_id = platform$platform_id,
-      takesetting_type = dataset$takesetting$type,
-      model_replicate = model$modelsetting$replicate,
-      special_cells = dataset$special_cells
-    )
-    out$geodesic_dist <- compute_emlike_dist(out)
-    out
-  })
-  task_wrapped %>%
-    list_as_tibble %>%
-    left_join(datasets_info, by = c("id" = "id"))
-}
-
-#' This function assigns an object in a different namespace.
+#' Assigning an object in a different namespace.
 #'
 #' It was copied from \code{\link[utils]{assignInNamespace}},
-#' but without an extra check so that I can override the set.seed function.
+#' but a certain check was removed so that the set.seed function can be overwritten.
+#'
+#' This function is not to be used aside from overriding the set.seed function within the
+#' TI evaluation.
 my_assignin_namespace <- function (x, value, ns, pos = -1, envir = as.environment(pos)) {
   nf <- sys.nframe()
   if (missing(ns)) {
@@ -97,6 +68,12 @@ my_assignin_namespace <- function (x, value, ns, pos = -1, envir = as.environmen
     ns <- asNamespace(ns)
   }
   ns_name <- getNamespaceName(ns)
+  # This check is removed!
+  # if (nf > 1L) {
+  #   if (ns_name %in% tools:::.get_standard_package_names()$base)
+  #     stop("locked binding of ", sQuote(x), " cannot be changed",
+  #          domain = NA)
+  # }
   if (bindingIsLocked(x, ns)) {
     in_load <- Sys.getenv("_R_NS_LOAD_")
     if (nzchar(in_load)) {
