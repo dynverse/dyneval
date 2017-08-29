@@ -1,11 +1,8 @@
 #' Return all TI descriptions
 #'
-#' @param as_tibble
+#' @param as_tibble Whether or not to return the descriptions as a tibble
 #'
-#' @return
 #' @export
-#'
-#' @examples
 get_descriptions <- function(as_tibble = T) {
   functions <- lsf.str("package:dyneval")
   description_functions <- functions[grep("description_", functions)]
@@ -19,10 +16,7 @@ get_descriptions <- function(as_tibble = T) {
 
 #' Check which packages need to be installed for all TI methods to function correctly
 #'
-#' @return
 #' @export
-#'
-#' @examples
 check_dependencies <- function() {
   descrs <- get_descriptions()
   for (descr_fun in description_functions) {
