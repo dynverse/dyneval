@@ -99,15 +99,20 @@ abstract_wrapper <- function(
   ## create a separate state if some cells have been filtered out
   na_ids <- setdiff(cell_ids, unique(milestone_percentages$cell_id))
   if (length(na_ids) != 0) {
+    new_mid <- "FILTERED_CELLS"
     milestone_percentages <- bind_rows(
       milestone_percentages,
-      data_frame(cell_id = na_ids, milestone_id = "FILTERED_CELLS", percentage = 1)
+      data_frame(cell_id = na_ids, milestone_id = new_mid, percentage = 1)
+    )
+    progressions <- bind_rows(
+      progressions,
+      data_frame(cell_id = na_ids, from = new_mid, to = new_mid, percentage = 1)
     )
     milestone_network <- dplyr::bind_rows(
       milestone_network,
-      data_frame(from = milestone_ids, to = "FILTERED_CELLS", length = max(milestone_network$length)*5)
+      data_frame(from = milestone_ids, to = new_mid, length = max(milestone_network$length)*5)
     )
-    milestone_ids <- c(milestone_ids, "FILTERED_CELLS")
+    milestone_ids <- c(milestone_ids, new_mid)
   }
 
   # create output structure
