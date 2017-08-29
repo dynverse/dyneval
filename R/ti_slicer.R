@@ -29,6 +29,8 @@ run_slicer <- function(counts,
                       min_representative_percentage = 0.8,
                       max_same_milestone_distance = 0.1) {
 
+  set.seed(1)
+
   expression <- log2(counts + 1)
 
   genes <- SLICER::select_genes(expression)
@@ -70,6 +72,13 @@ run_slicer <- function(counts,
       to=paste0("M", seq_along(unique(progressions$branch_id))*2)
     )
 
+  end_branches <- branches[rownames(expression_filtered)[ends]] # ignore these branches for making the connections
+  start_branch <- branches[rownames(expression_filtered)[start]] # ignore these branches for making the connections
+  connect_milestone_ids <- c(
+    milestone_network %>% filter(!(branch_id %in% end_branches)) %>% pull(to),
+    milestone_network %>% filter(!(branch_id %in% start_branch)) %>% pull(from)
+  )
+
   milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
 
   progressions <- progressions %>% left_join(milestone_network, by="branch_id")
@@ -100,7 +109,12 @@ run_slicer <- function(counts,
     group_by(milestone_id_from, milestone_id_to) %>%
     summarise(distance=min(distance)) %>%
     filter(milestone_id_from != milestone_id_to) %>%
-    mutate(close=distance < quantile(cell_distances, max_same_milestone_distance)) %>%
+    filter((milestone_id_from %in% connect_milestone_ids) & (milestone_id_to %in% connect_milestone_ids)) %>%
+    mutate(
+      close =
+        (distance < quantile(cell_distances, max_same_milestone_distance)) |
+        (distance == min(distance))
+      ) %>%
     filter(close)
 
   for (i in seq_len(nrow(close_representatives))) {
@@ -118,8 +132,6 @@ run_slicer <- function(counts,
   milestone_network$to <- milestone_mapper[milestone_network$to]
 
   # tada!
-
-
   wrap_ti_prediction(
     ti_type = "linear",
     id = "SLICER",
