@@ -4,7 +4,7 @@ description_stemid <- function() {
   list(
     name = "StemID",
     short_name = "StemID",
-    package_load = c("ggplot2"),
+    package_load = c("ggplot2", "methods", "dplyr"),
     package_installed = c(),
     par_set = makeParamSet(
       makeIntegerParam(id = "clustnr", lower = 20L, default = 30L, upper = 100L),
@@ -60,7 +60,7 @@ run_stemid <- function(counts,
                        ) {
   ## load class definition and functions
   code_path <- paste0(path.package("dyneval"), "/extra_code/StemID")
-  source(paste0(code_path, "/RaceID2_StemID_class.R"), local = T)
+  source(paste0(code_path, "/RaceID2_StemID_class.R"))
 
   # initialize SCseq object with transcript counts
   sc <- SCseq(data.frame(t(counts), check.names = F, stringsAsFactors = F))
