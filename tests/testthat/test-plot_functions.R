@@ -1,8 +1,7 @@
 context("Plot functions")
 
-.datasets_location = "../dyngen/results/4/"
-
-datasets <- load_datasets(mc_cores = 1, num_datasets = 3)
+# datasets <- source_file("helper-datasets-load.R", chdir = F)
+datasets <- readRDS(paste0(tempdir(), "/dyneval_test_datasets.rds"))
 
 test_that("perform dimred on trajectory", {
   for (dataseti in seq_len(nrow(datasets))) {

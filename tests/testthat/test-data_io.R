@@ -1,19 +1,21 @@
 context("Data IO")
 
-.datasets_location = "../dyngen/results/4/"
+# datasets <- source_file("helper-datasets-load.R", chdir = F)
+datasets <- readRDS(paste0(tempdir(), "/dyneval_test_datasets.rds"))
 
 test_that("Loading datasets", {
-  num_datasets <- 2
-  datasets <- load_datasets(mc_cores = 1, num_datasets = num_datasets)
-
   expect_that( is_tibble(datasets), is_true() )
-  expect_that( nrow(datasets), equals(num_datasets) )
 
   required_cols <- c("id", "cell_ids", "milestone_ids", "milestone_network", "milestone_percentages", "progressions", "counts", "geodesic_dist", "special_cells")
   expect_that( all(required_cols %in% colnames(datasets)), is_true() )
+})
 
-  for (dataseti in seq_len(nrow(datasets))) {
-    dataset <- extract_row_to_list(datasets, dataseti)
+
+for (dataseti in seq_len(nrow(datasets))) {
+  dataset <- extract_row_to_list(datasets, dataseti)
+
+  test_that(paste0("Evaluating with ", dataset$id), {
+
 
     expect_true( is.character(dataset$id) )
 
@@ -58,5 +60,5 @@ test_that("Loading datasets", {
 
     special_cells <- dataset$special_cells
     expect_true( all(sapply(special_cells, function(x) all(x %in% cell_ids))) )
-  }
-})
+  })
+}
