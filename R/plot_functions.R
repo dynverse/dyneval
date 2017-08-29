@@ -110,7 +110,9 @@ plotdata_default <- function(traj_object, insert_phantom_edges = T) {
     stringsAsFactors = F)
   space_lines <- data.frame(
     name,
+    from = milestone_network$from,
     from = gr_space_milestones[milestone_network$from,,drop=F],
+    to = milestone_network$to,
     to = gr_space_milestones[milestone_network$to,,drop=F],
     row.names = NULL,
     stringsAsFactors = F)
