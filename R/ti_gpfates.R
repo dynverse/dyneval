@@ -41,6 +41,8 @@ description_gpfates <- function() {
 
 
 ## TODO: give simulationtime as prior
+#' @importFrom readr read_csv
+#' @export
 run_gpfates <- function(
   counts,
   log_expression_cutoff=2,
