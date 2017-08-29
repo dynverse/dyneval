@@ -14,6 +14,7 @@ description_waterfall <- function() {
   )
 }
 
+#' @export
 run_waterfall <- function(counts, k = 10) {
   ## load class definition and functions
   code_path <- paste0(path.package("dyneval"), "/extra_code/Waterfall")

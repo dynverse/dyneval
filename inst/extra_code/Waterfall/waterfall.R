@@ -6,7 +6,7 @@ pseudotime.foo <-function(gene_name, all=all, span=.75, unit=.025, all.col=all.c
 
   # HMM
   library(RHmm)
-  exp <-as.numeric(all[grep(gene_name,rownames(all)),match(rownames(pseudotime.df),colnames(all))])
+  exp <-as.numeric(all[grep(gene_name,rownames(all)),match(rownames(pseudotime.df),colnames(all)),drop=F])
   onoff <-state.foo(exp,unit=unit)#; onoff[which(onoff==2/3)] <-1; onoff[which(onoff==4/3)] <-2
 
   pdf(file=paste0(gene_name,"_pseudotime_HMM.pdf"),width=8,height=.5)
@@ -81,6 +81,8 @@ mst.of.classification <- function (x, k=6,color,seed=1,...) {
   z <- r$centers
   z <- z[order(z[,1]),]
   rownames(z) <-paste0("t",1:nrow(z))
+
+
   m <- mst(dist(z))
   plot(y[,1:2], col=paste0(color), cex=3, pch=20, bty="n", ...)
   points(z[,1:2], col="#FF0000", pch=19,cex=1)
@@ -142,7 +144,7 @@ pseudotimeprog.foo <- function(x, k=10, color, x.reverse=F, plot=F, ...){
   # kmeans
   r <- kmeans(y,k)
   z <- r$centers
-  z <- z[order(z[,1]),]
+  z <- z[order(z[,1]),,drop=F]
   rownames(z) <-paste0("t",1:nrow(z))
   m <- mst(dist(z))
 
@@ -183,7 +185,7 @@ pseudotimeprog.foo <- function(x, k=10, color, x.reverse=F, plot=F, ...){
     # 3. update the pseudotime for y2ds with the short distance from the z2d.i
     updatethis.time[which(update.idx==1)] <-time_start.i
     # 4. update the pseudotime for y2ds with the short distance from the z2d.i-z2d.i+1 segment
-    relative_cordinates <-t(apply(intersect.i[which(update.idx==2),],1,function(X){seg_unit_vector%*%(X-z2d[i,])}))
+    relative_cordinates <-t(apply(intersect.i[which(update.idx==2),,drop=F],1,function(X){seg_unit_vector%*%(X-z2d[i,])}))
     updatethis.time[which(update.idx==2)] <-time_start.i + relative_cordinates
     # 1. update the shortest distance
     updatethis.dist <-apply(cbind(dot.dist.i,seg.dist.i,updatethis.dist),1,min)
@@ -262,7 +264,7 @@ state.foo <-function(X,s_from=2,unit=.025){
     ResFit <- HMMFit(obs, nStates=s)# Baum-Welch
     state <-viterbi(ResFit,obs)
     names(onoff) <-time.unit
-    onoff[match(as.character(names(obs)),names(onoff))] <-state[[1]]
+    onoff[match(as.character(names(obs)),names(onoff)),drop=F] <-state[[1]]
 
     onoff[which(onoff==.5)] <-onoff[which(onoff==.5)+1]
     onoff[which(onoff==.5)] <-onoff[which(onoff==.5)-1]
@@ -309,8 +311,8 @@ diff_gene.foo <-function(exp.df=all,group.name1,group.name2){
   groupA.idx <-which(colnames(exp.df) %in% group.name1)
   groupB.idx <-which(colnames(exp.df) %in% group.name2)
 
-  meanA <-rowMeans(exp.df[,groupA.idx])
-  meanB <-rowMeans(exp.df[,groupB.idx])
+  meanA <-rowMeans(exp.df[,groupA.idx,drop=F])
+  meanB <-rowMeans(exp.df[,groupB.idx,drop=F])
   maxmean <-apply(cbind(meanA,meanB),1,max)
 
   # coefficient of variation
