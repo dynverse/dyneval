@@ -7,7 +7,7 @@
 get_descriptions(as_tibble = T)
 }
 \arguments{
-\item{as_tibble}{}
+\item{as_tibble}{Whether or not to return the descriptions as a tibble}
 }
 \description{
 Return all TI descriptions
