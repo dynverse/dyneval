@@ -5,10 +5,10 @@
 #'  \code{\link{wrap_ti_prediction}}
 #' @param insert_phantom_edges attempt to plot bifurcating edges correctly automatically
 #'
-#' @import dplyr
 #' @importFrom igraph graph_from_data_frame layout_with_kk E
 #' @importFrom SCORPIUS rescale.and.center
 #' @importFrom RColorBrewer brewer.pal
+#' @importFrom grDevices col2rgb
 #'
 #' @export
 plotdata_default <- function(traj_object, insert_phantom_edges = T) {
@@ -28,7 +28,9 @@ plotdata_default <- function(traj_object, insert_phantom_edges = T) {
   milestone_network <- traj_object$milestone_network
 
   # retrieve information on samples
-  milestone_percentages <- traj_object$milestone_percentages %>% mutate(milestone_id=factor(milestone_id, levels=milestone_ids)) %>% spread(milestone_id, percentage, fill=0, drop=FALSE)
+  milestone_percentages <- traj_object$milestone_percentages %>%
+    mutate(milestone_id = factor(milestone_id, levels = milestone_ids)) %>%
+    spread(milestone_id, percentage, fill = 0, drop = FALSE)
   milestone_percentages_m <- as.matrix(milestone_percentages[,milestone_ids,drop=F])
   rownames(milestone_percentages_m) <- milestone_percentages$cell_id
   colours_rgb_samples <- milestone_percentages_m %*% colours_rgb_milestones
