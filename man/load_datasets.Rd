@@ -4,12 +4,12 @@
 \alias{load_datasets}
 \title{Load dyngen datasets}
 \usage{
-load_datasets(mc_cores = 1, num_datasets = Inf)
+load_datasets(mc_cores = 1, datasets_info = load_datasets_info())
 }
 \arguments{
 \item{mc_cores}{The number of cores to use while loading in the datasets (default: 1)}
 
-\item{num_datasets}{The maximum number of datasets to load (default: Inf)}
+\item{datasets_info}{The meta information of the datasets to read}
 }
 \value{
 A tibble of datasets
@@ -19,5 +19,5 @@ A tibble of datasets
 to work correctly.
 }
 \examples{
-datasets <- load_datasets(mc_cores = 1, num_datasets = Inf)
+datasets <- load_datasets(mc_cores = 1, datasets_info = load_datasets_info()))
 }
