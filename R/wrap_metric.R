@@ -128,7 +128,7 @@ calculate_metrics <- function(task, model, metrics) {
   # Compute the correlation of the geodesic distances
   if ("correlation" %in% metrics) {
     time0 <- Sys.time()
-    summary$correlation <- cor(task$geodesic_dist %>% as.vector, model$geodesic_dist %>% as.vector)
+    summary$correlation <- cor(task$geodesic_dist %>% as.vector, model$geodesic_dist %>% as.vector, method="spearman")
     time1 <- Sys.time()
     summary$time_correlation <- as.numeric(difftime(time1, time0, units = "sec"))
   }
