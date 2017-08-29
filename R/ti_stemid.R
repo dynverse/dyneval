@@ -5,7 +5,7 @@ description_stemid <- function() {
     name = "StemID",
     short_name = "StemID",
     package_load = c("ggplot2", "methods", "dplyr"),
-    package_installed = c(),
+    package_installed = c("tsne", "pheatmap", "MASS", "cluster", "mclust", "flexmix", "lattice", "fpc", "amap", "RColorBrewer", "locfit", "vegan"),
     par_set = makeParamSet(
       makeIntegerParam(id = "clustnr", lower = 20L, default = 30L, upper = 100L),
       makeIntegerParam(id = "bootnr", lower = 20L, default = 50, upper = 100L),
