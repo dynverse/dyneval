@@ -2,10 +2,24 @@
 % Please edit documentation in R/helpers.R
 \name{extract_row_to_list}
 \alias{extract_row_to_list}
-\title{Extracts one row, and reduces list-columns to their contents}
+\title{Extracts one row from a tibble and converts it to a list}
 \usage{
-extract_row_to_list(df, row_id)
+extract_row_to_list(tib, row_id)
+}
+\arguments{
+\item{tib}{the tibble}
+
+\item{row_id}{the index of the row to be selected}
+}
+\value{
+the corresponding row from the tibble as a list
 }
 \description{
-Extracts one row, and reduces list-columns to their contents
+Extracts one row from a tibble and converts it to a list
+}
+\examples{
+l <- list(list(a = 1, b = log10), list(a = 2, b = sqrt))
+tib <- list_as_tibble(l)
+
+extract_row_to_list(tib, 2)
 }
