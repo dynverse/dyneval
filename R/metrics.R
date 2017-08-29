@@ -149,45 +149,6 @@ compute_emlike_dist <- function(traj) {
   gr2 %>% igraph::distances(v = cell_ids, to = cell_ids, weights = igraph::E(gr2)$length)
 }
 
-#' Plot the Earth Mover's distances in a heatmap
-#'
-#' @param traj the trajectory (less than 500 cells is recommended)
-#' @param emdist the Earth Mover's distances as calculated by \code{\link{emdist}}
-#' @param dimred the dimensionality reduction of the trajectory as produced by \code{\link{plotLearnerData.ti.default}}
-#' @export
-#'
-#' @importFrom reshape2 acast
-#' @importFrom pheatmap pheatmap
-plot_emdist <- function(traj, dist, dimred = NULL, ...) {
-  milestone_percentages <- traj$milestone_percentages
-  pct <- as.data.frame(milestone_percentages[,-1])
-  rownames(pct) <- milestone_percentages$id
-
-  if (is.null(dimred)) {
-    dimred <- plotLearnerData.ti.default(traj)
-  }
-
-  ann_colours <- setNames(lapply(dimred$milestone_states$colour, function(x) c("white", x)), dimred$milestone_states$id)
-
-  pheatmap::pheatmap(
-    dist,
-    cluster_rows = F,
-    cluster_cols = F,
-    annotation_col = pct,
-    annotation_row = pct,
-    annotation_colors = ann_colours,
-    legend = F,
-    legend_labels = F,
-    legend_breaks = F,
-    border_color = NA,
-    show_rownames = F,
-    show_colnames = F,
-    annotation_legend = F,
-    annotation_names_row = F,
-    annotation_names_col = F,
-    fontsize = 20 / length(traj$milestone_ids),
-    ...)
-}
 
 #' Compute the coranking matrix and
 #'
