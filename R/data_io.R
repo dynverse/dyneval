@@ -21,25 +21,25 @@ load_datasets <- function(mc_cores = 1, num_datasets = Inf) {
 
   # load the datasets one by one
   task_wrapped <- parallel::mclapply(seq_len(num_datasets), mc.cores = mc_cores, function(dataset_num) {
-
     dataset_id <- datasets_info$id[[dataset_num]]
     dataset <- dyngen::load_dataset(dataset_id)
 
     list2env(dataset, environment())
 
     cell_ids <- rownames(counts)
+    cell_info <- cellinfo %>% slice(match(cell_ids, step_id))
     milestone_ids <- gs$milestone_percentages$milestone_id %>% unique %>% as.character
     milestone_network <- gs$milestone_network %>%
       mutate(
         from = as.character(from),
         to = as.character(to)
       )
-    milestone_percentages <- cellinfo %>%
+    milestone_percentages <- cell_info %>%
       left_join(gs$milestone_percentages, by = c("step_id" = "cell_id")) %>%
       filter(percentage > 0) %>%
       mutate(milestone_id = as.character(milestone_id)) %>%
       select(cell_id, milestone_id, percentage)
-    sample_info <- cellinfo %>%
+    sample_info <- cell_info %>%
       select(cell_id, step, simulation_time = simulationtime)
 
     out <- wrap_ti_task_data(
@@ -56,7 +56,7 @@ load_datasets <- function(mc_cores = 1, num_datasets = Inf) {
       platform_id = platform$platform_id,
       takesetting_type = dataset$takesetting$type,
       model_replicate = model$modelsetting$replicate,
-      special_cells = dataset$special_cells
+      special_cells = special_cells
     )
     out$geodesic_dist <- compute_emlike_dist(out)
     out
