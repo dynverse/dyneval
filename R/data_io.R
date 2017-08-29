@@ -27,7 +27,7 @@ load_datasets <- function(mc_cores = 1, num_datasets = Inf) {
     list2env(dataset, environment())
 
     cell_ids <- rownames(counts)
-    cell_info <- cellinfo %>% slice(match(step_id, rownames(counts)))
+    cell_info <- cellinfo %>% slice(match(cell_ids, step_id))
     milestone_ids <- gs$milestone_percentages$milestone_id %>% unique %>% as.character
     milestone_network <- gs$milestone_network %>%
       mutate(
