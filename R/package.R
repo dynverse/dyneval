@@ -1,6 +1,7 @@
 #' Evaluating TI methods
 #'
 #' @import dplyr
+#' @import tidyr
 #' @import methods
 #' @import tibble
 #' @importFrom purrr %>% map map_df map_chr map_lgl map_int map_dbl keep
