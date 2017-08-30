@@ -1,15 +1,21 @@
+get_gpfates_path <- function() {
+  "~/.dyneval/gpfates/"
+}
+
 #' @export
 install_gpfates <- function() {
+  dir.create(get_gpfates_path(), showWarnings = FALSE, recursive = TRUE)
+
   system(glue::glue(
     "bash ",
-    path.package("dyneval"), "/extra_code/GPfates/make ",path.package("dyneval"), "/extra_code/GPfates/"
+    path.package("dyneval"), "/extra_code/GPfates/make ",get_gpfates_path()
   ))
 }
 
 #' @import ParamHelpers
 #' @export
 description_gpfates <- function() {
-  if(!dir.exists(glue::glue("{path.package('dyneval')}/extra_code/GPfates/gpfates"))) {
+  if(!dir.exists(get_gpfates_path())) {
     warning("gpfates not installed, installing now")
     install_gpfates()
   }
@@ -66,9 +72,9 @@ run_gpfates <- function(
     args = c(
       "-c",
       shQuote(glue::glue(
-        "cd {path.package('dyneval')}/extra_code/GPfates/gpfates",
+        "cd {get_gpfates_path()}/gpfates/",
         "source bin/activate",
-        "python3 ..//gpfates_wrapper.py {temp_folder} {log_expression_cutoff} {min_cells_expression_cutoff} {nfates} {ndims}",
+        "python3 {path.package('dyneval')}/extra_code/GPfates/gpfates_wrapper.py {temp_folder} {log_expression_cutoff} {min_cells_expression_cutoff} {nfates} {ndims}",
         .sep = ";"))
     )
   )
