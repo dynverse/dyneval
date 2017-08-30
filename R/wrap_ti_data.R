@@ -155,6 +155,7 @@ convert_milestone_percentages_to_progressions <- function(cell_ids, milestone_id
     }
     relevant_progr
   }))
+
 }
 
 convert_progressions_to_milestone_percentages <- function(cell_ids, milestone_ids, milestone_network, progressions) {
@@ -163,17 +164,9 @@ convert_progressions_to_milestone_percentages <- function(cell_ids, milestone_id
     stop("In ", sQuote("progressions"), ", cells should only have 1 unique from milestone.")
   }
 
-  bind_rows(lapply(cell_ids, function(cid) {
-    relevant_prg <- progressions %>% filter(cell_id == cid)
-
-    # there should be only 1 unique from, according to an earlier check.
-    from <- unique(relevant_prg$from)
-
-    bind_rows(
-      data_frame(cell_id = cid, milestone_id = from, percentage = 1 - sum(relevant_prg$percentage)),
-      data_frame(cell_id = cid, milestone_id = relevant_prg$to, percentage = relevant_prg$percentage)
-    )
-  })) %>% filter(percentage > 0)
+  froms <- progressions %>% group_by(cell_id) %>% summarise(milestone_id = from[[1]], percentage = 1 - sum(percentage))
+  tos <- progressions %>% select(cell_id, milestone_id = to, percentage)
+  bind_rows(froms, tos) %>% filter(percentage > 0)
 }
 
 is_ti_wrapper <- function(object) {
