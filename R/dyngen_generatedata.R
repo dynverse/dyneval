@@ -1,7 +1,4 @@
-
-# sample some datasets
-# task_sel <- dplyr::sample_n(load_datasets_info(), 8)
-
+#' @importFrom dyngen generate_toy_milestone_network random_progressions_tented
 generate_toy_datasets <- function() {
   settings <- expand.grid(ti_type = c("linear", "bifurcating", "cycle"), replicate = 1:5, stringsAsFactors = F)
 
@@ -20,6 +17,8 @@ generate_toy_datasets <- function() {
     # todo: replace with real special_cells
     special_cells <- list()
 
+    # milestone_percentages <- convert_progressions_to_milestone_percentages(cell_ids, milestone_ids, milestone_network, progressions)
+
     task <- wrap_ti_task_data(
       ti_type = "toy",
       id = paste0(ti_type, "_", replicate),
@@ -34,7 +33,3 @@ generate_toy_datasets <- function() {
     task
   }))
 }
-
-set.seed(1)
-tasks <- generate_toy_datasets()
-saveRDS(tasks, paste0(tempdir(), "/dyneval_test_datasets.rds"))

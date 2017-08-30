@@ -1,6 +1,7 @@
 context("Data IO")
 
-tasks <- readRDS(paste0(tempdir(), "/dyneval_test_datasets.rds"))
+#tasks <- readRDS(paste0(tempdir(), "/dyneval_test_datasets.rds"))
+tasks <- dyneval::generate_toy_datasets()
 
 test_that("Loading datasets", {
   expect_that( is_tibble(tasks), is_true() )
