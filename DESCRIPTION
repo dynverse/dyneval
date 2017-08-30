@@ -18,6 +18,7 @@ Depends:
 Imports: 
     coRanking,
     dplyr, 
+    dyngen,
     future,
     ggplot2,
     glue,
@@ -34,7 +35,10 @@ Imports:
     reshape2,
     RColorBrewer,
     smoof,
+    testthat,
     tibble, 
     tidyr,
     transport,
     viridis
+Remotes:
+  Zouter/dyngen
