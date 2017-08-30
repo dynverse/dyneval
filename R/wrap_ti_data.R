@@ -82,8 +82,6 @@ abstract_wrapper <- function(
   }
 
   if (is.null(progressions)) {
-    phantom_network <- add_phantom_edges(milestone_ids, milestone_network)
-
     progressions <- convert_milestone_percentages_to_progressions(cell_ids, milestone_ids, phantom_network, milestone_percentages)
   } else if (is.null(milestone_percentages)) {
     milestone_percentages <- convert_progressions_to_milestone_percentages(cell_ids, milestone_ids, milestone_network, progressions)
@@ -142,6 +140,10 @@ convert_milestone_percentages_to_progressions <- function(cell_ids, milestone_id
         filter(from %in% relevant_pct$milestone_id & to %in% relevant_pct$milestone_id) %>%
         left_join(relevant_pct, by = c("to" = "milestone_id")) %>%
         select(cell_id, from, to, percentage)
+      if (nrow(relevant_progr) == 0) {
+        stop("According to milestone_percentages, cell ", sQuote(cid), " is between milestones ",
+          paste(sQuote(relevant_pct$milestone_id), collapse = " and "), ", but this edge does not exist in milestone_network!")
+      }
     } else if (nrow(relevant_pct) == 1) {
       relevant_net <- milestone_network %>% filter(to %in% relevant_pct$milestone_id)
       if (nrow(relevant_net) == 0) {
