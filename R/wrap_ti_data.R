@@ -82,7 +82,7 @@ abstract_wrapper <- function(
   }
 
   if (is.null(progressions)) {
-    progressions <- convert_milestone_percentages_to_progressions(cell_ids, milestone_ids, phantom_network, milestone_percentages)
+    progressions <- convert_milestone_percentages_to_progressions(cell_ids, milestone_ids, milestone_network, milestone_percentages)
   } else if (is.null(milestone_percentages)) {
     milestone_percentages <- convert_progressions_to_milestone_percentages(cell_ids, milestone_ids, milestone_network, progressions)
   }
