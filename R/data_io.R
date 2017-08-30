@@ -35,20 +35,28 @@ load_datasets <- function(mc_cores = 1, datasets_info = load_datasets_info()) {
     list2env(dataset, environment())
 
     cell_ids <- rownames(counts)
-    cell_info <- cellinfo %>% slice(match(cell_ids, step_id))
-    milestone_ids <- gs$milestone_percentages$milestone_id %>% unique %>% as.character
+
+    sample_info <- cellinfo %>%
+      slice(match(cell_ids, step_id)) %>%
+      select(cell_id, step, simulation_time = simulationtime)
+
+    milestone_ids <- gs$milestone_percentages$milestone_id %>%
+      unique %>%
+      as.character
+
     milestone_network <- gs$milestone_network %>%
       mutate(
         from = as.character(from),
         to = as.character(to)
       )
-    milestone_percentages <- cell_info %>%
-      left_join(gs$milestone_percentages, by = c("step_id" = "cell_id")) %>%
-      filter(percentage > 0) %>%
-      mutate(milestone_id = as.character(milestone_id)) %>%
-      select(cell_id, milestone_id, percentage)
-    sample_info <- cell_info %>%
-      select(cell_id, step, simulation_time = simulationtime)
+
+    progression <- sample_info %>%
+      select(cell_id) %>%
+      left_join(gs$progression, by = "cell_id") %>%
+      mutate(
+        from = as.character(from),
+        to = as.character(to)
+      )
 
     out <- wrap_ti_task_data(
       ti_type = model$modulenetname,
@@ -56,7 +64,7 @@ load_datasets <- function(mc_cores = 1, datasets_info = load_datasets_info()) {
       cell_ids = cell_ids,
       milestone_ids = milestone_ids,
       milestone_network = milestone_network,
-      milestone_percentages = milestone_percentages,
+      progression = progression,
       counts = counts,
       sample_info = sample_info,
       task_ix = dataset_num,
