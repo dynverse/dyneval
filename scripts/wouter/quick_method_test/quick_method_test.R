@@ -1,59 +1,72 @@
 library(tidyverse)
 library(dyneval)
 
-source("scripts/wouter/toy/generation.R")
-source("scripts/wouter/toy/perturbation.R")
+tasks <- generate_toy_datasets()
+tasks <- tasks[1, ]
 
-# generate a simple linear toy dataset
-task <- generate_linear()
-
-timepoints <- task$progressions$percentage
-cell_ids <- task$progressions$cell_id
-
-ngenes <- 200
-coefs <- runif(ngenes, -1, 1)
-intercepts <- runif(ngenes, -2, 2)
-metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "ged", "isomorphic")
-
-expression <- t(coefs %*% t(timepoints)) %>% apply(1, function(x) x + intercepts) %>% t
-expression <- expression + rnorm(length(expression), mean = 0, sd=0.1)
-dimnames(expression) <- list(cell_ids, seq_len(ncol(expression)))
-expression[order(timepoints),] %>% t %>% pheatmap::pheatmap(cluster_cols=F, scale="row")
-plot(timepoints, expression[, 1])
-
-counts <- round((2^expression) * 10)
-task$counts <- counts
-tasks <- dyneval:::list_as_tibble(list(task))
+counts <- tasks$counts[[1]]
 
 # choose certain parameters for each method, at which we know this method will perform well for the toy dataset
 method_descriptions <- list(
-  random_linear=list(),
-  # waterfall=list(), # broken
+  waterfall=list(), # broken, cannot install RHmm on cluster due to lapack isue
   scorpius=list(),
   slingshot=list(),
-  # slicer=list(max_same_milestone_distance=0.2, start_cell_id=progressions$percentage %>% which.min, min_branch_len=0.1, kmin=30, m=2), # broken it is inconceiveble really
-  # gpfates=list(nfates=1),
-  stemid=list(),
+  # # # slicer=list(max_same_milestone_distance=0.2, start_cell_id=progressions$percentage %>% which.min, min_branch_len=0.1, kmin=30, m=2), # broken it is inconceiveble really
+  gpfates=list(nfates=1),
+  stemid=list(clustnr=10, bootnr=10, pdishuf=10),
   tscan=list(),
-  embeddr=list(),
+  embeddr=list(nn_pct = 2),
   celltree_gibbs=list(sd_filter = 0),
   celltree_maptpx=list(sd_filter = 0),
-  celltree_vem=list(sd_filter = 0)
+  celltree_vem=list(sd_filter = 0),
+  random_linear=list()
 )
+# method_descriptions <- method_descriptions[c("stemid", "slingshot", "random_linear")]
+
+metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "ged", "isomorphic")
 
 # test the methods and get the scores
-scores <- purrr::map(names(method_descriptions), function(method_name) {
+# results <- purrr::map(names(method_descriptions), function(method_name) {
+# results <- parallel::mclapply(names(method_descriptions), function(method_name) {
+results <- PRISM::qsub_lapply(names(method_descriptions), function(method_name) {
+  library(dyneval)
+
   cat("Processing ", method_name, "\n", sep="")
   method <- get(paste0("description_", method_name))()
   method_params <- method_descriptions[[method_name]]
 
-  method_out <- dyneval:::execute_evaluation(tasks, method, method_params, metrics = metric_names, suppress_output = T)
-  attr(method_out, "extras")$.summary
-}) %>% bind_rows()
+  factory <- function(fun) {
+    function(...) {
+      warn <- err <- NULL
+      res <- withCallingHandlers(
+        tryCatch(fun(...), error=function(e) {
+          err <<- conditionMessage(e)
+          NULL
+        }), warning=function(w) {
+          warn <<- append(warn, conditionMessage(w))
+          invokeRestart("muffleWarning")
+        })
+      list(res, warn=warn, err=err, method_name=method_name)
+    }
+  }
 
-scores$correlation
+  factory(function() {
+    dyneval:::execute_evaluation(tasks, method, method_params, metrics = metric_names, suppress_output = F)
+  }
+  )()
+# }, mc.cores=8)
+# })
+}, qsub_environment = list2env(lst(method_descriptions, tasks, metric_names)), qsub_config = PRISM::override_qsub_config(memory = "10G"))
+
+scores <- purrr::map(results, function(.) {
+  bind_cols(
+    tibble(error=list(.$err), warning=list(.$warning)),
+    attr(.[[1]], "extras")$.summary,
+    tibble(method_name=.$method_name)
+  )
+}) %>% bind_rows() %>% mutate(errored = !map_lgl(error, is.null)) %>% select(-method_name1)
 
 scores %>%
   dplyr::select(-starts_with("time")) %>%
-  gather(score_id, score, -method_name, -method_short_name, -task_id) %>%
-  ggplot() + geom_bar(aes(method_name, score), stat="identity") + facet_wrap(~score_id)
+  gather(score_id, score, -method_name, -method_short_name, -task_id, -error, -warning) %>%
+  ggplot() + geom_bar(aes(method_name, score, fill=score_id), stat="identity") + facet_wrap(~score_id) + coord_flip()
