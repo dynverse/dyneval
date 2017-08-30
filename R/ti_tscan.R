@@ -67,6 +67,8 @@ run_tscan <- function(counts,
     tibble::data_frame(cell_id = rownames(counts), milestone_id = milestone_ids[[2]], percentage = pseudotime)
   )
 
+  milestone_percentages <- milestone_percentages %>% filter(!is.na(percentage))
+
   wrap_ti_prediction(
     ti_type = "linear",
     id = "TSCAN",
