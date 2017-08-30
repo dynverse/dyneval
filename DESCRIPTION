@@ -18,7 +18,6 @@ Depends:
 Imports: 
     coRanking,
     dplyr, 
-    dyngen,
     future,
     ggplot2,
     glue,
