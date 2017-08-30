@@ -1,4 +1,4 @@
-context("Data IO")
+context("Generating datasets with dyngen")
 
 #tasks <- readRDS(paste0(tempdir(), "/dyneval_test_datasets.rds"))
 tasks <- dyneval::generate_toy_datasets()

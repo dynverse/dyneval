@@ -1,4 +1,4 @@
-context("Dimred functions")
+context("Dimred for trajectories")
 
 tasks <- dyneval::generate_toy_datasets()
 
