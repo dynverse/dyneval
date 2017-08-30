@@ -1,4 +1,4 @@
-#' @importFrom dyngen generate_toy_milestone_network random_progressions_tented
+#' @importFrom dyngen generate_toy_milestone_network random_progressions_tented generate_expression
 generate_toy_datasets <- function() {
   settings <- expand.grid(ti_type = c("linear", "bifurcating", "cycle"), replicate = 1:5, stringsAsFactors = F)
 
@@ -8,7 +8,7 @@ generate_toy_datasets <- function() {
     milestone_network <- dyngen::generate_toy_milestone_network(ti_type)
     progressions <- dyngen::random_progressions_tented(milestone_network)
     expression <- dyngen::generate_expression(milestone_network, progressions)
-    counts <- round(expression * 100)
+    counts <- dyngen::generate_counts(expression)
 
     cell_ids <- unique(progressions$cell_id)
     milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
