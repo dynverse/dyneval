@@ -12,43 +12,53 @@
 #'
 #' @export
 plotdata_default <- function(traj_object, insert_phantom_edges = T) {
-  name <- paste0(traj_object$type, "/", traj_object$ti_type, "/", traj_object$name)
+  #name <- paste0(traj_object$type, "/", traj_object$ti_type, "/", traj_object$name)
+  name <- traj_object$id
 
-  # retrieve information on milestones
+  # retrieve some objects to work with
+  cell_ids <- traj_object$cell_ids
   milestone_ids <- traj_object$milestone_ids
-  if (length(milestone_ids) <= 12) {
-    colour_milestones <- RColorBrewer::brewer.pal(max(3, length(milestone_ids)), "Set3")[seq_along(milestone_ids)]
-    colours_milestones <- setNames(colour_milestones, milestone_ids)
-  } else {
-    colours_milestones <- setNames(sample(rainbow(length(milestone_ids))), milestone_ids)
-  }
-  colours_rgb_milestones <- t(col2rgb(colours_milestones))
-
-  # get milestone_network
+  num_milestones <- length(milestone_ids)
   milestone_network <- traj_object$milestone_network
+  milestone_percentages <- traj_object$milestone_percentages
 
-  # retrieve information on samples
-  milestone_percentages <- traj_object$milestone_percentages %>%
-    mutate(milestone_id = factor(milestone_id, levels = milestone_ids)) %>%
-    spread(milestone_id, percentage, fill = 0, drop = FALSE)
-  milestone_percentages_m <- as.matrix(milestone_percentages[,milestone_ids,drop=F])
-  rownames(milestone_percentages_m) <- milestone_percentages$cell_id
-  colours_rgb_samples <- milestone_percentages_m %*% colours_rgb_milestones
-  colours_samples <- mapply(colours_rgb_samples[,1], colours_rgb_samples[,2], colours_rgb_samples[,3], FUN = rgb, maxColorValue = 256)
+  # determine colours associated with each milestone
+  col_milest_hex <-
+    if (length(milestone_ids) <= 12) {
+      RColorBrewer::brewer.pal(max(3, num_milestones), "Set3")[seq_len(num_milestones)]
+    } else {
+      sample(rainbow(num_milestones))
+    }
+  col_milest_rgb <- t(col2rgb(col_milest_hex))
+  rownames(col_milest_rgb) <- milestone_ids
 
-  # add imaginary links, ifneedbe
+  # determine colour for sample by mixing milestone colours
+  mix_colours <- function(milid, milpct) {
+    colour_rgb <- apply(col_milest_rgb[milid,,drop=F], 2, function(x) sum(x * milpct))
+    do.call(rgb, as.list(c(colour_rgb, maxColorValue = 256)))
+  }
+  colours_samples <-
+    milestone_percentages %>%
+    group_by(cell_id) %>%
+    summarise(colour = mix_colours(milestone_id, percentage)) %$%
+    setNames(colour, cell_id)
+
+  # add phantom links, ifneedbe
   if (insert_phantom_edges) {
     structure <- add_phantom_edges(milestone_ids, milestone_network)
   } else {
     structure <- milestone_network
   }
 
-  # reduce dimensionality on milestone_network
-  gr <- graph_from_data_frame(structure, vertices = milestone_ids)
-  lengths <- E(gr)$length
-  if (min(lengths) * 3 < max(lengths)) {
-    lengths <- ((lengths - min(lengths)) / (max(lengths) - min(lengths)) + .5) %>% sqrt
+  # adjust weights on structure to make it easier to plot
+  if (min(structure$length) * 3 < max(structure$length)) {
+    structure <- structure %>% mutate(
+      length = sqrt((length - min(length)) / (max(length) - min(length)) + .5)
+    )
   }
+
+  # reduce dimensionality on milestone_network
+  gr <- graph_from_data_frame(structure %>% rename(weight = length), vertices = milestone_ids)
 
   gr_space_milestones <- layout_with_kk(gr, weights = lengths, maxiter = 200) %>% SCORPIUS::rescale.and.center()
   dimnames(gr_space_milestones) <- list(milestone_ids, paste0("Comp", seq_len(ncol(gr_space_milestones))))
