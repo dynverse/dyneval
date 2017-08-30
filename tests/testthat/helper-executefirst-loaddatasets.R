@@ -13,7 +13,7 @@ generate_toy_datasets <- function() {
   settings <- expand.grid(ti_type=c("linear", "bifurcating", "cycle"), replicate=1:5) %>% as.data.frame()
 
   purrrlyr::invoke_rows(function(ti_type, ...) {
-    milestone_network = dyngen::generate_toy_milestone_network("linear")
+    milestone_network = dyngen::generate_toy_milestone_network(ti_type)
     progressions = dyngen::random_progressions_tented(milestone_network)
 
     wrap(milestone_network, progressions)
