@@ -2,3 +2,6 @@ language: r
 sudo: required
 dist: trusty
 bioc_required: true
+build_script:
+  - travis-tool.sh install_github Zouter/dyngen
+  - travis-tool.sh install_deps
