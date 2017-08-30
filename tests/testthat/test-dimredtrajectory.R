@@ -1,4 +1,4 @@
-context("Plot functions")
+context("Dimred functions")
 
 tasks <- dyneval::generate_toy_datasets()
 

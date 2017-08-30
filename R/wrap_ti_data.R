@@ -127,7 +127,7 @@ abstract_wrapper <- function(
     progressions = progressions,
     ...
   )
-  class(out) <- paste0("dyneval::ti_wrapper")
+  class(out) <- c("dyneval::ti_wrapper", "list")
   out
 }
 
@@ -175,7 +175,7 @@ convert_progressions_to_milestone_percentages <- function(cell_ids, milestone_id
 }
 
 is_ti_wrapper <- function(object) {
-  class(object) == "dyneval::ti_wrapper"
+  "dyneval::ti_wrapper" %in% class(object)
 }
 
 add_phantom_edges <- function(milestone_ids, milestone_network) {
