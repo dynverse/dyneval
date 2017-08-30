@@ -1,6 +1,6 @@
 context("Plot functions")
 
-tasks <- readRDS(paste0(tempdir(), "/dyneval_test_datasets.rds"))
+tasks <- dyneval::generate_toy_datasets()
 
 for (taski in seq_len(nrow(tasks))) {
   task <- extract_row_to_list(tasks, taski)

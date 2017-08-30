@@ -24,6 +24,8 @@ load_datasets_info <- function() {
 #' @return A tibble of datasets
 #' @export
 #'
+#' @importFrom dyngen load_dataset
+#'
 #' @examples
 #' datasets <- load_datasets(mc_cores = 1, datasets_info = load_datasets_info()))
 load_datasets <- function(mc_cores = 1, datasets_info = load_datasets_info()) {
