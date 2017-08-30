@@ -6,7 +6,7 @@
 set.seed(1)
 
 # sample some datasets
-task_sel <- dplyr::sample_n(load_datasets_info(), 16)
+task_sel <- dplyr::sample_n(load_datasets_info(), 8)
 
 # load them
 cat("Loading ", nrow(task_sel), " datasets\n", sep="")
