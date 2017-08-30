@@ -1,19 +1,3 @@
-# filename <- paste0(tempdir(), "/dyneval_test_datasets.rds")
-# .datasets_location = "../../../dyngen/results/4/"
-# set.seed(1)
-# datasets_sel <- dplyr::sample_n(load_datasets_info(), 16)
-# cat("Loading ", nrow(datasets_sel), " datasets\n", sep="")
-# datasets <- load_datasets(mc_cores = 8, datasets_sel)
-# saveRDS(datasets, filename)
-#
-#
-#
-#
-#
-#
-# milestone_network <- dyngen::generate_toy_milestone_network("linear")
-# progressions <- dyngen::random_progressions_tented(milestone_network)
-
 wrap <- function(milestone_network, progressions, name="toy") {
   task <- dyneval::wrap_ti_prediction(
     "toy",
@@ -35,3 +19,6 @@ generate_toy_datasets <- function() {
     wrap(milestone_network, progressions)
   }, settings) %>% pull(.out)
 }
+
+tasks <- generate_toy_datasets()
+saveRDS(tasks, paste0(tempdir(), "/dyneval_test_datasets.rds"))
