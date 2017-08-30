@@ -43,7 +43,6 @@ run_waterfall <- function(counts, k = 10) {
   )
 }
 
-#' @importFrom ggplot2 ggplot geom_point aes scale_colour_distiller theme
 plot_waterfall <- function(ti_predictions) {
   ps <- ti_predictions$ps
   ggplot() +

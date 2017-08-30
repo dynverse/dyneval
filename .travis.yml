@@ -1,0 +1,7 @@
+language: r
+sudo: required
+dist: trusty
+bioc_required: true
+cache: packages
+r_github_packages: 
+- Zouter/dyngen
