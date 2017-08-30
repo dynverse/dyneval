@@ -82,7 +82,9 @@ abstract_wrapper <- function(
   }
 
   if (is.null(progressions)) {
-    progressions <- convert_milestone_percentages_to_progressions(cell_ids, milestone_ids, milestone_network, milestone_percentages)
+    phantom_network <- add_phantom_edges(milestone_ids, milestone_network)
+
+    progressions <- convert_milestone_percentages_to_progressions(cell_ids, milestone_ids, phantom_network, milestone_percentages)
   } else if (is.null(milestone_percentages)) {
     milestone_percentages <- convert_progressions_to_milestone_percentages(cell_ids, milestone_ids, milestone_network, progressions)
   }
@@ -178,4 +180,54 @@ is_ti_wrapper <- function(object) {
   class(object) == "dyneval::ti_wrapper"
 }
 
+add_phantom_edges <- function(milestone_ids, milestone_network) {
+  bind_rows(
+    milestone_network,
+    bind_rows(lapply(milestone_ids, function(x) {
+      strx <- milestone_network %>%
+        filter(from == x)
+
+      if (nrow(strx) > 1) {
+        strx <- strx %>%
+          mutate(
+            angle = seq(0, 120/360*pi*2, length.out = n()),
+            x = length * cos(angle),
+            y = length * sin(angle)
+          )
+        poss <- strx %>% select(x, y) %>% as.matrix
+        rownames(poss) <- strx$to
+        poss %>%
+          dist %>%
+          as.matrix %>%
+          reshape2::melt(varnames = c("from", "to"), value.name = "length") %>%
+          mutate(from = as.character(from), to = as.character(to)) %>%
+          filter(from != to)
+      } else {
+        NULL
+      }
+    })),
+    bind_rows(lapply(milestone_ids, function(x) {
+      strx <- milestone_network %>%
+        filter(to == x)
+
+      if (nrow(strx) > 1) {
+        strx <- strx %>%
+          mutate(
+            angle = seq(0, 120/360*pi*2, length.out = n()),
+            x = length * cos(angle),
+            y = length * sin(angle)
+          )
+        poss <- strx %>% select(x, y) %>% as.matrix
+        rownames(poss) <- strx$from
+        poss %>%
+          dist %>%
+          as.matrix %>%
+          reshape2::melt(varnames = c("from", "to"), value.name = "length") %>%
+          mutate(from = as.character(from), to = as.character(to)) %>%
+          filter(from != to)
+      } else {
+        NULL
+      }
+    })))
+}
 
