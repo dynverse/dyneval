@@ -10,12 +10,11 @@ generate_toy_datasets <- function() {
 
     milestone_network <- dyngen::generate_toy_milestone_network(ti_type)
     progressions <- dyngen::random_progressions_tented(milestone_network)
+    expression <- dyngen::generate_expression(milestone_network, progressions)
+    counts <- round(expression * 100)
 
     cell_ids <- unique(progressions$cell_id)
     milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
-
-    # todo: replace with real counts
-    counts <- matrix(runif(length(cell_ids) * 100), nrow = length(cell_ids), dimnames = list(cell_ids, paste0("G", seq_len(100))))
 
     # todo: replace with real special_cells
     special_cells <- list()
