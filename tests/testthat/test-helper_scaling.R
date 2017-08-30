@@ -1,4 +1,4 @@
-context("Scaling")
+context("Scaling helper")
 
 # generate some random data
 num_samples <- 40

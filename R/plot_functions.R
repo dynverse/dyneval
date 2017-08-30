@@ -67,20 +67,20 @@ plot_combined <- function(original_object, new_object, insert_phantom_edges = T)
 #' @importFrom reshape2 acast
 #' @importFrom pheatmap pheatmap
 plot_emdist <- function(traj, dist, dimred = NULL, ...) {
-  milestone_percentages <- traj$milestone_percentages
-  pct <- as.data.frame(milestone_percentages[,-1])
-  rownames(pct) <- milestone_percentages$id
+  pct <- traj$milestone_percentages %>%
+    reshape2::acast(cell_id ~ milestone_id, value.var = "percentage", fill = 0) %>%
+    as.data.frame(check.names = F)
 
   if (is.null(dimred)) {
     dimred <- dimred_trajectory(traj)
   }
 
-  ann_colours <- setNames(lapply(dimred$milestone_states$colour, function(x) c("white", x)), dimred$milestone_states$id)
+  ann_colours <- setNames(lapply(dimred$milestone_states$colour, function(x) c("white", x)), dimred$milestone_states$milestone_id)
 
   pheatmap::pheatmap(
     dist,
-    cluster_rows = F,
-    cluster_cols = F,
+    cluster_rows = T,
+    cluster_cols = T,
     annotation_col = pct,
     annotation_row = pct,
     annotation_colors = ann_colours,
@@ -94,5 +94,6 @@ plot_emdist <- function(traj, dist, dimred = NULL, ...) {
     annotation_names_row = F,
     annotation_names_col = F,
     fontsize = 20 / length(traj$milestone_ids),
-    ...)
+    ...
+  )
 }
