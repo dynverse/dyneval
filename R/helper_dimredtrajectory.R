@@ -1,4 +1,4 @@
-check_dimred <- function(object, insert_phantom_edges) {
+check_or_perform_dimred <- function(object, insert_phantom_edges) {
   if (is_ti_wrapper(object)) {
     dimred_object <- dimred_trajectory(object, insert_phantom_edges = insert_phantom_edges)
   } else if (is_ti_dimred_wrapper(object)) {

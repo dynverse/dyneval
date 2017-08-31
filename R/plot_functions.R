@@ -8,7 +8,7 @@
 #'
 #' @export
 plot_default <- function(object, insert_phantom_edges = T) {
-  dimred_object <- check_dimred(object, insert_phantom_edges)
+  dimred_object <- check_or_perform_dimred(object, insert_phantom_edges)
   with(dimred_object, {
     ggplot() +
       geom_segment(aes(x = from.Comp1, xend = to.Comp1, y = from.Comp2, yend = to.Comp2), space_lines,
@@ -36,8 +36,8 @@ plot_default <- function(object, insert_phantom_edges = T) {
 #'
 #' @export
 plot_combined <- function(original_object, new_object, insert_phantom_edges = T) {
-  original_dimred <- check_dimred(original_object, insert_phantom_edges)
-  new_dimred <- check_dimred(new_object, insert_phantom_edges)
+  original_dimred <- check_or_perform_dimred(original_object, insert_phantom_edges)
+  new_dimred <- check_or_perform_dimred(new_object, insert_phantom_edges)
 
   combined_dimred <- new_dimred
   combined_dimred$space_samples$colour <- original_dimred$space_samples$colour
