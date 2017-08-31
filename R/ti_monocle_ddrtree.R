@@ -28,9 +28,16 @@ description_monocle_ddrtree <- function() {
 #' @importFrom igraph degree all_shortest_paths distances
 #' @importFrom reshape2 melt
 run_monocle_ddrtree <- function(counts,
-                                num_dimensions = 2, norm_method = "vstExprs",
-                                maxIter = 20, sigma = 0.001, lambda_null = T, lambda = NULL,
-                                ncenter_null = T, ncenter = NULL, param.gamma = 20, tol = 0.001,
+                                num_dimensions = 2,
+                                norm_method = "vstExprs",
+                                maxIter = 20,
+                                sigma = 0.001,
+                                lambda_null = T,
+                                lambda = NULL,
+                                ncenter_null = T,
+                                ncenter = NULL,
+                                param.gamma = 20,
+                                tol = 0.001,
                                 auto_param_selection = T) {
   requireNamespace("monocle")
 
@@ -39,7 +46,8 @@ run_monocle_ddrtree <- function(counts,
   if (is.factor(norm_method)) norm_method <- as.character(norm_method)
 
   # load in the new dataset
-  expr <- log2(as.matrix(counts)+1)
+  expr <- counts
+  #expr <- log2(as.matrix(counts)+1)
   featureData <- new("AnnotatedDataFrame", data.frame(row.names = colnames(expr), gene_short_name = colnames(expr)))
   cds_1 <- newCellDataSet(t(expr), featureData = featureData)
 
@@ -91,7 +99,7 @@ run_monocle_ddrtree <- function(counts,
     pct %>%
       reshape2::melt(varnames = c("cell_id", "milestone_id"), value.name = "percentage") %>%
       mutate(cell_id = as.character(cell_id), milestone_id = paste0("milestone_", as.character(milestone_id)))
-  })) %>% as_data_frame() %>% filter(percentage > 0)
+  })) %>% as_tibble() %>% filter(percentage > 0) %>% distinct(cell_id, milestone_id, percentage)
   milestone_ids <- paste0("milestone_", milestone_ids)
 
   # wrap output
