@@ -11,9 +11,6 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.0.1
-BinaryFiles:
-  inst/extra_code/GEDEVO/linux-x64/gedevo
-  inst/extra_code/GEDEVO/linux-x64/gedevo-static
 Depends:
   R (>= 3.0.0)
 Imports: 
@@ -46,6 +43,7 @@ Suggests:
   cellTree,
   destiny,
   embeddr,
+  jsonlite,
   lle,
   monocle,
   R.matlab,
