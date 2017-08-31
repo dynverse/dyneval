@@ -14,14 +14,13 @@ generate_toy_datasets <- function() {
     progressions <- dyngen::random_progressions_tented(milestone_network)
     expression <- dyngen::generate_expression(milestone_network, progressions)
     counts <- dyngen::generate_counts(expression)
+    colnames(counts) <- paste0("G", seq_len(ncol(counts)))
 
     cell_ids <- unique(progressions$cell_id)
     milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
 
     # todo: replace with real special_cells
     special_cells <- list()
-
-    # milestone_percentages <- convert_progressions_to_milestone_percentages(cell_ids, milestone_ids, milestone_network, progressions)
 
     task <- wrap_ti_task_data(
       ti_type = "toy",
@@ -33,7 +32,7 @@ generate_toy_datasets <- function() {
       progressions = progressions,
       special_cells = special_cells
     )
-    task$geodesic_dist <- dyneval::compute_emlike_dist(task)
+    task$geodesic_dist <- compute_emlike_dist(task)
     task
   }))
 }
