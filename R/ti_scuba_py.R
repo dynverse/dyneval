@@ -20,9 +20,14 @@ description_scuba <- function() {
     name = "SCUBA",
     short_name = "SCUBA",
     package_load = c(),
-    package_installed = c("jsonlite"),
+    package_installed = c("jsonlite", "readr"),
     par_set = makeParamSet(
-## TODO
+      makeLogicalParam(id = "rigorous_gap_stats"),
+      makeIntegerParam(id = "N_dim", lower=2, upper=20, default=2),
+      makeNumericParam(id = "low_gene_threshold", lower = 0, upper = 5, default = 1),
+      makeNumericParam(id = "low_gene_fraction_max", lower = 0, upper = 1, default = 0.7),
+      makeIntegerParam(id = "min_split", lower=1, upper=100, default=15),
+      makeNumericParam(id = "min_percentage_split", lower=0, upper=1, default=0.25)
     ),
     properties = c(),
     run_fun = run_scuba,
@@ -32,14 +37,19 @@ description_scuba <- function() {
 
 #' @importFrom utils write.table
 run_scuba <- function(counts,
-                      log_mode=TRUE,
-                      rigorous_gap_stats=TRUE) {
-  requireNamespace("jsonlite")
+                      rigorous_gap_stats=TRUE,
+                      N_dim=2,
+                      low_gene_threshold=1,
+                      low_gene_fraction_max=0.7,
+                      min_split=15,
+                      min_percentage_split=0.25) {
 
+  requireNamespace("jsonlite")
   temp_folder <- tempfile()
   dir.create(temp_folder, recursive = T)
 
   counts %>%
+    #{log2(. + 1)} %>%
     t %>%
     as.data.frame() %>%
     write.table(paste0(temp_folder, "/counts.tsv"), sep="\t", col.names=NA)
@@ -51,21 +61,21 @@ run_scuba <- function(counts,
       shQuote(glue::glue(
         "cd {get_scuba_path()}/scuba/",
         "source bin/activate",
-        "python {path.package('dyneval')}/extra_code/PySCUBA/scuba_wrapper.py {temp_folder} {log_mode} {rigorous_gap_stats}",
+        "python {path.package('dyneval')}/extra_code/PySCUBA/scuba_wrapper.py {temp_folder} 0 {c(0, 1)[as.numeric(rigorous_gap_stats)+1]} {N_dim} {low_gene_threshold} {low_gene_fraction_max} {min_split} {min_percentage_split}",
         .sep = ";"))
     )
   )
 
   output <- jsonlite::read_json(paste0(temp_folder, "/output.json"))
   labels <- as.character(unlist(output$labels))
-  tree <- output$tree
-
-  milestone_network <- purrr::map2(names(tree), tree, ~tibble(from=.x, to=.y)) %>%
-    bind_rows() %>%
-    unnest(to) %>%
-    filter(to > -1) %>%
-    mutate(to=as.character(to)) %>%
-    mutate(length=1)
+  milestone_network <- readr::read_tsv(paste0(temp_folder, "/final_tree.tsv")) %>%  # tree was outputted seperatly by a python function, this is not returned by the function but can only be extracted by saving it
+    rename(to=`Cluster ID`, stage=Stage, from=`Parent cluster`) %>%
+    select(from, to) %>%
+    mutate(
+      length=1,
+      from=as.character(from),
+      to=as.character(to)
+    )
 
   milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
 
