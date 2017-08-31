@@ -22,13 +22,12 @@ description_scuba <- function() {
     package_load = c(),
     package_installed = c("jsonlite", "readr"),
     par_set = makeParamSet(
-      makeLogicalParam(id = "log_mode"),
       makeLogicalParam(id = "rigorous_gap_stats"),
       makeIntegerParam(id = "N_dim", lower=2, upper=20, default=2),
       makeNumericParam(id = "low_gene_threshold", lower = 0, upper = 5, default = 1),
       makeNumericParam(id = "low_gene_fraction_max", lower = 0, upper = 1, default = 0.7),
       makeIntegerParam(id = "min_split", lower=1, upper=100, default=15),
-      makeNumericParam(id = "min_percentage_split", lower=0, upper=1, default=0.25),
+      makeNumericParam(id = "min_percentage_split", lower=0, upper=1, default=0.25)
     ),
     properties = c(),
     run_fun = run_scuba,
@@ -39,7 +38,6 @@ description_scuba <- function() {
 #' @export
 #' @importFrom utils write.table
 run_scuba <- function(counts,
-                      log_mode=TRUE,
                       rigorous_gap_stats=TRUE,
                       N_dim=2,
                       low_gene_threshold=1,
@@ -51,6 +49,7 @@ run_scuba <- function(counts,
   dir.create(temp_folder, recursive = T)
 
   counts %>%
+    #{log2(. + 1)} %>%
     t %>%
     as.data.frame() %>%
     write.table(paste0(temp_folder, "/counts.tsv"), sep="\t", col.names=NA)
@@ -62,7 +61,7 @@ run_scuba <- function(counts,
       shQuote(glue::glue(
         "cd {get_scuba_path()}/scuba/",
         "source bin/activate",
-        "python {path.package('dyneval')}/extra_code/PySCUBA/scuba_wrapper.py {temp_folder} {c(0, 1)[as.numeric(log_mode)]} {c(0, 1)[as.numeric(rigorous_gap_stats)]} {N_dim} {low_gene_threshold} {low_gene_fraction_max} {min_split} {min_percentage_split}",
+        "python {path.package('dyneval')}/extra_code/PySCUBA/scuba_wrapper.py {temp_folder} 0 {c(0, 1)[as.numeric(rigorous_gap_stats)+1]} {N_dim} {low_gene_threshold} {low_gene_fraction_max} {min_split} {min_percentage_split}",
         .sep = ";"))
     )
   )
