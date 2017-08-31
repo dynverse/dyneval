@@ -20,6 +20,7 @@ Imports:
   coRanking,
   dplyr, 
   dyngen,
+  dynutils,
   future,
   ggplot2,
   glue,
@@ -42,4 +43,5 @@ Imports:
   transport,
   viridis
 Remotes:
-  Zouter/dyngen
+  Zouter/dyngen,
+  rcannood/dynutils

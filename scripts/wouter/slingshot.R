@@ -80,7 +80,7 @@ run_slingshot <- function(
       }
     }
   }
-  combinedbundles <- combinedbundles %>% dyneval:::list_as_tibble()
+  combinedbundles <- combinedbundles %>% list_as_tibble()
 
   # to which set of lineages does each cell belong
   combinations_cell <- apply(pt, 1, function(x) names(sds@lineages)[which(!is.na(x))])

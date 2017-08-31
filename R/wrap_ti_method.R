@@ -3,6 +3,7 @@
 #' @param as_tibble Whether or not to return the descriptions as a tibble
 #'
 #' @importFrom utils lsf.str
+#' @importFrom dynutils list_as_tibble
 #' @export
 get_descriptions <- function(as_tibble = T) {
   functions <- lsf.str("package:dyneval")

@@ -23,6 +23,7 @@ description_slingshot <- function() {
 #.datasets_location = "../dyngen/results/4/"
 #counts <- dyngen::load_dataset(dyngen::overviewer("datasets")$id[[1]])$counts
 
+#' @importFrom dynutils list_as_tibble
 run_slingshot <- function(
   counts,
   ndim = 3,
@@ -110,7 +111,7 @@ run_slingshot <- function(
       }
     }
   }
-  combinedbundles <- combinedbundles %>% dyneval:::list_as_tibble()
+  combinedbundles <- combinedbundles %>% list_as_tibble()
 
   # to which set of lineages does each cell belong, this does not work because sometimes strange combinations are chosen here outside of the known bundle
   combinations_cell <- apply(pt, 1, function(x) names(sds@lineages)[which(!is.na(x))])

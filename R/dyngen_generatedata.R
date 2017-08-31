@@ -1,6 +1,7 @@
 #' Generate toy datasets with dyngen
 #'
 #' @importFrom dyngen generate_toy_milestone_network random_progressions_tented generate_expression
+#' @importFrom dynutils extract_row_to_list list_as_tibble
 #'
 #' @export
 generate_toy_datasets <- function() {
