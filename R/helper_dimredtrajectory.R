@@ -17,6 +17,7 @@ check_or_perform_dimred <- function(object, insert_phantom_edges) {
 #'  \code{\link{wrap_ti_prediction}}
 #' @param insert_phantom_edges attempt to plot bifurcating edges correctly automatically
 #'
+#' @importFrom dynutils scale_uniformily
 #' @importFrom igraph graph_from_data_frame layout_with_kk E
 #' @importFrom RColorBrewer brewer.pal
 #' @importFrom grDevices col2rgb rainbow rgb
