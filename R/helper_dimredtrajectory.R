@@ -19,7 +19,7 @@ check_dimred <- function(object, insert_phantom_edges) {
 #'
 #' @importFrom igraph graph_from_data_frame layout_with_kk E
 #' @importFrom RColorBrewer brewer.pal
-#' @importFrom grDevices col2rgb
+#' @importFrom grDevices col2rgb rainbow rgb
 #'
 #' @export
 dimred_trajectory <- function(traj_object, insert_phantom_edges = T) {

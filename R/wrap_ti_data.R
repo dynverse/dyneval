@@ -4,6 +4,7 @@ get_task_identifier <- function(task) {
   task[c("type", "ti_type", "id")]
 }
 
+#' Wrapping TI task data
 #' @export
 wrap_ti_task_data <- function(
   ti_type,
@@ -34,6 +35,7 @@ wrap_ti_task_data <- function(
   )
 }
 
+#' Wrapping TI predictions
 #' @export
 wrap_ti_prediction <- function(
   ti_type,

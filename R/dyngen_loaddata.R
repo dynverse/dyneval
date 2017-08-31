@@ -7,7 +7,10 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
+#' .dataset_location <- "path_to_dyngen_results"
 #' load_datasets_info()
+#' }
 load_datasets_info <- function() {
   readRDS(paste0(.datasets_location, "/datasets.rds"))
 }
@@ -27,7 +30,10 @@ load_datasets_info <- function() {
 #' @importFrom dyngen load_dataset
 #'
 #' @examples
-#' datasets <- load_datasets(mc_cores = 1, datasets_info = load_datasets_info()))
+#' \dontrun{
+#' .dataset_location <- "path_to_dyngen_results"
+#' datasets <- load_datasets(mc_cores = 1, datasets_info = load_datasets_info())
+#' }
 load_datasets <- function(mc_cores = 1, datasets_info = load_datasets_info()) {
   # load the datasets one by one
   task_wrapped <- parallel::mclapply(seq_len(nrow(datasets_info)), mc.cores = mc_cores, function(dataset_num) {

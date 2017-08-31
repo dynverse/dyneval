@@ -1,4 +1,8 @@
+#' Generate toy datasets with dyngen
+#'
 #' @importFrom dyngen generate_toy_milestone_network random_progressions_tented generate_expression
+#'
+#' @export
 generate_toy_datasets <- function() {
   settings <- expand.grid(ti_type = c("linear", "bifurcating", "cycle"), replicate = 1:5, stringsAsFactors = F)
 

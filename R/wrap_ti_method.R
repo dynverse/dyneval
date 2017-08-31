@@ -2,6 +2,7 @@
 #'
 #' @param as_tibble Whether or not to return the descriptions as a tibble
 #'
+#' @importFrom utils lsf.str
 #' @export
 get_descriptions <- function(as_tibble = T) {
   functions <- lsf.str("package:dyneval")
@@ -29,6 +30,7 @@ check_dependencies <- function() {
   }
 }
 
+#' @importFrom utils capture.output
 #' @export
 run_method <- function(task, method, parameters, suppress_output = TRUE) {
   summary <- data.frame(row.names = 1)

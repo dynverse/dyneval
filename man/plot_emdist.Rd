@@ -11,7 +11,7 @@ plot_emdist(traj, dist, dimred = NULL, ...)
 
 \item{dimred}{the dimensionality reduction of the trajectory as produced by \code{\link{dimred_trajectory}}}
 
-\item{emdist}{the Earth Mover's distances as calculated by \link{\code{emdist}}}
+\item{emdist}{the Earth Mover's distances as calculated by \code{\link{compute_emlike_dist}}}
 }
 \description{
 Plot the Earth Mover's distances in a heatmap

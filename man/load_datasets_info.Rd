@@ -14,5 +14,8 @@ The meta information of the datasets
 to work correctly.
 }
 \examples{
+\dontrun{
+.dataset_location <- "path_to_dyngen_results"
 load_datasets_info()
+}
 }

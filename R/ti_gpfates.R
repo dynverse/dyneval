@@ -36,18 +36,9 @@ description_gpfates <- function() {
   )
 }
 
-# library(tidyverse)
-# library(dyneval)
-#
-# .version <- 4
-# .datasets_location <- paste0("/home/wouters/thesis/projects/dyngen/results/", .version, "/")
-# dataset <- load_datasets(ndatasets = 1) %>% dyneval:::extract_row_to_list(1)
-#
-# counts <- dataset$counts
-
-
 ## TODO: give simulationtime as prior
 #' @importFrom readr read_csv
+#' @importFrom utils write.table
 #' @export
 run_gpfates <- function(
   counts,
