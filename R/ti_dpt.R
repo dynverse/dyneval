@@ -1,4 +1,3 @@
-#' @import ParamHelpers
 #' @export
 description_dpt <- function() {
   list(
@@ -22,7 +21,6 @@ description_dpt <- function() {
   )
 }
 
-#' @export
 run_dpt <- function(counts,
                     sigma = "local",
                     distance = "euclidean",
@@ -31,6 +29,8 @@ run_dpt <- function(counts,
                     n_local_lower = 5,
                     n_local_upper = 7,
                     w_width = .1) {
+  requireNamespace("destiny")
+
   n_local <- seq(n_local_lower, n_local_upper, by = 1)
 
   expr <- log2(counts+1)
@@ -62,8 +62,8 @@ run_dpt <- function(counts,
   )
 }
 
-#' @export
 plot_dpt <- function(ti_predictions) {
+  requireNamespace("destiny")
   #qplot(percent_rank(ti_predictions$milestone_percentages[,1]), ti_predictions$milestone_percentages[,1], colour = data$sample_info$group.name)
   stop("TODO!")
 }

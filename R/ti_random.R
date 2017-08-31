@@ -1,4 +1,3 @@
-#' @import ParamHelpers
 #' @export
 description_random_linear <- function() {
   list(
@@ -14,7 +13,6 @@ description_random_linear <- function() {
   )
 }
 
-#' @export
 run_random_linear <- function(counts) {
   milestone_network <- tibble(from=1, to=2, length=1)
   progressions <- tibble(cell_id=rownames(counts), from=1, to=2) %>%

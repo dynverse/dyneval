@@ -11,7 +11,6 @@ run_slingshot <- function(
   nclus = 10,
   dimred_name = "pca"
 ) {
-
   dimred_func <- match.fun(paste0("dimred_", dimred_name))
 
   # normalization

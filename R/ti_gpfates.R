@@ -12,7 +12,6 @@ install_gpfates <- function() {
   ))
 }
 
-#' @import ParamHelpers
 #' @export
 description_gpfates <- function() {
   if(!dir.exists(get_gpfates_path())) {
@@ -39,7 +38,6 @@ description_gpfates <- function() {
 ## TODO: give simulationtime as prior
 #' @importFrom readr read_csv
 #' @importFrom utils write.table
-#' @export
 run_gpfates <- function(
   counts,
   log_expression_cutoff=2,
@@ -108,7 +106,6 @@ run_gpfates <- function(
 }
 
 ## TODO extract OMGP
-#' @export
 plot_gpfates <- function(ti_predictions) {
   sample_df <- data.frame(
     ti_predictions$dimred_samples

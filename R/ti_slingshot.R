@@ -1,4 +1,3 @@
-#' @import ParamHelpers
 #' @export
 description_slingshot <- function() {
   list(
@@ -17,12 +16,6 @@ description_slingshot <- function() {
   )
 }
 
-#library(tidyverse)
-#library(magrittr)
-
-#.datasets_location = "../dyngen/results/4/"
-#counts <- dyngen::load_dataset(dyngen::overviewer("datasets")$id[[1]])$counts
-
 #' @importFrom dynutils list_as_tibble
 run_slingshot <- function(
   counts,
@@ -30,6 +23,7 @@ run_slingshot <- function(
   nclus = 5,
   dimred_name = "pca"
 ) {
+  requireNamespace("slingshot")
 
   tryCatch({
     dimred_func <- match.fun(paste0("dimred_", dimred_name))
@@ -163,8 +157,7 @@ run_slingshot <- function(
 }
 
 
-#' @import dplyr ggplot2
-#' @export
+#' @import ggplot2
 plot_slingshot <- function(ti_predictions) {
   colnames(ti_predictions$dimred_samples) <- paste0("Comp", seq_len(ncol(ti_predictions$dimred_samples)))
   plotdata <- as_tibble(ti_predictions$dimred_samples) %>%

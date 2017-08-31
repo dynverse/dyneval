@@ -42,6 +42,21 @@ Imports:
   tidyr,
   transport,
   viridis
+Suggests:
+  cellTree,
+  destiny,
+  embeddr,
+  lle,
+  monocle,
+  R.matlab,
+  scater,
+  SCORPIUS,
+  SLICER,
+  slingshot,
+  TSCAN
 Remotes:
   Zouter/dyngen,
-  rcannood/dynutils
+  rcannood/dynutils,
+  kieranrcampbell/embeddr,
+  rcannood/SCORPIUS
+  
