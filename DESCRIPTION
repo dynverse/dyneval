@@ -14,31 +14,31 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.0.1
 Depends:
-    R (>= 3.0.0)
+  R (>= 3.0.0)
 Imports: 
-    coRanking,
-    dplyr, 
-    dyngen,
-    future,
-    ggplot2,
-    glue,
-    grDevices,
-    grid,
-    igraph,
-    magrittr, 
-    methods,
-    mlr,
-    ParamHelpers,
-    pheatmap,
-    purrr, 
-    readr,
-    reshape2,
-    RColorBrewer,
-    smoof,
-    testthat,
-    tibble, 
-    tidyr,
-    transport,
-    viridis
+  coRanking,
+  dplyr, 
+  dyngen,
+  future,
+  ggplot2,
+  glue,
+  grDevices,
+  grid,
+  igraph,
+  magrittr, 
+  methods,
+  mlr,
+  ParamHelpers,
+  pheatmap,
+  purrr, 
+  readr,
+  reshape2,
+  RColorBrewer,
+  smoof,
+  testthat,
+  tibble, 
+  tidyr,
+  transport,
+  viridis
 Remotes:
   Zouter/dyngen
