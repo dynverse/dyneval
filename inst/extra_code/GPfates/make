@@ -2,6 +2,6 @@
 virtualenv -p python3 $1/gpfates --system-site-packages
 cd $1/gpfates
 source bin/activate
-pip install numpy pandas tqdm GPy
+pip install numpy pandas matplotlib tqdm GPy
 pip install git+https://github.com/SheffieldML/GPclust.git
 pip install git+https://github.com/Teichlab/GPfates.git@bccd5496b4121b3e634ce7cd5b0bff823b2850fa
