@@ -27,6 +27,7 @@ Imports:
   grDevices,
   grid,
   igraph,
+  netdist,
   magrittr, 
   methods,
   mlr,
