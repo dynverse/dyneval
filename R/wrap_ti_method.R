@@ -20,9 +20,7 @@ get_descriptions <- function(as_tibble = T) {
 #'
 #' @export
 check_dependencies <- function() {
-  descrs <- get_descriptions()
-  for (descr_fun in description_functions) {
-    descr <- do.call(descr_fun, list())
+  for (descr in get_descriptions(as_tibble = F)) {
     required_packages <- c(descr$package_load, descr$package_installed)
     installed <- required_packages %in% rownames(installed.packages())
     if (any(!installed)) {
