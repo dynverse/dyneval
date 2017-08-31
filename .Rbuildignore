@@ -2,3 +2,5 @@
 ^\.Rproj\.user$
 ^\.httr-oauth$
 ^\.travis\.yml$
+^scripts$
+^R_modular_TI$
