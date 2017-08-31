@@ -1,3 +1,4 @@
+#' Description for celltree maptpx
 #' @export
 description_celltree_maptpx <- function() {
   list(
@@ -13,7 +14,6 @@ description_celltree_maptpx <- function() {
       makeNumericParam(id = "tot_iter", lower = log(10^4), upper = log(10^7), default = log(10^6), trafo = function(x) round(exp(x))),
       makeNumericParam(id = "tolerance", lower = log(.001), upper = log(.5), default = log(.05), trafo = exp),
       makeNumericParam(id = "width_scale_factor", lower = 1.01, default = 1.2, upper = 2),
-      makeNumericParam(id = "outlier_tolerance_factor", lower = log(.01), upper = log(.5), default = log(.1), trafo = exp),
       forbidden = quote(num_topics_lower > num_topics_upper)
     ),
     properties = c(),
@@ -22,6 +22,7 @@ description_celltree_maptpx <- function() {
   )
 }
 
+#' Description for celltree gibbs
 #' @export
 description_celltree_gibbs <- function() {
   list(
@@ -35,8 +36,7 @@ description_celltree_gibbs <- function() {
       makeNumericParam(id = "sd_filter", lower = log(.01), upper = log(5.0), default = log(.5), special.vals = list(F), trafo = exp),
       makeNumericParam(id = "tot_iter", lower = log(50), upper = log(500), default = log(200), trafo = function(x) round(exp(x))),
       makeNumericParam(id = "tolerance", lower = log(10^-7), upper = log(10^-3), default = log(10^-5), trafo = exp),
-      makeNumericParam(id = "width_scale_factor", lower = log(.1), default = log(1.2), upper = log(100), trafo = exp),
-      makeNumericParam(id = "outlier_tolerance_factor", lower = log(.01), upper = log(.5), default = log(.1), trafo = exp)
+      makeNumericParam(id = "width_scale_factor", lower = log(.1), default = log(1.2), upper = log(100), trafo = exp)
     ),
     properties = c(),
     run_fun = run_celltree,
@@ -44,6 +44,7 @@ description_celltree_gibbs <- function() {
   )
 }
 
+#' Description for celltree VEM
 #' @export
 description_celltree_vem <- function() {
   list(
@@ -57,8 +58,7 @@ description_celltree_vem <- function() {
       makeNumericParam(id = "sd_filter", lower = log(.01), upper = log(5.0), default = log(.5), special.vals = list(F), trafo = exp),
       makeNumericParam(id = "tot_iter", lower = log(10^4), upper = log(10^7), default = log(10^6), trafo = function(x) round(exp(x))),
       makeNumericParam(id = "tolerance", lower = log(10^-7), upper = log(10^-3), default = log(10^-5), trafo = exp),
-      makeNumericParam(id = "width_scale_factor", lower = log(.1), default = log(1.5), upper = log(100), trafo = exp),
-      makeNumericParam(id = "outlier_tolerance_factor", lower = log(.01), upper = log(.5), default = log(.1), trafo = exp)
+      makeNumericParam(id = "width_scale_factor", lower = log(.1), default = log(1.5), upper = log(100), trafo = exp)
     ),
     properties = c(),
     run_fun = run_celltree,
@@ -66,15 +66,26 @@ description_celltree_vem <- function() {
   )
 }
 
-
+#' Run celltree
+#'
+#' This function is a wrapper for \code{\link[cellTree]{compute.lda}} and
+#' \code{\link[cellTree]{compute.backbone.tree}} and finally using
+#' \code{\link{wrap_ti_prediction}} to return the output.
+#'
+#' @param counts the counts matrix
+#' @param num_topics a range of values corresponding to \code{k.topics}
+#' @param sd_filter a standard deviation filter corresponding to \code{sd.filter}
+#' @param tot_iter the total number of iterations corresponding to \code{tot.iter}
+#' @param tolerance the tolerance corresponding to \code{tol}
+#' @param width_scale_factor the width scale factor corresponding to \code{width.scale.factor}
+#'
 #' @importFrom igraph degree distances get.vertex.attribute induced_subgraph
 #' @importFrom reshape2 melt
 #'
 #' @export
 run_celltree <- function(counts, method = "maptpx",
-                         num_topics_lower = 2, num_topics_upper = 15, num_topics = num_topics_lower:num_topics_upper,
-                         sd_filter = .5, tot_iter = 1e6, tolerance = .05, width_scale_factor = 1.5,
-                         outlier_tolerance_factor = .5, only_mst = F, merge_sequential_backbone = F) {
+                         num_topics = num_topics_lower:num_topics_upper,
+                         sd_filter = .5, tot_iter = 1e6, tolerance = .05, width_scale_factor = 1.5) {
   expression <- log2(counts+1)
 
   lda_out <- cellTree::compute.lda(
@@ -89,8 +100,8 @@ run_celltree <- function(counts, method = "maptpx",
   mst_tree <- cellTree::compute.backbone.tree(
     lda_out,
     width.scale.factor = width_scale_factor,
-    only.mst = only_mst,
-    merge.sequential.backbone = merge_sequential_backbone)
+    only.mst = F,
+    merge.sequential.backbone = F)
 
   backbone_gr <- igraph::induced_subgraph(mst_tree, igraph::get.vertex.attribute(mst_tree, "is.backbone"))
   tomerge <- names(igraph::V(backbone_gr))[igraph::degree(backbone_gr) == 2]

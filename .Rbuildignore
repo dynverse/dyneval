@@ -4,3 +4,4 @@
 ^\.travis\.yml$
 ^scripts$
 ^R_modular_TI$
+^inst/extra_code/SCUBA/*$

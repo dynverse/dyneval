@@ -86,13 +86,13 @@ if txtout_mode == 1,
     end
     fout = fopen(processDataTxt, 'w+');
     fprintf(fout, '%s\n', header1);
-    
+
     fprintf(fout, '%s\t', 'Stage');
     for k = 1:ncell-1
         fprintf(fout, '%f\t', pro.cell_stage(k));
     end
     fprintf(fout, '%f\n', pro.cell_stage(end));
-    
+
     for k = 1:ngene_select,
         fprintf(fout, '%s\t', pro.gname{k});
         for j = 1:ncell-1,
@@ -100,7 +100,7 @@ if txtout_mode == 1,
         end
         fprintf(fout, '%f\n', pro.expr(ncell, k));
     end
-    
+
     fclose all;
 end
 
