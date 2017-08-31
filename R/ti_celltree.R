@@ -69,6 +69,8 @@ description_celltree_vem <- function() {
 #' @importFrom igraph degree distances get.vertex.attribute induced_subgraph
 #' @importFrom reshape2 melt
 run_celltree <- function(counts, method = "maptpx",
+                         num_topics_lower = 2,
+                         num_topics_upper = 15,
                          num_topics = num_topics_lower:num_topics_upper,
                          sd_filter = .5, tot_iter = 1e6, tolerance = .05, width_scale_factor = 1.5) {
   requireNamespace("cellTree")
