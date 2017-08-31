@@ -1,3 +1,4 @@
+#' Description for SLICER
 #' @export
 description_slicer <- function() {
   list(

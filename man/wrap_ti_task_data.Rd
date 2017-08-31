@@ -2,12 +2,35 @@
 % Please edit documentation in R/wrap_ti_data.R
 \name{wrap_ti_task_data}
 \alias{wrap_ti_task_data}
-\title{Wrapping TI task data}
+\title{Wrapping a TI dataset}
 \usage{
 wrap_ti_task_data(ti_type, id, counts, cell_ids, milestone_ids,
   milestone_network, milestone_percentages = NULL, progressions = NULL,
   sample_info = NULL, feature_info = NULL, ...)
 }
+\arguments{
+\item{ti_type}{a descriptor specifying the TI type}
+
+\item{id}{a unique identifier for the task}
+
+\item{counts}{the counts}
+
+\item{cell_ids}{the ids of the cells in the trajectory and counts}
+
+\item{milestone_ids}{the ids of the milestones in the trajectory}
+
+\item{milestone_network}{the network of the milestones}
+
+\item{milestone_percentages}{what percentage of milestone is each cell}
+
+\item{progressions}{what progression does a cell have}
+
+\item{sample_info}{extra information about the cells}
+
+\item{feature_info}{extra information about the genes}
+
+\item{...}{extra information to be stored in the wrapper}
+}
 \description{
-Wrapping TI task data
+Wrapping a TI dataset
 }

@@ -96,7 +96,6 @@ trainLearner.ti.celltree <- function(.task, .subset, num_topics, width_scale_fac
     state_names,
     state_network,
     state_percentages,
-    task_id = get_task_identifier(.task),
     mst.tree = mst.tree
   )
 }

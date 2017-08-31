@@ -6,6 +6,11 @@
 \usage{
 calculate_ged(net1, net2)
 }
+\arguments{
+\item{net1}{the first network to compare}
+
+\item{net2}{the second network to compare}
+}
 \description{
 Compute the graph edit distance using gedevo
 }

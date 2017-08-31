@@ -1,3 +1,4 @@
+#' Description for random linear
 #' @export
 description_random_linear <- function() {
   list(

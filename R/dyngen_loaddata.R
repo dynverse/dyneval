@@ -73,7 +73,7 @@ load_datasets <- function(mc_cores = 1, datasets_info = load_datasets_info()) {
       cell_ids = cell_ids,
       milestone_ids = milestone_ids,
       milestone_network = milestone_network,
-      progression = progression,
+      progressions = progression,
       counts = counts,
       sample_info = sample_info,
       task_ix = dataset_num,

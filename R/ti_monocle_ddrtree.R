@@ -1,3 +1,4 @@
+#' Description for Monocle DDRtree
 #' @export
 description_monocle_ddrtree <- function() {
   list(
@@ -31,8 +32,7 @@ run_monocle_ddrtree <- function(counts,
                                 maxIter = 20, sigma = 0.001, lambda_null = T, lambda = NULL,
                                 ncenter_null = T, ncenter = NULL, param.gamma = 20, tol = 0.001,
                                 auto_param_selection = T) {
-  # grr # requireNamespace("monocle")
-  library(monocle)
+  requireNamespace("monocle")
 
   if (lambda_null) lambda <- NULL
   if (ncenter_null) ncenter <- NULL

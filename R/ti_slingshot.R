@@ -1,3 +1,4 @@
+#' Description for slingshot
 #' @export
 description_slingshot <- function() {
   list(

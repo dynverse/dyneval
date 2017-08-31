@@ -1,10 +1,17 @@
-
-#' @export
-get_task_identifier <- function(task) {
-  task[c("type", "ti_type", "id")]
-}
-
-#' Wrapping TI task data
+#' Wrapping a TI dataset
+#'
+#' @param ti_type a descriptor specifying the TI type
+#' @param id a unique identifier for the task
+#' @param counts the counts
+#' @param cell_ids the ids of the cells in the trajectory and counts
+#' @param milestone_ids the ids of the milestones in the trajectory
+#' @param milestone_network the network of the milestones
+#' @param milestone_percentages what percentage of milestone is each cell
+#' @param progressions what progression does a cell have
+#' @param sample_info extra information about the cells
+#' @param feature_info extra information about the genes
+#' @param ... extra information to be stored in the wrapper
+#'
 #' @export
 wrap_ti_task_data <- function(
   ti_type,
@@ -36,6 +43,16 @@ wrap_ti_task_data <- function(
 }
 
 #' Wrapping TI predictions
+#'
+#' @param ti_type a descriptor specifying the TI type
+#' @param id a unique identifier for the task
+#' @param cell_ids the ids of the cells in the trajectory and counts
+#' @param milestone_ids the ids of the milestones in the trajectory
+#' @param milestone_network the network of the milestones
+#' @param milestone_percentages what percentage of milestone is each cell
+#' @param progressions what progression does a cell have
+#' @param ... extra information to be stored in the wrapper
+#'
 #' @export
 wrap_ti_prediction <- function(
   ti_type,

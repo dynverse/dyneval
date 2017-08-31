@@ -1,3 +1,4 @@
+#' Description for Embeddr
 #' @export
 description_embeddr <- function() {
   list(

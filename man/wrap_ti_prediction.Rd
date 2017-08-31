@@ -7,6 +7,23 @@
 wrap_ti_prediction(ti_type, id, cell_ids, milestone_ids, milestone_network,
   milestone_percentages = NULL, progressions = NULL, ...)
 }
+\arguments{
+\item{ti_type}{a descriptor specifying the TI type}
+
+\item{id}{a unique identifier for the task}
+
+\item{cell_ids}{the ids of the cells in the trajectory and counts}
+
+\item{milestone_ids}{the ids of the milestones in the trajectory}
+
+\item{milestone_network}{the network of the milestones}
+
+\item{milestone_percentages}{what percentage of milestone is each cell}
+
+\item{progressions}{what progression does a cell have}
+
+\item{...}{extra information to be stored in the wrapper}
+}
 \description{
 Wrapping TI predictions
 }
