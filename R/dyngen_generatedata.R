@@ -8,7 +8,7 @@ generate_toy_datasets <- function() {
   settings <- expand.grid(ti_type = c("linear", "bifurcating", "cycle"), replicate = 1:5, stringsAsFactors = F)
 
   list_as_tibble(lapply(seq_len(nrow(settings)), function(rowi) {
-    list2env(extract_row_to_list(settings, rowi), environment())
+    list2env(dynutils::extract_row_to_list(settings, rowi), environment())
 
     milestone_network <- dyngen::generate_toy_milestone_network(ti_type)
     progressions <- dyngen::random_progressions_tented(milestone_network)
@@ -20,7 +20,9 @@ generate_toy_datasets <- function() {
     milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
 
     # todo: replace with real special_cells
-    special_cells <- list()
+    special_cells <- list(
+      start_cell_id = progressions %>% arrange(from, to, percentage) %>% pull(cell_id) %>% first
+    )
 
     task <- wrap_ti_task_data(
       ti_type = "toy",
