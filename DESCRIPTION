@@ -59,4 +59,9 @@ Remotes:
   rcannood/dynutils,
   kieranrcampbell/embeddr,
   rcannood/SCORPIUS,
-  kstreet13/slingshot
+  kstreet13/slingshot,
+  bioc::cellTree,
+  bioc::destiny,
+  bioc::monocle,
+  bioc::scater,
+  bioc::TSCAN
