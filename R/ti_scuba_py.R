@@ -35,7 +35,6 @@ description_scuba <- function() {
   )
 }
 
-#' @export
 #' @importFrom utils write.table
 run_scuba <- function(counts,
                       rigorous_gap_stats=TRUE,
@@ -45,6 +44,7 @@ run_scuba <- function(counts,
                       min_split=15,
                       min_percentage_split=0.25) {
 
+  requireNamespace("jsonlite")
   temp_folder <- tempfile()
   dir.create(temp_folder, recursive = T)
 
