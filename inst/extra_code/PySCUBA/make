@@ -1,0 +1,5 @@
+virtualenv -p python2.7 --system-site-packages $1/scuba # need python2 for PyQt4
+cd $1/scuba
+source bin/activate
+pip install rpy2==2.8.1 # install older rpy2 because new rpy2 no longer python 2.7 compatible
+pip install PySCUBA
