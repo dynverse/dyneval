@@ -38,6 +38,7 @@ impute_y_fun <- function(num_objectives) {
 }
 
 #' @export
+#' @importFrom dynutils override_setseed extract_row_to_list
 #' @importFrom future future value plan
 execute_evaluation <- function(tasks, method, parameters,
                                metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "ged"),
@@ -51,16 +52,19 @@ execute_evaluation <- function(tasks, method, parameters,
       }
 
       # Disable seed setting
-      dyneval:::my_assignin_namespace("set.seed", function(i) {}, ns = "base", envir = .BaseNamespaceEnv)
+      orig_setseed <- base::set.seed
+      override_setseed(function(i) {})
 
       # Run method on each task
       lapply(seq_len(nrow(tasks)), function(i) {
-        task <- dyneval:::extract_row_to_list(tasks, i)
-        dyneval:::run_method(task, method, parameters, suppress_output = suppress_output)
+        task <- extract_row_to_list(tasks, i)
+        run_method(task, method, parameters, suppress_output = suppress_output)
       })
+
+      override_setseed(orig_setseed)
     },
-    globals = c("tasks", "method", "parameters", "suppress_output", "my_set_seed"),
-    packages = c("dyneval", method$package_load),
+    globals = c("tasks", "method", "parameters", "suppress_output"),
+    packages = c("dyneval", "dynutils", method$package_load),
     evaluator = plan("multisession")
   )
   method_outputs <- value(method_futures)

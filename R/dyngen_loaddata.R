@@ -28,6 +28,7 @@ load_datasets_info <- function() {
 #' @export
 #'
 #' @importFrom dyngen load_dataset
+#' @importFrom dynutils list_as_tibble
 #'
 #' @examples
 #' \dontrun{
