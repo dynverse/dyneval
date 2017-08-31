@@ -30,7 +30,7 @@ description_scuba <- function() {
   )
 }
 
-#' @xport
+#' @export
 #' @importFrom utils write.table
 run_scuba <- function(counts,
                       log_mode=TRUE,
