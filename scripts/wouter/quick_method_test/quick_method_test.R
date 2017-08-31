@@ -5,13 +5,13 @@ tasks <- generate_toy_datasets()
 tasks <- tasks[1, ]
 
 counts <- tasks$counts[[1]]
+special_cells <- tasks$special_cells[[1]]
 
 # choose certain parameters for each method, at which we know this method will perform well for the toy dataset
 method_descriptions <- list(
   waterfall=list(), # broken, cannot install RHmm on cluster due to lapack isue
   scorpius=list(),
   slingshot=list(),
-  # # # slicer=list(max_same_milestone_distance=0.2, start_cell_id=progressions$percentage %>% which.min, min_branch_len=0.1, kmin=30, m=2), # broken it is inconceiveble really
   gpfates=list(nfates=1),
   stemid=list(clustnr=10, bootnr=10, pdishuf=10),
   tscan=list(),
@@ -19,16 +19,19 @@ method_descriptions <- list(
   celltree_gibbs=list(sd_filter = 0),
   celltree_maptpx=list(sd_filter = 0),
   celltree_vem=list(sd_filter = 0),
+  scuba=list(),
+  slicer = list(min_branch_len=50),
+  monocle_ddrtree=list(),
   random_linear=list()
 )
 
-method_descriptions <- method_descriptions["gpfates"]
+# method_descriptions <- method_descriptions["monocle_ddrtree"]
 
-metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "ged", "isomorphic")
+metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "ged", "isomorphic", "net_emd")
 
 # test the methods and get the scores
-# results <- purrr::map(names(method_descriptions), function(method_name) {
-results <- pbapply::pblapply(names(method_descriptions), cl = 7, function(method_name) {
+results <- purrr::map(names(method_descriptions), function(method_name) {
+# results <- pbapply::pblapply(names(method_descriptions), cl = 7, function(method_name) {
 # results <- PRISM::qsub_lapply(names(method_descriptions), function(method_name) {
   library(dyneval)
 
@@ -65,7 +68,7 @@ scores <- purrr::map(results, function(.) {
     attr(.[[1]], "extras")$.summary,
     tibble(method_name=.$method_name)
   )
-}) %>% bind_rows() %>% mutate(errored = !map_lgl(error, is.null)) %>% select(-method_name1)
+}) %>% bind_rows() %>% mutate(errored = !map_lgl(error, is.null)) %>% dplyr::select(-method_name1)
 
 scores %>%
   dplyr::select(-starts_with("time")) %>%
