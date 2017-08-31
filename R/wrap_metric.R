@@ -77,12 +77,14 @@ execute_evaluation <- function(
       override_setseed(function(i) {})
 
       # Run method on each task
-      lapply(seq_len(nrow(tasks)), function(i) {
+      outputs <- lapply(seq_len(nrow(tasks)), function(i) {
         task <- extract_row_to_list(tasks, i)
         run_method(task, method, parameters, suppress_output = suppress_output)
       })
 
       override_setseed(orig_setseed)
+
+      outputs
     },
     globals = c("tasks", "method", "parameters", "suppress_output"),
     packages = c("dyneval", "dynutils", method$package_load),
