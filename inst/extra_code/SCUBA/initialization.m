@@ -1,7 +1,7 @@
 function [dataFile processDataMat processDataTxt PCAdataFile dataFolder resultsDir intermediate_filesDir figuresDir] = initialization(dataset);
 
 % set path of data files
-dataFolder = fullfile(pwd,'sample_data',dataset);
+dataFolder = dataset; %fullfile(pwd,'sample_data',dataset);
 % save('dataFolder.mat','dataFolder');
 
 % Alternatively, uncomment the following line and select interactively
@@ -18,10 +18,10 @@ createSubfolders(resultsDir)
 createSubfolders(intermediate_filesDir)
 createSubfolders(figuresDir)
 
-dataFile = fullfile(dataFolder, [dataset, 'Data.txt']);
-processDataMat = fullfile(intermediate_filesDir, [dataset 'PData.mat']);
-processDataTxt = fullfile(intermediate_filesDir, [dataset 'PData.txt']);
-PCAdataFile = fullfile(intermediate_filesDir, [dataset, 'PDataPCA.mat']);
+dataFile = fullfile(dataFolder, '/Data.txt');
+processDataMat = fullfile(intermediate_filesDir, '/PData.mat');
+processDataTxt = fullfile(intermediate_filesDir, '/PData.txt');
+PCAdataFile = fullfile(intermediate_filesDir, '/PDataPCA.mat');
 
 end
 
