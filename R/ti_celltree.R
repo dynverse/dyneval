@@ -66,26 +66,13 @@ description_celltree_vem <- function() {
   )
 }
 
-#' Run celltree
-#'
-#' This function is a wrapper for \code{\link[cellTree]{compute.lda}} and
-#' \code{\link[cellTree]{compute.backbone.tree}} and finally using
-#' \code{\link{wrap_ti_prediction}} to return the output.
-#'
-#' @param counts the counts matrix
-#' @param num_topics a range of values corresponding to \code{k.topics}
-#' @param sd_filter a standard deviation filter corresponding to \code{sd.filter}
-#' @param tot_iter the total number of iterations corresponding to \code{tot.iter}
-#' @param tolerance the tolerance corresponding to \code{tol}
-#' @param width_scale_factor the width scale factor corresponding to \code{width.scale.factor}
-#'
 #' @importFrom igraph degree distances get.vertex.attribute induced_subgraph
 #' @importFrom reshape2 melt
-#'
-#' @export
 run_celltree <- function(counts, method = "maptpx",
                          num_topics = num_topics_lower:num_topics_upper,
                          sd_filter = .5, tot_iter = 1e6, tolerance = .05, width_scale_factor = 1.5) {
+  requireNamespace("cellTree")
+
   expression <- log2(counts+1)
 
   lda_out <- cellTree::compute.lda(
@@ -161,7 +148,7 @@ run_celltree <- function(counts, method = "maptpx",
   )
 }
 
-#' @export
 plot_celltree <- function(ti_predictions) {
+  requireNamespace("cellTree")
   cellTree::ct.plot.topics(ti_predictions$mst_tree)
 }

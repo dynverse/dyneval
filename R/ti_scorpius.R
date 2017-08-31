@@ -1,5 +1,3 @@
-#' @import ParamHelpers
-#' @import mlr
 #' @export
 description_scorpius <- function() {
   list(
@@ -23,10 +21,11 @@ description_scorpius <- function() {
   )
 }
 
-#' @export
 run_scorpius <- function(counts,
                          num_dimensions = 3, num_clusters = 4, distance_method = "spearman",
                          thresh = .001, maxit = 10, stretch = 0, smoother = "smooth.spline") {
+  requireNamespace("SCORPIUS")
+
   expression <- log2(as.matrix(counts)+1)
 
   dist <- SCORPIUS::correlation.distance(expression, method = distance_method)
@@ -55,7 +54,6 @@ run_scorpius <- function(counts,
 
 #' @import ggplot2
 #' @importFrom viridis scale_color_viridis
-#' @export
 plot_scorpius <- function(ti_predictions) {
   sample_df <- data.frame(
     ti_predictions$dimred_samples,

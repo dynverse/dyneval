@@ -1,4 +1,3 @@
-#' @import ParamHelpers
 #' @export
 description_monocle_ddrtree <- function() {
   list(
@@ -27,13 +26,14 @@ description_monocle_ddrtree <- function() {
 
 #' @importFrom igraph degree all_shortest_paths distances
 #' @importFrom reshape2 melt
-#'
-#' @export
 run_monocle_ddrtree <- function(counts,
                                 num_dimensions = 2, norm_method = "vstExprs",
                                 maxIter = 20, sigma = 0.001, lambda_null = T, lambda = NULL,
                                 ncenter_null = T, ncenter = NULL, param.gamma = 20, tol = 0.001,
                                 auto_param_selection = T) {
+  # grr # requireNamespace("monocle")
+  library(monocle)
+
   if (lambda_null) lambda <- NULL
   if (ncenter_null) ncenter <- NULL
   if (is.factor(norm_method)) norm_method <- as.character(norm_method)
@@ -106,7 +106,7 @@ run_monocle_ddrtree <- function(counts,
   )
 }
 
-#' @export
 plot_monocle_ddrtree <- function(ti_predictions) {
+  requireNamespace("monocle")
   monocle::plot_cell_trajectory(ti_predictions$cds)
 }

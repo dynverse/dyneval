@@ -1,4 +1,3 @@
-#' @import ParamHelpers
 #' @export
 description_slicer <- function() {
   list(
@@ -19,8 +18,6 @@ description_slicer <- function() {
   )
 }
 
-#' @import dplyr
-#' @export
 run_slicer <- function(counts,
                       start_cell_id = sample(rownames(counts), 1),
                       kmin = 10,
@@ -28,6 +25,8 @@ run_slicer <- function(counts,
                       min_branch_len = 5,
                       min_representative_percentage = 0.8,
                       max_same_milestone_distance = 0.1) {
+  requireNamespace("SLICER")
+  requireNamespace("lle")
 
   set.seed(1)
 
@@ -46,8 +45,6 @@ run_slicer <- function(counts,
   #start <- 1
   cells_ordered <- SLICER::cell_order(traj_graph, start)
   branches <- SLICER::assign_branches(traj_graph, start, min_branch_len=min_branch_len) %>% factor %>% set_names(rownames(expression_filtered))
-  #source("~/thesis/projects/dyngen/scripts/evaluation/methods/dimred.R")
-  #SCORPIUS::draw.trajectory.plot(traj_lle, branches)
 
   # from SLICER we get the branch assignment, and the overall ordering of the cells from the start point
   progressions <- tibble(
@@ -144,8 +141,8 @@ run_slicer <- function(counts,
   )
 }
 
-#' @import ggplot2 dplyr
-#' @export
+#' @import ggplot2
 plot_slicer <- function(ti_predictions) {
-  ggplot(as.data.frame(ti_predictions$dimred_samples) %>% mutate(branch=ti_predictions$dimred_clust)) + geom_point(aes(V1, V2, color=branch))
+  dat <- as.data.frame(ti_predictions$dimred_samples) %>% mutate(branch = ti_predictions$dimred_clust)
+  ggplot(dat) + geom_point(aes(V1, V2, color=branch))
 }

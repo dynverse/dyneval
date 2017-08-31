@@ -1,4 +1,3 @@
-#' @import ParamHelpers
 #' @export
 description_stemid <- function() {
   list(
@@ -35,29 +34,29 @@ description_stemid <- function() {
   )
 }
 
-#' @export
-run_stemid <- function(counts,
-                       clustnr = 30,
-                       bootnr = 50,
-                       metric = "pearson",
-                       num_cluster_method = "sat",
-                       SE.method = "Tibs2001SEmax",
-                       SE.factor = .25,
-                       B.gap = 50,
-                       cln = 0,
-                       FUNcluster = "kmedoids",
-                       dimred_method = "tsne", # tsne, sammon, tsne_initcmd
-                       outminc = 5,
-                       outlg = 2,
-                       probthr = 1e-3,
-                       thr_lower = -40,
-                       thr_upper = -1,
-                       outdistquant = .95,
-                       nmode = F,
-                       pdishuf = 2000,
-                       pthr = .01,
-                       pethr = .01
-                       ) {
+run_stemid <- function(
+  counts,
+  clustnr = 30,
+  bootnr = 50,
+  metric = "pearson",
+  num_cluster_method = "sat",
+  SE.method = "Tibs2001SEmax",
+  SE.factor = .25,
+  B.gap = 50,
+  cln = 0,
+  FUNcluster = "kmedoids",
+  dimred_method = "tsne", # tsne, sammon, tsne_initcmd
+  outminc = 5,
+  outlg = 2,
+  probthr = 1e-3,
+  thr_lower = -40,
+  thr_upper = -1,
+  outdistquant = .95,
+  nmode = F,
+  pdishuf = 2000,
+  pthr = .01,
+  pethr = .01
+) {
   ## load class definition and functions
   code_path <- paste0(path.package("dyneval"), "/extra_code/StemID")
   source(paste0(code_path, "/RaceID2_StemID_class.R"))
@@ -145,7 +144,6 @@ run_stemid <- function(counts,
   )
 }
 
-#' @export
 plot_stemid <- function(ti_predictions) {
   # recreating plotmapprojections(ti_predictions$ltr)
   object <- ti_predictions$ltr

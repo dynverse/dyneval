@@ -1,4 +1,3 @@
-#' @import ParamHelpers
 #' @export
 description_scuba <- function() {
   list(
@@ -17,9 +16,10 @@ description_scuba <- function() {
 
 #' @importFrom readr read_tsv
 #' @importFrom utils write.table
-#' @export
 run_scuba <- function(counts,
                       cluster_mode = "pca2") {
+  requireNamespace("R.matlab")
+
   # create new folder for data
   dataset_path <- tempfile()
   dir.create(dataset_path, recursive = T)
@@ -56,6 +56,7 @@ run_scuba <- function(counts,
   tree_data <- readr::read_tsv(tree_file, col_types = cols(Time = "i", "Cluster ID" = "i", "Parent cluster" = "i", .default = "d"))
   bifurcation_header <- readr::read_tsv(bifurcation_file, n_max = 1, col_types = cols(Time = "c", .default = "d"))
   bifurcation_data <- readr::read_tsv(bifurcation_file, skip = 2, col_names = colnames(bifurcation_header), col_types = cols(Time = "c", .default = "d"))
+
   treemat_data <- R.matlab::readMat(treemat_file)$T[,,1]
 
   tree <- tree_data %>% select(cluster = `Cluster ID`, parent = `Parent cluster`, time_index = Time, cell_stage = `Cell Stage`) %>% mutate(cluster_name = paste0("Cluster", cluster))
@@ -84,7 +85,6 @@ run_scuba <- function(counts,
   )
 }
 
-#' @export
 plot_scuba <- function(ti_predictions) {
   stop("TODO")
   #qplot(percent_rank(ti_predictions$milestone_percentages[,1]), ti_predictions$milestone_percentages[,1], colour = data$sample_info$group.name)

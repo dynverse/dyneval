@@ -1,6 +1,6 @@
-#' @import ParamHelpers
 #' @export
 description_tscan <- function() {
+  modelNames_values <- c("EII", "VII", "EEI", "VEI", "EVI", "VVI", "EEE", "EVE", "VEE", "VVE", "EEV", "VEV", "EVV", "VVV")
   list(
     name = "TSCAN",
     short_name = "TSCAN",
@@ -12,7 +12,7 @@ description_tscan <- function() {
       # makeNumericParam(id = "cvcutoff", lower = 0, upper = 5, default = 1),
       makeIntegerParam(id = "exprmclust_clusternum_lower", lower = 2L, upper = 20L, default = 2),
       makeIntegerParam(id = "exprmclust_clusternum_upper", lower = 2L, upper = 20L, default = 9),
-      makeDiscreteParam(id = "modelNames", default = "VVV", values = mclust::mclust.options("emModelNames")),
+      makeDiscreteParam(id = "modelNames", default = "VVV", values = modelNames_values),
       forbidden = quote(exprmclust_clusternum_lower > exprmclust_clusternum_upper)
     ),
     properties = c(),
@@ -21,7 +21,6 @@ description_tscan <- function() {
   )
 }
 
-#' @export
 run_tscan <- function(counts,
                       minexpr_percent = 1,
                       minexpr_value = .5,
@@ -29,6 +28,7 @@ run_tscan <- function(counts,
                       exprmclust_clusternum_lower = 2,
                       exprmclust_clusternum_upper = 9,
                       modelNames = "VVV") {
+  requireNamespace("TSCAN")
   expr <- t(as.matrix(counts))
   # cds_1 <- TSCAN::preprocess(
   #   expr,
@@ -83,7 +83,6 @@ run_tscan <- function(counts,
   )
 }
 
-#' @export
 plot_tscan <- function(ti_predictions) {
   qplot(percent_rank(ti_predictions$milestone_percentages[,1]), ti_predictions$milestone_percentages[,1], colour = data$sample_info$group.name)
 }

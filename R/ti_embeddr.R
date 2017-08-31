@@ -1,5 +1,3 @@
-#' @import ParamHelpers
-#' @import mlr
 #' @export
 description_embeddr <- function() {
   list(
@@ -27,13 +25,15 @@ description_embeddr <- function() {
   )
 }
 
-#' @export
 run_embeddr <- function(counts,
                         kernel = "nn", metric = "correlation",
                         nn_pct = 1, eps = 1, t = 1,
                         symmetrize = "mean", measure_type = "unorm", p = 2,
                         thresh = .001, maxit = 10, stretch = 2, smoother = "smooth.spline") {
-  nn = round(log(nrow(counts)) * nn_pct)
+  requireNamespace("scater")
+  requireNamespace("embeddr")
+
+  nn <- round(log(nrow(counts)) * nn_pct)
 
   sce <- scater::newSCESet(countData = t(counts))
   sce <- embeddr::embeddr(sce, kernel = kernel, metric = metric, nn = nn, eps = eps, t = t, symmetrize = symmetrize, measure_type = measure_type, p = p)
@@ -70,7 +70,6 @@ run_embeddr <- function(counts,
 
 #' @import ggplot2
 #' @importFrom viridis scale_color_viridis
-#' @export
 plot_embeddr <- function(ti_predictions) {
   dimred_samples <- ti_predictions$dimred_samples
   dimred_traj <- ti_predictions$dimred_traj
