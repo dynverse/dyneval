@@ -16,6 +16,7 @@ description_scuba <- function() {
 }
 
 #' @importFrom readr read_tsv
+#' @importFrom utils write.table
 #' @export
 run_scuba <- function(counts,
                       cluster_mode = "pca2") {

@@ -19,5 +19,8 @@ A tibble of datasets
 to work correctly.
 }
 \examples{
-datasets <- load_datasets(mc_cores = 1, datasets_info = load_datasets_info()))
+\dontrun{
+.dataset_location <- "path_to_dyngen_results"
+datasets <- load_datasets(mc_cores = 1, datasets_info = load_datasets_info())
+}
 }

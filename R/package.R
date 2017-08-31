@@ -4,6 +4,8 @@
 #' @import tidyr
 #' @import methods
 #' @import tibble
+#' @importFrom stats cor dist kmeans median prcomp quantile runif setNames step time
+#' @importFrom utils installed.packages head tail
 #' @importFrom purrr %>% map map_df map_chr map_lgl map_int map_dbl keep set_names
 #' @importFrom magrittr %<>% %$%
 #'

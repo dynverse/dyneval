@@ -5,8 +5,8 @@ Version: 0.1.0
 Author: Robrecht Cannoodt
 Authors@R: c(
   person("Robrecht", "Cannoodt", email = "robrecht.cannoodt@ugent.be", role = c("aut", "cre")),
-  person("Wouter", "Saelens", email = "wouter.saelens@ugent.be", role = c("aut", "cre")),
-  person("Helena", "Todorov", email = "helena.todorov@ugent.be", role = c("aut", "cre")))
+  person("Wouter", "Saelens", email = "wouter.saelens@ugent.be", role = c("aut")),
+  person("Helena", "Todorov", email = "helena.todorov@ugent.be", role = c("aut")))
 Maintainer: Robrecht Cannoodt <robrecht.cannoodt@ugent.be>
 Description: dyneval provides an evaluation pipeline including metrics, wrappers for TI methods and plotting functions.
 License: TBD
