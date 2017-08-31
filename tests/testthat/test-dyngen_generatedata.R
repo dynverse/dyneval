@@ -1,7 +1,6 @@
 context("Generating datasets with dyngen")
 
-#tasks <- readRDS(paste0(tempdir(), "/dyneval_test_datasets.rds"))
-tasks <- dyneval::generate_toy_datasets()
+tasks <- generate_toy_datasets()
 
 test_that("Loading datasets", {
   expect_that( is_tibble(tasks), is_true() )
@@ -47,6 +46,7 @@ for (taski in seq_len(nrow(tasks))) {
     expect_true( is.numeric(counts) )
     expect_true( is.matrix(counts) )
     expect_equal( rownames(counts), cell_ids )
+    expect_false( is.null(colnames(counts)) )
 
     geodesic_dist <- task$geodesic_dist
     expect_true( is.matrix(geodesic_dist) )

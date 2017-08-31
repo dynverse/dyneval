@@ -83,7 +83,7 @@ run_slicer <- function(counts,
 
   progressions <- progressions %>% left_join(milestone_network, by="branch_id")
 
-  milestone_percentages <- dyneval:::convert_progressions_to_milestone_percentages(rownames(expression), milestone_ids, milestone_network, progressions)
+  milestone_percentages <- convert_progressions_to_milestone_percentages(rownames(expression), milestone_ids, milestone_network, progressions)
 
   # we will now check which milestones are actually the "same" (ie. low distance to eachother)
   # use some milestone representatives, those which have a high percentage of the particular milestone

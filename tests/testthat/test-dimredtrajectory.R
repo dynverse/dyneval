@@ -1,6 +1,6 @@
 context("Dimred for trajectories")
 
-tasks <- dyneval::generate_toy_datasets()
+tasks <- generate_toy_datasets()
 
 for (taski in seq_len(nrow(tasks))) {
   task <- extract_row_to_list(tasks, taski)
