@@ -30,6 +30,7 @@ description_scuba <- function() {
   )
 }
 
+#' @xport
 #' @importFrom utils write.table
 run_scuba <- function(counts,
                       log_mode=TRUE,
@@ -59,12 +60,14 @@ run_scuba <- function(counts,
   labels <- as.character(unlist(output$labels))
   tree <- output$tree
 
-  milestone_network <- map2(names(tree), tree, ~tibble(from=.x, to=.y)) %>%
+  milestone_network <- purrr::map2(names(tree), tree, ~tibble(from=.x, to=.y)) %>%
     bind_rows() %>%
     unnest(to) %>%
     filter(to > -1) %>%
     mutate(to=as.character(to)) %>%
     mutate(length=1)
+
+  milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
 
   milestone_percentages <- data_frame(
     cell_id = rownames(counts),
