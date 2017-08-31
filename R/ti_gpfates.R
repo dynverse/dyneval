@@ -2,16 +2,18 @@ get_gpfates_path <- function() {
   "~/.dyneval/gpfates/"
 }
 
+#' Installing GPfates
 #' @export
 install_gpfates <- function() {
   dir.create(get_gpfates_path(), showWarnings = FALSE, recursive = TRUE)
 
   system(glue::glue(
     "bash ",
-    path.package("dyneval"), "/extra_code/GPfates/make ",get_gpfates_path()
+    path.package("dyneval"), "/extra_code/GPfates/make ", get_gpfates_path()
   ))
 }
 
+#' Description for GPfates
 #' @export
 description_gpfates <- function() {
   if(!dir.exists(get_gpfates_path())) {

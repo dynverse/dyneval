@@ -1,9 +1,10 @@
+#' Description for SCORPIUS
 #' @export
 description_scorpius <- function() {
   list(
     name = "SCORPIUS",
     short_name = "SCORPIUS",
-    package_loaded = c("ggplot2"),
+    package_loaded = c(),
     package_installed = c("SCORPIUS"),
     par_set = makeParamSet(
       makeDiscreteParam(id = "distance_method", default = "spearman", values = c("spearman", "pearson", "kendall")),
@@ -33,10 +34,10 @@ run_scorpius <- function(counts,
   traj <- SCORPIUS::infer.trajectory(space, k = num_clusters, thresh = thresh, maxit = maxit, stretch = stretch, smoother = smoother)
 
   milestone_ids <- c("milestone_A", "milestone_B")
-  milestone_network <- tibble::data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1)
+  milestone_network <- data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1)
   milestone_percentages <- bind_rows(
-    tibble::data_frame(cell_id = rownames(expression), milestone_id = milestone_ids[[1]], percentage = 1 - traj$time),
-    tibble::data_frame(cell_id = rownames(expression), milestone_id = milestone_ids[[2]], percentage = traj$time)
+    data_frame(cell_id = rownames(expression), milestone_id = milestone_ids[[1]], percentage = 1 - traj$time),
+    data_frame(cell_id = rownames(expression), milestone_id = milestone_ids[[2]], percentage = traj$time)
   )
 
   wrap_ti_prediction(

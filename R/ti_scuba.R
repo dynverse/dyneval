@@ -1,3 +1,4 @@
+#' Description for SCUBA
 #' @export
 description_scuba <- function() {
   list(

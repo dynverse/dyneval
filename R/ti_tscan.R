@@ -1,3 +1,4 @@
+#' Description for TSCAN
 #' @export
 description_tscan <- function() {
   modelNames_values <- c("EII", "VII", "EEI", "VEI", "EVI", "VVI", "EEE", "EVE", "VEE", "VVE", "EEV", "VEV", "EVV", "VVV")

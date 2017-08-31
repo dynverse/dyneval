@@ -1,5 +1,10 @@
 #' Used for wrapping an evaluation function around a TI method
 #'
+#' @param method the method to wrap an evaluation function around
+#' @param noisy whether or not the metric is noisy or not
+#' @param suppress_output whether or not to suppress the output
+#' @param metrics which metrics to evaluate with
+#'
 #' @importFrom smoof makeSingleObjectiveFunction makeMultiObjectiveFunction
 #' @export
 make_obj_fun <- function(method, noisy = F, suppress_output = T,
@@ -28,21 +33,37 @@ make_obj_fun <- function(method, noisy = F, suppress_output = T,
         suppress_output = suppress_output))
 }
 
+#' For returning a poor score when a method errors
+#'
+#' @param num_objectives the number of objectives used
+#' @param error_score the score to return upon erroring
+#'
 #' @export
-impute_y_fun <- function(num_objectives) {
+impute_y_fun <- function(num_objectives, error_score = -1) {
   function(x, y, opt.path, ...) {
-    val <- rep(-1, num_objectives)
+    val <- rep(error_score, num_objectives)
     attr(val, "extras") <- list(.summary = NA)
     val
   }
 }
 
+#' Running an evaluation of a method on a set of tasks with a set of parameters
+#'
+#' @param tasks the tasks on which to evaluate
+#' @param method the method to evaluate
+#' @param parameters the parameters to evaluate with
+#' @param metrics which metrics to use
+#' @param suppress_output whether or not to suppress the outputted messages
+#'
 #' @export
 #' @importFrom dynutils override_setseed extract_row_to_list
 #' @importFrom future future value plan
-execute_evaluation <- function(tasks, method, parameters,
-                               metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "ged"),
-                               suppress_output = T) {
+execute_evaluation <- function(
+  tasks,
+  method,
+  parameters,
+  metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "ged"),
+  suppress_output = T) {
   # Run the method on each of the tasks
   method_futures <- future(
     {
@@ -320,6 +341,10 @@ compute_coranking <- function(gold_dist, pred_dist) {
 
 
 #' Compute the graph edit distance using gedevo
+#'
+#' @param net1 the first network to compare
+#' @param net2 the second network to compare
+#'
 #' @importFrom readr read_file
 #' @importFrom glue glue
 #' @importFrom utils write.table

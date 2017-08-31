@@ -8,6 +8,15 @@ make_obj_fun(method, noisy = F, suppress_output = T,
   metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation",
   "isomorphic", "ged"))
 }
+\arguments{
+\item{method}{the method to wrap an evaluation function around}
+
+\item{noisy}{whether or not the metric is noisy or not}
+
+\item{suppress_output}{whether or not to suppress the output}
+
+\item{metrics}{which metrics to evaluate with}
+}
 \description{
 Used for wrapping an evaluation function around a TI method
 }

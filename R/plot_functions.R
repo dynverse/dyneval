@@ -60,8 +60,9 @@ plot_combined <- function(original_object, new_object, insert_phantom_edges = T)
 #' Plot the Earth Mover's distances in a heatmap
 #'
 #' @param traj the trajectory (less than 500 cells is recommended)
-#' @param emdist the Earth Mover's distances as calculated by \code{\link{compute_emlike_dist}}
+#' @param dist the Earth Mover's distances as calculated by \code{\link{compute_emlike_dist}}
 #' @param dimred the dimensionality reduction of the trajectory as produced by \code{\link{dimred_trajectory}}
+#' @param ... extra parameters to be passed to \code{\link[pheatmap]{pheatmap}}
 #' @export
 #'
 #' @importFrom reshape2 acast

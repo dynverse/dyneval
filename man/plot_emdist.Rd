@@ -9,9 +9,11 @@ plot_emdist(traj, dist, dimred = NULL, ...)
 \arguments{
 \item{traj}{the trajectory (less than 500 cells is recommended)}
 
+\item{dist}{the Earth Mover's distances as calculated by \code{\link{compute_emlike_dist}}}
+
 \item{dimred}{the dimensionality reduction of the trajectory as produced by \code{\link{dimred_trajectory}}}
 
-\item{emdist}{the Earth Mover's distances as calculated by \code{\link{compute_emlike_dist}}}
+\item{...}{extra parameters to be passed to \code{\link[pheatmap]{pheatmap}}}
 }
 \description{
 Plot the Earth Mover's distances in a heatmap
