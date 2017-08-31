@@ -26,9 +26,10 @@ method_descriptions <- list(
 metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "ged", "isomorphic")
 
 # test the methods and get the scores
-# results <- purrr::map(names(method_descriptions), function(method_name) {
+results <- purrr::map(names(method_descriptions), function(method_name) {
+# results <- pbapply::pblapply(names(method_descriptions), cl = 7, function(method_name) {
 # results <- parallel::mclapply(names(method_descriptions), function(method_name) {
-results <- PRISM::qsub_lapply(names(method_descriptions), function(method_name) {
+# results <- PRISM::qsub_lapply(names(method_descriptions), function(method_name) {
   library(dyneval)
 
   cat("Processing ", method_name, "\n", sep="")
@@ -55,8 +56,8 @@ results <- PRISM::qsub_lapply(names(method_descriptions), function(method_name) 
   }
   )()
 # }, mc.cores=8)
-# })
-}, qsub_environment = list2env(lst(method_descriptions, tasks, metric_names)), qsub_config = PRISM::override_qsub_config(memory = "10G"))
+})
+# }, qsub_environment = list2env(lst(method_descriptions, tasks, metric_names)), qsub_config = PRISM::override_qsub_config(memory = "10G"))
 
 scores <- purrr::map(results, function(.) {
   bind_cols(
@@ -64,7 +65,7 @@ scores <- purrr::map(results, function(.) {
     attr(.[[1]], "extras")$.summary,
     tibble(method_name=.$method_name)
   )
-}) %>% bind_rows() %>% mutate(errored = !map_lgl(error, is.null)) %>% select(-method_name1)
+}) %>% bind_rows() %>% mutate(errored = !map_lgl(error, is.null)) %>% select(-method_name)
 
 scores %>%
   dplyr::select(-starts_with("time")) %>%
