@@ -179,6 +179,17 @@ calculate_metrics <- function(task, model, metrics) {
     summary$time_ged <- as.numeric(difftime(time1, time0, units = "sec"))
   }
 
+  # Compute Netdist EMD (see scripts/wouter/network_scores_tests.R)
+  if ("net_emd" %in% metrics) {
+    time0 <- Sys.time()
+    gdd1 <- netdist::gdd(model$milestone_network %>% igraph::graph_from_data_frame())
+    gdd2 <- netdist::gdd(task$milestone_network %>% igraph::graph_from_data_frame())
+    summary$net_emd <- netdist::net_emd(gdd1, gdd2)
+    time1 <- Sys.time()
+    summary$time_net_emd <- 1-as.numeric(difftime(time1, time0, units = "sec"))
+  }
+
+
   rownames(summary) <- NULL
 
   lst(coranking, summary)
