@@ -61,7 +61,7 @@ write_rds(toys, "toys.rds")
 toys <- read_rds("toys.rds")
 
 # get the scores when comparing the gs to toy
-metrics <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "isomorphic", "ged")
+metrics <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "isomorphic", "ged", "net_emd")
 compare_toy <- function(gs, toy, id=toy$id) {
   scores <- dyneval:::calculate_metrics(gs, toy, metrics=metrics)$summary
   scores %>% mutate(toy_id=id)

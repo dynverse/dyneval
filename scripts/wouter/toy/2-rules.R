@@ -1,4 +1,4 @@
-load("toys.rds")
+scores <- read_rds("scores.rds")
 
 source("scripts/wouter/toy/rules.R")
 
