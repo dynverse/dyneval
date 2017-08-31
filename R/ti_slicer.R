@@ -29,8 +29,6 @@ run_slicer <- function(counts,
   requireNamespace("SLICER")
   requireNamespace("lle")
 
-  set.seed(1)
-
   expression <- log2(counts + 1)
 
   genes <- SLICER::select_genes(expression)
@@ -60,6 +58,8 @@ run_slicer <- function(counts,
       percentage = rank/max(rank)
     )
 
+  ggplot(progressions) + geom_point(aes(branch_id, global_rank))
+
   # now extract the branch network
   # first create a temporary milestone network
   milestone_network <- progressions %>%
@@ -70,54 +70,53 @@ run_slicer <- function(counts,
       to=paste0("M", seq_along(unique(progressions$branch_id))*2)
     )
 
-  end_branches <- branches[rownames(expression_filtered)[ends]] # ignore these branches for making the connections
-  start_branch <- branches[rownames(expression_filtered)[start]] # ignore these branches for making the connections
-  connect_milestone_ids <- c(
-    milestone_network %>% filter(!(branch_id %in% end_branches)) %>% pull(to),
-    milestone_network %>% filter(!(branch_id %in% start_branch)) %>% pull(from)
-  )
-
   milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
 
   progressions <- progressions %>% left_join(milestone_network, by="branch_id")
 
-  milestone_percentages <- convert_progressions_to_milestone_percentages(rownames(expression), milestone_ids, milestone_network, progressions)
+  milestone_percentages <- dyneval:::convert_progressions_to_milestone_percentages(rownames(expression), milestone_ids, milestone_network, progressions)
 
-  # we will now check which milestones are actually the "same" (ie. low distance to eachother)
-  # use some milestone representatives, those which have a high percentage of the particular milestone
-  # min_representative_percentage: between 0.5 and 1
-  # to get at least one representative for each milestone, always get the one with the highest percentages
-  milestone_representatives <- milestone_percentages %>%
-    filter(percentage > (min_representative_percentage) | percentage == max(percentage)) %>%
-    select(-percentage)
+  representatives <- milestone_percentages %>% group_by(cell_id) %>% summarise(milestone_id=milestone_id[which.max(percentage)], percentage=max(percentage))
+  #representatives <- representatives %>% filter(percentage > 0.9)
 
-  # calculate distances between these representatives
-  cell_distances <- map(seq_len(nrow(expression)), ~SLICER::process_distance(traj_graph, .)) %>%
-    invoke(rbind, .) %>% set_rownames(rownames(expression)) %>% set_colnames(rownames(expression))
-  representative_distances <- cell_distances[milestone_representatives$cell_id, milestone_representatives$cell_id] %>%
-    reshape2::melt(varnames=c("cell_id_from", "cell_id_to"), value.name="distance") %>%
-    mutate(cell_id_from=as.character(cell_id_from), cell_id_to=as.character(cell_id_to)) %>%
-    left_join(milestone_representatives %>% rename(milestone_id_from=milestone_id), by=c("cell_id_from"="cell_id")) %>%
-    left_join(milestone_representatives %>% rename(milestone_id_to=milestone_id), by=c("cell_id_to"="cell_id"))
+
+  conn <- traj_graph %>%
+    igraph::as_data_frame() %>%
+    mutate(
+      from=rownames(counts)[from],
+      to=rownames(counts)[to]
+    ) %>%
+    left_join(representatives %>% rename(milestone_id_from=milestone_id), by=c("from"="cell_id")) %>%
+    left_join(representatives %>% rename(milestone_id_to=milestone_id), by=c("to"="cell_id"))
+
+  branch_milestone_combinations <- c(paste0(milestone_network$from, milestone_network$to),paste0(milestone_network$to, milestone_network$from)) # disallowed merges of milestones
+
+  weight_cutoff <- 0.5
+  close_representatives <- conn %>%
+    filter(milestone_id_from != milestone_id_to) %>%
+    arrange(-weight) %>%
+    filter(weight >= weight_cutoff) %>%
+    filter(!(paste0(milestone_id_from, milestone_id_to) %in% branch_milestone_combinations))
+
+  set.seed(1)
+  traj_graph %>% plot(vertex.color=rainbow(10)[as.numeric(rownames(counts) == start_cell_id)+1])
+  set.seed(1)
+  traj_graph %>% plot(vertex.color=rainbow(10)[branches])
 
   # group the representatives, according to close distance
   milestone_groups <- setNames(seq_along(milestone_ids), milestone_ids)
 
-  close_representatives <- representative_distances %>%
-    group_by(milestone_id_from, milestone_id_to) %>%
-    summarise(distance=min(distance)) %>%
-    filter(milestone_id_from != milestone_id_to) %>%
-    filter((milestone_id_from %in% connect_milestone_ids) & (milestone_id_to %in% connect_milestone_ids)) %>%
-    mutate(
-      close =
-        (distance < quantile(cell_distances, max_same_milestone_distance)) |
-        (distance == min(distance))
-      ) %>%
-    filter(close)
+  for (j in 1:10) {
+    for (i in seq_len(nrow(close_representatives))) {
+      from <- close_representatives[i,]$milestone_id_from
+      to <- close_representatives[i,]$milestone_id_to
 
-  for (i in seq_len(nrow(close_representatives))) {
-    milestone_groups[[close_representatives[i,]$milestone_id_from]] <- min(milestone_groups[[close_representatives[i,]$milestone_id_to]], milestone_groups[[close_representatives[i,]$milestone_id_from]])
+      min <- min(milestone_groups[[from]], milestone_groups[[to]])
+      milestone_groups[[from]] <- min
+      milestone_groups[[to]] <- min
+    }
   }
+
 
   # now map old milestones to new milestones
   milestone_mapper <- setNames(paste0("M", milestone_groups), names(milestone_groups))
@@ -136,7 +135,7 @@ run_slicer <- function(counts,
     cell_ids = rownames(expression_filtered),
     milestone_ids = milestone_ids,
     milestone_network = milestone_network %>% select(from, to, length),
-    milestone_percentages = milestone_percentages,
+    milestone_percentages = milestone_percentages %>% select(cell_id, milestone_id, percentage),
     dimred_samples = traj_lle,
     dimred_clust = branches
   )
