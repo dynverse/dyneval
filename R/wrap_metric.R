@@ -191,6 +191,14 @@ calculate_metrics <- function(task, model, metrics) {
   }
 
 
+  if ("robbie_network_score" %in% metrics) {
+    time0 <- Sys.time()
+    summary$robbie_network_score <- calculate_robbie_network_score(model$milestone_network, task$milestone_network)
+    time1 <- Sys.time()
+    summary$time_robbie_network_score <- 1-as.numeric(difftime(time1, time0, units = "sec"))
+  }
+
+
   rownames(summary) <- NULL
 
   lst(coranking, summary)
@@ -367,9 +375,6 @@ compute_coranking <- function(gold_dist, pred_dist) {
 calculate_ged <- function(net1, net2) {
   gedevo_path <- paste0(find.package("dyneval"), "/extra_code/GEDEVO/linux-x64/gedevo")
 
-  net1 <- tasks$milestone_network[[1]]
-  net2 <- tasks$milestone_network[[1]]
-
   net1 <- net1 %>% mutate(dir="u") %>% select(from, dir, to)
   net2 <- net2 %>% mutate(dir="u") %>% select(from, dir, to)
 
@@ -387,3 +392,73 @@ calculate_ged <- function(net1, net2) {
   1-score
 }
 
+
+
+
+
+
+
+
+
+
+
+
+score_map <- function(permutation, net, net_ref) {
+  net_mapped <- net[permutation, permutation]
+
+  1-sum(abs(net_mapped - net_ref))/(sum(net_mapped) + sum(net_ref))
+}
+
+complete_matrix <- function(mat, dim, fill=0) {
+  mat <- rbind(mat, matrix(rep(0, ncol(mat) * (dim - nrow(mat))), ncol=ncol(mat)))
+  mat <- cbind(mat, matrix(rep(0, nrow(mat) * (dim - ncol(mat))), nrow=nrow(mat)))
+}
+
+get_adjacency <- function(net, nodes=unique(c(net$from, net$to))) {
+  newnet <- net %>%
+    mutate(from=factor(from, levels=nodes), to=factor(to, levels=nodes)) %>%
+    reshape2::acast(from~to, value.var="length", fill=0, drop=F)
+
+  newnet[lower.tri(newnet)] = newnet[lower.tri(newnet)] + t(newnet)[lower.tri(newnet)] # make symmetric
+
+  newnet
+}
+
+#' Compute the robbie network score (any resemblances to real-life persons is purely coincidental)
+#'
+#' @param net1 the first network to compare
+#' @param net2 the second network to compare
+#' @importFrom GA ga
+#' @export
+calculate_robbie_network_score <- function(net1, net2) {
+  net1 <- dynutils::simplify_network(net1)
+  net2 <- dynutils::simplify_network(net2)
+
+  nodes1 <- unique(c(net1$from, net1$to))
+  nodes2 <- unique(c(net2$from, net2$to))
+
+  if(length(nodes1) < length(nodes2)) {
+    nodes3 <- nodes2
+    net3 <- net2
+    nodes2 <- nodes1
+    net2 <- net1
+    nodes1 <- nodes3
+    net1 <- net3
+  }
+
+  if(nrow(net1) == 1) {
+    return(1) # perfect score if both networks just contain one edge, net1 will always be the largest network
+  }
+
+  net <- get_adjacency(net1)
+  net_ref <- get_adjacency(net2)
+  net_ref <- complete_matrix(net_ref, nrow(net))
+
+  # normalize weights
+  net <- net/sum(net)
+  net_ref <- net_ref/sum(net_ref)
+
+  results <- GA::ga("permutation", score_map, net=net, net_ref=net_ref, min=rep(1, length(nodes1)), max=rep(length(nodes1), length(nodes1)), maxiter=10)
+
+  results@fitnessValue
+}
