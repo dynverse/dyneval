@@ -3,4 +3,5 @@ module load  python/x86_64/3.5.1
 virtualenv -p python3 $1/scuba --system-site-packages
 cd $1/scuba
 source bin/activate
-pip install git+https://github.com/Zouter/PySCUBA.git
+pip install git+https://github.com/Zouter/PySCUBA.git # first install without upgrade of dependencies
+pip install git+https://github.com/Zouter/PySCUBA.git --upgrade --no-dependencies --no-cache-dir -U # now upgrade PySCUBA :p
