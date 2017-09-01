@@ -1,5 +1,5 @@
 #!/bin/bash
-module load python3
+module load python/x86_64/3.5.1
 virtualenv -p python3 $1/gpfates --system-site-packages
 cd $1/gpfates
 source bin/activate
