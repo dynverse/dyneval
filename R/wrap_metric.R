@@ -363,7 +363,7 @@ compute_coranking <- function(gold_dist, pred_dist) {
 #' @importFrom utils write.table
 #' @export
 calculate_ged <- function(net1, net2) {
-  gedevo_path <- paste0(path.package("dyneval"), "/extra_code/GEDEVO/linux-x64/gedevo")
+  gedevo_path <- paste0(find.package("dyneval"), "/extra_code/GEDEVO/linux-x64/gedevo")
 
   net1 <- net1 %>% mutate(dir="u") %>% select(from, dir, to)
   net2 <- net2 %>% mutate(dir="u") %>% select(from, dir, to)
