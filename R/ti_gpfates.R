@@ -9,7 +9,7 @@ install_gpfates <- function() {
 
   system(glue::glue(
     "bash ",
-    path.package("dyneval"), "/extra_code/GPfates/make ", get_gpfates_path()
+    find.package("dyneval"), "/extra_code/GPfates/make ", get_gpfates_path()
   ))
 }
 
@@ -65,7 +65,7 @@ run_gpfates <- function(
       shQuote(glue::glue(
         "cd {get_gpfates_path()}/gpfates/",
         "source bin/activate",
-        "python3 {path.package('dyneval')}/extra_code/GPfates/gpfates_wrapper.py {temp_folder} {log_expression_cutoff} {min_cells_expression_cutoff} {nfates} {ndims}",
+        "python3 {find.package('dyneval')}/extra_code/GPfates/gpfates_wrapper.py {temp_folder} {log_expression_cutoff} {min_cells_expression_cutoff} {nfates} {ndims}",
         .sep = ";"))
     )
   )
