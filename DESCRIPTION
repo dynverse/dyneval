@@ -19,6 +19,7 @@ Imports:
   dyngen,
   dynutils,
   future,
+  GA,
   GEDEVO,
   ggplot2,
   glue,
