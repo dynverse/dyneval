@@ -1,4 +1,5 @@
 #!/bin/bash
+module load python2
 virtualenv -p python2.7 $1/scuba # need python2 for PyQt4
 cd $1/scuba
 source bin/activate
