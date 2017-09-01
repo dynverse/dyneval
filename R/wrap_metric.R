@@ -367,9 +367,6 @@ compute_coranking <- function(gold_dist, pred_dist) {
 calculate_ged <- function(net1, net2) {
   gedevo_path <- paste0(find.package("dyneval"), "/extra_code/GEDEVO/linux-x64/gedevo")
 
-  net1 <- tasks$milestone_network[[1]]
-  net2 <- tasks$milestone_network[[1]]
-
   net1 <- net1 %>% mutate(dir="u") %>% select(from, dir, to)
   net2 <- net2 %>% mutate(dir="u") %>% select(from, dir, to)
 
