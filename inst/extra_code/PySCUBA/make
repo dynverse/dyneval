@@ -1,8 +1,6 @@
 #!/bin/bash
-module load python2/x86_64/2.7.2
-virtualenv -p python2.7 $1/scuba --system-site-packages # need python2 for PyQt4
+module load  python/x86_64/3.5.1
+virtualenv -p python2.7 $1/scuba --system-site-packages
 cd $1/scuba
 source bin/activate
-module unload gcc # to avoid GOMP not found error, unload gcc, only god knows why
-pip install rpy2==2.8.1 # install older rpy2 because new rpy2 no longer python 2.7 compatible, this will fail on cluster
 pip install git+https://github.com/Zouter/PySCUBA.git
