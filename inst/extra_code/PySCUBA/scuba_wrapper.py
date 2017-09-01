@@ -1,6 +1,7 @@
 import PySCUBA
 import json
 import sys
+import numpy
 
 temp_folder = sys.argv[1]
 rigorous_gap_stats = bool(sys.argv[3])
@@ -15,9 +16,23 @@ cell_IDs, data, markers, cell_stages, data_tag, output_directory = PySCUBA.Prepr
 centroid_coordinates, cluster_indices, parent_clusters = PySCUBA.initialize_tree(data, cell_stages, rigorous_gap_stats=rigorous_gap_stats, min_split=min_split, min_percentage_split=min_percentage_split)
 centroid_coordinates, cluster_indices, parent_clusters, new_tree = PySCUBA.refine_tree(data, centroid_coordinates, cluster_indices, parent_clusters, cell_stages, output_directory=temp_folder)
 
+class MyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, numpy.integer):
+            return int(obj)
+        elif isinstance(obj, numpy.floating):
+            return float(obj)
+        elif isinstance(obj, numpy.ndarray):
+            return obj.tolist()
+        else:
+            return super(MyEncoder, self).default(obj)
+
+
 json.dump({
         "tree":parent_clusters,
-        "labels":cluster_indices.tolist()
+        "labels":cluster_indices.tolist(),
+        "new_tree":new_tree
     },
           open(temp_folder + "/output.json", "w")
+, cls=MyEncoder
  )

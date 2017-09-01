@@ -68,9 +68,15 @@ run_scuba <- function(counts,
 
   output <- jsonlite::read_json(paste0(temp_folder, "/output.json"))
   labels <- as.character(unlist(output$labels))
-  milestone_network <- readr::read_tsv(paste0(temp_folder, "/final_tree.tsv")) %>%  # tree was outputted seperatly by a python function, this is not returned by the function but can only be extracted by saving it
-    rename(to=`Cluster ID`, stage=Stage, from=`Parent cluster`) %>%
-    select(from, to) %>%
+
+  milestone_network <- output$new_tree %>%
+    map(unlist) %>%
+    .[-1] %>%
+    map(as.numeric) %>%
+    do.call(rbind, .) %>%
+    .[, c(1, 3)] %>%
+    as.data.frame() %>%
+    magrittr::set_colnames(c("from", "to")) %>%
     mutate(
       length=1,
       from=as.character(from),
