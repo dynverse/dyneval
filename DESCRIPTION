@@ -19,6 +19,7 @@ Imports:
   dyngen,
   dynutils,
   future,
+  GEDEVO,
   ggplot2,
   glue,
   grDevices,
@@ -27,6 +28,7 @@ Imports:
   magrittr, 
   methods,
   mlr,
+  netdist,
   ParamHelpers,
   pheatmap,
   purrr, 
@@ -54,10 +56,12 @@ Suggests:
   TSCAN
 Remotes:
   Zouter/dyngen,
+  rcannood/GEDEVO,
   rcannood/dynutils,
   kieranrcampbell/embeddr,
   rcannood/SCORPIUS,
   kstreet13/slingshot,
+  alan-turing-institute/network-comparison,
   bioc::cellTree,
   bioc::destiny,
   bioc::monocle,
