@@ -7,3 +7,4 @@ addons:
   apt:
     packages:
       - libgsl-dev
+      - libsdl1.2-dev
