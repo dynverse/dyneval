@@ -1,6 +1,6 @@
 #!/bin/bash
 module load  python/x86_64/3.5.1
-virtualenv -p python2.7 $1/scuba --system-site-packages
+virtualenv -p python3 $1/scuba --system-site-packages
 cd $1/scuba
 source bin/activate
 pip install git+https://github.com/Zouter/PySCUBA.git
