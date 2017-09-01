@@ -370,7 +370,7 @@ compute_coranking <- function(gold_dist, pred_dist) {
 #' @importFrom readr read_file
 #' @importFrom glue glue
 #' @importFrom utils write.table
-#' @importFrom GEDEVO poor_mans_wrap
+#' @importFrom GEDEVO run_GEDEVO
 #' @export
 calculate_ged <- function(net1, net2) {
   net1 <- net1 %>% mutate(dir="u") %>% select(from, dir, to)
