@@ -9,7 +9,7 @@ install_scuba <- function() {
 
   system(glue::glue(
     "bash ",
-    path.package("dyneval"), "/extra_code/PySCUBA/make ", get_scuba_path()
+    find.package("dyneval"), "/extra_code/PySCUBA/make ", get_scuba_path()
   ))
 }
 
@@ -61,7 +61,7 @@ run_scuba <- function(counts,
       shQuote(glue::glue(
         "cd {get_scuba_path()}/scuba/",
         "source bin/activate",
-        "python {path.package('dyneval')}/extra_code/PySCUBA/scuba_wrapper.py {temp_folder} 0 {c(0, 1)[as.numeric(rigorous_gap_stats)+1]} {N_dim} {low_gene_threshold} {low_gene_fraction_max} {min_split} {min_percentage_split}",
+        "python {find.package('dyneval')}/extra_code/PySCUBA/scuba_wrapper.py {temp_folder} 0 {c(0, 1)[as.numeric(rigorous_gap_stats)+1]} {N_dim} {low_gene_threshold} {low_gene_fraction_max} {min_split} {min_percentage_split}",
         .sep = ";"))
     )
   )

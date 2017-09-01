@@ -59,7 +59,7 @@ run_stemid <- function(
   pethr = .01
 ) {
   ## load class definition and functions
-  code_path <- paste0(path.package("dyneval"), "/extra_code/StemID")
+  code_path <- paste0(find.package("dyneval"), "/extra_code/StemID")
   source(paste0(code_path, "/RaceID2_StemID_class.R"))
 
   # initialize SCseq object with transcript counts
