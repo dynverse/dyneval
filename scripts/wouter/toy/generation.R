@@ -1,39 +1,10 @@
-#' @import tidyverse
-generate_linear <- function(ncells = 100) {
-  milestone_network <- tibble(from="M1", to="M2", length=1)
-  milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
-  cell_ids <- paste0("C", seq_len(ncells))
-
-  progressions <- random_progressions(cell_ids, milestone_network)
-
+wrap <- function(milestone_network, progressions) {
   task <- dyneval::wrap_ti_prediction(
-    "linear",
-    "linear",
-    cell_ids,
-    milestone_ids,
-    milestone_network,
-    progressions = progressions
-  )
-
-  task$geodesic_dist <- compute_emlike_dist(task)
-
-  task
-}
-
-#' @import tidyverse
-generate_bifurcating <- function(ncells = 100) {
-  milestone_network <- tibble(from=c("M1", "M2", "M2"), to=c("M2", "M3", "M4"), length=1)
-  milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
-  cell_ids <- paste0("C", seq_len(ncells))
-
-  progressions <- random_progressions(cell_ids, milestone_network)
-
-  task <- dyneval::wrap_ti_prediction(
-    "bifurcating",
-    "bifurcating",
-    cell_ids,
-    milestone_ids,
-    milestone_network,
+    "toy",
+    "toy",
+    cell_ids = unique(progressions$cell_id),
+    milestone_ids = unique(c(milestone_network$from, milestone_network$to)),
+    milestone_network=milestone_network,
     progressions = progressions
   )
 
@@ -43,32 +14,23 @@ generate_bifurcating <- function(ncells = 100) {
 }
 
 
-#' @import tidyverse
-generate_cycle <- function(ncells = 100) {
-  milestone_network <- tibble(from=c("M1", "M2", "M3"), to=c("M2", "M3", "M1"), length=1)
-  milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
-  cell_ids <- paste0("C", seq_len(ncells))
+generate_linear <- function(ncells=100) {
+  milestone_network <- dyngen::generate_toy_milestone_network("linear")
+  progressions <- dyngen::random_progressions(milestone_network, ncells)
 
-  progressions <- random_progressions(cell_ids, milestone_network)
-
-  task <- dyneval::wrap_ti_prediction(
-    "cycle",
-    "cycle",
-    cell_ids,
-    milestone_ids,
-    milestone_network,
-    progressions = progressions
-  )
-
-  task$geodesic_dist <- compute_emlike_dist(task)
-
-  task
+  wrap(milestone_network, progressions)
 }
 
+generate_bifurcating <- function(ncells=100) {
+  milestone_network <- dyngen::generate_toy_milestone_network("bifurcating")
+  progressions <- dyngen::random_progressions(milestone_network, ncells)
 
-random_progressions <- function(cell_ids, milestone_network) {
-  tibble(cell_id = cell_ids) %>%
-    bind_cols(milestone_network[sample(seq_len(nrow(milestone_network)), length(cell_ids), replace=TRUE), ]) %>%
-    mutate(percentage = map_dbl(length, ~runif(1, 0, .))) %>%
-    select(cell_id, from, to, percentage)
+  wrap(milestone_network, progressions)
+}
+
+generate_cycle <- function(ncells=100) {
+  milestone_network <- dyngen::generate_toy_milestone_network("cycle")
+  progressions <- dyngen::random_progressions(milestone_network, ncells)
+
+  wrap(milestone_network, progressions)
 }
