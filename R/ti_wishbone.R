@@ -39,8 +39,6 @@ description_wishbone <- function() {
   )
 }
 
-#' Run Wishbone
-#' @export
 #' @importFrom utils write.table
 run_wishbone <- function(counts,
                          start_cell_id,
