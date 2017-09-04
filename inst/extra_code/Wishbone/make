@@ -1,0 +1,7 @@
+#!/bin/bash
+module load python/x86_64/3.5.1
+virtualenv -p python3 $1/wishbone --system-site-packages
+cd $1/wishbone
+source bin/activate
+pip install Cython
+pip install git+https://github.com/Zouter/wishbone
