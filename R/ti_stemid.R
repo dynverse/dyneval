@@ -112,7 +112,9 @@ run_stemid <- function(
   gr_df <- data_frame(from = milestone_ids[seq_along(trl$kid)+1], to = milestone_ids[trl$kid], weight = dc[cbind(from, to)])
   gr <- igraph::graph_from_data_frame(gr_df, directed = F, vertices = milestone_ids)
   milestone_network <- igraph::distances(gr) %>%
+    {.[upper.tri(., diag=TRUE)] = NA; .} %>% # no bidirectionality
     reshape2::melt(varnames = c("from", "to"), value.name = "length") %>%
+    filter(!is.na(length)) %>%
     filter(from != to) %>%
     mutate(from = as.character(from), to = as.character(to))
 
@@ -133,6 +135,8 @@ run_stemid <- function(
     }
   }))
 
+  # ltr@sc@cluster$gap,
+
   wrap_ti_prediction(
     ti_type = "linear",
     id = "StemID",
@@ -140,8 +144,8 @@ run_stemid <- function(
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
     milestone_percentages = milestone_percentages,
-    dimred_samples = ltr@ltcoord,
-    ltr = ltr
+    dimred_samples = ltr@ltcoord#,
+    #ltr = ltr # removed ltr because it can CONTAIN errors (yes really, check out ltr@sc@cluster$gap)
   )
 }
 
