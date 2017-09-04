@@ -13,6 +13,8 @@ install_wishbone <- function() {
       find.package("dyneval"), "/extra_code/Wishbone/make ", get_wishbone_path()
     )
   ), stdout = T, stderr = T)
+
+  print(output)
 }
 
 #' Description for Wishbone
@@ -22,7 +24,6 @@ description_wishbone <- function() {
     warning("wishbone not installed, installing now")
     install_wishbone()
   }
-
 
   list(
     name = "Wishbone",
@@ -45,7 +46,6 @@ description_wishbone <- function() {
   )
 }
 
-#' @importFrom utils write.table
 run_wishbone <- function(counts,
                          start_cell_id,
                          knn = 10,
