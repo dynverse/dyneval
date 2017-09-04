@@ -69,7 +69,7 @@ run_wishbone <- function(counts,
     as.data.frame() %>%
     write.table(paste0(temp_folder, "/counts.tsv"), sep="\t")
 
-  params <- as.list(environment())[formalArgs("run_wishbone")]
+  params <- as.list(environment())[formalArgs(run_wishbone)]
   params <- params[-(names(params) == "counts")]
   params[["components_list"]] <- seq_len(n_diffusion_components)-1
   params %>% jsonlite::toJSON(auto_unbox=TRUE) %>% write(paste0(temp_folder, "/params.json"))
