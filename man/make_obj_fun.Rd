@@ -6,7 +6,7 @@
 \usage{
 make_obj_fun(method, noisy = F, suppress_output = T,
   metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation",
-  "isomorphic", "ged"))
+  "isomorphic", "robbie_network_score"))
 }
 \arguments{
 \item{method}{the method to wrap an evaluation function around}
