@@ -5,7 +5,7 @@ description_slicer <- function() {
     name = "SLICER",
     short_name = "SLICER",
     package_load = c("SLICER"),
-    package_installed = c(),
+    package_installed = c("SLICER"),
     par_set = makeParamSet(
       makeIntegerParam(id = "kmin", lower = 2L, upper = 20L, default = 10),
       makeIntegerParam(id = "m", lower = 2L, upper = 20L, default = 2),
