@@ -4,7 +4,7 @@ import sys
 import numpy
 
 temp_folder = sys.argv[1]
-rigorous_gap_stats = bool(sys.argv[3])
+rigorous_gap_stats = bool(sys.argv[3].capitalize())
 N_dim = int(sys.argv[4])
 low_gene_threshold = float(sys.argv[5])
 low_gene_fraction_max = float(sys.argv[6])
