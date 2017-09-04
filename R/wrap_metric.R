@@ -8,7 +8,7 @@
 #' @importFrom smoof makeSingleObjectiveFunction makeMultiObjectiveFunction
 #' @export
 make_obj_fun <- function(method, noisy = F, suppress_output = T,
-                         metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "ged")) {
+                         metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "robbie_network_score")) {
   # Use different makefunction if there are multiple metrics versus one
   if (length(metrics) > 1) {
     make_fun <- function(...) makeMultiObjectiveFunction(..., n.objectives = length(metrics))
@@ -63,7 +63,7 @@ execute_evaluation <- function(
   tasks,
   method,
   parameters,
-  metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "ged"),
+  metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "robbie_network_score"),
   suppress_output = T) {
   # Run the method on each of the tasks
   method_futures <- future(

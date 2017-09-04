@@ -5,8 +5,8 @@
 \title{Running an evaluation of a method on a set of tasks with a set of parameters}
 \usage{
 execute_evaluation(tasks, method, parameters, metrics = c("mean_R_nx",
-  "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "ged"),
-  suppress_output = T)
+  "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic",
+  "robbie_network_score"), suppress_output = T)
 }
 \arguments{
 \item{tasks}{the tasks on which to evaluate}
