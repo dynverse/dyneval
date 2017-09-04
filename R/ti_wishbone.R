@@ -18,6 +18,12 @@ install_wishbone <- function() {
 #' Description for Wishbone
 #' @export
 description_wishbone <- function() {
+  if(!dir.exists(get_gpfates_path())) {
+    warning("gpfates not installed, installing now")
+    install_gpfates()
+  }
+
+
   list(
     name = "Wishbone",
     short_name = "Wishbone",
