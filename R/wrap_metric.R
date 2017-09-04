@@ -164,9 +164,12 @@ calculate_metrics <- function(task, model, metrics) {
   # Compute the milestone network isomorphic
   if ("isomorphic" %in% metrics) {
     time0 <- Sys.time()
+    net1 <- dynutils::simplify_network(model$milestone_network)
+    net2 <- dynutils::simplify_network(task$milestone_network)
+
     summary$isomorphic <- (is_isomorphic_to(
-      graph_from_data_frame(model$milestone_network),
-      graph_from_data_frame(task$milestone_network)
+      graph_from_data_frame(net1),
+      graph_from_data_frame(net2)
     ))+0
     time1 <- Sys.time()
     summary$time_isomorphic <- as.numeric(difftime(time1, time0, units = "sec"))
