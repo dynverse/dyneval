@@ -1,5 +1,4 @@
 library(tidyverse)
-library(dyneval)
 
 source("scripts/wouter/toy/generation.R")
 source("scripts/wouter/toy/perturbation.R")
@@ -49,7 +48,7 @@ toys$gs <- toys %>% split(seq_len(nrow(toys))) %>% parallel::mclapply(function(r
 toys$toy <- toys %>% split(seq_len(nrow(toys))) %>% parallel::mclapply(function(row) {
   row$perturbator[[1]](row$gs[[1]])
 }, mc.cores=8)
-#toys$toy <- map2(toys$perturbator, toys$gs, ~.x(.y))
+# toys$toy <- map2(toys$perturbator, toys$gs, ~.x(.y))
 toys$toy <- map2(toys$toy, toys$toy_id, ~rename_toy(.x, .y))
 
 # plot toys
@@ -61,7 +60,7 @@ write_rds(toys, "toys.rds")
 toys <- read_rds("toys.rds")
 
 # get the scores when comparing the gs to toy
-metrics <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "isomorphic", "ged", "net_emd")
+metrics <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "isomorphic", "net_emd", "robbie_network_score", "ged")
 compare_toy <- function(gs, toy, id=toy$id) {
   scores <- dyneval:::calculate_metrics(gs, toy, metrics=metrics)$summary
   scores %>% mutate(toy_id=id)
