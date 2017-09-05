@@ -63,8 +63,10 @@ Remotes:
   rcannood/dynutils,
   kieranrcampbell/embeddr,
   Zouter/MPath,
-  kieranrcampbell/pseudogp
+  kieranrcampbell/pseudogp,
   rcannood/SCORPIUS,
+  rcannood/RHmm,
+  kieranrcampbell/embeddr,
   jw156605/SLICER,
   kstreet13/slingshot,
   alan-turing-institute/network-comparison,
