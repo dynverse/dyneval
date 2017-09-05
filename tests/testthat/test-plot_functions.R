@@ -9,6 +9,10 @@ for (taski in seq_len(nrow(tasks))) {
     g <- plot_default(task)
     expect_is(g, "ggplot")
 
+    pdf("/dev/null")
+    print(g)
+    dev.off()
+
     prediction <- task
     cell_id_map <- setNames(sample(prediction$cell_ids), prediction$cell_ids)
     prediction$milestone_percentages$cell_id <- cell_id_map[prediction$milestone_percentages$cell_id]
@@ -16,6 +20,10 @@ for (taski in seq_len(nrow(tasks))) {
 
     g <- plot_combined(task, prediction)
     expect_is(g, "ggplot")
+
+    pdf("/dev/null")
+    print(g)
+    dev.off()
 
     pdf("/dev/null")
     ph <- plot_emdist(task, task$geodesic_dist)
