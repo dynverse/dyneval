@@ -10,7 +10,7 @@ progressions <- tasks$progressions[[1]]
 
 # choose certain parameters for each method, at which we know this method will perform well for the toy dataset
 method_descriptions <- list(
-  waterfall=list(), # broken, cannot install RHmm on cluster due to lapack isue
+  waterfall=list(),
   scorpius=list(),
   slingshot=list(),
   gpfates=list(nfates=1),
@@ -24,12 +24,13 @@ method_descriptions <- list(
   slicer = list(min_branch_len=50),
   monocle_ddrtree=list(),
   wishbone = list(branch=F),
+  pseudogp = list(iter=100, initialise_from="principal_curve"),
   random_linear=list()
 )
 
-method_descriptions <- method_descriptions["stemid"]
+method_descriptions <- method_descriptions["pseudogp"]
 
-metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "ged", "isomorphic", "net_emd")
+metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "isomorphic", "robbie_network_score")
 
 # test the methods and get the scores
 results <- purrr::map(names(method_descriptions), function(method_name) {
@@ -62,7 +63,18 @@ results <- purrr::map(names(method_descriptions), function(method_name) {
   )()
 # }, mc.cores=8)
 })
-# }, qsub_environment = list2env(lst(method_descriptions, tasks, metric_names)), qsub_config = PRISM::override_qsub_config(memory = "10G"))
+# }, qsub_environment = list2env(lst(method_descriptions, tasks, metric_names)), qsub_config = PRISM::override_qsub_config(memory = "10G", execute_before=c("module load python/x86_64/3.5.1")))
+#
+# PRISM::qsub_run(
+#   function(i) {dyneval:::run_slicer(counts)},
+#   qsub_environment=list2env(lst(counts)),
+#   qsub_config = PRISM::override_qsub_config(
+#     memory = "10G",
+#     execute_before=c("module load python/x86_64/3.5.1"),
+#     r_module = "R",
+#     remove_tmp_folder=F
+#   )
+# )
 
 scores <- purrr::map(results, function(.) {
   bind_cols(
