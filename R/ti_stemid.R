@@ -4,8 +4,8 @@ description_stemid <- function() {
   list(
     name = "StemID",
     short_name = "StemID",
-    package_load = c("ggplot2", "methods", "dplyr"),
-    package_installed = c("tsne", "pheatmap", "MASS", "cluster", "mclust", "flexmix", "lattice", "fpc", "amap", "RColorBrewer", "locfit", "vegan"),
+    package_load = c(),
+    package_installed = c("StemID", "igraph", "reshape2"),
     par_set = makeParamSet(
       makeIntegerParam(id = "clustnr", lower = 20L, default = 30L, upper = 100L),
       makeIntegerParam(id = "bootnr", lower = 20L, default = 50, upper = 100L),
@@ -58,58 +58,57 @@ run_stemid <- function(
   pthr = .01,
   pethr = .01
 ) {
-  ## load class definition and functions
-  code_path <- paste0(find.package("dyneval"), "/extra_code/StemID")
-  source(paste0(code_path, "/RaceID2_StemID_class.R"))
+  requireNamespace("StemID")
+  requireNamespace("igraph")
+  requireNamespace("reshape2")
 
   # initialize SCseq object with transcript counts
-  sc <- SCseq(data.frame(t(counts), check.names = F, stringsAsFactors = F))
+  sc <- StemID:::SCseq(data.frame(t(counts), check.names = F, stringsAsFactors = F))
 
   # filtering of expression data
-  sc <- filterdata(sc, mintotal = 1, minexpr = 0, minnumber = 0, maxexpr = Inf, downsample = TRUE, dsn = 1)
+  sc <- StemID:::filterdata(sc, mintotal = 1, minexpr = 0, minnumber = 0, maxexpr = Inf, downsample = TRUE, dsn = 1)
 
   # k-medoids clustering
   do_gap <- num_cluster_method == "gap"
   do_sat <- num_cluster_method == "sat"
-  sc <- clustexp(sc, clustnr = clustnr, bootnr = bootnr, metric = metric, do.gap = do_gap,
+  sc <- StemID:::clustexp(sc, clustnr = clustnr, bootnr = bootnr, metric = metric, do.gap = do_gap,
                  sat = do_sat, SE.method = SE.method, SE.factor = SE.factor,
                  B.gap = B.gap, cln = cln, FUNcluster = FUNcluster)
 
   # compute t-SNE map
   sammonmap <- dimred_method == "sammon"
   initial_cmd <- dimred_method == "tsne_initcmd"
-  sc <- comptsne(sc, sammonmap = sammonmap, initial_cmd = initial_cmd)
+  sc <- StemID:::comptsne(sc, sammonmap = sammonmap, initial_cmd = initial_cmd)
 
   # detect outliers and redefine clusters
   thr <- 2^(thr_lower:thr_upper)
-  sc <- findoutliers(sc, outminc = outminc, outlg = outlg, probthr = probthr, thr = thr, outdistquant = outdistquant)
+  sc <- StemID:::findoutliers(sc, outminc = outminc, outlg = outlg, probthr = probthr, thr = thr, outdistquant = outdistquant)
 
   # initialization
-  ltr <- Ltree(sc)
+  ltr <- StemID:::Ltree(sc)
 
   # computation of the entropy
-  ltr <- compentropy(ltr)
+  ltr <- StemID:::compentropy(ltr)
 
   # computation of the projections for all cells
-  ltr <- projcells(ltr, cthr = 0, nmode = nmode)
+  ltr <- StemID:::projcells(ltr, cthr = 0, nmode = nmode)
 
   # computation of the projections for all cells after randomization
-  ltr <- projback(ltr, pdishuf = pdishuf, nmode = nmode)
+  ltr <- StemID:::projback(ltr, pdishuf = pdishuf, nmode = nmode)
 
   # assembly of the lineage tree
-  ltr <- lineagetree(ltr, pthr = pthr, nmode = nmode)
+  ltr <- StemID:::lineagetree(ltr, pthr = pthr, nmode = nmode)
 
-  # get names of the milestones and the samples
-  milestone_ids <- paste0("milestone_", ltr@ldata$m)
+  # compute a spanning tree
+  ltr <- StemID:::compspantree(ltr)
 
-  # can't find any cluster distances, so calculating manually
-  medoids <- compmedoids(ltr@sc@fdata, ltr@sc@cpart)
-  cent <- ltr@sc@fdata[,medoids]
-  dc <- as.data.frame(1 - cor(cent))
-  dimnames(dc) <- list(milestone_ids, milestone_ids)
-  trl <- spantree(dc[ltr@ldata$m,ltr@ldata$m])
+  dc <- ltr@trl$dc
+  milestone_ids <- rownames(dc)
+  trl <- ltr@trl$trl
+  cent <- ltr@trl$cent
 
-  gr_df <- data_frame(from = milestone_ids[seq_along(trl$kid)+1], to = milestone_ids[trl$kid], weight = dc[cbind(from, to)])
+  # converting to milestone network
+  gr_df <- data_frame(from = seq_along(trl$kid)+1, to = trl$kid, weight = dc[cbind(from, to)])
   gr <- igraph::graph_from_data_frame(gr_df, directed = F, vertices = milestone_ids)
   milestone_network <- igraph::distances(gr) %>%
     {.[upper.tri(., diag=TRUE)] = NA; .} %>% # no bidirectionality
@@ -119,7 +118,7 @@ run_stemid <- function(
     mutate(from = as.character(from), to = as.character(to))
 
   # calculating the cell-to-cluster distances manually
-  trproj_res <- ltr@trproj$res %>% as_data_frame() %>% rownames_to_column("id") %>% dplyr::select(id, closest = o, furthest = l)
+  trproj_res <- ltr@trproj$res %>% as_data_frame() %>% rownames_to_column("id") %>% select(id, closest = o, furthest = l)
   milestone_percentages <- bind_rows(lapply(seq_len(nrow(trproj_res)), function(i) {
     id <- trproj_res$id[[i]]
     closest <- trproj_res$closest[[i]]
@@ -135,7 +134,10 @@ run_stemid <- function(
     }
   }))
 
-  # ltr@sc@cluster$gap,
+  milestone_network$from <- paste0("Milestone", milestone_network$from)
+  milestone_network$to <- paste0("Milestone", milestone_network$to)
+  milestone_ids <- paste0("Milestone", milestone_ids)
+  milestone_percentages$milestone_id <- paste0("Milestone", milestone_percentages$milestone_id)
 
   wrap_ti_prediction(
     ti_type = "linear",
@@ -144,24 +146,26 @@ run_stemid <- function(
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
     milestone_percentages = milestone_percentages,
-    dimred_samples = ltr@ltcoord#,
-    #ltr = ltr # removed ltr because it can CONTAIN errors (yes really, check out ltr@sc@cluster$gap)
+    dimred_samples = ltr@ltcoord,
+    objects = list(
+      trl = ltr@trl,
+      ltcoord = ltr@ltcoord,
+      cnl = ltr@ldata$cnl,
+      lp = ltr@ldata$lp,
+      fcol = ltr@sc@fcol
+    )
   )
 }
 
 plot_stemid <- function(ti_predictions) {
-  # recreating plotmapprojections(ti_predictions$ltr)
-  object <- ti_predictions$ltr
-  cent <- object@sc@fdata[,compmedoids(object@sc@fdata,object@sc@cpart)]
-  dc <- as.data.frame(1 - cor(cent))
-  names(dc) <- sort(unique(object@sc@cpart))
-  rownames(dc) <- sort(unique(object@sc@cpart))
-  trl <- spantree(dc[object@ldata$m,object@ldata$m])
+  trl <- ti_predictions$objects$trl$trl
+  ltcoord <- ti_predictions$objects$ltcoord
+  cnl <- ti_predictions$objects$cnl
+  lp <- ti_predictions$objects$lp
+  fcol <- ti_predictions$objects$fcol
 
-  u <- object@ltcoord[,1]
-  v <- object@ltcoord[,2]
-  cnl <- object@ldata$cnl
-  lp <- object@ldata$lp
+  u <- ltcoord[,1]
+  v <- ltcoord[,2]
 
   lines <- data.frame(from = cnl[seq_along(trl$kid)+1,], to = cnl[trl$kid,])
 
@@ -172,7 +176,7 @@ plot_stemid <- function(ti_predictions) {
     geom_segment(aes(x = from.V1, xend = to.V1, y = from.V2, yend = to.V2), lines) +
     geom_text(aes(V1, V2, label = seq_len(nrow(cnl))), cnl, size = 10) +
     labs(x = "Dim 1", y = "Dim 2") +
-    scale_colour_manual(values = object@sc@fcol) +
+    scale_colour_manual(values = fcol) +
     theme(legend.position = "none")
 }
 
