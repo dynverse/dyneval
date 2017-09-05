@@ -158,7 +158,6 @@ run_slingshot <- function(
 }
 
 
-#' @import ggplot2
 plot_slingshot <- function(ti_predictions) {
   colnames(ti_predictions$dimred_samples) <- paste0("Comp", seq_len(ncol(ti_predictions$dimred_samples)))
   plotdata <- as_tibble(ti_predictions$dimred_samples) %>%
