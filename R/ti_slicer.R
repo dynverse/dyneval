@@ -79,7 +79,6 @@ run_slicer <- function(counts,
   representatives <- milestone_percentages %>% group_by(cell_id) %>% summarise(milestone_id=milestone_id[which.max(percentage)], percentage=max(percentage))
   #representatives <- representatives %>% filter(percentage > 0.9)
 
-
   conn <- traj_graph %>%
     igraph::as_data_frame() %>%
     mutate(
@@ -97,11 +96,6 @@ run_slicer <- function(counts,
     arrange(-weight) %>%
     filter(weight >= weight_cutoff) %>%
     filter(!(paste0(milestone_id_from, milestone_id_to) %in% branch_milestone_combinations))
-
-  set.seed(1)
-  traj_graph %>% plot(vertex.color=rainbow(10)[as.numeric(rownames(counts) == start_cell_id)+1])
-  set.seed(1)
-  traj_graph %>% plot(vertex.color=rainbow(10)[branches])
 
   # group the representatives, according to close distance
   milestone_groups <- setNames(seq_along(milestone_ids), milestone_ids)
