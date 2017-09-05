@@ -1,4 +1,5 @@
 scores <- read_rds("scores.rds")
+toys <- read_rds("toys.rds")
 
 source("scripts/wouter/toy/rules.R")
 
