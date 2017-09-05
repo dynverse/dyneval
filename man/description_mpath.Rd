@@ -2,10 +2,10 @@
 % Please edit documentation in R/ti_mpath.R
 \name{description_mpath}
 \alias{description_mpath}
-\title{Description for MPath}
+\title{Description for Mpath}
 \usage{
 description_mpath()
 }
 \description{
-Description for MPath
+Description for Mpath
 }

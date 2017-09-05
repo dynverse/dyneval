@@ -92,8 +92,7 @@ run_slicer <- function(counts,
     filter(milestone_id_from != milestone_id_to) %>%
     arrange(-weight) %>%
     filter(weight >= weight_cutoff) %>%
-    filter(!(paste0(milestone_id_from, milestone_id_to) %in% branch_milestone_combinations)) %>%
-    arrange(milestone_id_from, milestone_id_to)
+    filter(!(paste0(milestone_id_from, milestone_id_to) %in% branch_milestone_combinations))
 
   # group the representatives, according to close distance
   gr <- igraph::graph_from_data_frame(close_representatives %>% select(from = milestone_id_from, to = milestone_id_to), directed = F, vertices = milestone_ids)

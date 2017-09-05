@@ -55,6 +55,7 @@ Suggests:
   pseudogp,
   Rtsne,
   rstan,
+  coda,
   scater,
   SCORPIUS,
   SLICER,

@@ -83,10 +83,16 @@ load_datasets <- function(mc_cores = 1, datasets_info = load_datasets_info()) {
       model_replicate = model$modelsetting$replicate,
       special_cells = special_cells
     )
+    out$cell_grouping = get_cell_grouping(out$milestone_percentages)
     out$geodesic_dist <- compute_emlike_dist(out)
     out
   })
   task_wrapped %>%
     list_as_tibble %>%
     left_join(datasets_info, by = c("id" = "id"))
+}
+
+get_cell_grouping <- function(milestone_percentages) {
+  milestone_percentages %>% group_by(cell_id) %>%
+    summarise(group_id=milestone_id[which.max(percentage)])
 }

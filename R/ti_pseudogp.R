@@ -5,7 +5,7 @@ description_pseudogp <- function() {
     name = "pseudogp",
     short_name = "pseudogp",
     package_load = c(),
-    package_installed = c("pseudogp", "rstan"),
+    package_installed = c("pseudogp", "rstan", "coda"),
     par_set = makeParamSet(
       makeNumericParam(id = "smoothing_alpha", lower = 1, upper = 20, default = 10),
       makeNumericParam(id = "smoothing_beta", lower = 1, upper = 20, default = 3),
@@ -35,6 +35,7 @@ run_pseudogp <- function(
 ) {
   requireNamespace("pseudogp")
   requireNamespace("rstan")
+  requireNamespace("coda")
   dimred_funcs <- map(dimred_names, ~getFromNamespace(paste0("dimred_", .), "dyneval"))
 
   spaces <- map(dimred_funcs, ~.(counts, 2)) # only 2 dimensions are allowed
@@ -49,7 +50,7 @@ run_pseudogp <- function(
   sigma <- rstan::extract(le_fit, pars = "sigma", permute = FALSE)
 
   # not necessary, but can be used for plotting: the times of every sample across chains
-  sample_posterior_times <- map(seq_len(chains), ~mcmc(pst[, ., ])) %>%
+  sample_posterior_times <- map(seq_len(chains), ~coda::mcmc(pst[, ., ])) %>%
     invoke(rbind, .)
   colnames(sample_posterior_times) <- rownames(counts)
   sample_posterior_times <- sample_posterior_times %>%
