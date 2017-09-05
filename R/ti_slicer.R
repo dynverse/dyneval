@@ -5,7 +5,7 @@ description_slicer <- function() {
     name = "SLICER",
     short_name = "SLICER",
     package_load = c("SLICER"),
-    package_installed = c("SLICER"),
+    package_installed = c("lle", "igraph"),
     par_set = makeParamSet(
       makeIntegerParam(id = "kmin", lower = 2L, upper = 20L, default = 10),
       makeIntegerParam(id = "m", lower = 2L, upper = 20L, default = 2),
@@ -28,6 +28,7 @@ run_slicer <- function(counts,
                       max_same_milestone_distance = 0.1) {
   requireNamespace("SLICER")
   requireNamespace("lle")
+  requireNamespace("igraph")
 
   expression <- log2(counts + 1)
 
@@ -39,26 +40,23 @@ run_slicer <- function(counts,
   traj_graph <- SLICER::conn_knn_graph(traj_lle, k=k)
   ends <- SLICER::find_extreme_cells(traj_graph, traj_lle)
 
-  #start_cell_id <- dataset$gs$cellinfo %>% filter(cell_id %in% rownames(expression_filtered)) %>% arrange(state_id, time) %>% pull(cell_id) %>% first
   start <- which(rownames(expression_filtered) == start_cell_id)
-  #start <- 1
   cells_ordered <- SLICER::cell_order(traj_graph, start)
   branches <- SLICER::assign_branches(traj_graph, start, min_branch_len=min_branch_len) %>% factor %>% set_names(rownames(expression_filtered))
+
+  # TODO: clean up code, add comments
 
   # from SLICER we get the branch assignment, and the overall ordering of the cells from the start point
   progressions <- tibble(
     branch_id = branches,
     global_rank = match(rownames(expression), rownames(expression)[cells_ordered]),
     cell_id = rownames(expression)
-  )
-  progressions <- progressions %>%
+  ) %>%
     group_by(branch_id) %>%
     mutate(
       rank = rank(global_rank)-1,
       percentage = rank/max(rank)
-    )
-
-  ggplot(progressions) + geom_point(aes(branch_id, global_rank))
+    ) %>% ungroup()
 
   # now extract the branch network
   # first create a temporary milestone network
@@ -74,10 +72,9 @@ run_slicer <- function(counts,
 
   progressions <- progressions %>% left_join(milestone_network, by="branch_id")
 
-  milestone_percentages <- dyneval:::convert_progressions_to_milestone_percentages(rownames(expression), milestone_ids, milestone_network, progressions)
+  milestone_percentages <- convert_progressions_to_milestone_percentages(rownames(expression), milestone_ids, milestone_network, progressions)
 
   representatives <- milestone_percentages %>% group_by(cell_id) %>% summarise(milestone_id=milestone_id[which.max(percentage)], percentage=max(percentage))
-  #representatives <- representatives %>% filter(percentage > 0.9)
 
   conn <- traj_graph %>%
     igraph::as_data_frame() %>%
@@ -98,19 +95,8 @@ run_slicer <- function(counts,
     filter(!(paste0(milestone_id_from, milestone_id_to) %in% branch_milestone_combinations))
 
   # group the representatives, according to close distance
-  milestone_groups <- setNames(seq_along(milestone_ids), milestone_ids)
-
-  for (j in 1:10) {
-    for (i in seq_len(nrow(close_representatives))) {
-      from <- close_representatives[i,]$milestone_id_from
-      to <- close_representatives[i,]$milestone_id_to
-
-      min <- min(milestone_groups[[from]], milestone_groups[[to]])
-      milestone_groups[[from]] <- min
-      milestone_groups[[to]] <- min
-    }
-  }
-
+  gr <- igraph::graph_from_data_frame(close_representatives %>% select(from = milestone_id_from, to = milestone_id_to), directed = F, vertices = milestone_ids)
+  milestone_groups <- igraph::components(gr)$membership
 
   # now map old milestones to new milestones
   milestone_mapper <- setNames(paste0("M", milestone_groups), names(milestone_groups))

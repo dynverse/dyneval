@@ -50,7 +50,8 @@ dimred_mds = function(x, ndim=3) {
 dimred_tsne = function(x, ndim=3) {
   requireNamespace("SCORPIUS")
   requireNamespace("Rtsne")
-  space = Rtsne::Rtsne(as.dist(SCORPIUS::correlation.distance(x)), dims = ndim, is_distance = TRUE)$Y
+  requireNamespace("stats")
+  space = Rtsne::Rtsne(stats::as.dist(SCORPIUS::correlation.distance(x)), dims = ndim, is_distance = TRUE)$Y
   rownames(space) = rownames(x)
   process_dimred(space)
 }
@@ -58,7 +59,8 @@ dimred_tsne = function(x, ndim=3) {
 dimred_dp = function(x, ndim=3, neigen=3) {
   requireNamespace("SCORPIUS")
   requireNamespace("diffusionMap")
-  space = diffusionMap::diffuse(as.dist(SCORPIUS::correlation.distance(x)), neigen=neigen)
+  requireNamespace("stats")
+  space = diffusionMap::diffuse(stats::as.dist(SCORPIUS::correlation.distance(x)), neigen=neigen)
   process_dimred(space$X[,seq_len(ndim)])
 }
 
