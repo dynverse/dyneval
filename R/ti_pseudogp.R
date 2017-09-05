@@ -4,8 +4,8 @@ description_pseudogp <- function() {
   list(
     name = "pseudogp",
     short_name = "pseudogp",
-    package_load = c("pseudogp"),
-    package_installed = c("pseudogp"),
+    package_load = c(),
+    package_installed = c("pseudogp", "rstan"),
     par_set = makeParamSet(
       makeNumericParam(id = "smoothing_alpha", lower = 1, upper = 20, default = 10),
       makeNumericParam(id = "smoothing_beta", lower = 1, upper = 20, default = 3),
@@ -34,12 +34,13 @@ run_pseudogp <- function(
   initialise_from = "random"
 ) {
   requireNamespace("pseudogp")
+  requireNamespace("rstan")
   dimred_funcs <- map(dimred_names, ~getFromNamespace(paste0("dimred_", .), "dyneval"))
 
   spaces <- map(dimred_funcs, ~.(counts, 2)) # only 2 dimensions are allowed
   #ggplot(spaces[[1]] %>% as.data.frame) + geom_point(aes(Comp1, Comp2))
 
-  le_fit <- fitPseudotime(spaces, smoothing_alpha, smoothing_beta, iter = iter, chains = chains, initialise_from = initialise_from, pseudotime_var=pseudotime_var, pseudotime_mean=pseudotime_mean)
+  le_fit <- pseudogp::fitPseudotime(spaces, smoothing_alpha, smoothing_beta, iter = iter, chains = chains, initialise_from = initialise_from, pseudotime_var=pseudotime_var, pseudotime_mean=pseudotime_mean)
   nsamples <- iter/2
   #posteriorCurvePlot(spaces, le_fit, nsamples=nsamples, posterior_mean = TRUE)
 
