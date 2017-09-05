@@ -62,7 +62,6 @@ Suggests:
   slingshot,
   StemID,
   TSCAN,
-  StemID,
   Waterfall
 Remotes:
   alan-turing-institute/network-comparison,
