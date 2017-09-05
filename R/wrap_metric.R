@@ -161,11 +161,12 @@ calculate_metrics <- function(task, model, metrics) {
     summary$time_correlation <- as.numeric(difftime(time1, time0, units = "sec"))
   }
 
+  net1 <- dynutils::simplify_network(model$milestone_network)
+  net2 <- dynutils::simplify_network(task$milestone_network) %>% filter(to != "FILTERED_CELLS")
+
   # Compute the milestone network isomorphic
   if ("isomorphic" %in% metrics) {
     time0 <- Sys.time()
-    net1 <- dynutils::simplify_network(model$milestone_network)
-    net2 <- dynutils::simplify_network(task$milestone_network)
 
     summary$isomorphic <- (is_isomorphic_to(
       graph_from_data_frame(net1),
@@ -178,7 +179,7 @@ calculate_metrics <- function(task, model, metrics) {
   # Compute the milestone network GED
   if ("ged" %in% metrics) {
     time0 <- Sys.time()
-    summary$ged <- calculate_ged(model$milestone_network, task$milestone_network)
+    summary$ged <- calculate_ged(net1, net2)
     time1 <- Sys.time()
     summary$time_ged <- as.numeric(difftime(time1, time0, units = "sec"))
   }
@@ -186,17 +187,16 @@ calculate_metrics <- function(task, model, metrics) {
   # Compute Netdist EMD (see scripts/wouter/network_scores_tests.R)
   if ("net_emd" %in% metrics) {
     time0 <- Sys.time()
-    gdd1 <- netdist::gdd(model$milestone_network %>% igraph::graph_from_data_frame())
-    gdd2 <- netdist::gdd(task$milestone_network %>% igraph::graph_from_data_frame())
+    gdd1 <- netdist::gdd(net1 %>% igraph::graph_from_data_frame())
+    gdd2 <- netdist::gdd(net2 %>% igraph::graph_from_data_frame())
     summary$net_emd <- netdist::net_emd(gdd1, gdd2)
     time1 <- Sys.time()
     summary$time_net_emd <- 1-as.numeric(difftime(time1, time0, units = "sec"))
   }
 
-
   if ("robbie_network_score" %in% metrics) {
     time0 <- Sys.time()
-    summary$robbie_network_score <- calculate_robbie_network_score(model$milestone_network, task$milestone_network)
+    summary$robbie_network_score <- calculate_robbie_network_score(net1, net2)
     time1 <- Sys.time()
     summary$time_robbie_network_score <- 1-as.numeric(difftime(time1, time0, units = "sec"))
   }
@@ -431,9 +431,6 @@ get_adjacency <- function(net, nodes=unique(c(net$from, net$to))) {
 #' @importFrom GA ga
 #' @export
 calculate_robbie_network_score <- function(net1, net2) {
-  net1 <- dynutils::simplify_network(net1)
-  net2 <- dynutils::simplify_network(net2)
-
   nodes1 <- unique(c(net1$from, net1$to))
   nodes2 <- unique(c(net2$from, net2$to))
 
