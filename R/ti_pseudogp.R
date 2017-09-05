@@ -4,8 +4,8 @@ description_pseudogp <- function() {
   list(
     name = "pseudogp",
     short_name = "pseudogp",
-    package_load = c(),
-    package_installed = c("pseudogp", "rstan", "coda"),
+    package_load = c("pseudogp"),
+    package_installed = c("rstan"),
     par_set = makeParamSet(
       makeNumericParam(id = "smoothing_alpha", lower = 1, upper = 20, default = 10),
       makeNumericParam(id = "smoothing_beta", lower = 1, upper = 20, default = 3),
@@ -35,13 +35,12 @@ run_pseudogp <- function(
 ) {
   requireNamespace("pseudogp")
   requireNamespace("rstan")
-  requireNamespace("coda")
   dimred_funcs <- map(dimred_names, ~getFromNamespace(paste0("dimred_", .), "dyneval"))
 
   spaces <- map(dimred_funcs, ~.(counts, 2)) # only 2 dimensions are allowed
   #ggplot(spaces[[1]] %>% as.data.frame) + geom_point(aes(Comp1, Comp2))
 
-  le_fit <- pseudogp::fitPseudotime(spaces, smoothing_alpha, smoothing_beta, iter = iter, chains = chains, initialise_from = initialise_from, pseudotime_var=pseudotime_var, pseudotime_mean=pseudotime_mean)
+  le_fit <- fitPseudotime(spaces, smoothing_alpha, smoothing_beta, iter = iter, chains = chains, initialise_from = initialise_from, pseudotime_var=pseudotime_var, pseudotime_mean=pseudotime_mean)
   nsamples <- iter/2
   #posteriorCurvePlot(spaces, le_fit, nsamples=nsamples, posterior_mean = TRUE)
 
@@ -50,8 +49,8 @@ run_pseudogp <- function(
   sigma <- rstan::extract(le_fit, pars = "sigma", permute = FALSE)
 
   # not necessary, but can be used for plotting: the times of every sample across chains
-  sample_posterior_times <- map(seq_len(chains), ~coda::mcmc(pst[, ., ])) %>%
-    invoke(rbind, .)
+  sample_posterior_times <- map(seq_len(chains), ~mcmc(pst[, ., ])) %>%
+    do.call(rbind, .)
   colnames(sample_posterior_times) <- rownames(counts)
   sample_posterior_times <- sample_posterior_times %>%
     reshape2::melt(varnames=c("sample_id", "cell_id"), value.name="time") %>%
@@ -59,7 +58,7 @@ run_pseudogp <- function(
 
   # calculate the final pseudotime by averaging over the modes of every chain
   chain_posterior_times <- map(seq_len(chains), ~posterior.mode(mcmc(pst[, ., ]))) %>%
-    invoke(rbind, .)
+    do.call(rbind, .)
   colnames(chain_posterior_times) <- rownames(counts)
   chain_posterior_times <- chain_posterior_times %>% reshape2::melt(varnames = c("chain_id", "cell_id"), value.name="time")
 
