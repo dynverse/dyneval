@@ -54,13 +54,14 @@ Suggests:
   SCORPIUS,
   SLICER,
   slingshot,
-  TSCAN
+  TSCAN,
+  Waterfall
 Remotes:
   Zouter/dyngen,
   rcannood/GEDEVO,
   rcannood/dynutils,
   rcannood/SCORPIUS,
-  rcannood/RHmm,
+  rcannood/Waterfall,
   kieranrcampbell/embeddr,
   jw156605/SLICER,
   kstreet13/slingshot,
