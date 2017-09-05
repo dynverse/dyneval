@@ -401,8 +401,7 @@ calculate_ged <- function(net1, net2) {
 
 
 
-
-
+## Robie network score ----------------------------
 score_map <- function(permutation, net, net_ref) {
   net_mapped <- net[permutation, permutation]
 
@@ -455,7 +454,7 @@ calculate_robbie_network_score <- function(net1, net2) {
   net <- net/sum(net)
   net_ref <- net_ref/sum(net_ref)
 
-  results <- GA::ga("permutation", score_map, net=net, net_ref=net_ref, min=rep(1, length(nodes1)), max=rep(length(nodes1), length(nodes1)), maxiter=10)
+  results <- GA::ga("permutation", score_map, net=net, net_ref=net_ref, min=rep(1, length(nodes1)), max=rep(length(nodes1), length(nodes1)), maxiter=10, monitor=FALSE)
 
   results@fitnessValue
 }
