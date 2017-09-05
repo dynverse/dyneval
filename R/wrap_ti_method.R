@@ -44,9 +44,16 @@ run_method <- function(task, method, parameters, suppress_output = TRUE) {
   # Add the counts to the parameters
   arglist <- c(list(counts = task$counts), parameters)
 
+
+  # Add prior information
   # Include start cell if method requires it
   if ("start_cell_id" %in% formalArgs(method$run_fun)) {
     arglist$start_cell_id <- task$special_cells$start_cell_id
+  }
+
+  # Include cell_grouping if method requires it
+  if ("cell_grouping" %in% formalArgs(method$run_fun)) {
+    arglist$cell_grouping <- task$cell_grouping
   }
 
   # Run model on task with given parameters. Suppress output if need be.
