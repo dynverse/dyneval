@@ -22,7 +22,7 @@ description_scuba <- function() {
     package_load = c(),
     package_installed = c("jsonlite", "readr"),
     par_set = makeParamSet(
-      makeLogicalParam(id = "rigorous_gap_stats"),
+      makeLogicalParam(id = "rigorous_gap_stats", default = T),
       makeIntegerParam(id = "N_dim", lower=2, upper=20, default=2),
       makeNumericParam(id = "low_gene_threshold", lower = 0, upper = 5, default = 1),
       makeNumericParam(id = "low_gene_fraction_max", lower = 0, upper = 1, default = 0.7),
