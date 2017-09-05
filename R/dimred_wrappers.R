@@ -3,58 +3,73 @@ dimred_pca = function(x, ndim=3) {
   process_dimred(space)
 }
 
-dimred_simlr = function(x, ndim=3, nclusters=4) {
-  result = SIMLR::SIMLR(t(x), nclusters)
-  S = result$S
-  space = tsne::tsne(as.dist(max(S)-S), k = ndim)
-  process_dimred(space)
-}
+# dimred_simlr = function(x, ndim=3, nclusters=4) {
+#   requireNamespace("SIMLR")
+#   requireNamespace("tsn")
+#   result = SIMLR::SIMLR(t(x), nclusters)
+#   S = result$S
+#   space = tsne::tsne(as.dist(max(S)-S), k = ndim)
+#   process_dimred(space)
+# }
 
 dimred_mds = function(x, ndim=3) {
+  requireNamespace("SCORPIUS")
   space = SCORPIUS::reduce.dimensionality(SCORPIUS::correlation.distance(x),ndim = ndim)
   process_dimred(space)
 }
 
-dimred_mds_sammon = function(x, ndim=3) {
-  dist = SCORPIUS::correlation.distance(x)
-  space <- MASS::sammon(dist, k = ndim)$points
-  process_dimred(space)
-}
-
-dimred_mds_isomds = function(x, ndim=3) {
-  dist = SCORPIUS::correlation.distance(x)
-  space <- MASS::isoMDS(dist, k = ndim)$points
-  process_dimred(space)
-}
-
-dimred_lmds = function(x, ndim=3) {
-  mds.out <- dambiutils::mds_withlandmarks(x %>% as.data.frame, SCORPIUS::correlation.distance, k = ndim, landmark.method = "naive", num.landmarks = min(1000, round(nrow(x)*0.1)), num.seed.landmarks = 10, pca.normalisation = F)
-  process_dimred(mds.out$S)
-}
-
-dimred_mds_smacof = function(x, ndim=3) {
-  dist = SCORPIUS::correlation.distance(x)
-  space <- smacof::mds(as.dist(dist), type = "ratio", ndim = ndim)$conf
-  process_dimred(space)
-}
+# dimred_mds_sammon = function(x, ndim=3) {
+#   requireNamespace("SCORPIUS")
+#   requireNamespace("MASS")
+#   dist = SCORPIUS::correlation.distance(x)
+#   space <- MASS::sammon(dist, k = ndim)$points
+#   process_dimred(space)
+# }
+#
+# dimred_mds_isomds = function(x, ndim=3) {
+#   requireNamespace("SCORPIUS")
+#   requireNamespace("MASS")
+#   dist = SCORPIUS::correlation.distance(x)
+#   space <- MASS::isoMDS(dist, k = ndim)$points
+#   process_dimred(space)
+# }
+#
+# dimred_lmds = function(x, ndim=3) {
+#   mds.out <- dambiutils::mds_withlandmarks(x %>% as.data.frame, SCORPIUS::correlation.distance, k = ndim, landmark.method = "naive", num.landmarks = min(1000, round(nrow(x)*0.1)), num.seed.landmarks = 10, pca.normalisation = F)
+#   process_dimred(mds.out$S)
+# }
+#
+# dimred_mds_smacof = function(x, ndim=3) {
+#   requireNamespace("SCORPIUS")
+#   requireNamespace("smacof")
+#   dist = SCORPIUS::correlation.distance(x)
+#   space <- smacof::mds(as.dist(dist), type = "ratio", ndim = ndim)$conf
+#   process_dimred(space)
+# }
 
 dimred_tsne = function(x, ndim=3) {
+  requireNamespace("SCORPIUS")
+  requireNamespace("Rtsne")
   space = Rtsne::Rtsne(as.dist(SCORPIUS::correlation.distance(x)), dims = ndim, is_distance = TRUE)$Y
   rownames(space) = rownames(x)
   process_dimred(space)
 }
 
 dimred_dp = function(x, ndim=3, neigen=3) {
+  requireNamespace("SCORPIUS")
+  requireNamespace("diffusionMap")
   space = diffusionMap::diffuse(as.dist(SCORPIUS::correlation.distance(x)), neigen=neigen)
   process_dimred(space$X[,seq_len(ndim)])
 }
 
 dimred_ica = function(x, ndim=3) {
+  requireNamespace("fastICA")
   space = fastICA::fastICA(t(scale(t(x))), ndim)$S
   process_dimred(space)
 }
 
 dimred_lle = function(x, ndim=3) {
+  requireNamespace("lle")
   k = lle::calc_k(t(scale(t(x))), ndim)
   k = k$k[which.min(k$rho)]
   space = lle::lle(t(scale(t(x))), ndim, k)$Y
