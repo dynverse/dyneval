@@ -59,8 +59,9 @@ Suggests:
   SCORPIUS,
   SLICER,
   slingshot,
+  TSCAN,
   StemID,
-  TSCAN
+  Waterfall
 Remotes:
   Zouter/dyngen,
   rcannood/GEDEVO,
@@ -69,7 +70,7 @@ Remotes:
   Zouter/MPath,
   Zouter/pseudogp,
   rcannood/SCORPIUS,
-  rcannood/RHmm,
+  rcannood/Waterfall,
   kieranrcampbell/embeddr,
   jw156605/SLICER,
   kstreet13/slingshot,
