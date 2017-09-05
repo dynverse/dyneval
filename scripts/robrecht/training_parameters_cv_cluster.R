@@ -24,7 +24,7 @@ methods <- list(
   description_celltree_vem(),
   description_dpt(),
   description_embeddr(),
-  description_gpfates(),
+  # description_gpfates(),
   description_monocle_ddrtree(),
   description_pseudogp(),
   description_scorpius(),
@@ -44,7 +44,7 @@ select_tasks <- tasks %>% filter(platform_id == "fluidigm_c1", takesetting_type 
 num_cores <- 4
 
 ## set up evaluation
-metrics <- c("Q_global", "Q_local", "correlation")
+metrics <- c("auc_R_nx", "robbie_network_score")
 impute_fun <- impute_y_fun(length(metrics))
 
 ## MBO settings
