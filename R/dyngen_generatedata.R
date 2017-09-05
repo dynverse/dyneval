@@ -34,6 +34,8 @@ generate_toy_datasets <- function() {
       progressions = progressions,
       special_cells = special_cells
     )
+
+    task$cell_grouping = get_cell_grouping(task$milestone_percentages)
     task$geodesic_dist <- compute_emlike_dist(task)
     task
   }))
