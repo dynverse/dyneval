@@ -48,43 +48,6 @@ impute_y_fun <- function(num_objectives, error_score = -1) {
 }
 
 
-#' Run a method on a set of tasks with a set of parameters
-#' @param tasks the tasks on which to evaluate
-#' @param method the method to evaluate
-#' @param parameters the parameters to evaluate with
-#' @param suppress_output whether or not to suppress the outputted messages
-#'
-#' @export
-execute_method <- function(tasks, method, parameters, suppress_output = TRUE) {
-  # Run the method on each of the tasks
-  method_futures <- future(
-    {
-      # Load required namespaces
-      for (pack in method$package_required) {
-        suppressMessages(do.call(requireNamespace, list(pack)))
-      }
-
-      # Disable seed setting
-      orig_setseed <- base::set.seed
-      override_setseed(function(i) {})
-
-      # Run method on each task
-      outputs <- lapply(seq_len(nrow(tasks)), function(i) {
-        task <- extract_row_to_list(tasks, i)
-        run_method(task, method, parameters, suppress_output = suppress_output)
-      })
-
-      override_setseed(orig_setseed)
-
-      outputs
-    },
-    globals = c("tasks", "method", "parameters", "suppress_output"),
-    packages = c("dyneval", "dynutils", method$package_load),
-    evaluator = plan("multisession")
-  )
-  value(method_futures)
-}
-
 #' Running an evaluation of a method on a set of tasks with a set of parameters
 #'
 #' @inheritParams execute_method

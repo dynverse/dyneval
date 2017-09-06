@@ -1,41 +1,21 @@
-get_gpfates_path <- function() {
-  "~/.dyneval/gpfates/"
-}
-
-#' Installing GPfates
-#' @export
-install_gpfates <- function() {
-  dir.create(get_gpfates_path(), showWarnings = FALSE, recursive = TRUE)
-
-  system(glue::glue(
-    "bash ",
-    find.package("dyneval"), "/extra_code/GPfates/make ", get_gpfates_path()
-  ))
-}
-
 #' Description for GPfates
 #' @export
-description_gpfates <- function() {
-  if(!dir.exists(get_gpfates_path())) {
-    warning("gpfates not installed, installing now")
-    install_gpfates()
-  }
-
-  list(
-    name = "GPfates",
-    short_name = "GPfates",
-    package_installed = c(),
-    par_set = makeParamSet(
-      makeNumericParam(id = "log_expression_cutoff", lower = 0.5, upper = 5, default = 2),
-      makeNumericParam(id = "min_cells_expression_cutoff", lower = 0, upper = 20, default = 2),
-      makeIntegerParam(id="nfates", lower=1, upper=20, default=1),
-      makeIntegerParam(id="ndims", lower=1, upper=5, default=2)
-    ),
-    properties = c(),
-    run_fun = run_gpfates,
-    plot_fun = plot_gpfates
-  )
-}
+description_gpfates <- function() create_description(
+  name = "GPfates",
+  short_name = "GPfates",
+  package_loaded = c(),
+  package_required = c(),
+  par_set = makeParamSet(
+    makeNumericParam(id = "log_expression_cutoff", lower = 0.5, upper = 5, default = 2),
+    makeNumericParam(id = "min_cells_expression_cutoff", lower = 0, upper = 20, default = 2),
+    makeIntegerParam(id = "nfates", lower=1, upper=20, default=1),
+    makeIntegerParam(id = "ndims", lower=1, upper=5, default=2)
+  ),
+  properties = c(),
+  run_fun = run_gpfates,
+  plot_fun = plot_gpfates,
+  make_command = paste0("extra_code/GPfates/make ", get_dyneval_install_path(), "/gpfates")
+)
 
 ## TODO: give simulationtime as prior
 #' @importFrom readr read_csv
@@ -63,9 +43,9 @@ run_gpfates <- function(
     args = c(
       "-c",
       shQuote(glue::glue(
-        "cd {get_gpfates_path()}/gpfates/",
+        "cd {get_gpfates_path()}/",
         "source bin/activate",
-        "python3 {find.package('dyneval')}/extra_code/GPfates/gpfates_wrapper.py {temp_folder} {log_expression_cutoff} {min_cells_expression_cutoff} {nfates} {ndims}",
+        "python3 {find.package('dyneval')}/extra_code/GPfates/wrapper.py {temp_folder} {log_expression_cutoff} {min_cells_expression_cutoff} {nfates} {ndims}",
         .sep = ";"))
     )
   )

@@ -1,50 +1,25 @@
-get_wishbone_path <- function() {
-  "~/.dyneval/wishbone/"
-}
-
-#' Installing Wishbone
-#' @export
-install_wishbone <- function() {
-  dir.create(get_wishbone_path(), showWarnings = FALSE, recursive = TRUE)
-
-  output <- system2(
-    "/bin/bash",
-    args = c(glue::glue(
-      find.package("dyneval"), "/extra_code/Wishbone/make ", get_wishbone_path()
-    )
-  ), stdout = T, stderr = T)
-
-  print(output)
-}
-
 #' Description for Wishbone
 #' @export
-description_wishbone <- function() {
-  if(!dir.exists(get_wishbone_path())) {
-    warning("wishbone not installed, installing now")
-    install_wishbone()
-  }
-
-  list(
-    name = "Wishbone",
-    short_name = "Wishbone",
-    package_load = c(),
-    package_installed = c("jsonlite"),
-    par_set = makeParamSet(
-      makeIntegerParam(id = "knn", lower=2, upper=100, default=10),
-      makeIntegerParam(id = "n_diffusion_components", lower=2, upper=20, default=10),
-      makeIntegerParam(id = "n_pca_components", lower=2, upper=30, default=15),
-      makeLogicalParam(id = "branch", default = TRUE),
-      makeIntegerParam(id = "k", lower=2, upper=100, default=15),
-      makeIntegerParam(id = "num_waypoints", lower=2, upper=500, default=250),
-      makeLogicalParam(id = "normalize", default = TRUE),
-      makeNumericParam(id = "epsilon", lower=0.1, upper=10, default=1)
-    ),
-    properties = c(),
-    run_fun = run_wishbone,
-    plot_fun = plot_wishbone
-  )
-}
+description_wishbone <- function() create_description(
+  name = "Wishbone",
+  short_name = "Wishbone",
+  package_loaded = c(),
+  package_required = c("jsonlite"),
+  par_set = makeParamSet(
+    makeIntegerParam(id = "knn", lower=2, upper=100, default=10),
+    makeIntegerParam(id = "n_diffusion_components", lower=2, upper=20, default=10),
+    makeIntegerParam(id = "n_pca_components", lower=2, upper=30, default=15),
+    makeLogicalParam(id = "branch", default = TRUE),
+    makeIntegerParam(id = "k", lower=2, upper=100, default=15),
+    makeIntegerParam(id = "num_waypoints", lower=2, upper=500, default=250),
+    makeLogicalParam(id = "normalize", default = TRUE),
+    makeNumericParam(id = "epsilon", lower=0.1, upper=10, default=1)
+  ),
+  properties = c(),
+  run_fun = run_wishbone,
+  plot_fun = plot_wishbone,
+  make_command = paste0("extra_code/Wishbone/make ", get_dyneval_install_path(), "/wishbone")
+)
 
 run_wishbone <- function(counts,
                          start_cell_id,
@@ -79,9 +54,9 @@ run_wishbone <- function(counts,
     args = c(
       "-c",
       shQuote(glue::glue(
-        "cd {get_wishbone_path()}/wishbone/",
+        "cd {get_wishbone_path()}/",
         "source bin/activate",
-        "python {find.package('dyneval')}/extra_code/Wishbone/wishbone_wrapper.py {temp_folder}",
+        "python {find.package('dyneval')}/extra_code/Wishbone/wrapper.py {temp_folder}",
         .sep = ";"))
     ), stdout = T, stderr = T
   )

@@ -1,30 +1,28 @@
 #' Description for Embeddr
 #' @export
-description_embeddr <- function() {
-  list(
-    name = "embeddr",
-    short_name = "embeddr",
-    package_load = c("ggplot2", "scater"),
-    package_installed = c("scater", "embeddr"),
-    par_set = makeParamSet(
-      makeDiscreteParam(id = "kernel", default = "nn", values = c("nn", "dist", "heat")),
-      makeDiscreteParam(id = "metric", default = "correlation", values = c("correlation", "euclidean", "cosine")),
-      makeNumericParam(id = "nn_pct", lower = -2, upper = log10(10), default = 0, trafo = function(x) 10^x),
-      makeNumericParam(id = "eps", lower = -5L, upper = 5L, default = 0, trafo = function(x) 10^x),
-      makeNumericParam(id = "t", lower = -5L, upper = 5L, default = 0, trafo = function(x) 10^x),
-      makeDiscreteParam(id = "symmetrize", default = "mean", values = c("mean", "ceil", "floor")),
-      makeDiscreteParam(id = "measure_type", default = "unorm", values = c("unorm", "norm")),
-      makeIntegerParam(id = "p", lower = 2, upper = 10, default = 2),
-      makeNumericParam(id = "thresh", lower = -5L, upper = 5L, default = -3L, trafo = function(x) 10^x),
-      makeIntegerParam(id = "maxit", lower = 0, upper = 50, default = 10),
-      makeNumericParam(id = "stretch", lower = 0, upper = 5, default = 2),
-      makeDiscreteParam(id = "smoother", default = "smooth.spline", values = c("smooth.spline", "lowess", "periodic.lowess"))
-    ),
-    properties = c(),
-    run_fun = run_embeddr,
-    plot_fun = plot_embeddr
-  )
-}
+description_embeddr <- function() create_description(
+  name = "embeddr",
+  short_name = "embeddr",
+  package_loaded = c("scater"),
+  package_required = c("embeddr"),
+  par_set = makeParamSet(
+    makeDiscreteParam(id = "kernel", default = "nn", values = c("nn", "dist", "heat")),
+    makeDiscreteParam(id = "metric", default = "correlation", values = c("correlation", "euclidean", "cosine")),
+    makeNumericParam(id = "nn_pct", lower = -2, upper = log10(10), default = 0, trafo = function(x) 10^x),
+    makeNumericParam(id = "eps", lower = -5L, upper = 5L, default = 0, trafo = function(x) 10^x),
+    makeNumericParam(id = "t", lower = -5L, upper = 5L, default = 0, trafo = function(x) 10^x),
+    makeDiscreteParam(id = "symmetrize", default = "mean", values = c("mean", "ceil", "floor")),
+    makeDiscreteParam(id = "measure_type", default = "unorm", values = c("unorm", "norm")),
+    makeIntegerParam(id = "p", lower = 2, upper = 10, default = 2),
+    makeNumericParam(id = "thresh", lower = -5L, upper = 5L, default = -3L, trafo = function(x) 10^x),
+    makeIntegerParam(id = "maxit", lower = 0, upper = 50, default = 10),
+    makeNumericParam(id = "stretch", lower = 0, upper = 5, default = 2),
+    makeDiscreteParam(id = "smoother", default = "smooth.spline", values = c("smooth.spline", "lowess", "periodic.lowess"))
+  ),
+  properties = c(),
+  run_fun = run_embeddr,
+  plot_fun = plot_embeddr
+)
 
 run_embeddr <- function(counts,
                         kernel = "nn", metric = "correlation",

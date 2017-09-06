@@ -1,26 +1,24 @@
 #' Description for SCORPIUS
 #' @export
-description_scorpius <- function() {
-  list(
-    name = "SCORPIUS",
-    short_name = "SCORPIUS",
-    package_loaded = c(),
-    package_installed = c("SCORPIUS"),
-    par_set = makeParamSet(
-      makeDiscreteParam(id = "distance_method", default = "spearman", values = c("spearman", "pearson", "kendall")),
-      makeIntegerParam(id = "num_dimensions", lower = 2L, default = 3L, upper = 20L),
-      makeIntegerParam(id = "num_clusters", lower = 2L, default = 4L, upper = 20L, special.vals = list(NULL)),
-      makeNumericParam(id = "thresh", lower = -5L, upper = 5L, default = -3L, trafo = function(x) 10^x),
-      makeIntegerParam(id = "maxit", lower = 0, upper = 50, default = 10),
-      makeNumericParam(id = "stretch", lower = 0, upper = 5, default = 0),
-      makeDiscreteParam(id = "smoother", default = "smooth.spline", values = c("smooth.spline", "lowess", "periodic.lowess"))
+description_scorpius <- function() create_description(
+  name = "SCORPIUS",
+  short_name = "SCORPIUS",
+  package_loaded = c(),
+  package_required = c("SCORPIUS"),
+  par_set = makeParamSet(
+    makeDiscreteParam(id = "distance_method", default = "spearman", values = c("spearman", "pearson", "kendall")),
+    makeIntegerParam(id = "num_dimensions", lower = 2L, default = 3L, upper = 20L),
+    makeIntegerParam(id = "num_clusters", lower = 2L, default = 4L, upper = 20L, special.vals = list(NULL)),
+    makeNumericParam(id = "thresh", lower = -5L, upper = 5L, default = -3L, trafo = function(x) 10^x),
+    makeIntegerParam(id = "maxit", lower = 0, upper = 50, default = 10),
+    makeNumericParam(id = "stretch", lower = 0, upper = 5, default = 0),
+    makeDiscreteParam(id = "smoother", default = "smooth.spline", values = c("smooth.spline", "lowess", "periodic.lowess"))
 
-    ),
-    properties = c("tibble", "dimred", "dimred_traj", "pseudotime"),
-    run_fun = run_scorpius,
-    plot_fun = plot_scorpius
-  )
-}
+  ),
+  properties = c("tibble", "dimred", "dimred_traj", "pseudotime"),
+  run_fun = run_scorpius,
+  plot_fun = plot_scorpius
+)
 
 run_scorpius <- function(counts,
                          num_dimensions = 3, num_clusters = 4, distance_method = "spearman",
