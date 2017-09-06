@@ -9,7 +9,7 @@ description_slingshot <- function() {
     par_set = makeParamSet(
       makeIntegerParam(id = "ndim", lower = 2L, upper = 20L, default = 3L),
       makeIntegerParam(id = "nclus", lower = 2L, upper = 40L, default = 5L),
-      makeDiscreteParam(id = "dimred_name", values=c("pca", "mds", "tsne"), default="pca")
+      makeDiscreteParam(id = "dimred_name", values = names(list_dimred_methods()), default="pca")
     ),
     properties = c(),
     run_fun = run_slingshot,
@@ -26,18 +26,6 @@ run_slingshot <- function(
 ) {
   requireNamespace("slingshot")
 
-  tryCatch({
-    dimred_func <- match.fun(paste0("dimred_", dimred_name))
-  }, error = function(e) {
-    warning("Dimensionality reduction function not found, defaulting to PCA")
-    dimred_func <<- function(counts, ndim) {
-      pca <- prcomp(t(log2(expression+1)), scale. = FALSE)
-      space <- pca$x[,1:ndim]
-      space
-    }
-  })
-
-
   # normalization & preprocessing --------------------
   # from the vignette of slingshot
   FQnorm <- function(counts){
@@ -52,7 +40,7 @@ run_slingshot <- function(
   expression <- FQnorm(t(counts))
 
   # dimensionality reduction
-  space <- dimred_func(counts, ndim=ndim)
+  space <- dimred(counts, method = dimred_name, ndim = ndim)
 
   # clustering
   labels <- kmeans(space, centers = nclus)$cluster
