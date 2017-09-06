@@ -79,5 +79,5 @@ Remotes:
   rcannood/StemID,
   rcannood/Waterfall,
   Zouter/dyngen,
-  rcannood/MPath,
-  rcannood/pseudogp
+  Zouter/Mpath,
+  Zouter/pseudogp
