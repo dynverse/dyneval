@@ -11,8 +11,8 @@ generate_toy_datasets <- function() {
     list2env(extract_row_to_list(settings, rowi), environment())
 
     milestone_network <- dyngen::generate_toy_milestone_network(ti_type)
-    progressions <- dyngen::random_progressions_tented(milestone_network)
-    expression <- dyngen::generate_expression(milestone_network, progressions)
+    progressions <- dyngen::random_progressions_tented(milestone_network, ncells = 99)
+    expression <- dyngen::generate_expression(milestone_network, progressions, ngenes = 101)
     counts <- dyngen::generate_counts(expression)
     colnames(counts) <- paste0("G", seq_len(ncol(counts)))
 
