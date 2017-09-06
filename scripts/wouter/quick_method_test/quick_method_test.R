@@ -28,7 +28,7 @@ method_descriptions <- list(
   random_linear=list()
 )
 
-method_descriptions <- method_descriptions["pseudogp"]
+# method_descriptions <- method_descriptions["pseudogp"]
 
 metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "isomorphic", "robbie_network_score")
 
