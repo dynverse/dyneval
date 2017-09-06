@@ -32,6 +32,9 @@ run_slicer <- function(counts,
 
   expression <- log2(counts + 1)
 
+  oldwd <- getwd() # SLICER randomly generates plots, therefore reset working directory
+  setwd(tempdir())
+
   genes <- SLICER::select_genes(expression)
   expression_filtered <- expression[, genes]
 
@@ -43,6 +46,8 @@ run_slicer <- function(counts,
   start <- which(rownames(expression_filtered) == start_cell_id)
   cells_ordered <- SLICER::cell_order(traj_graph, start)
   branches <- SLICER::assign_branches(traj_graph, start, min_branch_len=min_branch_len) %>% factor %>% set_names(rownames(expression_filtered))
+
+  setwd(oldwd)
 
   # TODO: clean up code, add comments
 
