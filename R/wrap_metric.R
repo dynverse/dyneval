@@ -47,24 +47,15 @@ impute_y_fun <- function(num_objectives, error_score = -1) {
   }
 }
 
-#' Running an evaluation of a method on a set of tasks with a set of parameters
-#'
+
+#' Run a method on a set of tasks with a set of parameters
 #' @param tasks the tasks on which to evaluate
 #' @param method the method to evaluate
 #' @param parameters the parameters to evaluate with
-#' @param metrics which metrics to use
 #' @param suppress_output whether or not to suppress the outputted messages
 #'
 #' @export
-#' @importFrom dynutils override_setseed extract_row_to_list
-#' @importFrom future future value plan
-#' @importFrom netdist gdd net_emd
-execute_evaluation <- function(
-  tasks,
-  method,
-  parameters,
-  metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "robbie_network_score"),
-  suppress_output = T) {
+execute_method <- function(tasks, method, parameters, suppress_output = TRUE) {
   # Run the method on each of the tasks
   method_futures <- future(
     {
@@ -91,7 +82,26 @@ execute_evaluation <- function(
     packages = c("dyneval", "dynutils", method$package_load),
     evaluator = plan("multisession")
   )
-  method_outputs <- value(method_futures)
+  value(method_futures)
+}
+
+#' Running an evaluation of a method on a set of tasks with a set of parameters
+#'
+#' @inheritParams execute_method
+#' @param metrics which metrics to use
+#'
+#' @export
+#' @importFrom dynutils override_setseed extract_row_to_list
+#' @importFrom future future value plan
+#' @importFrom netdist gdd net_emd
+execute_evaluation <- function(
+  tasks,
+  method,
+  parameters,
+  metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "robbie_network_score"),
+  suppress_output = TRUE) {
+
+  method_outputs <- execute_method(tasks, method, parameters, suppress_output)
 
   # Calculate scores
   summary_outs <- lapply(seq_len(nrow(tasks)), function(i) {
