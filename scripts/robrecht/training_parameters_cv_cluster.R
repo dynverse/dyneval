@@ -24,7 +24,7 @@ methods <- list(
   description_celltree_vem(),
   description_dpt(),
   description_embeddr(),
-  # description_gpfates(),
+  description_gpfates(),
   description_monocle_ddrtree(),
   description_pseudogp(),
   description_scorpius(),
@@ -39,6 +39,9 @@ methods <- list(
 
 ## select datasets # limit for now
 select_tasks <- tasks %>% filter(platform_id == "fluidigm_c1", takesetting_type == "snapshot") %>% arrange(ti_type, subtask_ix)
+
+# limit even further
+select_tasks <- select_tasks %>% filter(subtask_ix %in% c(1,2), ti_type == "consecutive_bifurcating")
 
 ## MBO settings
 num_cores <- 4
@@ -119,7 +122,7 @@ for (method in methods) {
         )
         tune_test <- mbo(
           obj_fun,
-          design = tune_train$opt.path$env$path %>% dplyr::select(-starts_with("y_"), -one_of("y")),
+          design = tune_train$opt.path$env$path %>% select(-starts_with("y_"), -one_of("y")),
           control = control_test,
           show.info = T,
           more.args = list(tasks = select_tasks %>% filter(group == group_sel, subtask_ix == fold_i))

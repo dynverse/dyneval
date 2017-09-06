@@ -1,21 +1,19 @@
 #' Description for slingshot
 #' @export
-description_slingshot <- function() {
-  list(
-    name = "slingshot",
-    short_name = "slingshot",
-    package_load = c("slingshot"),
-    package_installed = c(),
-    par_set = makeParamSet(
-      makeIntegerParam(id = "ndim", lower = 2L, upper = 20L, default = 3L),
-      makeIntegerParam(id = "nclus", lower = 2L, upper = 40L, default = 5L),
-      makeDiscreteParam(id = "dimred_name", values = names(list_dimred_methods()), default="pca")
-    ),
-    properties = c(),
-    run_fun = run_slingshot,
-    plot_fun = plot_slingshot
-  )
-}
+description_slingshot <- function() create_description(
+  name = "slingshot",
+  short_name = "slngsht",
+  package_loaded = c("slingshot"),
+  package_required = c(),
+  par_set = makeParamSet(
+    makeIntegerParam(id = "ndim", lower = 2L, upper = 20L, default = 3L),
+    makeIntegerParam(id = "nclus", lower = 2L, upper = 40L, default = 5L),
+    makeDiscreteParam(id = "dimred_name", values = names(list_dimred_methods()), default="pca")
+  ),
+  properties = c(),
+  run_fun = run_slingshot,
+  plot_fun = plot_slingshot
+)
 
 #' @importFrom dynutils list_as_tibble
 run_slingshot <- function(

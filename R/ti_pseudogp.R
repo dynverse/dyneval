@@ -1,27 +1,24 @@
 #' Description for pseudogp
 #' @export
-description_pseudogp <- function() {
-  dimreds <- list_dimred_methods()
-  list(
-    name = "pseudogp",
-    short_name = "pseudogp",
-    package_load = c("pseudogp"),
-    package_installed = c("rstan"),
-    par_set = makeParamSet(
-      makeNumericParam(id = "smoothing_alpha", lower = 1, upper = 20, default = 10),
-      makeNumericParam(id = "smoothing_beta", lower = 1, upper = 20, default = 3),
-      makeNumericParam(id = "pseudotime_mean", lower = 0, upper = 1, default = 0.5),
-      makeNumericParam(id = "pseudotime_var", lower = 0.01, upper = 1, default = 1),
-      makeIntegerParam(id = "chains", lower = 1L, upper = 20L, default = 1L),
-      makeIntegerParam(id = "iter", lower = 10L, upper = 1000L, default = 1000L),
-      makeLogicalVectorParam(id = "dimreds", len = length(dimreds), default = names(dimreds) == "pca"),
-      makeDiscreteParam(id = "intialise_from", values=c("random", "principal_curve", "pca"), default="random")
-    ),
-    properties = c(),
-    run_fun = run_pseudogp,
-    plot_fun = plot_pseudogp
-  )
-}
+description_pseudogp <- function() create_description(
+  name = "pseudogp",
+  short_name = "pseudogp",
+  package_loaded = c("pseudogp"),
+  package_required = c("rstan"),
+  par_set = makeParamSet(
+    makeNumericParam(id = "smoothing_alpha", lower = 1, upper = 20, default = 10),
+    makeNumericParam(id = "smoothing_beta", lower = 1, upper = 20, default = 3),
+    makeNumericParam(id = "pseudotime_mean", lower = 0, upper = 1, default = 0.5),
+    makeNumericParam(id = "pseudotime_var", lower = 0.01, upper = 1, default = 1),
+    makeIntegerParam(id = "chains", lower = 1L, upper = 20L, default = 1L),
+    makeIntegerParam(id = "iter", lower = 10L, upper = 1000L, default = 1000L),
+    makeLogicalVectorParam(id = "dimreds", len = length(list_dimred_methods()), default = names(list_dimred_methods()) == "pca"),
+    makeDiscreteParam(id = "intialise_from", values=c("random", "principal_curve", "pca"), default="random")
+  ),
+  properties = c(),
+  run_fun = run_pseudogp,
+  plot_fun = plot_pseudogp
+)
 
 run_pseudogp <- function(
   counts,

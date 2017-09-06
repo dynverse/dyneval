@@ -1,18 +1,16 @@
 #' Description for random linear
 #' @export
-description_random_linear <- function() {
-  list(
-    name = "random_linear",
-    short_name = "random_linear",
-    package_load = c(),
-    package_installed = c(),
-    par_set = makeParamSet(
-    ),
-    properties = c(),
-    run_fun = run_random_linear,
-    plot_fun = plot_default
-  )
-}
+description_random_linear <- function() create_description(
+  name = "random_linear",
+  short_name = "randomli",
+  package_loaded = c(),
+  package_required = c(),
+  par_set = makeParamSet(
+  ),
+  properties = c(),
+  run_fun = run_random_linear,
+  plot_fun = plot_default
+)
 
 run_random_linear <- function(counts) {
   milestone_network <- tibble(from=1, to=2, length=1)
