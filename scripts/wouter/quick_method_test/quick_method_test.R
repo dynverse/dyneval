@@ -1,12 +1,15 @@
 library(tidyverse)
 library(dyneval)
 
+set.seed(1)
 tasks <- generate_toy_datasets()
 tasks <- tasks[1,]
 
 counts <- tasks$counts[[1]]
 special_cells <- tasks$special_cells[[1]]
+cell_grouping <- tasks$cell_grouping[[1]]
 progressions <- tasks$progressions[[1]]
+
 
 # choose certain parameters for each method, at which we know this method will perform well for the toy dataset
 method_descriptions <- list(
@@ -25,10 +28,14 @@ method_descriptions <- list(
   monocle_ddrtree=list(),
   wishbone = list(branch=F),
   pseudogp = list(iter=100, initialise_from="principal_curve"),
+  mpath = list(numcluster=6),
   random_linear=list()
 )
+#
+#
+# prediction <- dyneval:::execute_method(tasks, description_mpath(), method_descriptions$mpath, suppress_output = F)[[1]]$model
 
-# method_descriptions <- method_descriptions["pseudogp"]
+# method_descriptions <- method_descriptions["mpath"]
 
 metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "isomorphic", "robbie_network_score")
 
