@@ -1,6 +1,7 @@
 #' Description for pseudogp
 #' @export
 description_pseudogp <- function() {
+  dimreds <- list_dimred_methods()
   list(
     name = "pseudogp",
     short_name = "pseudogp",
@@ -13,7 +14,7 @@ description_pseudogp <- function() {
       makeNumericParam(id = "pseudotime_var", lower = 0.01, upper = 1, default = 1),
       makeIntegerParam(id = "chains", lower = 1L, upper = 20L, default = 1L),
       makeIntegerParam(id = "iter", lower = 10L, upper = 1000L, default = 1000L),
-      makeDiscreteParam(id = "dimred_names", values=c("pca", "mds", "tsne"), default="pca"),
+      makeLogicalVectorParam(id = "dimreds", len = length(dimreds), default = names(dimreds) == "pca"),
       makeDiscreteParam(id = "intialise_from", values=c("random", "principal_curve", "pca"), default="random")
     ),
     properties = c(),
@@ -24,7 +25,7 @@ description_pseudogp <- function() {
 
 run_pseudogp <- function(
   counts,
-  dimred_names="pca",
+  dimreds = names(list_dimred_methods()) == "pca",
   chains = 1,
   iter = 1000,
   smoothing_alpha = 10,
@@ -35,10 +36,8 @@ run_pseudogp <- function(
 ) {
   requireNamespace("pseudogp")
   requireNamespace("rstan")
-  dimred_funcs <- map(dimred_names, ~getFromNamespace(paste0("dimred_", .), "dyneval"))
 
-  spaces <- map(dimred_funcs, ~.(counts, 2)) # only 2 dimensions are allowed
-  #ggplot(spaces[[1]] %>% as.data.frame) + geom_point(aes(Comp1, Comp2))
+  spaces <- list_dimred_methods()[dimreds] %>% map(~.(counts, 2)) # only 2 dimensions are allowed
 
   le_fit <- fitPseudotime(spaces, smoothing_alpha, smoothing_beta, iter = iter, chains = chains, initialise_from = initialise_from, pseudotime_var=pseudotime_var, pseudotime_mean=pseudotime_mean)
   nsamples <- iter/2
