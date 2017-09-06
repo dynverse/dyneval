@@ -111,7 +111,7 @@ run_gpfates <- function(
 plot_gpfates <- function(ti_predictions) {
   sample_df <- data.frame(
     ti_predictions$dimred_samples
-  ) %>% left_join(pseudotime, by="cell_id")
+  ) %>% left_join(ti_predictions$pseudotime, by="cell_id")
   ggplot() +
     geom_point(aes(Comp1, Comp2, colour = time), sample_df) +
     coord_equal() +
