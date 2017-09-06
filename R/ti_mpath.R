@@ -14,8 +14,10 @@ description_mpath <- function() {
   )
 }
 run_mpath <- function(counts, cell_grouping, numcluster=15, method="diversity") {
-  oldwd <- getwd() # Mpath randomly generates plots and output files in the working directory, so change the wd here
+  oldwd <- getwd() # Mpath generates a lot of plots and output files in the working directory, so change the wd here, some of these output files are necessary for other mpath functions, so we can't just disable the file saving without impacting these functions
   setwd(tempdir())
+
+  # function to save a data.frame in a temporary directory and return the file's location
   fakeFile <- function(x) {
     loc <- tempfile()
     write.table(x, file=loc, sep="\t")
@@ -36,12 +38,11 @@ run_mpath <- function(counts, cell_grouping, numcluster=15, method="diversity") 
 
   trimmed_network[upper.tri(trimmed_network)] = 0
   attr(trimmed_network, "class") = "matrix"
-  milestone_network <- trimmed_network %>% as.matrix() %>% reshape2::melt(varnames=c("from", "to")) %>%
+
+  mpath_network <- trimmed_network %>% as.matrix() %>% reshape2::melt(varnames=c("from", "to")) %>%
     filter(value == 1) %>% select(-value) %>% mutate(from=as.character(from), to=as.character(to))
 
-  # milestone_network %>% igraph::graph_from_data_frame() %>% plot
-  #
-  # milestone_network %>% {unique(.$from, .$to) %in% .$to}
+  milestone_network <- mpath_network
 
   # add milestones for landmarks with only outgoing edges
   beginning_milestones <- unique(c(milestone_network$from, milestone_network$to)) %>% keep(~!(. %in% milestone_network$from))
@@ -82,11 +83,21 @@ run_mpath <- function(counts, cell_grouping, numcluster=15, method="diversity") 
     cell_ids = rownames(counts),
     milestone_ids = unique(c(milestone_network$from, milestone_network$to)),
     milestone_network = milestone_network %>% select(from, to, length),
-    progressions = progressions %>% select(cell_id, from, to, percentage) %>% mutate(cell_id=as.character(cell_id))
+    progressions = progressions %>% select(cell_id, from, to, percentage) %>% mutate(cell_id=as.character(cell_id)),
+    landmark_cluster = landmark_cluster,
+    mpath_network = mpath_network,
+    cell_grouping = cell_grouping
   )
 }
 
-
 plot_mpath <- function(prediction) {
+  pie_sizes <- prediction$landmark_cluster %>% left_join(prediction$cell_grouping, by=c("cell"="cell_id")) %>%
+    mutate(group_id=factor(group_id)) %>%
+    group_by(landmark_cluster) %>%
+    summarise(counts=list(as.numeric(table(group_id)))) %>%
+    {set_names(.$counts, .$landmark_cluster)}
 
+  g <- prediction$mpath_network %>% igraph::graph_from_data_frame()
+  pie_sizes <- pie_sizes[names(igraph::V(g))]
+  g %>% plot(vertex.shape="pie",vertex.pie=pie_sizes)
 }
