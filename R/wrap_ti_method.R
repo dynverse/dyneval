@@ -61,7 +61,8 @@ create_description <- function(
     par_set,
     properties,
     run_fun,
-    plot_fun
+    plot_fun,
+    make_command
   )
 }
 
