@@ -121,7 +121,7 @@ execute_method <- function(tasks, method, parameters, suppress_output = TRUE) {
 
         rownames(summary) <- NULL
 
-        lst(model, summary)
+        list(model = model, summary = summary)
       })
 
       override_setseed(orig_setseed)
