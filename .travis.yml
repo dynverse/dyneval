@@ -10,10 +10,12 @@ addons:
       - libgsl-dev
       - libsdl1.2-dev
       - libreadline-dev
+r_packages:
+ - roxygen2
 install:
-  - R -e 'devtools::install(dependencies = T, upgrade_dependencies = T)'
-  - R -e 'dyneval::check_dependencies()'
+ - R -e 'devtools::install(dependencies = T, upgrade_dependencies = T)'
+ - R -e 'dyneval::check_dependencies()'
 script:
-  - R CMD build .
-  - R CMD check "dyneval*.tar.gz" --as-cran --no-tests
-  - R -e 'Sys.setenv("R_TESTS" = ""); devtools::test()'
+ - R CMD build .
+ - R CMD check "dyneval*.tar.gz" --as-cran --no-tests
+ - R -e 'Sys.setenv("R_TESTS" = ""); devtools::test()'
