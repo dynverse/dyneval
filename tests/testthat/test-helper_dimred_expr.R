@@ -1,15 +1,20 @@
 context("Dimred for expression")
 
-tasks <- generate_toy_datasets()
+test_that("Retrieving dimred_methods", {
+  methods <- dyneval:::list_dimred_methods()
+  expect_is(methods, "list")
+  expect_gt(length(methods), 0)
+  expect_named(methods)
+})
+
+
+tasks <- generate_toy_datasets(num_replicates = 1)
 
 for (taski in seq_len(nrow(tasks))) {
   task <- extract_row_to_list(tasks, taski)
   expr <- log2(task$counts+1)
 
   methods <- dyneval:::list_dimred_methods()
-  expect_is(methods, "list")
-  expect_gt(length(methods), 0)
-  expect_named(methods)
 
   for (method_name in names(methods)) {
     test_that(paste0("Perform dimred ", method_name, " with expression on task ", task$id), {

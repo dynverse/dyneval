@@ -30,7 +30,7 @@ generate_toy_datasets <- function(ti_types = c("linear", "bifurcating", "cycle")
     )
 
     task <- wrap_ti_task_data(
-      ti_type = "toy",
+      ti_type = ti_type,
       id = paste0(ti_type, "_", replicate),
       counts = counts,
       cell_ids = cell_ids,
@@ -40,8 +40,10 @@ generate_toy_datasets <- function(ti_types = c("linear", "bifurcating", "cycle")
       special_cells = special_cells
     )
 
-    task$cell_grouping = get_cell_grouping(task$milestone_percentages)
+    task$type <- "ti_toy"
+    task$cell_grouping <- get_cell_grouping(task$milestone_percentages)
     task$geodesic_dist <- compute_emlike_dist(task)
+
     task
   }))
 }
