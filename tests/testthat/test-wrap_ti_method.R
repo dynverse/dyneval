@@ -8,7 +8,7 @@ expect_that(lis, is_a("list"))
 
 for (descr in lis) {
   testthat(paste0("Description ", descr$name), {
-    expect_lte(str_length(descr$short_name), 8)
+    expect_lte(nchar(descr$short_name), 8)
   })
 }
 
