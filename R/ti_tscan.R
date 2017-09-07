@@ -78,7 +78,13 @@ run_tscan <- function(counts,
   )
 }
 
-plot_tscan <- function(ti_predictions) {
-  qplot(percent_rank(ti_predictions$milestone_percentages[,1]), ti_predictions$milestone_percentages[,1], colour = data$sample_info$group.name)
+plot_tscan <- function(prediction) {
+  plotdata_cells <- prediction$dimred_samples %>% as.data.frame() %>% tibble::rownames_to_column("cell_id") %>% mutate(cluster_id=factor(prediction$dimred_clust)) %>% mutate(rank=match(cell_id, prediction$cds))
+  cluster_order <- plotdata_cells %>% group_by(cluster_id) %>% summarise(rank=mean(rank)) %>% arrange(rank) %>% pull(cluster_id)
+  plotdata_clusters <- prediction$clust_centers[cluster_order, ] %>% as.data.frame()
+
+  ggplot() +
+    geom_point(aes(PC1, PC2, color=cluster_id), data=plotdata_cells) +
+    geom_path(aes(V1, V2), data=plotdata_clusters)
 }
 
