@@ -9,6 +9,5 @@ addons:
       - libgsl-dev
       - libsdl1.2-dev
 install:
-  - R -e 'devtools::install_deps(upgrade = T, dependencies = c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances"))'
-  - R -e 'devtools::install()'
-  - R -e 'dyneval::check_dependencies()'
+  - R -e 'devtools::install(dependencies = T, upgrade_dependencies = T)'
+  - R -e 'library(dyneval); dyneval::check_dependencies()'
