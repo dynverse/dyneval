@@ -1,18 +1,23 @@
 #' Generate toy datasets with dyngen
 #'
+#' @param ti_types The types of TI to generate
+#' @param num_replicates How many replicates of each TI type to generate
+#' @param num_cells The number of cells in each dataset
+#' @param num_genes The number of genes in each dataset
+#'
 #' @importFrom dyngen generate_toy_milestone_network random_progressions_tented generate_expression
 #' @importFrom dynutils extract_row_to_list list_as_tibble
 #'
 #' @export
-generate_toy_datasets <- function() {
-  settings <- expand.grid(ti_type = c("linear", "bifurcating", "cycle"), replicate = 1:5, stringsAsFactors = F)
+generate_toy_datasets <- function(ti_types = c("linear", "bifurcating", "cycle"), num_replicates = 3, num_cells = 99, num_genes = 101) {
+  settings <- expand.grid(ti_type = ti_types, replicate = seq_len(num_replicates), stringsAsFactors = F)
 
   list_as_tibble(lapply(seq_len(nrow(settings)), function(rowi) {
     list2env(extract_row_to_list(settings, rowi), environment())
 
     milestone_network <- dyngen::generate_toy_milestone_network(ti_type)
-    progressions <- dyngen::random_progressions_tented(milestone_network, ncells = 99)
-    expression <- dyngen::generate_expression(milestone_network, progressions, ngenes = 101)
+    progressions <- dyngen::random_progressions_tented(milestone_network, ncells = num_cells)
+    expression <- dyngen::generate_expression(milestone_network, progressions, ngenes = num_genes)
     counts <- dyngen::generate_counts(expression)
     colnames(counts) <- paste0("G", seq_len(ncol(counts)))
 
