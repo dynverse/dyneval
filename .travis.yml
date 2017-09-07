@@ -15,5 +15,5 @@ install:
  - R -e 'dyneval::check_dependencies()'
 script:
  - R CMD build .
- - R CMD check "dyneval*.tar.gz" --as-cran --no-tests
- - R -e 'Sys.setenv("R_TESTS" = ""); devtools::test()'
+ - travis_wait 100 R CMD check dyneval*.tar.gz --as-cran
+ - grep "WARNING" "dyneval.Rcheck/00check.log" ; [ $? -ne 0 ]

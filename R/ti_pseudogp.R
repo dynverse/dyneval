@@ -108,6 +108,7 @@ posteriorCurvePlot <- function (X, fit, posterior_mean = TRUE, nsamples = 50, nn
           curve_alpha = 0.5, grid_nrow = NULL, grid_ncol = NULL, use_cowplot = TRUE,
           standardize_ranges = FALSE, ...)
 {
+  requireNamespace("cowplot")
   if (is.matrix(X))
     X <- list(X)
   Ns <- length(X)
