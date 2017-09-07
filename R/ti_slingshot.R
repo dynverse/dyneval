@@ -143,8 +143,8 @@ run_slingshot <- function(
   )
 }
 
-
+#' @importFrom graphics pairs
 plot_slingshot <- function(ti_predictions) {
-  pairs(ti_predictions$sds, horInd=2, verInd=1)
+  graphics::pairs(ti_predictions$sds, horInd=2, verInd=1)
 }
 

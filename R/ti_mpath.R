@@ -90,6 +90,8 @@ run_mpath <- function(counts, cell_grouping, numcluster=15, method="diversity") 
 }
 
 plot_mpath <- function(prediction) {
+  requireNamespace("igraph")
+
   pie_sizes <- prediction$landmark_cluster %>% left_join(prediction$cell_grouping, by=c("cell"="cell_id")) %>%
     mutate(group_id=factor(group_id)) %>%
     group_by(landmark_cluster) %>%
@@ -98,5 +100,5 @@ plot_mpath <- function(prediction) {
 
   g <- prediction$mpath_network %>% igraph::graph_from_data_frame()
   pie_sizes <- pie_sizes[names(igraph::V(g))]
-  g %>% plot(vertex.shape="pie",vertex.pie=pie_sizes)
+  g %>% igraph::plot.igraph(vertex.shape="pie",vertex.pie=pie_sizes)
 }
