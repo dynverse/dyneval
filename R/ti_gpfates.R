@@ -43,7 +43,7 @@ run_gpfates <- function(
     args = c(
       "-c",
       shQuote(glue::glue(
-        "cd {get_dyneval_install_path()}/gpfates",
+        "cd {get_dyneval_install_path()}/gpfates/gpfates",
         "source bin/activate",
         "python3 {find.package('dyneval')}/extra_code/GPfates/wrapper.py {temp_folder} {log_expression_cutoff} {min_cells_expression_cutoff} {nfates} {ndims}",
         .sep = ";"))
