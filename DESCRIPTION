@@ -46,6 +46,7 @@ Imports:
   viridis
 Suggests:
   cellTree,
+  coda,
   destiny,
   diffusionMap,
   embeddr,
@@ -56,7 +57,7 @@ Suggests:
   pseudogp,
   Rtsne,
   rstan,
-  coda,
+  roxygen2,
   scater,
   SCORPIUS,
   SLICER,
