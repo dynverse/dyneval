@@ -18,6 +18,8 @@ description_scoup <- function() create_description(
 
 run_scoup <- function(
   counts,
+  cell_grouping,
+  start_cell_id,
   nbranch = 2,
   m = 20,
   M = 20,
