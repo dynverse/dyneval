@@ -12,7 +12,7 @@ progressions <- tasks$progressions[[1]]
 
 
 # choose certain parameters for each method, at which we know this method will perform well for the toy dataset
-method_descriptions <- list(
+method_params <- list(
   waterfall=list(),
   scorpius=list(),
   slingshot=list(),
@@ -35,19 +35,24 @@ method_descriptions <- list(
 #
 # prediction <- dyneval:::execute_method(tasks, description_mpath(), method_descriptions$mpath, suppress_output = F)[[1]]$model
 
-# method_descriptions <- method_descriptions["mpath"]
+method_names <- names(method_params)
+method_descriptions <- map(method_names, ~get(paste0("description_", .))()) %>% set_names(method_names)
 
 metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "isomorphic", "robbie_network_score")
 
+
+
+method_names <- c("gpfates")
+
 # test the methods and get the scores
-results <- purrr::map(names(method_descriptions), function(method_name) {
-# results <- pbapply::pblapply(names(method_descriptions), cl = 7, function(method_name) {
+# results <- purrr::map(method_names, function(method_name) {
+results <- pbapply::pblapply(method_names, function(method_name) {
 # results <- PRISM::qsub_lapply(names(method_descriptions), function(method_name) {
   library(dyneval)
 
   cat("Processing ", method_name, "\n", sep="")
-  method <- get(paste0("description_", method_name))()
-  method_params <- method_descriptions[[method_name]]
+  method <- method_descriptions[[method_name]]
+  params <- method_params[[method_name]]
 
   factory <- function(fun) {
     function(...) {
@@ -65,7 +70,7 @@ results <- purrr::map(names(method_descriptions), function(method_name) {
   }
 
   factory(function() {
-    dyneval:::execute_evaluation(tasks, method, method_params, metrics = metric_names, suppress_output = F)
+    dyneval:::execute_evaluation(tasks, method, params, metrics = metric_names, suppress_output = F)
   }
   )()
 # }, mc.cores=8)
