@@ -54,7 +54,7 @@ run_wishbone <- function(counts,
     args = c(
       "-c",
       shQuote(glue::glue(
-        "cd {get_wishbone_path()}/",
+        "cd {get_dyneval_install_path()}/wishbone",
         "source bin/activate",
         "python {find.package('dyneval')}/extra_code/Wishbone/wrapper.py {temp_folder}",
         .sep = ";"))
