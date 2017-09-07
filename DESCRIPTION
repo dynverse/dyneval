@@ -38,6 +38,7 @@ Imports:
   reshape2,
   RColorBrewer,
   smoof,
+  stringr,
   testthat,
   tibble, 
   tidyr,
