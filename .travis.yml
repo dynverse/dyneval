@@ -16,4 +16,4 @@ install:
 script:
   - R CMD build .
   - R CMD check "dyneval*.tar.gz" --as-cran --no-tests
-  - devtools::test()
+  - R -e 'devtools::test()'
