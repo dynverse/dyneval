@@ -31,7 +31,8 @@ check_dependencies <- function() {
     }
     if (!is.null(descr$make_command)) {
       pkg_dir <- find.package("dyneval")
-      if (pkg_dir == getwd()) {
+      if (grepl("testthat$", getwd())) {
+        # testing environment detected
         pkg_dir <- paste0(pkg_dir, "/inst")
       }
       system(paste0("bash ", pkg_dir, "/", descr$make_command))
