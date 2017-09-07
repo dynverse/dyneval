@@ -3,11 +3,12 @@ sudo: required
 dist: trusty
 bioc_required: true
 cache: packages
+warnings_are_errors: true
 addons:
   apt:
     packages:
       - libgsl-dev
       - libsdl1.2-dev
-install:
-  - R -e 'devtools::install(dependencies = T, upgrade_dependencies = T)'
+before_script:
+  - R -e 'devtools::install_deps(dependencies = T, upgrade = T)'
   - R -e 'library(dyneval); dyneval::check_dependencies()'
