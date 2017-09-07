@@ -26,6 +26,13 @@ check_dependencies <- function() {
     if (any(!installed)) {
       warning(sQuote(descr$name), " requires the following packages still to be installed: ", paste(sQuote(required_packages[!installed]), collapse = ", "))
     }
+    if (!is.null(descr$make_command)) {
+      pkg_dir <- find.package("dyneval")
+      if (pkg_dir == getwd()) {
+        pkg_dir <- paste0(pkg_dir, "/inst")
+      }
+      system(paste0("bash ", pkg_dir, "/", descr$make_command))
+    }
   }
 }
 
@@ -35,9 +42,6 @@ get_dyneval_install_path <- function() {
   p
 }
 
-#' Create a new TI description
-#'
-#' @importFrom stringr str_length
 create_description <- function(
   name,
   short_name,
@@ -49,17 +53,6 @@ create_description <- function(
   plot_fun,
   make_command = NULL
 ) {
-  if (stringr::str_length(short_name) > 8) {
-    stop("The short_name ", sQuote(short_name), " should not be longer than 8 characters.")
-  }
-  if (!is.null(make_command)) {
-    pkg_dir <- find.package("dyneval")
-    if (pkg_dir == getwd()) {
-      pkg_dir <- paste0(pkg_dir, "/inst")
-    }
-    system(paste0("bash ", pkg_dir, "/", make_command))
-  }
-
   lst(
     name,
     short_name,
