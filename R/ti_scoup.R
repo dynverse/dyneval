@@ -31,7 +31,7 @@ run_scoup <- function(
 
   nbranch <- 2
 
-  start_group <- cell_grouping %>% filter(cell_id == special_cells$start_cell_id) %>% pull(group_id)
+  start_group <- cell_grouping %>% filter(cell_id == start_cell_id) %>% pull(group_id)
   start_ix <- cell_grouping %>% filter(group_id==start_group) %>% pull(cell_id)
 
   vars <- apply(counts[start_ix,], 2, var)
