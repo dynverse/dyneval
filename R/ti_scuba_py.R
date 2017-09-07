@@ -43,7 +43,7 @@ run_scuba <- function(counts,
     args = c(
       "-c",
       shQuote(glue::glue(
-        "cd {get_dyneval_install_path()}/scuba/scuba",
+        "cd {get_dyneval_install_path()}/scuba",
         "source bin/activate",
         "python3 {find.package('dyneval')}/extra_code/PySCUBA/wrapper.py {temp_folder} 0 {c(0, 1)[as.numeric(rigorous_gap_stats)+1]} {N_dim} {low_gene_threshold} {low_gene_fraction_max} {min_split} {min_percentage_split}",
         .sep = ";"))
