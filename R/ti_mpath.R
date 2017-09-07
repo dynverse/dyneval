@@ -1,18 +1,17 @@
 #' Description for Mpath
 #' @export
-description_mpath <- function() {
-  list(
-    name = "Mpath",
-    short_name = "Mpath",
-    package_load = c("Mpath"),
-    package_installed = c(),
-    par_set = makeParamSet(
-    ),
-    properties = c(),
-    run_fun = run_mpath,
-    plot_fun = plot_mpath
-  )
-}
+description_mpath <- function() create_description(
+  name = "Mpath",
+  short_name = "Mpath",
+  package_loaded = c("Mpath"),
+  package_required = c(),
+  par_set = makeParamSet(
+  ),
+  properties = c(),
+  run_fun = run_mpath,
+  plot_fun = plot_mpath
+)
+
 run_mpath <- function(counts, cell_grouping, numcluster=15, method="diversity") {
   oldwd <- getwd() # Mpath generates a lot of plots and output files in the working directory, so change the wd here, some of these output files are necessary for other mpath functions, so we can't just disable the file saving without impacting these functions
   setwd(tempdir())

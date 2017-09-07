@@ -1,39 +1,37 @@
 #' Description for StemID
 #' @export
-description_stemid <- function() {
-  list(
-    name = "StemID",
-    short_name = "StemID",
-    package_load = c(),
-    package_installed = c("StemID", "igraph", "reshape2"),
-    par_set = makeParamSet(
-      makeIntegerParam(id = "clustnr", lower = 20L, default = 30L, upper = 100L),
-      makeIntegerParam(id = "bootnr", lower = 20L, default = 50, upper = 100L),
-      makeDiscreteParam(id = "metric", default = "pearson", values = c("pearson", "spearman", "kendall", "euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski")),
-      makeDiscreteParam(id = "num_cluster_method", default = "sat", values = c("sat", "gap", "manual")),
-      makeDiscreteParam(id = "SE.method", default = "Tibs2001SEmax", values = c("firstSEmax", "Tibs2001SEmax", "globalSEmax", "firstmax", "globalmax")),
-      makeNumericParam(id = "SE.factor", default = .25, lower = 0, upper = 1),
-      makeIntegerParam(id = "B.gap", lower = 20L, default = 50, upper = 100L),
-      makeIntegerParam(id = "cln", lower = 20L, default = 30, upper = 100L),
-      makeDiscreteParam(id = "FUNcluster", default = "kmedoids", values = c("kmedoids", "kmeans", "hclust")),
-      makeDiscreteParam(id = "dimred_method", default = "tsne", values = c("tsne", "sammon", "tsne_initcmd")),
-      makeIntegerParam(id = "outminc", lower = 0, default = 5, upper = 100L),
-      makeIntegerParam(id = "outlg", lower = 0, default = 2, upper = 100L),
-      makeNumericParam(id = "probthr", lower = -10, default = -3, upper = -1, trafo = function(x) 10^x),
-      makeNumericParam(id = "thr_lower", lower = -100, default = -40, upper = -1),
-      makeNumericParam(id = "thr_upper", lower = -100, default = -40, upper = -1),
-      makeNumericParam(id = "outdistquant", lower = 0, default = .95, upper = 1),
-      makeLogicalParam(id = "nmode", default = F),
-      makeNumericParam(id = "pdishuf", lower = 2, default = log10(2000), upper = 3.5, trafo = function(x) ceiling(10)^x),
-      makeNumericParam(id = "pthr", lower = -4, default = -2, upper = 0, trafo = function(x) 10^x),
-      makeNumericParam(id = "pethr", lower = -4, default = -2, upper = 0, trafo = function(x) 10^x)
-    ),
-    properties = c(),
-    run_fun = run_stemid,
-    plot_fun = plot_stemid,
+description_stemid <- function() create_description(
+  name = "StemID",
+  short_name = "StemID",
+  package_loaded = c(),
+  package_required = c("StemID", "igraph", "reshape2"),
+  par_set = makeParamSet(
+    makeIntegerParam(id = "clustnr", lower = 20L, default = 30L, upper = 100L),
+    makeIntegerParam(id = "bootnr", lower = 20L, default = 50, upper = 100L),
+    makeDiscreteParam(id = "metric", default = "pearson", values = c("pearson", "spearman", "kendall", "euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski")),
+    makeDiscreteParam(id = "num_cluster_method", default = "sat", values = c("sat", "gap", "manual")),
+    makeDiscreteParam(id = "SE.method", default = "Tibs2001SEmax", values = c("firstSEmax", "Tibs2001SEmax", "globalSEmax", "firstmax", "globalmax")),
+    makeNumericParam(id = "SE.factor", default = .25, lower = 0, upper = 1),
+    makeIntegerParam(id = "B.gap", lower = 20L, default = 50, upper = 100L),
+    makeIntegerParam(id = "cln", lower = 20L, default = 30, upper = 100L),
+    makeDiscreteParam(id = "FUNcluster", default = "kmedoids", values = c("kmedoids", "kmeans", "hclust")),
+    makeDiscreteParam(id = "dimred_method", default = "tsne", values = c("tsne", "sammon", "tsne_initcmd")),
+    makeIntegerParam(id = "outminc", lower = 0, default = 5, upper = 100L),
+    makeIntegerParam(id = "outlg", lower = 0, default = 2, upper = 100L),
+    makeNumericParam(id = "probthr", lower = -10, default = -3, upper = -1, trafo = function(x) 10^x),
+    makeNumericParam(id = "thr_lower", lower = -100, default = -40, upper = -1),
+    makeNumericParam(id = "thr_upper", lower = -100, default = -40, upper = -1),
+    makeNumericParam(id = "outdistquant", lower = 0, default = .95, upper = 1),
+    makeLogicalParam(id = "nmode", default = F),
+    makeNumericParam(id = "pdishuf", lower = 2, default = log10(2000), upper = 3.5, trafo = function(x) ceiling(10)^x),
+    makeNumericParam(id = "pthr", lower = -4, default = -2, upper = 0, trafo = function(x) 10^x),
+    makeNumericParam(id = "pethr", lower = -4, default = -2, upper = 0, trafo = function(x) 10^x),
     forbidden = quote(thr_lower > thr_lower)
-  )
-}
+  ),
+  properties = c(),
+  run_fun = run_stemid,
+  plot_fun = plot_stemid
+)
 
 run_stemid <- function(
   counts,
