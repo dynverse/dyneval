@@ -13,7 +13,3 @@ addons:
 install:
  - R -e 'devtools::install(dependencies = T, upgrade_dependencies = T)'
  - R -e 'dyneval::check_dependencies()'
-script:
- - R CMD build .
- - travis_wait 100 R CMD check dyneval*.tar.gz --as-cran
- - grep "WARNING" "dyneval.Rcheck/00check.log" ; [ $? -ne 0 ]

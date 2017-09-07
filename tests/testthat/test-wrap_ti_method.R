@@ -53,7 +53,7 @@ test_that("Testing create_description with dummy method", {
 
 
 test_that("Testing execute_method with dummy method", {
-  tasks <- dyneval::generate_toy_datasets()
+  tasks <- readRDS(paste0(tempdir(), "/dyneval_test_datasets.rds"))
 
   dummy <- dyneval:::create_description(
     name = "dummy 2",
