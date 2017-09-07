@@ -85,6 +85,8 @@ run_pseudogp <- function(
 }
 
 plot_pseudogp <- function(prediction) {
+  extract <- rstan::extract
+
   # variability between samples and chains
   prediction$sample_posterior_times %>%
     group_by(cell_id) %>%
@@ -100,5 +102,5 @@ plot_pseudogp <- function(prediction) {
     ggplot() +
     geom_boxplot(aes(mean_time, time, group=cell_id))
 
-  posteriorCurvePlot(prediction$dimreds_samples, prediction$le_fit, nsamples=50, posterior_mean = TRUE)
+  pseudogp:::posteriorCurvePlot(prediction$dimreds_samples, prediction$le_fit, nsamples=50, posterior_mean = TRUE)
 }
