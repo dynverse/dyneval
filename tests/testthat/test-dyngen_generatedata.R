@@ -20,10 +20,10 @@ test_that("Creating toy datasets", {
   expect_true( all(tasks$cell_ids %>% map_lgl(~ length(.) == num_cells )) )
 
   ti_types <- c("linear", "bifurcating", "cycle")
-  num_replicates <- 3
+  num_replicates <- 1
   num_cells <- 99
   num_genes <- 101
-  tasks <- generate_toy_datasets(ti_types = ti_types, num_replicates = num_replicates, num_cells = num_cells, num_genes = num_genes)
+  tasks <- readRDS(paste0(tempdir(), "/dyneval_test_datasets.rds"))
 
   expect_that( is_tibble(tasks), is_true() )
 
@@ -38,7 +38,7 @@ test_that("Creating toy datasets", {
   expect_true( all(tasks$cell_ids %>% map_lgl(~ length(.) == num_cells )) )
 })
 
-tasks <- generate_toy_datasets()
+tasks <- readRDS(paste0(tempdir(), "/dyneval_test_datasets.rds"))
 
 for (taski in seq_len(nrow(tasks))) {
   task <- extract_row_to_list(tasks, taski)

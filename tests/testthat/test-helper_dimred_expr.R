@@ -8,7 +8,7 @@ test_that("Retrieving dimred_methods", {
 })
 
 
-tasks <- generate_toy_datasets(num_replicates = 1)
+tasks <- readRDS(paste0(tempdir(), "/dyneval_test_datasets.rds"))
 
 for (taski in seq_len(nrow(tasks))) {
   task <- extract_row_to_list(tasks, taski)
