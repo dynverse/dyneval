@@ -106,6 +106,7 @@ run_scuba <- function(counts,
 }
 
 plot_scuba <- function(ti_predictions) {
-  stop("TODO")
-  #qplot(percent_rank(ti_predictions$milestone_percentages[,1]), ti_predictions$milestone_percentages[,1], colour = data$sample_info$group.name)
+  g <- ti_predictions$milestone_network %>% igraph::graph_from_data_frame()
+  l <- igraph::layout_as_tree(g)
+  igraph::plot.igraph(g, layout=l)
 }
