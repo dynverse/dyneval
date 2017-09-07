@@ -11,4 +11,4 @@ addons:
       - libsdl1.2-dev
 install:
   - R -e 'devtools::install(dependencies = T, upgrade_dependencies = T)'
-  - R -e 'library(dyneval); dyneval::check_dependencies()'
+  - R -e 'dyneval::check_dependencies()'

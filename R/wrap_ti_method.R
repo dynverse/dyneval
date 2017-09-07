@@ -6,7 +6,8 @@
 #' @importFrom dynutils list_as_tibble
 #' @export
 get_descriptions <- function(as_tibble = T) {
-  functions <- lsf.str("package:dyneval")
+  requireNamespace("dyneval")
+  functions <- lsf.str(asNamespace("dyneval"))
   description_functions <- functions[grep("description_", functions)]
   descriptions <- lapply(description_functions, do.call, list())
   if (as_tibble) {
