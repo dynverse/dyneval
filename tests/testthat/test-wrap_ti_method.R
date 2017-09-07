@@ -53,6 +53,10 @@ test_that("Testing create_description with dummy method", {
 
 
 test_that("Testing execute_method with dummy method", {
+  # see https://github.com/RevolutionAnalytics/checkpoint/commit/a8d713dd067734a2108f78ea706ceaa73e17ac3e
+  # as fix for https://github.com/hadley/testthat/issues/129, https://github.com/hadley/testthat/issues/144
+  Sys.setenv("R_TESTS" = "")
+
   tasks <- dyneval::generate_toy_datasets()
 
   dummy <- dyneval:::create_description(
