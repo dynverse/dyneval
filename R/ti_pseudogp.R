@@ -82,6 +82,8 @@ run_pseudogp <- function(
 }
 
 plot_pseudogp <- function(prediction) {
+  extract <- rstan::extract
+
   # variability between samples and chains
   prediction$sample_posterior_times %>%
     group_by(cell_id) %>%
