@@ -9,7 +9,7 @@ get_descriptions <- function(as_tibble = T) {
   requireNamespace("dyneval")
   functions <- lsf.str(asNamespace("dyneval"))
   description_functions <- functions[grep("description_", functions)]
-  descriptions <- lapply(description_functions, do.call, list())
+  descriptions <- lapply(description_functions, do.call, list(), envir = asNamespace("dyneval"))
   if (as_tibble) {
     list_as_tibble(descriptions)
   } else {
