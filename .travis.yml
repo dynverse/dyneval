@@ -9,6 +9,7 @@ addons:
     packages:
       - libgsl-dev
       - libsdl1.2-dev
+      - libreadline-dev
 install:
   - R -e 'devtools::install(dependencies = T, upgrade_dependencies = T)'
   - R -e 'dyneval::check_dependencies()'
