@@ -36,8 +36,8 @@ get_dyneval_install_path <- function() {
 }
 
 #' Create a new TI description
+#'
 #' @importFrom stringr str_length
-#' @export
 create_description <- function(
   name,
   short_name,
