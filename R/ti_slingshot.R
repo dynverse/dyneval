@@ -145,10 +145,6 @@ run_slingshot <- function(
 
 
 plot_slingshot <- function(ti_predictions) {
-  colnames(ti_predictions$dimred_samples) <- paste0("Comp", seq_len(ncol(ti_predictions$dimred_samples)))
-  plotdata <- as_tibble(ti_predictions$dimred_samples) %>%
-    mutate(branch=ti_predictions$dimred_clust)
-  ggplot(plotdata) +
-    geom_point(aes(Comp1, Comp2, color=branch))
+  pairs(ti_predictions$sds, horInd=2, verInd=1)
 }
 

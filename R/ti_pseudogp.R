@@ -99,5 +99,35 @@ plot_pseudogp <- function(prediction) {
     ggplot() +
     geom_boxplot(aes(mean_time, time, group=cell_id))
 
-  pseudogp::posteriorCurvePlot(prediction$dimreds_samples, prediction$le_fit, nsamples=50, posterior_mean = TRUE)
+  posteriorCurvePlot(prediction$dimreds_samples, prediction$le_fit, nsamples=50, posterior_mean = TRUE)
 }
+
+
+posteriorCurvePlot <- function (X, fit, posterior_mean = TRUE, nsamples = 50, nnt = 80,
+          point_colour = "darkred", curve_colour = "black", point_alpha = 1,
+          curve_alpha = 0.5, grid_nrow = NULL, grid_ncol = NULL, use_cowplot = TRUE,
+          standardize_ranges = FALSE, ...)
+{
+  if (is.matrix(X))
+    X <- list(X)
+  Ns <- length(X)
+  chains <- length(fit@inits)
+  message(paste("Plotting traces for", Ns, "representation(s) and",
+                chains, "chain(s)"))
+  plots <- vector("list", Ns)
+  pst <- rstan::extract(fit, pars = "t", permute = FALSE)
+  lambda <- rstan::extract(fit, pars = "lambda", permute = FALSE)
+  sigma <- rstan::extract(fit, pars = "sigma", permute = FALSE)
+  for (i in 1:Ns) {
+    l <- lambda[, , (2 * i - 1):(2 * i), drop = FALSE]
+    s <- sigma[, , (2 * i - 1):(2 * i), drop = FALSE]
+    plt <- pseudogp:::makeEnvelopePlot(pst, l, s, X[[i]], chains, posterior_mean,
+                            nsamples, nnt, point_colour, curve_colour, point_alpha,
+                            curve_alpha, use_cowplot, standardize_ranges)
+    plots[[i]] <- plt
+  }
+  gplt <- cowplot::plot_grid(plotlist = plots, labels = names(X),
+                             nrow = grid_nrow, ncol = grid_ncol)
+  return(gplt)
+}
+
