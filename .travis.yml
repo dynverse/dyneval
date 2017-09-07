@@ -14,5 +14,5 @@ install:
   - R -e 'devtools::install(dependencies = T, upgrade_dependencies = T)'
   - R -e 'dyneval::check_dependencies()'
 script:
-  - travis_wait 100 R CMD build
+  - travis_wait 100 R CMD build .
   - travis_wait 100 R CMD check "dyneval*.tar.gz" --as-cran
