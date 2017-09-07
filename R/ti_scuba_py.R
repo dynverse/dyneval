@@ -1,39 +1,23 @@
-get_scuba_path <- function() {
-  "~/.dyneval/scuba/"
-}
-
-#' Installing SCUBA
-#' @export
-install_scuba <- function() {
-  dir.create(get_scuba_path(), showWarnings = FALSE, recursive = TRUE)
-
-  system(glue::glue(
-    "bash ",
-    find.package("dyneval"), "/extra_code/PySCUBA/make ", get_scuba_path()
-  ))
-}
-
 #' Description for SCUBA
 #' @export
-description_scuba <- function() {
-  list(
-    name = "SCUBA",
-    short_name = "SCUBA",
-    package_load = c(),
-    package_installed = c("jsonlite", "readr"),
-    par_set = makeParamSet(
-      makeLogicalParam(id = "rigorous_gap_stats", default = T),
-      makeIntegerParam(id = "N_dim", lower=2, upper=20, default=2),
-      makeNumericParam(id = "low_gene_threshold", lower = 0, upper = 5, default = 1),
-      makeNumericParam(id = "low_gene_fraction_max", lower = 0, upper = 1, default = 0.7),
-      makeIntegerParam(id = "min_split", lower=1, upper=100, default=15),
-      makeNumericParam(id = "min_percentage_split", lower=0, upper=1, default=0.25)
-    ),
-    properties = c(),
-    run_fun = run_scuba,
-    plot_fun = plot_scuba
-  )
-}
+description_scuba <- function() create_description(
+  name = "SCUBA",
+  short_name = "SCUBA",
+  package_loaded = c(),
+  package_required = c("jsonlite", "readr"),
+  par_set = makeParamSet(
+    makeLogicalParam(id = "rigorous_gap_stats", default = T),
+    makeIntegerParam(id = "N_dim", lower=2, upper=20, default=2),
+    makeNumericParam(id = "low_gene_threshold", lower = 0, upper = 5, default = 1),
+    makeNumericParam(id = "low_gene_fraction_max", lower = 0, upper = 1, default = 0.7),
+    makeIntegerParam(id = "min_split", lower=1, upper=100, default=15),
+    makeNumericParam(id = "min_percentage_split", lower=0, upper=1, default=0.25)
+  ),
+  properties = c(),
+  run_fun = run_scuba,
+  plot_fun = plot_scuba,
+  make_command = paste0("extra_code/PySCUBA/make ", get_dyneval_install_path(), "/scuba")
+)
 
 #' @importFrom utils write.table
 run_scuba <- function(counts,
@@ -59,9 +43,9 @@ run_scuba <- function(counts,
     args = c(
       "-c",
       shQuote(glue::glue(
-        "cd {get_scuba_path()}/scuba/",
+        "cd {get_scuba_path()}/",
         "source bin/activate",
-        "python3 {find.package('dyneval')}/extra_code/PySCUBA/scuba_wrapper.py {temp_folder} 0 {c(0, 1)[as.numeric(rigorous_gap_stats)+1]} {N_dim} {low_gene_threshold} {low_gene_fraction_max} {min_split} {min_percentage_split}",
+        "python3 {find.package('dyneval')}/extra_code/PySCUBA/wrapper.py {temp_folder} 0 {c(0, 1)[as.numeric(rigorous_gap_stats)+1]} {N_dim} {low_gene_threshold} {low_gene_fraction_max} {min_split} {min_percentage_split}",
         .sep = ";"))
     )
   )

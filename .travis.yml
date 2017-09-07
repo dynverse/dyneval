@@ -8,3 +8,6 @@ addons:
     packages:
       - libgsl-dev
       - libsdl1.2-dev
+install:
+  - R -e 'devtools::install_deps(upgrade = T, dependencies = c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances"))'
+  - R -e 'dyneval::check_dependencies()'

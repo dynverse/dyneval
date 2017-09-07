@@ -1,29 +1,27 @@
 #' Description for Monocle DDRtree
 #' @export
-description_monocle_ddrtree <- function() {
-  list(
-    name = "monocle with DDRtree",
-    short_name = "monocDDR",
-    package_load = c("monocle", "igraph", "reshape2"),
-    package_installed = c(),
-    par_set = makeParamSet(
-      makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
-      makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
-      makeIntegerParam(id = "maxIter", lower = 1L, default = 20L, upper = 100L),
-      makeNumericParam(id = "sigma", lower = 0, default = .001, upper = 100),
-      makeLogicalParam(id = "lambda_null", default = T),
-      makeNumericParam(id = "lambda", lower = 0, default = 5, upper = 100),
-      makeLogicalParam(id = "ncenter_null", default = T),
-      makeIntegerParam(id = "ncenter", lower = 3, default = 5, upper = 20),
-      makeNumericParam(id = "param.gamma", lower = 0, default = 20, upper = 1e5),
-      makeNumericParam(id = "tol", lower = 0, default = .001, upper = 10),
-      makeLogicalParam(id = "auto_param_selection", default = T)
-    ),
-    properties = c("tibble"),#, "dimred", "dimred_traj", "pseudotime"), # todo: implement other outputs
-    run_fun = run_monocle_ddrtree,
-    plot_fun = plot_monocle_ddrtree
-  )
-}
+description_monocle_ddrtree <- function() create_description(
+  name = "monocle with DDRtree",
+  short_name = "monocDDR",
+  package_loaded = c("monocle", "igraph", "reshape2"),
+  package_required = c(),
+  par_set = makeParamSet(
+    makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
+    makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
+    makeIntegerParam(id = "maxIter", lower = 1L, default = 20L, upper = 100L),
+    makeNumericParam(id = "sigma", lower = 0, default = .001, upper = 100),
+    makeLogicalParam(id = "lambda_null", default = T),
+    makeNumericParam(id = "lambda", lower = 0, default = 5, upper = 100),
+    makeLogicalParam(id = "ncenter_null", default = T),
+    makeIntegerParam(id = "ncenter", lower = 3, default = 5, upper = 20),
+    makeNumericParam(id = "param.gamma", lower = 0, default = 20, upper = 1e5),
+    makeNumericParam(id = "tol", lower = 0, default = .001, upper = 10),
+    makeLogicalParam(id = "auto_param_selection", default = T)
+  ),
+  properties = c("tibble"),#, "dimred", "dimred_traj", "pseudotime"), # todo: implement other outputs
+  run_fun = run_monocle_ddrtree,
+  plot_fun = plot_monocle_ddrtree
+)
 
 #' @importFrom igraph degree all_shortest_paths distances
 #' @importFrom reshape2 melt

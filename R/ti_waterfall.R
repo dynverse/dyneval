@@ -1,19 +1,17 @@
 #' Description for Waterfall
 #' @export
-description_waterfall <- function() {
-  list(
-    name = "Waterfall",
-    short_name = "Waterf", # max 8 chars
-    package_load = c(),
-    package_installed = c("Waterfall"),
-    par_set = makeParamSet(
-      makeIntegerParam(id = "num_clusters", lower = 2, default = 10, upper = 20)
-    ),
-    properties = c("pseudotime"),
-    run_fun = run_waterfall,
-    plot_fun = plot_waterfall
-  )
-}
+description_waterfall <- function() create_description(
+  name = "Waterfall",
+  short_name = "waterfll", # max 8 chars
+  package_loaded = c(),
+  package_required = c("Waterfall"),
+  par_set = makeParamSet(
+    makeIntegerParam(id = "num_clusters", lower = 2, default = 10, upper = 20)
+  ),
+  properties = c("pseudotime"),
+  run_fun = run_waterfall,
+  plot_fun = plot_waterfall
+)
 
 run_waterfall <- function(counts, k = 10) {
   requireNamespace("Waterfall")

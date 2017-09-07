@@ -1,26 +1,20 @@
 #' Description for TSCAN
 #' @export
-description_tscan <- function() {
-  modelNames_values <- c("EII", "VII", "EEI", "VEI", "EVI", "VVI", "EEE", "EVE", "VEE", "VVE", "EEV", "VEV", "EVV", "VVV")
-  list(
-    name = "TSCAN",
-    short_name = "TSCAN",
-    package_load = c("mclust", "igraph", "ggplot2"),
-    package_installed = c("TSCAN"),
-    par_set = makeParamSet(
-      # makeNumericParam(id = "minexpr_value", lower = 0, upper = 5, default = 1),
-      # makeNumericParam(id = "minexpr_percent", lower = 0, upper = .5, default = .5),
-      # makeNumericParam(id = "cvcutoff", lower = 0, upper = 5, default = 1),
-      makeIntegerParam(id = "exprmclust_clusternum_lower", lower = 2L, upper = 20L, default = 2),
-      makeIntegerParam(id = "exprmclust_clusternum_upper", lower = 2L, upper = 20L, default = 9),
-      makeDiscreteParam(id = "modelNames", default = "VVV", values = modelNames_values),
-      forbidden = quote(exprmclust_clusternum_lower > exprmclust_clusternum_upper)
-    ),
-    properties = c(),
-    run_fun = run_tscan,
-    plot_fun = plot_tscan
-  )
-}
+description_tscan <- function() create_description(
+  name = "TSCAN",
+  short_name = "TSCAN",
+  package_loaded = c("mclust", "igraph", "ggplot2"),
+  package_required = c("TSCAN"),
+  par_set = makeParamSet(
+    makeIntegerParam(id = "exprmclust_clusternum_lower", lower = 2L, upper = 20L, default = 2),
+    makeIntegerParam(id = "exprmclust_clusternum_upper", lower = 2L, upper = 20L, default = 9),
+    makeDiscreteParam(id = "modelNames", default = "VVV", values = c("EII", "VII", "EEI", "VEI", "EVI", "VVI", "EEE", "EVE", "VEE", "VVE", "EEV", "VEV", "EVV", "VVV")),
+    forbidden = quote(exprmclust_clusternum_lower > exprmclust_clusternum_upper)
+  ),
+  properties = c(),
+  run_fun = run_tscan,
+  plot_fun = plot_tscan
+)
 
 run_tscan <- function(counts,
                       minexpr_percent = 1,
