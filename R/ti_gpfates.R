@@ -4,7 +4,7 @@ description_gpfates <- function() create_description(
   name = "GPfates",
   short_name = "GPfates",
   package_loaded = c(),
-  package_required = c(),
+  package_required = c("GPfates"),
   par_set = makeParamSet(
     makeNumericParam(id = "log_expression_cutoff", lower = 0.5, upper = 5, default = 2),
     makeNumericParam(id = "min_cells_expression_cutoff", lower = 0, upper = 20, default = 2),
@@ -13,8 +13,7 @@ description_gpfates <- function() create_description(
   ),
   properties = c(),
   run_fun = run_gpfates,
-  plot_fun = plot_gpfates,
-  make_command = paste0("extra_code/GPfates/make ", get_dyneval_install_path(), "/gpfates")
+  plot_fun = plot_gpfates
 )
 
 ## TODO: give simulationtime as prior
@@ -43,9 +42,9 @@ run_gpfates <- function(
     args = c(
       "-c",
       shQuote(glue::glue(
-        "cd {get_dyneval_install_path()}/gpfates",
+        "cd {find.package('GPfates')}/venv",
         "source bin/activate",
-        "python3 {find.package('dyneval')}/extra_code/GPfates/wrapper.py {temp_folder} {log_expression_cutoff} {min_cells_expression_cutoff} {nfates} {ndims}",
+        "python3 {find.package('GPfates')}/wrapper.py {temp_folder} {log_expression_cutoff} {min_cells_expression_cutoff} {nfates} {ndims}",
         .sep = ";"))
     )
   )
