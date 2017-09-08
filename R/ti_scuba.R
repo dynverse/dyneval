@@ -4,7 +4,7 @@ description_scuba <- function() create_description(
   name = "SCUBA",
   short_name = "SCUBA",
   package_loaded = c(),
-  package_required = c("jsonlite", "readr"),
+  package_required = c("jsonlite", "readr", "SCUBA"),
   par_set = makeParamSet(
     makeLogicalParam(id = "rigorous_gap_stats", default = T),
     makeIntegerParam(id = "N_dim", lower=2, upper=20, default=2),
@@ -15,8 +15,7 @@ description_scuba <- function() create_description(
   ),
   properties = c(),
   run_fun = run_scuba,
-  plot_fun = plot_scuba,
-  make_command = paste0("extra_code/PySCUBA/make ", get_dyneval_install_path(), "/scuba")
+  plot_fun = plot_scuba
 )
 
 #' @importFrom utils write.table
@@ -43,9 +42,9 @@ run_scuba <- function(counts,
     args = c(
       "-c",
       shQuote(glue::glue(
-        "cd {get_dyneval_install_path()}/scuba",
+        "cd {find.package('SCUBA')}/venv",
         "source bin/activate",
-        "python3 {find.package('dyneval')}/extra_code/PySCUBA/wrapper.py {temp_folder} 0 {c(0, 1)[as.numeric(rigorous_gap_stats)+1]} {N_dim} {low_gene_threshold} {low_gene_fraction_max} {min_split} {min_percentage_split}",
+        "python3 {find.package('SCUBA')}/wrapper.py {temp_folder} 0 {c(0, 1)[as.numeric(rigorous_gap_stats)+1]} {N_dim} {low_gene_threshold} {low_gene_fraction_max} {min_split} {min_percentage_split}",
         .sep = ";"))
     )
   )

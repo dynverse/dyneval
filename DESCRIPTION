@@ -52,6 +52,7 @@ Suggests:
   diffusionMap,
   embeddr,
   fastICA,
+  GPfates,
   lle,
   Mpath,
   monocle,
@@ -62,12 +63,14 @@ Suggests:
   scater,
   SCORPIUS,
   SCOUP,
+  SCUBA,
   SLICE,
   SLICER,
   slingshot,
   StemID,
   TSCAN,
-  Waterfall
+  Waterfall,
+  Wishbone
 Remotes:
   alan-turing-institute/network-comparison,
   bioc::cellTree,
@@ -87,4 +90,7 @@ Remotes:
   rcannood/Waterfall,
   Zouter/dyngen,
   Zouter/Mpath,
-  Zouter/pseudogp
+  Zouter/pseudogp,
+  Zouter/Wishbone,
+  Zouter/GPfates,
+  Zouter/SCUBA

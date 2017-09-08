@@ -4,7 +4,7 @@ description_wishbone <- function() create_description(
   name = "Wishbone",
   short_name = "Wishbone",
   package_loaded = c(),
-  package_required = c("jsonlite"),
+  package_required = c("jsonlite", "Wishbone"),
   par_set = makeParamSet(
     makeIntegerParam(id = "knn", lower=2, upper=100, default=10),
     makeIntegerParam(id = "n_diffusion_components", lower=2, upper=20, default=10),
@@ -17,8 +17,7 @@ description_wishbone <- function() create_description(
   ),
   properties = c(),
   run_fun = run_wishbone,
-  plot_fun = plot_wishbone,
-  make_command = paste0("extra_code/Wishbone/make ", get_dyneval_install_path(), "/wishbone")
+  plot_fun = plot_wishbone
 )
 
 run_wishbone <- function(counts,
@@ -54,9 +53,9 @@ run_wishbone <- function(counts,
     args = c(
       "-c",
       shQuote(glue::glue(
-        "cd {get_dyneval_install_path()}/wishbone",
+        "cd {find.package('Wishbone')}/venv",
         "source bin/activate",
-        "python {find.package('dyneval')}/extra_code/Wishbone/wrapper.py {temp_folder}",
+        "python {find.package('Wishbone')}/wrapper.py {temp_folder}",
         .sep = ";"))
     ), stdout = T, stderr = T
   )
