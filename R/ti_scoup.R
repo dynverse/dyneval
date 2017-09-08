@@ -25,9 +25,10 @@ run_scoup <- function(
   M = 20,
   ndim=3
   ) {
+  requireNamespace("SCOUP")
+
   tmp_dir <- paste0(tempfile(), "/")
   dir.create(tmp_dir)
-  scoup_dir <- "/home/wouters/thesis/tools/SCOUP"
 
   nbranch <- 2
 
@@ -38,13 +39,13 @@ run_scoup <- function(
   means <- apply(counts[start_ix,], 2, mean)
   distr.df <- data.frame(i = seq_along(vars) - 1, means, vars)
 
-  write.table(t(counts), file = paste0(tmp_dir, "1"), sep = "\t", row.names = F, col.names = F)
-  write.table(distr.df, file = paste0(tmp_dir, "2"), sep = "\t", row.names = F, col.names = F)
+  write.table(t(counts), file = paste0(tmp_dir, "data"), sep = "\t", row.names = F, col.names = F)
+  write.table(distr.df, file = paste0(tmp_dir, "init"), sep = "\t", row.names = F, col.names = F)
 
-  system(glue::glue("{scoup_dir}/sp {tmp_dir}1 {tmp_dir}2 {tmp_dir}3 {tmp_dir}4 {ncol(counts)} {nrow(counts)} {ndim}"))
-  system(glue::glue("{scoup_dir}/scoup -k {nbranch} {tmp_dir}1 {tmp_dir}2 {tmp_dir}3 {tmp_dir}4 {tmp_dir}5 {tmp_dir}6 {ncol(counts)} {nrow(counts)} -m {m} -M {M}"))
+  SCOUP::run_SCOUP("sp", glue::glue("sp {tmp_dir}data {tmp_dir}init {tmp_dir}time_sp {tmp_dir}gpara {ncol(counts)} {nrow(counts)} {ndim}"), verbose = T)
+  SCOUP::run_SCOUP("scoup", glue::glue("scoup -k {nbranch} {tmp_dir}data {tmp_dir}init {tmp_dir}time_sp {tmp_dir}gpara {tmp_dir}cpara {tmp_dir}ll {ncol(counts)} {nrow(counts)} -m {m} -M {M}"))
 
-  model <- read.table(paste0(tmp_dir, "5"))
+  model <- read.table(paste0(tmp_dir, "cpara"))
   colnames(model) <- c("time", paste0("M", seq_len(ncol(model)-1)+1))
   model <- model %>% mutate(cell_id = rownames(counts))
 
