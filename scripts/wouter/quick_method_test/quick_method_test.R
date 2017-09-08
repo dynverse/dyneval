@@ -1,6 +1,8 @@
 library(tidyverse)
 library(dyneval)
 
+check_dependencies()
+
 set.seed(1)
 tasks <- generate_toy_datasets()
 tasks <- tasks[1,]
@@ -29,6 +31,29 @@ method_params <- list(
   wishbone = list(branch=F),
   pseudogp = list(iter=100, initialise_from="principal_curve"),
   mpath = list(numcluster=6),
+  scoup = list(nbranch=1),
+  slice = list(),
+  random_linear=list()
+)
+
+method_params <- list(
+  waterfall=list(),
+  scorpius=list(),
+  slingshot=list(),
+  gpfates=list(nfates=2),
+  stemid=list(clustnr=10, bootnr=10, pdishuf=10),
+  tscan=list(),
+  embeddr=list(nn_pct = 2),
+  celltree_gibbs=list(sd_filter = 0),
+  celltree_maptpx=list(sd_filter = 0),
+  celltree_vem=list(sd_filter = 0),
+  scuba=list(),
+  slicer = list(min_branch_len=50),
+  monocle_ddrtree=list(),
+  wishbone = list(branch=F),
+  pseudogp = list(iter=100, initialise_from="principal_curve"),
+  mpath = list(numcluster=6),
+  scoup = list(nbranch=2),
   random_linear=list()
 )
 #
@@ -40,13 +65,10 @@ method_descriptions <- map(method_names, ~get(paste0("description_", .))()) %>% 
 
 metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "isomorphic", "robbie_network_score")
 
-
-
-method_names <- c("gpfates")
+method_names <- c("slice")
 
 # test the methods and get the scores
-# results <- purrr::map(method_names, function(method_name) {
-results <- pbapply::pblapply(method_names, function(method_name) {
+results <- purrr::map(method_names, function(method_name) {
 # results <- PRISM::qsub_lapply(names(method_descriptions), function(method_name) {
   library(dyneval)
 
@@ -62,7 +84,7 @@ results <- pbapply::pblapply(method_names, function(method_name) {
           err <<- conditionMessage(e)
           NULL
         }), warning=function(w) {
-          warn <<- append(warn, conditionMessage(w))
+          warn <<- append(warn, bconditionMessage(w))
           invokeRestart("muffleWarning")
         })
       list(res, warn=warn, err=err, method_name=method_name)
