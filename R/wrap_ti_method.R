@@ -29,21 +29,7 @@ check_dependencies <- function() {
     if (any(!installed)) {
       warning(sQuote(descr$name), " requires the following packages still to be installed: ", paste(sQuote(required_packages[!installed]), collapse = ", "))
     }
-    if (!is.null(descr$make_command)) {
-      pkg_dir <- find.package("dyneval")
-      if (grepl("testthat$", getwd())) {
-        # testing environment detected
-        pkg_dir <- paste0(pkg_dir, "/inst")
-      }
-      system(paste0("bash ", pkg_dir, "/", descr$make_command))
-    }
   }
-}
-
-get_dyneval_install_path <- function() {
-  p <- "~/.dyneval"
-  if (!dir.exists(p)) dir.create(p, recursive = T, showWarnings = F)
-  p
 }
 
 create_description <- function(
@@ -54,8 +40,7 @@ create_description <- function(
   par_set,
   properties,
   run_fun,
-  plot_fun,
-  make_command = NULL
+  plot_fun
 ) {
   lst(
     name,
@@ -65,8 +50,7 @@ create_description <- function(
     par_set,
     properties,
     run_fun,
-    plot_fun,
-    make_command
+    plot_fun
   )
 }
 
