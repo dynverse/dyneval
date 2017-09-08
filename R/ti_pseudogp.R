@@ -4,7 +4,7 @@ description_pseudogp <- function() create_description(
   name = "pseudogp",
   short_name = "pseudogp",
   package_loaded = c("pseudogp"),
-  package_required = c("rstan"),
+  package_required = c("rstan", "coda", "MCMCglmm"),
   par_set = makeParamSet(
     makeNumericParam(id = "smoothing_alpha", lower = 1, upper = 20, default = 10),
     makeNumericParam(id = "smoothing_beta", lower = 1, upper = 20, default = 3),
@@ -31,8 +31,9 @@ run_pseudogp <- function(
   pseudotime_var = 1,
   initialise_from = "random"
 ) {
-  requireNamespace("pseudogp")
   requireNamespace("rstan")
+  requireNamespace("coda")
+  requireNamespace("MCMCglmm")
 
   spaces <- list_dimred_methods()[dimreds] %>% map(~.(counts, 2)) # only 2 dimensions are allowed
 
@@ -45,7 +46,7 @@ run_pseudogp <- function(
   sigma <- rstan::extract(le_fit, pars = "sigma", permute = FALSE)
 
   # not necessary, but can be used for plotting: the times of every sample across chains
-  sample_posterior_times <- map(seq_len(chains), ~mcmc(pst[, ., ])) %>%
+  sample_posterior_times <- map(seq_len(chains), ~coda::mcmc(pst[, ., ])) %>%
     do.call(rbind, .)
   colnames(sample_posterior_times) <- rownames(counts)
   sample_posterior_times <- sample_posterior_times %>%
@@ -53,7 +54,7 @@ run_pseudogp <- function(
     mutate(chain_id = floor((sample_id-1)/(max(sample_id) / chains)) + 1)
 
   # calculate the final pseudotime by averaging over the modes of every chain
-  chain_posterior_times <- map(seq_len(chains), ~posterior.mode(mcmc(pst[, ., ]))) %>%
+  chain_posterior_times <- map(seq_len(chains), ~MCMCglmm::posterior.mode(coda::mcmc(pst[, ., ]))) %>%
     do.call(rbind, .)
   colnames(chain_posterior_times) <- rownames(counts)
   chain_posterior_times <- chain_posterior_times %>% reshape2::melt(varnames = c("chain_id", "cell_id"), value.name="time")

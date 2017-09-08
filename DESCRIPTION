@@ -71,7 +71,10 @@ Suggests:
   StemID,
   TSCAN,
   Waterfall,
-  Wishbone
+  Wishbone,
+  MCMCglmm,
+  coda,
+  rstan
 Remotes:
   alan-turing-institute/network-comparison,
   bioc::cellTree,
