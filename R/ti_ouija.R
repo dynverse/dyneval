@@ -25,14 +25,14 @@ run_ouija <- function(
   ) {
   requireNamespace("ouija")
 
-  oui <- ouija(
+  oui <- ouija::ouija(
     counts,
     iter=iter,
     response_type=response_type,
     inference_type=inference_type,
     normalise_expression=normalise_expression
   )
-  pseudotimes <- map_pseudotime(oui)
+  pseudotimes <- ouija::map_pseudotime(oui)
 
   milestone_ids <- c("milestone_A", "milestone_B")
   milestone_network <- tibble::data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1)
