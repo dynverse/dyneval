@@ -61,6 +61,7 @@ Suggests:
   roxygen2,
   scater,
   SCORPIUS,
+  SLICE,
   SLICER,
   slingshot,
   StemID,
