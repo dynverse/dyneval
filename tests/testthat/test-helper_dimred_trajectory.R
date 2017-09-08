@@ -1,9 +1,9 @@
 context("Dimred for trajectories")
 
-tasks <- generate_toy_datasets()
+data(toy_tasks)
 
-for (taski in seq_len(nrow(tasks))) {
-  task <- extract_row_to_list(tasks, taski)
+for (taski in seq_len(nrow(toy_tasks))) {
+  task <- extract_row_to_list(toy_tasks, taski)
 
   test_that(paste0("Perform dimred on trajectory with task ", task$id), {
     dimred <- dimred_trajectory(task, insert_phantom_edges = T)

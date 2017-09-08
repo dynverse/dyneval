@@ -53,7 +53,7 @@ test_that("Testing create_description with dummy method", {
 
 
 test_that("Testing execute_method with dummy method", {
-  tasks <- dyneval::generate_toy_datasets()
+  data(toy_tasks)
 
   dummy <- dyneval:::create_description(
     name = "dummy 2",
@@ -90,7 +90,7 @@ test_that("Testing execute_method with dummy method", {
     make_command = NULL
   )
 
-  method_outs <- execute_method(tasks, dummy, parameters = list(aggr_fun = "median"))
+  method_outs <- execute_method(toy_tasks, dummy, parameters = list(aggr_fun = "median"))
 
   for (i in seq_along(method_outs)) {
     method_out <- method_outs[[i]]

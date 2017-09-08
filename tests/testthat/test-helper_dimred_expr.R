@@ -8,10 +8,10 @@ test_that("Retrieving dimred_methods", {
 })
 
 
-tasks <- generate_toy_datasets(num_replicates = 1)
+data(toy_tasks)
 
-for (taski in seq_len(nrow(tasks))) {
-  task <- extract_row_to_list(tasks, taski)
+for (taski in seq_len(nrow(toy_tasks))) {
+  task <- extract_row_to_list(toy_tasks, taski)
   expr <- log2(task$counts+1)
 
   methods <- dyneval:::list_dimred_methods()

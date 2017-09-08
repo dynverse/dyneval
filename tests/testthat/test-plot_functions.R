@@ -1,9 +1,9 @@
 context("Plot functions")
 
-tasks <- generate_toy_datasets(num_replicates = 1)
+data(toy_tasks)
 
-for (taski in seq_len(nrow(tasks))) {
-  task <- extract_row_to_list(tasks, taski)
+for (taski in seq_len(nrow(toy_tasks))) {
+  task <- extract_row_to_list(toy_tasks, taski)
 
   test_that(paste0("Perform dimred on trajectory with task ", task$id), {
     g <- plot_default(task)
