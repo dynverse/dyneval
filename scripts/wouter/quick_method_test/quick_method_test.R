@@ -13,6 +13,7 @@ cell_grouping <- tasks$cell_grouping[[1]]
 progressions <- tasks$progressions[[1]]
 
 
+
 # choose certain parameters for each method, at which we know this method will perform well for the toy dataset
 method_params <- list(
   waterfall=list(),
@@ -33,6 +34,7 @@ method_params <- list(
   mpath = list(numcluster=6),
   scoup = list(nbranch=1),
   slice = list(),
+  ouija = list(),
   random_linear=list()
 )
 
@@ -65,7 +67,7 @@ method_descriptions <- map(method_names, ~get(paste0("description_", .))()) %>% 
 
 metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "isomorphic", "robbie_network_score")
 
-method_names <- c("slice")
+method_names <- c("ouija")
 
 # test the methods and get the scores
 results <- purrr::map(method_names, function(method_name) {
@@ -84,7 +86,7 @@ results <- purrr::map(method_names, function(method_name) {
           err <<- conditionMessage(e)
           NULL
         }), warning=function(w) {
-          warn <<- append(warn, bconditionMessage(w))
+          warn <<- append(warn, conditionMessage(w))
           invokeRestart("muffleWarning")
         })
       list(res, warn=warn, err=err, method_name=method_name)
