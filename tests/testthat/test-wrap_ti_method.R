@@ -14,13 +14,6 @@ test_that("Descriptions can be retrieved", {
   }
 })
 
-test_that("Testing dyneval install path", {
-  path <- dyneval:::get_dyneval_install_path()
-
-  expect_is(path, "character")
-
-})
-
 test_that("Checking for dependencies does not produce an error", {
   expect_error(check_dependencies(), NA)
 })
@@ -34,8 +27,7 @@ test_that("Testing create_description with dummy method", {
     par_set = ParamHelpers::makeParamSet(),
     properties = c("space", "trajectory"),
     run_fun = function(counts, param = "fjioiw") "pie",
-    plot_fun = function(out) "cake",
-    make_command = "work it; make it; do it; makes us; harder better faster stronger"
+    plot_fun = function(out) "cake"
   )
   expect_equal( dummy$name, "dummy 1" )
   expect_equal( dummy$short_name, "dum1" )
@@ -47,7 +39,6 @@ test_that("Testing create_description with dummy method", {
   expect_equal( dummy$run_fun(NULL), "pie" )
   expect_is( dummy$plot_fun, "function" )
   expect_equal( dummy$plot_fun(NULL), "cake" )
-  expect_equal( dummy$make_command, "work it; make it; do it; makes us; harder better faster stronger" )
 })
 
 
@@ -86,8 +77,7 @@ test_that("Testing execute_method with dummy method", {
         geom_point(size = 2.2) +
         geom_point(aes(colour = percentage), size = 2) +
         scale_colour_distiller(palette = "RdBu")
-    },
-    make_command = NULL
+    }
   )
 
   method_outs <- execute_method(toy_tasks, dummy, parameters = list(aggr_fun = "median"))
