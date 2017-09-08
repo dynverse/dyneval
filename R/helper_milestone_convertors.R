@@ -35,10 +35,7 @@ convert_progressions_to_milestone_percentages <- function(cell_ids, milestone_id
 
   froms <- progressions %>% group_by(cell_id) %>% summarise(milestone_id = from[[1]], percentage = 1 - sum(percentage))
   tos <- progressions %>% select(cell_id, milestone_id = to, percentage)
-  bind_rows(froms, tos) %>%
-    group_by(cell_id) %>%
-    mutate(percentage = ifelse(abs(rep(1, n()) - sum(percentage)) > 0, percentage / sum(percentage), percentage)) %>%
-    ungroup
+  bind_rows(froms, tos)
 }
 
 add_phantom_edges <- function(milestone_ids, milestone_network) {
