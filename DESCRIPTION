@@ -90,7 +90,6 @@ Remotes:
   kieranrcampbell/phenopath,
   kieranrcampbell/mfa,
   kstreet13/slingshot,
-  xu-lab/SLICE,
   rcannood/dynutils,
   rcannood/GEDEVO,
   rcannood/SCORPIUS,
@@ -102,4 +101,5 @@ Remotes:
   Zouter/pseudogp,
   Zouter/Wishbone,
   Zouter/GPfates,
-  Zouter/SCUBA
+  Zouter/SCUBA,
+  Zouter/SLICE
