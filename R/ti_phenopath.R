@@ -7,7 +7,7 @@ description_phenopath <- function() create_description(
   package_loaded = c(),
   par_set = makeParamSet(
     makeIntegerParam(id = "thin", lower = 2, upper = 500, default = 40),
-    makeDiscreteParam(id = "z_init", default = 1, values = c(1, 2, 3, 4, 5, "random")),
+    makeDiscreteParam(id = "z_init", default = 1, values = list(1, 2, 3, 4, 5, "random")),
     makeLogicalParam(id="model_mu", default=FALSE),
     makeLogicalParam(id="scale_y", default=TRUE)
   ),
@@ -25,8 +25,9 @@ run_phenopath <- function(
   ) {
   requireNamespace("phenopath")
 
-  fit <- phenopath::phenopath(counts, rep(1, nrow(counts)), elbo_tol = 1e-6, thin = , z_init=z_init)
-  time <- phenopath::trajectory(fit)
+  fit <- phenopath::phenopath(counts, rep(1, nrow(counts)), elbo_tol = 1e-6, thin = thin, z_init=z_init, model_mu=model_mu, scale_y=scale_y)
+  pseudotimes <- phenopath::trajectory(fit)
+  pseudotimes <- (pseudotimes - min(pseudotimes))/(max(pseudotimes) - min(pseudotimes))
 
   milestone_ids <- c("milestone_A", "milestone_B")
   milestone_network <- tibble::data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1)
@@ -44,7 +45,7 @@ run_phenopath <- function(
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
     progressions = progressions,
-    oui = oui
+    fit = fit
   )
 }
 
