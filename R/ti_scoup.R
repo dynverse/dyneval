@@ -70,6 +70,6 @@ run_scoup <- function(
 
 
 plot_scoup <- function(prediction) {
-  model %>% gather("endstate", "percentage", -cell_id, -time) %>%
+  prediction$model %>% gather("endstate", "percentage", -cell_id, -time) %>%
     ggplot() + geom_point(aes(time, percentage, color=endstate)) + facet_grid(endstate~.)
 }
