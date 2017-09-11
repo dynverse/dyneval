@@ -2,7 +2,7 @@
 #' @export
 description_phenopath <- function() create_description(
   name = "phenopath",
-  short_name = "phenopath",
+  short_name = "phenopat",
   package_required = c("phenopath"),
   package_loaded = c(),
   par_set = makeParamSet(
