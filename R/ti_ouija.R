@@ -45,7 +45,7 @@ run_ouija <- function(
 
   wrap_ti_prediction(
     ti_type = "linear",
-    id = "embeddr",
+    id = "ouija",
     cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
