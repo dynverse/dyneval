@@ -13,9 +13,6 @@ description_mpath <- function() create_description(
 )
 
 run_mpath <- function(counts, cell_grouping, numcluster=15, method="diversity") {
-  oldwd <- getwd() # Mpath generates a lot of plots and output files in the working directory, so change the wd here, some of these output files are necessary for other mpath functions, so we can't just disable the file saving without impacting these functions
-  setwd(tempdir())
-
   # function to save a data.frame in a temporary directory and return the file's location
   fakeFile <- function(x) {
     loc <- tempfile()
@@ -73,8 +70,6 @@ run_mpath <- function(counts, cell_grouping, numcluster=15, method="diversity") 
   milestone_network <- progressions %>% group_by(from, to) %>% summarise(length=n()) %>%
     right_join(milestone_network, by=c("from", "to")) %>%
     ungroup()
-
-  setwd(oldwd)
 
   wrap_ti_prediction(
     ti_type = "tree",

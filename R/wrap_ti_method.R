@@ -97,13 +97,18 @@ execute_method <- function(tasks, method, parameters, suppress_output = TRUE) {
 
         # Run model on task with given parameters. Suppress output if need be.
         time0 <- Sys.time()
-        if (suppress_output) {
-          capture.output({
+
+        oldwd <- getwd() # set working directory, to avoid polluting the working directory
+        setwd(tempdir())
+        tryCatch({
+          if (suppress_output) {
+            capture.output({
+              model <- do.call(method$run_fun, arglist)
+            })
+          } else {
             model <- do.call(method$run_fun, arglist)
-          })
-        } else {
-          model <- do.call(method$run_fun, arglist)
-        }
+          }
+        }, finally=setwd(oldwd)) # make sure working directory is always set to original even when errored
         time1 <- Sys.time()
         summary$time_method <- as.numeric(difftime(time1, time0, units = "sec"))
 

@@ -44,9 +44,6 @@ run_slice <- function(
   ) {
   if (k == 0) k = NULL
 
-  oldwd <- getwd() # SLICE generates a lot of plots and output files in the working directory, so change the wd here
-  setwd(tempdir())
-
   requireNamespace("igraph")
 
   sc <- construct(exprmatrix=t(counts) %>% as.data.frame(),
@@ -113,8 +110,6 @@ run_slice <- function(
     filter(row_number() == 1) %>%
     select(-state) %>%
     rename(percentage = time)
-
-  setwd(oldwd)
 
   prediction <- wrap_ti_prediction(
     ti_type = "tree",
