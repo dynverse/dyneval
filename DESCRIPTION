@@ -97,9 +97,9 @@ Remotes:
   rcannood/StemID,
   rcannood/Waterfall,
   Zouter/dyngen,
-  Zouter/Mpath,
-  Zouter/pseudogp,
-  Zouter/Wishbone,
-  Zouter/GPfates,
-  Zouter/SCUBA,
-  Zouter/SLICE
+  dynverse/Mpath,
+  dynverse/pseudogp,
+  dynverse/Wishbone,
+  dynverse/GPfates,
+  dynverse/SCUBA,
+  dynverse/SLICE
