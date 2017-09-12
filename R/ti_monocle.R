@@ -6,28 +6,43 @@ description_monocle_ddrtree <- function() description_monocle("DDRTree")
 #' @export
 description_monocle_pqtree <- function() description_monocle("ICA")
 
-description_monocle <- function(reduction_method) create_description(
-  name = glue::glue("monocle with {reduction_method}"),
-  short_name = ifelse(reduction_method == "DDRTree", "monocDDR", "monocPQ"),
-  package_loaded = c("monocle", "igraph", "reshape2"),
-  package_required = c(),
-  par_set = makeParamSet(
-    makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
-    makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
-    makeIntegerParam(id = "maxIter", lower = 1L, default = 20L, upper = 100L),
-    makeNumericParam(id = "sigma", lower = 0, default = .001, upper = 100),
-    makeLogicalParam(id = "lambda_null", default = T),
-    makeNumericParam(id = "lambda", lower = 0, default = 5, upper = 100),
-    makeLogicalParam(id = "ncenter_null", default = T),
-    makeIntegerParam(id = "ncenter", lower = 3, default = 5, upper = 20),
-    makeNumericParam(id = "param.gamma", lower = 0, default = 20, upper = 1e5),
-    makeNumericParam(id = "tol", lower = 0, default = .001, upper = 10),
-    makeLogicalParam(id = "auto_param_selection", default = T)
-  ),
-  properties = c("tibble"),#, "dimred", "dimred_traj", "pseudotime"), # todo: implement other outputs
-  run_fun = ifelse(reduction_method == "DDRTree", run_monocle_ddrtree, run_monocle_pqtree),
-  plot_fun = plot_monocle
-)
+description_monocle <- function(reduction_method) {
+  if(reduction_method == "DDRTree") {
+    par_set = makeParamSet(
+      makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
+      makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
+      makeIntegerParam(id = "maxIter", lower = 1L, default = 20L, upper = 100L),
+      makeNumericParam(id = "sigma", lower = 0, default = .001, upper = 100),
+      makeLogicalParam(id = "lambda_null", default = T),
+      makeNumericParam(id = "lambda", lower = 0, default = 5, upper = 100),
+      makeLogicalParam(id = "ncenter_null", default = T),
+      makeIntegerParam(id = "ncenter", lower = 3, default = 5, upper = 20),
+      makeNumericParam(id = "param.gamma", lower = 0, default = 20, upper = 1e5),
+      makeNumericParam(id = "tol", lower = 0, default = .001, upper = 10),
+      makeLogicalParam(id = "auto_param_selection", default = T)
+    )
+  } else if(reduction_method == "ICA"){
+    par_set = makeParamSet(
+      makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
+      makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
+      makeNumericParam(id = "lambda", lower = 0, default = 5, upper = 100),
+      makeLogicalParam(id = "ncenter_null", default = T),
+      makeNumericParam(id = "tol", lower = 0, default = .001, upper = 10),
+      makeLogicalParam(id = "auto_param_selection", default = T)
+    )
+  }
+
+  create_description(
+    name = glue::glue("monocle with {ifelse(reduction_method == 'DDRTree', 'DDRTree', 'ICA and PQTree')}"),
+    short_name = ifelse(reduction_method == "DDRTree", "monocDDR", "monocPQ"),
+    package_loaded = c("monocle", "igraph", "reshape2"),
+    package_required = c(),
+    par_set = par_set,
+    properties = c("tibble"),#, "dimred", "dimred_traj", "pseudotime"), # todo: implement other outputs
+    run_fun = ifelse(reduction_method == "DDRTree", run_monocle_ddrtree, run_monocle_pqtree),
+    plot_fun = plot_monocle
+  )
+}
 
 run_monocle_ddrtree <- function(...) {
   args <- list(...)
@@ -77,20 +92,33 @@ run_monocle <- function(counts,
   cds_1 <- estimateDispersions(cds_1)
 
   # reduce dimension
-  cds_2 <- reduceDimension(cds_1,
-                           reduction_method = reduction_method,
-                           max_components = num_dimensions, norm_method = norm_method,
-                           maxIter = maxIter, sigma = sigma, lambda = lambda, ncenter = ncenter,
-                           param.gamma = param.gamma, tol = tol, auto_param_selection = auto_param_selection)
+  if(reduction_method == "DDRTree") {
+    cds_2 <- reduceDimension(cds_1,
+                             reduction_method = reduction_method,
+                             max_components = num_dimensions, norm_method = norm_method,
+                             maxIter = maxIter, sigma = sigma, lambda = lambda, ncenter = ncenter,
+                             param.gamma = param.gamma, tol = tol, auto_param_selection = auto_param_selection)
+  } else if (reduction_method == "ICA") {
+    cds_2 <- reduceDimension(cds_1,
+                             reduction_method = reduction_method,
+                             max_components = num_dimensions, norm_method = norm_method,
+                             tol = tol, auto_param_selection = auto_param_selection)
+  }
+
 
   # order the cells
   cds_3 <- orderCells(cds_2, reverse = FALSE)
 
-  # retrieve the graph and the root cell
-  gr <- cds_3@auxOrderingData$DDRTree$pr_graph_cell_proj_tree
+  orderingData <- cds_3@auxOrderingData[[reduction_method]] # location of ordering data depends on reduction method
+  # retrieve the graph and the root cell, also depends on reduction method (-_-)
+  if (reduction_method == "DDRTree") {
+    gr <- orderingData$pr_graph_cell_proj_tree
+  } else if (reduction_method == "ICA") {
+    gr <- orderingData$cell_ordering_tree
+  }
 
   if(is.null(start_cell_id)) {
-    root <- cds_3@auxOrderingData$DDRTree$root_cell
+    root <- orderingData$root_cell
   } else {
     root <- start_cell_id
   }
