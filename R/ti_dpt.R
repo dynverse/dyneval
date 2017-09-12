@@ -49,7 +49,7 @@ run_dpt <- function(counts,
     from <- milestone_ids[[i]]
     index <- tips[[i]]
     data_frame(from = from, to = milestone_ids, length = dpt[[from]][tips])
-  })) %>% filter(row_number() %in% c(2, 6, 7)) %>% mutate(directed=FALSE)
+  })) %>% filter(row_number() %in% c(2, 3)) %>% mutate(directed=FALSE)
 
   wrap_ti_prediction(
     ti_type = "triangle",
