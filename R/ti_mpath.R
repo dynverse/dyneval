@@ -6,13 +6,20 @@ description_mpath <- function() create_description(
   package_loaded = c("Mpath"),
   package_required = c(),
   par_set = makeParamSet(
+    makeDiscreteParam(id = "distMethod", default = "euclidean", values = c("pearson", "kendall", "spearman", "euclidean")),
+    makeDiscreteParam(id = "method", default = "diversity_size", values = c("kmeans", "diversity", "size", "diversity_size")),
+    makeIntegerParam(id = "numcluster", lower = 3, default = 11, upper = 30),
+    makeNumericParam(id = "diversity_cut", lower = .1, default = .6, upper = 1),
+    makeNumericParam(id = "size_cut", lower = .01, default = .05, upper = 1)
   ),
   properties = c(),
   run_fun = run_mpath,
   plot_fun = plot_mpath
 )
 
-run_mpath <- function(counts, cell_grouping, numcluster=15, method="diversity") {
+run_mpath <- function(counts, cell_grouping,
+                      distMethod = "euclidean", method = "kmeans",
+                      numcluster = 11, diversity_cut = .6, size_cut = .05) {
   # function to save a data.frame in a temporary directory and return the file's location
   fakeFile <- function(x) {
     loc <- tempfile()
@@ -22,12 +29,19 @@ run_mpath <- function(counts, cell_grouping, numcluster=15, method="diversity") 
 
   sampleInfo <- cell_grouping %>% rename(GroupID=group_id)
 
-  #find_optimal_cluster_number(fakeFile(t(counts)), fakeFile(sampleInfo))
-
   # never use method = kmeans, dark monsters from the abiss reside there!
-  landmark_cluster <- landmark_designation(fakeFile(t(counts)), "wat", fakeFile(sampleInfo), numcluster=numcluster, method = method, saveRes=FALSE)
+  landmark_cluster <- landmark_designation(
+    fakeFile(t(counts)),
+    "output_disabled",
+    fakeFile(sampleInfo),
+    distMethod = distMethod,
+    method = method,
+    numcluster = numcluster,
+    diversity_cut = diversity_cut,
+    size_cut = size_cut,
+    saveRes = FALSE)
 
-  network <- build_network(t(counts), landmark_cluster)
+  network <- build_network(t(counts), landmark_cluster, distMethod = distMethod)
   trimmed_network <- trim_net(network)
 
   ordering <- nbor_order(t(counts), landmark_cluster, unique(landmark_cluster$landmark_cluster))
@@ -35,13 +49,19 @@ run_mpath <- function(counts, cell_grouping, numcluster=15, method="diversity") 
   trimmed_network[upper.tri(trimmed_network)] = 0
   attr(trimmed_network, "class") = "matrix"
 
-  mpath_network <- trimmed_network %>% as.matrix() %>% reshape2::melt(varnames=c("from", "to")) %>%
-    filter(value == 1) %>% select(-value) %>% mutate(from=as.character(from), to=as.character(to))
+  mpath_network <- trimmed_network %>%
+    as.matrix() %>%
+    reshape2::melt(varnames = c("from", "to")) %>%
+    filter(value == 1) %>%
+    select(-value) %>%
+    mutate(from = as.character(from), to = as.character(to))
 
   milestone_network <- mpath_network
 
   # add milestones for landmarks with only outgoing edges
-  beginning_milestones <- unique(c(milestone_network$from, milestone_network$to)) %>% keep(~!(. %in% milestone_network$from))
+  beginning_milestones <- unique(c(milestone_network$from, milestone_network$to)) %>%
+    keep(~!(. %in% milestone_network$from))
+
   milestone_network <- bind_rows(
     milestone_network,
     tibble(
