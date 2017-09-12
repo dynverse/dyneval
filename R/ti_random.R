@@ -1,28 +1,29 @@
-#' Description for random linear
+#' Description for random
 #' @export
-description_random_linear <- function() create_description(
-  name = "random_linear",
-  short_name = "randomli",
+description_shuffle <- function() create_description(
+  name = "shuffle",
+  short_name = "shuffle",
   package_loaded = c(),
   package_required = c(),
   par_set = makeParamSet(
   ),
   properties = c(),
-  run_fun = run_random_linear,
+  run_fun = run_shuffle,
   plot_fun = plot_default
 )
 
-run_random_linear <- function(counts) {
-  milestone_network <- tibble(from=1, to=2, length=1)
-  progressions <- tibble(cell_id=rownames(counts), from=1, to=2) %>%
-    mutate(percentage=runif(n()))
+run_shuffle <- function(counts, task) {
+  allcels <- rownames(counts)
+  mapper <- setNames(allcells, sample(allcells))
+  progressions <- task$progressions
+  progressions$cell_id <- mapper[progressions$cellid]
 
   wrap_ti_prediction(
-    ti_type = "linear",
-    id = "random_linear",
-    cell_ids = rownames(counts),
-    milestone_ids = c(1,2),
-    milestone_network = milestone_network,
+    ti_type = task$ti_type,
+    id = paste0(task$id, "_shuffled"),
+    cell_ids = task$cell_ids,
+    milestone_ids =task$milestone_ids,
+    milestone_network = task$milestone_network,
     progressions = progressions
   )
 }
