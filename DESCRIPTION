@@ -12,7 +12,7 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.0.1
 Depends:
-  R (>= 3.0.0)
+  R (>= 3.4.0)
 Imports: 
   coRanking,
   dplyr, 
@@ -71,6 +71,7 @@ Suggests:
   SLICER,
   slingshot,
   StemID,
+  topslam,
   TSCAN,
   Waterfall,
   Wishbone,
@@ -82,22 +83,24 @@ Remotes:
   bioc::monocle,
   bioc::scater,
   bioc::TSCAN,
-  jw156605/SLICER,
-  kieranrcampbell/embeddr,
-  kieranrcampbell/ouija,
-  kieranrcampbell/phenopath,
-  kieranrcampbell/mfa,
-  kstreet13/slingshot,
-  rcannood/dynutils,
   dynverse/GEDEVO,
-  rcannood/SCORPIUS,
-  dynverse/SCOUP,
-  dynverse/StemID,
-  dynverse/Waterfall,
-  Zouter/dyngen,
+  dynverse/GPfates,
   dynverse/Mpath,
   dynverse/pseudogp,
-  dynverse/Wishbone,
-  dynverse/GPfates,
+  dynverse/SCOUP,
   dynverse/SCUBA,
-  dynverse/SLICE
+  dynverse/SLICE,
+  dynverse/StemID,
+  dynverse/topslam,
+  dynverse/Waterfall,
+  dynverse/Wishbone,
+  jw156605/SLICER,
+  kieranrcampbell/embeddr,
+  kieranrcampbell/mfa,
+  kieranrcampbell/ouija,
+  kieranrcampbell/phenopath,
+  kstreet13/slingshot,
+  rcannood/dynutils,
+  rcannood/SCORPIUS,
+  Zouter/dyngen
+
