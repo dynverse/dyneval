@@ -10,7 +10,7 @@ description_topslam <- function() create_description(
     makeIntegerParam(id = "n_neighbors", lower=2, upper=100, default=10),
     makeIntegerParam(id = "linear_dims", lower=0, upper=5, default=0),
     makeIntegerParam(id = "max_iters", lower=100, upper=1000, default=200),
-    makeLogicalVectorParam(id = "dimreds", len = 5, default = c(TRUE, TRUE, TRUE, TRUE, TRUE))
+    makeLogicalVectorParam(id = "dimreds", len = 5, default = rep(TRUE, 5))
   ),
   properties = c(),
   run_fun = run_topslam,
@@ -23,7 +23,7 @@ run_topslam <- function(counts,
                         n_neighbors = 10,
                         linear_dims = 0,
                         max_iters = 200,
-                        dimreds = c(TRUE, TRUE, TRUE, TRUE, TRUE)
+                        dimreds = rep(TRUE, 5)
                       ) {
   requireNamespace("jsonlite")
   temp_folder <- tempfile()
