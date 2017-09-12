@@ -1,8 +1,14 @@
-#' Description for Monocle DDRtree
+#' Description for monocle DDRTree
 #' @export
-description_monocle_ddrtree <- function() create_description(
-  name = "monocle with DDRtree",
-  short_name = "monocDDR",
+description_monocle_ddrtree <- function() description_monocle("DDRTree")
+
+#' Description for monocle PQTree
+#' @export
+description_monocle_pqtree <- function() description_monocle("ICA")
+
+description_monocle <- function(reduction_method) create_description(
+  name = glue::glue("monocle with {reduction_method}"),
+  short_name = ifelse(reduction_method == "DDRTree", "monocDDR", "monocPQ"),
   package_loaded = c("monocle", "igraph", "reshape2"),
   package_required = c(),
   par_set = makeParamSet(
@@ -19,25 +25,41 @@ description_monocle_ddrtree <- function() create_description(
     makeLogicalParam(id = "auto_param_selection", default = T)
   ),
   properties = c("tibble"),#, "dimred", "dimred_traj", "pseudotime"), # todo: implement other outputs
-  run_fun = run_monocle_ddrtree,
-  plot_fun = plot_monocle_ddrtree
+  run_fun = ifelse(reduction_method == "DDRTree", run_monocle_ddrtree, run_monocle_pqtree),
+  plot_fun = plot_monocle
 )
+
+run_monocle_ddrtree <- function(...) {
+  args <- list(...)
+  print(args)
+  args$reduction_method <- "DDRTree"
+
+  do.call(run_monocle, args)
+}
+
+run_monocle_pqtree <- function(...) {
+  args <- list(...)
+  args$reduction_method <- "ICA"
+
+  do.call(run_monocle, args)
+}
 
 #' @importFrom igraph degree all_shortest_paths distances
 #' @importFrom reshape2 melt
-run_monocle_ddrtree <- function(counts,
-                                start_cell_id = NULL,
-                                num_dimensions = 2,
-                                norm_method = "vstExprs",
-                                maxIter = 20,
-                                sigma = 0.001,
-                                lambda_null = T,
-                                lambda = NULL,
-                                ncenter_null = T,
-                                ncenter = NULL,
-                                param.gamma = 20,
-                                tol = 0.001,
-                                auto_param_selection = T) {
+run_monocle <- function(counts,
+                        reduction_method,
+                        start_cell_id = NULL,
+                        num_dimensions = 2,
+                        norm_method = "vstExprs",
+                        maxIter = 20,
+                        sigma = 0.001,
+                        lambda_null = T,
+                        lambda = NULL,
+                        ncenter_null = T,
+                        ncenter = NULL,
+                        param.gamma = 20,
+                        tol = 0.001,
+                        auto_param_selection = T) {
   requireNamespace("monocle")
 
   if (lambda_null) lambda <- NULL
@@ -56,6 +78,7 @@ run_monocle_ddrtree <- function(counts,
 
   # reduce dimension
   cds_2 <- reduceDimension(cds_1,
+                           reduction_method = reduction_method,
                            max_components = num_dimensions, norm_method = norm_method,
                            maxIter = maxIter, sigma = sigma, lambda = lambda, ncenter = ncenter,
                            param.gamma = param.gamma, tol = tol, auto_param_selection = auto_param_selection)
@@ -66,7 +89,7 @@ run_monocle_ddrtree <- function(counts,
   # retrieve the graph and the root cell
   gr <- cds_3@auxOrderingData$DDRTree$pr_graph_cell_proj_tree
 
-  if(!is.null(start_cell_id)) {
+  if(is.null(start_cell_id)) {
     root <- cds_3@auxOrderingData$DDRTree$root_cell
   } else {
     root <- start_cell_id
@@ -78,10 +101,10 @@ run_monocle_ddrtree <- function(counts,
   branching <- names(deg)[deg > 2]
   terminal <- names(deg)[deg == 1]
 
-
   asp <- igraph::all_shortest_paths(gr, from = root, to = milestone_ids, mode = c("all"))
   asp2 <- lapply(asp$res, function(path) {
     last_bit <- tail(which(path$name %in% milestone_ids), 2)
+    print(last_bit)
     if (length(last_bit) == 1) {
       path[last_bit]
     } else {
@@ -109,7 +132,7 @@ run_monocle_ddrtree <- function(counts,
   # wrap output
   wrap_ti_prediction(
     ti_type = "tree",
-    id = "monocleDDRtree",
+    id = ifelse(reduction_method == "DDRTree", "monocDDR", "monocPQ"),
     cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
@@ -118,7 +141,7 @@ run_monocle_ddrtree <- function(counts,
   )
 }
 
-plot_monocle_ddrtree <- function(ti_predictions) {
+plot_monocle <- function(ti_predictions) {
   requireNamespace("monocle")
   monocle::plot_cell_trajectory(ti_predictions$cds)
 }
