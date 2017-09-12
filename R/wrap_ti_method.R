@@ -63,7 +63,7 @@ create_description <- function(
 #'
 #' @importFrom utils capture.output
 #' @export
-execute_method <- function(tasks, method, parameters, give_start_cell = FALSE, suppress_output = TRUE) {
+execute_method <- function(tasks, method, parameters, give_start_cell = FALSE, give_cell_grouping = FALSE, suppress_output = TRUE) {
   # Run the method on each of the tasks
   method_futures <- future(
     {
@@ -100,7 +100,14 @@ execute_method <- function(tasks, method, parameters, give_start_cell = FALSE, s
 
         # Include cell_grouping if method requires it
         if ("cell_grouping" %in% formalArgs(method$run_fun)) {
-          arglist$cell_grouping <- task$cell_grouping
+          # Some methods do not require a grouping, but can use it, determined by whether the default grouping is NULL
+          # Give the grouping if the grouping is needed, OR if give_cell_grouping is TRUE
+          if(
+            (!is.null(as.list(args(method$run_fun))$cell_grouping)) |
+            give_cell_grouping
+          ) {
+            arglist$cell_grouping <- task$cell_grouping
+          }
         }
 
         # Include task (only used for perturbing the gold standard, not used by any real methods)
@@ -134,7 +141,7 @@ execute_method <- function(tasks, method, parameters, give_start_cell = FALSE, s
 
       outputs
     },
-    globals = c("tasks", "method", "parameters", "suppress_output", "give_start_cell"),
+    globals = c("tasks", "method", "parameters", "suppress_output", "give_start_cell", "give_cell_grouping"),
     packages = c("dyneval", "dynutils", method$package_loaded),
     evaluator = plan("multisession")
   )

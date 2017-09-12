@@ -91,9 +91,9 @@ run_celltree <- function(counts,
   backbone_params <- list(lda_out, width.scale.factor = width_scale_factor, only.mst = F, merge.sequential.backbone = F)
 
   if(!is.null(cell_grouping)) {
-    backbone_params$grouping <- cell_grouping
+    backbone_params$grouping <- cell_grouping %>% slice(match(cell_id, rownames(counts))) %>% pull(group_id)
     if(!is.null(start_cell_id)) {
-      backbone_params$start.group.label <- cell_grouping[[start_cell_id]]
+      backbone_params$start.group.label <- cell_grouping %>% filter(cell_id == start_cell_id) %>% pull(group_id)
     }
   }
 
