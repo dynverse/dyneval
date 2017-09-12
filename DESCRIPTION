@@ -74,9 +74,7 @@ Suggests:
   TSCAN,
   Waterfall,
   Wishbone,
-  MCMCglmm,
-  coda,
-  rstan
+  MCMCglmm
 Remotes:
   alan-turing-institute/network-comparison,
   bioc::cellTree,
