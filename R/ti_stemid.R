@@ -113,7 +113,7 @@ run_stemid <- function(
     reshape2::melt(varnames = c("from", "to"), value.name = "length") %>%
     filter(!is.na(length)) %>%
     filter(from != to) %>%
-    mutate(from = as.character(from), to = as.character(to))
+    mutate(from = as.character(from), to = as.character(to), directed=FALSE)
 
   # calculating the cell-to-cluster distances manually
   trproj_res <- ltr@trproj$res %>% as_data_frame() %>% rownames_to_column("id") %>% select(id, closest = o, furthest = l)

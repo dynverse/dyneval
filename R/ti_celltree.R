@@ -129,7 +129,8 @@ run_celltree <- function(counts, method = "maptpx",
   milestone_network <- backbone %>% tidyr::nest(included) %>% dplyr::select(from, to) %>% mutate(
     from = milestone_ids[match(from, centralnodes)],
     to = milestone_ids[match(to, centralnodes)],
-    length = 1
+    length = 1,
+    directed=TRUE
   )
 
   # wrap output

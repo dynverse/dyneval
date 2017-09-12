@@ -30,7 +30,7 @@ run_phenopath <- function(
   pseudotimes <- (pseudotimes - min(pseudotimes))/(max(pseudotimes) - min(pseudotimes))
 
   milestone_ids <- c("milestone_A", "milestone_B")
-  milestone_network <- tibble::data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1)
+  milestone_network <- tibble::data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1, directed=TRUE)
   progressions <- tibble(
     cell_id = rownames(counts),
     from = milestone_ids[[1]],

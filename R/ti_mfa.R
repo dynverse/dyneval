@@ -34,7 +34,7 @@ run_mfa <- function(
   m <- mfa::mfa(counts, b=b, iter=iter, thin=thin, zero_inflation=zero_inflation, pc_initialise = pc_initialise, prop_collapse=prop_collapse, scale_input = scale_input)
   ms <- summary(m)
 
-  milestone_network <- tibble(from="M0", to=paste0("M", seq_len(b)), length=1)
+  milestone_network <- tibble(from="M0", to=paste0("M", seq_len(b)), length=1, directed=TRUE)
   progressions <- ms %>% mutate(
     from="M0",
     to=paste0("M", branch),

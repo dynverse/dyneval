@@ -63,7 +63,8 @@ run_scuba <- function(counts,
     mutate(
       length=1,
       from=as.character(from),
-      to=as.character(to)
+      to=as.character(to),
+      directed=TRUE
     )
 
   milestone_ids <- unique(c(milestone_network$from, milestone_network$to))

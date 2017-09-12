@@ -32,7 +32,7 @@ run_scorpius <- function(counts,
   traj <- SCORPIUS::infer.trajectory(space, k = num_clusters, thresh = thresh, maxit = maxit, stretch = stretch, smoother = smoother)
 
   milestone_ids <- c("milestone_A", "milestone_B")
-  milestone_network <- data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1)
+  milestone_network <- data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1, directed=TRUE)
   milestone_percentages <- bind_rows(
     data_frame(cell_id = rownames(expression), milestone_id = milestone_ids[[1]], percentage = 1 - traj$time),
     data_frame(cell_id = rownames(expression), milestone_id = milestone_ids[[2]], percentage = traj$time)

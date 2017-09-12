@@ -45,7 +45,7 @@ run_embeddr <- function(counts,
   dimred_traj <- results %>% dplyr::arrange(pseudotime) %>% select(starts_with("trajectory"))
 
   milestone_ids <- c("milestone_A", "milestone_B")
-  milestone_network <- tibble::data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1)
+  milestone_network <- tibble::data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1, directed=TRUE)
   milestone_percentages <- bind_rows(
     tibble(
       cell_id = rownames(counts), milestone_id=milestone_ids[[1]], percentage=1-pseudotime

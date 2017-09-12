@@ -66,7 +66,7 @@ run_pseudogp <- function(
     mutate(from="M1", to="M2") %>%
     mutate(cell_id = as.character(cell_id))
 
-  milestone_network <- tibble(from="M1", to="M2", length=1)
+  milestone_network <- tibble(from="M1", to="M2", length=1, directed=TRUE)
 
   wrap_ti_prediction(
     ti_type = "linear",

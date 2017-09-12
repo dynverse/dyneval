@@ -95,7 +95,7 @@ run_monocle_ddrtree <- function(counts,
     from_ <- head(p, 1)$name
     to_ <- tail(p, 1)$name
     data_frame(from = paste0("milestone_", from_), to = paste0("milestone_", to_), length = dist_m[[from_, to_]])
-  })) %>% mutate(length = length / max(length))
+  })) %>% mutate(length = length / max(length), directed=TRUE)
 
   milestone_percentages <- bind_rows(lapply(asp2, function(path) {
     dists <- t(igraph::distances(gr, v = path[c(1, length(path))], to = path))
