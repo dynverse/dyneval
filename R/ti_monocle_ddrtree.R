@@ -26,6 +26,7 @@ description_monocle_ddrtree <- function() create_description(
 #' @importFrom igraph degree all_shortest_paths distances
 #' @importFrom reshape2 melt
 run_monocle_ddrtree <- function(counts,
+                                start_cell_id = NULL,
                                 num_dimensions = 2,
                                 norm_method = "vstExprs",
                                 maxIter = 20,
@@ -64,7 +65,12 @@ run_monocle_ddrtree <- function(counts,
 
   # retrieve the graph and the root cell
   gr <- cds_3@auxOrderingData$DDRTree$pr_graph_cell_proj_tree
-  root <- cds_3@auxOrderingData$DDRTree$root_cell
+
+  if(!is.null(start_cell_id)) {
+    root <- cds_3@auxOrderingData$DDRTree$root_cell
+  } else {
+    root <- start_cell_id
+  }
 
   # find the branching cells and the terminal cells using the degree
   deg <- igraph::degree(gr, mode = c("all"))
