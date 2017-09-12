@@ -6,7 +6,7 @@ description_shuffled <- function() create_description(
   package_loaded = c(),
   package_required = c(),
   par_set = makeParamSet(
-    makeIntegerParam(id = "dummy_param", lower = 0, default = 0.5, upper = 1)
+    makeNumericParam(id = "dummy_param", lower = 0, default = 0.5, upper = 1)
   ),
   properties = c(),
   run_fun = run_shuffled,
