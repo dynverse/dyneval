@@ -5,7 +5,7 @@
 \title{Run a method on a set of tasks with a set of parameters}
 \usage{
 execute_method(tasks, method, parameters, give_start_cell = FALSE,
-  suppress_output = TRUE)
+  give_cell_grouping = FALSE, suppress_output = TRUE)
 }
 \arguments{
 \item{tasks}{the tasks on which to evaluate}
