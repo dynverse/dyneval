@@ -62,11 +62,18 @@ description_celltree_vem <- function() create_description(
 
 #' @importFrom igraph degree distances get.vertex.attribute induced_subgraph
 #' @importFrom reshape2 melt
-run_celltree <- function(counts, method = "maptpx",
+run_celltree <- function(counts,
+                         start_cell_id=NULL,
+                         cell_grouping=NULL,
+                         method = "maptpx",
                          num_topics_lower = 2,
                          num_topics_upper = 15,
                          num_topics = num_topics_lower:num_topics_upper,
-                         sd_filter = .5, tot_iter = 1e6, tolerance = .05, width_scale_factor = 1.5) {
+                         sd_filter = .5,
+                         tot_iter = 1e6,
+                         tolerance = .05,
+                         width_scale_factor = 1.5
+  ) {
   requireNamespace("cellTree")
 
   expression <- log2(counts+1)
@@ -80,11 +87,17 @@ run_celltree <- function(counts, method = "maptpx",
     tot.iter = tot_iter,
     tol = tolerance)
 
-  mst_tree <- cellTree::compute.backbone.tree(
-    lda_out,
-    width.scale.factor = width_scale_factor,
-    only.mst = F,
-    merge.sequential.backbone = F)
+  # put the parameters for the backbones in separate list, for adding optional cell_grouping and (if grouping is given) start group
+  backbone_params <- list(lda_out, width.scale.factor = width_scale_factor, only.mst = F, merge.sequential.backbone = F)
+
+  if(!is.null(cell_grouping)) {
+    backbone_params$grouping <- cell_grouping
+    if(!is.null(start_cell_id)) {
+      backbone_params$start.group.label <- cell_grouping[[start_cell_id]]
+    }
+  }
+
+  mst_tree <- do.call(cellTree::compute.backbone.tree, backbone_params)
 
   backbone_gr <- igraph::induced_subgraph(mst_tree, igraph::get.vertex.attribute(mst_tree, "is.backbone"))
   tomerge <- names(igraph::V(backbone_gr))[igraph::degree(backbone_gr) == 2]
