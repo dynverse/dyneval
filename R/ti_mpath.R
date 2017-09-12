@@ -10,7 +10,7 @@ description_mpath <- function() create_description(
     makeDiscreteParam(id = "method", default = "diversity_size", values = c("kmeans", "diversity", "size", "diversity_size")),
     makeIntegerParam(id = "numcluster", lower = 3, default = 11, upper = 30),
     makeNumericParam(id = "diversity_cut", lower = .1, default = .6, upper = 1),
-    makeNumericParam(id = "size_cut", lower = .01, default = .05, upper = 1),
+    makeNumericParam(id = "size_cut", lower = .01, default = .05, upper = 1)
   ),
   properties = c(),
   run_fun = run_mpath,
