@@ -14,51 +14,7 @@ progressions <- tasks$progressions[[1]]
 
 
 
-# choose certain parameters for each method, at which we know this method will perform well for the toy dataset
-method_params <- list(
-  waterfall=list(),
-  scorpius=list(),
-  slingshot=list(),
-  gpfates=list(nfates=1),
-  stemid=list(clustnr=10, bootnr=10, pdishuf=10),
-  tscan=list(),
-  embeddr=list(nn_pct = 2),
-  celltree_gibbs=list(sd_filter = 0),
-  celltree_maptpx=list(sd_filter = 0),
-  celltree_vem=list(sd_filter = 0),
-  scuba=list(),
-  slicer = list(min_branch_len=50),
-  monocle_ddrtree=list(),
-  wishbone = list(branch=F),
-  pseudogp = list(iter=100, initialise_from="principal_curve"),
-  mpath = list(numcluster=6),
-  scoup = list(nbranch=1),
-  slice = list(),
-  ouija = list(),
-  random_linear=list()
-)
 
-method_params <- list(
-  waterfall=list(),
-  scorpius=list(),
-  slingshot=list(),
-  gpfates=list(nfates=2),
-  stemid=list(clustnr=10, bootnr=10, pdishuf=10),
-  tscan=list(),
-  embeddr=list(nn_pct = 2),
-  celltree_gibbs=list(sd_filter = 0),
-  celltree_maptpx=list(sd_filter = 0),
-  celltree_vem=list(sd_filter = 0),
-  scuba=list(),
-  slicer = list(min_branch_len=50),
-  monocle_ddrtree=list(),
-  wishbone = list(branch=F),
-  pseudogp = list(iter=100, initialise_from="principal_curve"),
-  mpath = list(numcluster=6),
-  scoup = list(nbranch=2),
-  random_linear=list()
-)
-#
 #
 # prediction <- dyneval:::execute_method(tasks, description_mpath(), method_descriptions$mpath, suppress_output = F)[[1]]$model
 
@@ -67,10 +23,11 @@ method_descriptions <- map(method_names, ~get(paste0("description_", .))()) %>% 
 
 metric_names <- c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "isomorphic", "robbie_network_score")
 
-method_names <- c("ouija")
+#method_names <- c("scoup")
 
 # test the methods and get the scores
-results <- purrr::map(method_names, function(method_name) {
+results <- parallel::mclapply(method_names, function(method_name) {
+# results <- purrr::map(method_names, function(method_name) {
 # results <- PRISM::qsub_lapply(names(method_descriptions), function(method_name) {
   library(dyneval)
 
@@ -97,8 +54,8 @@ results <- purrr::map(method_names, function(method_name) {
     dyneval:::execute_evaluation(tasks, method, params, metrics = metric_names, suppress_output = F)
   }
   )()
-# }, mc.cores=8)
-})
+}, mc.cores=3)
+# })
 # }, qsub_environment = list2env(lst(method_descriptions, tasks, metric_names)), qsub_config = PRISM::override_qsub_config(memory = "10G", execute_before=c("module load python/x86_64/3.5.1")))
 #
 # PRISM::qsub_run(
