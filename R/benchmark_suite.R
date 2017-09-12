@@ -58,6 +58,7 @@ benchmark_suite_submit <- function(
           "tasks", "task_group", "task_fold",
           "num_cores", "metrics", "impute_fun",
           "control_train", "control_test", "grid"),
+        qsub_packages = c("dplyr", "purr", "dyneval", "mlrMBO", "parallelMap"),
         qsub_config = PRISM::override_qsub_config(
           wait = F,
           num_cores = num_cores,
@@ -70,12 +71,6 @@ benchmark_suite_submit <- function(
           execute_before = " export R_MAX_NUM_DLLS=200"
         ),
         FUN = function(grid_i) {
-          library(dplyr)
-          library(purrr)
-          library(dyneval)
-          library(mlrMBO)
-          library(parallelMap)
-
           fold_i <- grid[grid_i,]$fold_i
           group_sel <- grid[grid_i,]$group_sel
           repeat_i <- grid[grid_i,]$repeat_i
