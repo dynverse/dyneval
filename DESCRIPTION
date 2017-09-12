@@ -33,6 +33,7 @@ Imports:
   netdist,
   ParamHelpers,
   pheatmap,
+  PRISM,
   purrr, 
   readr,
   reshape2,
@@ -101,6 +102,7 @@ Remotes:
   kieranrcampbell/phenopath,
   kstreet13/slingshot,
   rcannood/dynutils,
+  rcannood/PRISM,
   rcannood/SCORPIUS,
   Zouter/dyngen
 
