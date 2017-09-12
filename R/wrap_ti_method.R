@@ -134,7 +134,7 @@ execute_method <- function(tasks, method, parameters, give_start_cell = FALSE, s
 
       outputs
     },
-    globals = c("tasks", "method", "parameters", "suppress_output"),
+    globals = c("tasks", "method", "parameters", "suppress_output", "give_start_cell"),
     packages = c("dyneval", "dynutils", method$package_loaded),
     evaluator = plan("multisession")
   )
