@@ -27,7 +27,8 @@ run_dpt <- function(counts,
                     density_norm = T,
                     n_local_lower = 5,
                     n_local_upper = 7,
-                    w_width = .1) {
+                    w_width = .1,
+                    branching=TRUE) {
   requireNamespace("destiny")
 
   n_local <- seq(n_local_lower, n_local_upper, by = 1)
@@ -35,7 +36,7 @@ run_dpt <- function(counts,
   expr <- log2(counts+1)
 
   dm <- destiny::DiffusionMap(expr, sigma = sigma, distance = distance, n_eigs = n_eigs, density_norm = density_norm, n_local = n_local)
-  dpt <- destiny::DPT(dm, w_width = w_width)
+  dpt <- destiny::DPT(dm, w_width = w_width, branching=branching)
 
   tips <- destiny::tips(dpt)
   milestone_ids <- paste0("DPT", tips)
