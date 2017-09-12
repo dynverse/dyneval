@@ -415,8 +415,14 @@ calculate_robbie_network_score <- function(net1, net2) {
     net1 <- net3
   }
 
+  # if both networks have only one edge...
   if(nrow(net1) == 1) {
-    return(1) # perfect score if both networks just contain one edge, net1 will always be the largest network
+    # special cases: either the networks are a cycle, or contain one linear edge
+    if(length(unique(c(net1$from, net1$to))) == length(unique(c(net2$from, net2$to)))) {
+      return(1)
+    } else {
+      return(0)
+    }
   }
 
   net <- get_adjacency(net1)
