@@ -13,7 +13,7 @@ description_shuffled <- function() create_description(
 )
 
 run_shuffled <- function(counts, task) {
-  allcels <- rownames(counts)
+  allcells <- rownames(counts)
   mapper <- setNames(allcells, sample(allcells))
   progressions <- task$progressions
   progressions$cell_id <- mapper[progressions$cellid]
