@@ -14,6 +14,8 @@ execute_method(tasks, method, parameters, give_start_cell = FALSE,
 
 \item{parameters}{the parameters to evaluate with}
 
+\item{give_start_cell}{whether a start cell should be provided even though a method doesn't require it}
+
 \item{suppress_output}{whether or not to suppress the outputted messages}
 }
 \description{

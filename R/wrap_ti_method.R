@@ -58,6 +58,7 @@ create_description <- function(
 #' @param tasks the tasks on which to evaluate
 #' @param method the method to evaluate
 #' @param parameters the parameters to evaluate with
+#' @param give_start_cell whether a start cell should be provided even though a method doesn't require it
 #' @param suppress_output whether or not to suppress the outputted messages
 #'
 #' @importFrom utils capture.output
