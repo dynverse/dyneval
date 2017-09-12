@@ -95,6 +95,11 @@ execute_method <- function(tasks, method, parameters, suppress_output = TRUE) {
           arglist$cell_grouping <- task$cell_grouping
         }
 
+        # Include task (only used for perturbing the gold standard, not used by any real methods)
+        if ("task" %in% formalArgs(method$run_fun)) {
+          arglist$task <- task
+        }
+
         # Run model on task with given parameters. Suppress output if need be.
         time0 <- Sys.time()
 
