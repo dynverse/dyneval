@@ -7,14 +7,14 @@ test_that("Testing abstract_wrapper", {
   cell_ids <- c("truth", "universally", "acknowledged", "that", "a", "single")
   milestone_ids <-  c("man", "in", "possession", "of", "good", "fortune", "must")
   milestone_network <- tribble(
-    ~from, ~to, ~length,
-    "man", "in", 1,
-    "in", "possession", 2,
-    "in", "of", 3,
-    "possession", "good", 4,
-    "of", "fortune", 5,
-    "good", "must", 6,
-    "fortune", "must", 7
+    ~from, ~to, ~length, ~directed,
+    "man", "in", 1, TRUE,
+    "in", "possession", 2, TRUE,
+    "in", "of", 3, TRUE,
+    "possession", "good", 4, TRUE,
+    "of", "fortune", 5, TRUE,
+    "good", "must", 6, TRUE,
+    "fortune", "must", 7, TRUE
   )
   milestone_percentages <- tribble(
     ~cell_id, ~milestone_id, ~percentage,

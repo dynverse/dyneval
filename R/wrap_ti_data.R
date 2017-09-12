@@ -107,7 +107,7 @@ abstract_wrapper <- function(
   }
 
   if (!is.data.frame(milestone_percentages) || ncol(milestone_percentages) != 3 || any(colnames(milestone_percentages) != c("cell_id", "milestone_id", "percentage"))) {
-    stop(sQuote("milestone_percentages"), " should be a data frame with exactly three columns named ", sQuote("cell_id"),
+    stop(sQuote("milestone_percentages"), " should be a data frame with exactly four columns named ", sQuote("cell_id"),
          ", ", sQuote("milestone_id"), " and ", sQuote("percentage"), ".")
   }
   if (!is.data.frame(progressions) || ncol(progressions) != 4 || any(colnames(progressions) != c("cell_id", "from", "to", "percentage"))) {

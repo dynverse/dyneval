@@ -60,7 +60,7 @@ test_that("Testing execute_method with dummy method", {
       pt <- (pt - min(pt)) / (max(pt) - min(pt))
 
       milestone_ids <- c("start", "end")
-      milestone_network <- data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1)
+      milestone_network <- data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1, directed=TRUE)
       progressions <- data_frame(cell_id = names(pt), from = milestone_ids[[1]], to = milestone_ids[[2]], percentage = pt)
 
       wrap_ti_prediction(

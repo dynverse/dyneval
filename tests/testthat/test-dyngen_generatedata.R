@@ -56,6 +56,7 @@ for (taski in seq_len(nrow(toy_tasks))) {
     expect_true( all(milestone_network$from %in% milestone_ids) )
     expect_true( all(milestone_network$to %in% milestone_ids) )
     expect_true( all(milestone_network$length > 0) )
+    expect_true( is.logical(milestone_network$directed) )
 
     milestone_percentages <- task$milestone_percentages
     expect_equal( sort(unique(milestone_percentages$cell_id)), sort(cell_ids) )
