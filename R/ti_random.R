@@ -1,6 +1,6 @@
-#' Description for random
+#' Description for shuffled
 #' @export
-description_shuffle <- function() create_description(
+description_shuffled <- function() create_description(
   name = "shuffle",
   short_name = "shuffle",
   package_loaded = c(),
@@ -8,11 +8,11 @@ description_shuffle <- function() create_description(
   par_set = makeParamSet(
   ),
   properties = c(),
-  run_fun = run_shuffle,
+  run_fun = run_shuffled,
   plot_fun = plot_default
 )
 
-run_shuffle <- function(counts, task) {
+run_shuffled <- function(counts, task) {
   allcels <- rownames(counts)
   mapper <- setNames(allcells, sample(allcells))
   progressions <- task$progressions
