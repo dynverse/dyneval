@@ -4,7 +4,8 @@
 \alias{execute_method}
 \title{Run a method on a set of tasks with a set of parameters}
 \usage{
-execute_method(tasks, method, parameters, suppress_output = TRUE)
+execute_method(tasks, method, parameters, give_start_cell = FALSE,
+  suppress_output = TRUE)
 }
 \arguments{
 \item{tasks}{the tasks on which to evaluate}
