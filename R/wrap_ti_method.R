@@ -62,7 +62,7 @@ create_description <- function(
 #'
 #' @importFrom utils capture.output
 #' @export
-execute_method <- function(tasks, method, parameters, suppress_output = TRUE) {
+execute_method <- function(tasks, method, parameters, give_start_cell = FALSE, suppress_output = TRUE) {
   # Run the method on each of the tasks
   method_futures <- future(
     {
@@ -87,7 +87,14 @@ execute_method <- function(tasks, method, parameters, suppress_output = TRUE) {
         # Add prior information
         # Include start cell if method requires it
         if ("start_cell_id" %in% formalArgs(method$run_fun)) {
-          arglist$start_cell_id <- task$special_cells$start_cell_id
+          # Some methods do not require a start cell, but can use it, determined by whether the default start_cell_id is NULL
+          # Give the start cell if the start cell is needed, OR if give_start_cell is TRUE
+          if(
+            (!is.null(as.list(args(method$run_fun))$start_cell_id)) |
+            give_start_cell
+          ) {
+            arglist$start_cell_id <- task$special_cells$start_cell_id
+          }
         }
 
         # Include cell_grouping if method requires it
