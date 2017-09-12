@@ -16,7 +16,7 @@ run_shuffled <- function(counts, task) {
   allcells <- rownames(counts)
   mapper <- setNames(allcells, sample(allcells))
   progressions <- task$progressions
-  progressions$cell_id <- mapper[progressions$cellid]
+  progressions$cell_id <- mapper[progressions$cell_id]
 
   wrap_ti_prediction(
     ti_type = task$ti_type,
