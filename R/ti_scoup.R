@@ -62,7 +62,7 @@ run_scoup <- function(
     id = "SCOUP",
     cell_ids = rownames(counts),
     milestone_ids = unique(c(milestone_network$from, milestone_network$to)),
-    milestone_network = milestone_network %>% select(from, to, length),
+    milestone_network = milestone_network %>% select(from, to, length, directed),
     progressions = progressions %>% select(cell_id, from, to, percentage),
     model = model
   )

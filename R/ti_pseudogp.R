@@ -73,7 +73,7 @@ run_pseudogp <- function(
     id = "pseudogp",
     cell_ids = rownames(counts),
     milestone_ids = c("M1", "M2"),
-    milestone_network = milestone_network %>% select(from, to, length),
+    milestone_network = milestone_network %>% select(from, to, length, directed),
     progressions = progressions %>% select(cell_id, from, to, percentage),
     dimreds_samples = spaces,
     sample_posterior_times = sample_posterior_times,
