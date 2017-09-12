@@ -6,14 +6,11 @@ description_topslam <- function() create_description(
   package_loaded = c(),
   package_required = c("jsonlite", "topslam"),
   par_set = makeParamSet(
-    # makeIntegerParam(id = "knn", lower=2, upper=100, default=10),
-    # makeIntegerParam(id = "n_diffusion_components", lower=2, upper=20, default=10),
-    # makeIntegerParam(id = "n_pca_components", lower=2, upper=30, default=15),
-    # makeLogicalParam(id = "branch", default = TRUE),
-    # makeIntegerParam(id = "k", lower=2, upper=100, default=15),
-    # makeIntegerParam(id = "num_waypoints", lower=2, upper=500, default=250),
-    # makeLogicalParam(id = "normalize", default = TRUE),
-    # makeNumericParam(id = "epsilon", lower=0.1, upper=10, default=1)
+    makeIntegerParam(id = "n_components", lower=2, upper=10, default=2),
+    makeIntegerParam(id = "n_neighbors", lower=2, upper=100, default=10),
+    makeIntegerParam(id = "linear_dims", lower=0, upper=5, default=0),
+    makeIntegerParam(id = "max_iters", lower=100, upper=1000, default=200),
+    makeLogicalVectorParam(id = "dimreds", len = 5, default = c(TRUE, TRUE, TRUE, TRUE, TRUE))
   ),
   properties = c(),
   run_fun = run_topslam,
@@ -25,7 +22,8 @@ run_topslam <- function(counts,
                         n_components = 2,
                         n_neighbors = 10,
                         linear_dims = 0,
-                        max_iters = 200
+                        max_iters = 200,
+                        dimreds = c(TRUE, TRUE, TRUE, TRUE, TRUE)
                       ) {
   requireNamespace("jsonlite")
   temp_folder <- tempfile()
@@ -39,6 +37,7 @@ run_topslam <- function(counts,
   params <- as.list(environment())[formalArgs(run_topslam)]
   params <- params[-(names(params) == "counts")]
   params$start_cell_id <- which(rownames(counts) == start_cell_id) -1 # add this minus 1 because R starts counting from 1
+  params$dimreds <- c("t-SNE", "PCA", "Spectral", "Isomap", "ICA")[dimreds]
   params %>% jsonlite::toJSON(auto_unbox=TRUE) %>% write(paste0(temp_folder, "/params.json"))
 
   output <- system2(
