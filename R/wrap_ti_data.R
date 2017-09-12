@@ -88,9 +88,9 @@ abstract_wrapper <- function(
   progressions = NULL,
   ...
 ) {
-  if (!is.data.frame(milestone_network) || ncol(milestone_network) != 3 || any(colnames(milestone_network) != c("from", "to", "length"))) {
+  if (!is.data.frame(milestone_network) || ncol(milestone_network) != 4 || any(colnames(milestone_network) != c("from", "to", "length", "directed"))) {
     stop(sQuote("milestone_network"), " should be a data frame with exactly three columns named ", sQuote("from"),
-         ", ", sQuote("to"), " and ", sQuote("length"), ".")
+         ", ", sQuote("to"), ", ", sQuote("length"), " and ", sQuote("directed"), ".")
   }
   if (any(!milestone_network$from %in% milestone_ids) || any(!milestone_network$to %in% milestone_ids)) {
     stop("Not all states in ", sQuote("milestone_network"), " are in ", sQuote("milestone_ids"), ".")
