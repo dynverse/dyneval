@@ -37,7 +37,7 @@ run_dpt <- function(counts,
   dm <- destiny::DiffusionMap(expr, sigma = sigma, distance = distance, n_eigs = n_eigs, density_norm = density_norm, n_local = n_local)
   dpt <- destiny::DPT(dm, w_width = w_width)
 
-  tips <- tips(dpt)
+  tips <- destiny::tips(dpt)
   milestone_ids <- paste0("DPT", tips)
 
   milestone_percentages <- bind_rows(lapply(milestone_ids, function(x) data_frame(cell_id = rownames(expr), milestone_id = x, percentage = dpt[[x]]))) %>%
@@ -57,13 +57,13 @@ run_dpt <- function(counts,
     cell_ids = rownames(expr),
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
-    milestone_percentages = milestone_percentages
+    milestone_percentages = milestone_percentages,
+    dpt = dpt
   )
 }
 
-plot_dpt <- function(ti_predictions) {
+plot_dpt <- function(prediction) {
   requireNamespace("destiny")
-  #qplot(percent_rank(ti_predictions$milestone_percentages[,1]), ti_predictions$milestone_percentages[,1], colour = data$sample_info$group.name)
-  stop("TODO!")
+  destiny::plot.DPT(prediction$dpt)
 }
 
