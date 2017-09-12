@@ -70,7 +70,8 @@ run_gpfates <- function(
   milestone_network <- tibble(
     from="M0",
     to=glue::glue("M{seq_len(nfates)}"),
-    length=1
+    length=1,
+    directed=TRUE
   )
   milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
 

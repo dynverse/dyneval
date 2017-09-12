@@ -69,7 +69,8 @@ run_mpath <- function(counts, cell_grouping, numcluster=15, method="diversity") 
 
   milestone_network <- progressions %>% group_by(from, to) %>% summarise(length=n()) %>%
     right_join(milestone_network, by=c("from", "to")) %>%
-    ungroup()
+    ungroup() %>%
+    mutate(directed=FALSE)
 
   wrap_ti_prediction(
     ti_type = "tree",

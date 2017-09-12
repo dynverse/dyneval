@@ -109,7 +109,7 @@ run_slingshot <- function(
   milestone_network <- combinedbundles %>%
     rename(from=prevbundle, to=id) %>%
     select(from, to) %>%
-    mutate(from=paste0("M", from), to=paste0("M", to))
+    mutate(from=paste0("M", from), to=paste0("M", to), directed=TRUE)
 
   milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
 
@@ -135,7 +135,7 @@ run_slingshot <- function(
     id = "slingshot",
     cell_ids = colnames(expression),
     milestone_ids = milestone_ids,
-    milestone_network = milestone_network %>% select(from, to, length),
+    milestone_network = milestone_network %>% select(from, to, length, directed),
     progressions = progressions %>% select(cell_id, from, to, percentage),
     dimred_samples = space,
     dimred_clust = labels,

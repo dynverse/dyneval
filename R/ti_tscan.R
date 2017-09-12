@@ -54,7 +54,7 @@ run_tscan <- function(counts,
   cds_3 <- TSCAN::TSCANorder(cds_2)
 
   milestone_ids <- paste0("milestone_", c(head(cds_3, 1), tail(cds_3, 1)))
-  milestone_network <- data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1)
+  milestone_network <- data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1, directed=TRUE)
 
   pseudotime <- setNames(percent_rank(match(rownames(counts), cds_3)), rownames(counts))
   milestone_percentages <- bind_rows(

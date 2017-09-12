@@ -62,7 +62,8 @@ run_slicer <- function(counts,
     summarise(length=n()) %>%
     mutate(
       from=paste0("M", seq_along(unique(progressions$branch_id))*2-1),
-      to=paste0("M", seq_along(unique(progressions$branch_id))*2)
+      to=paste0("M", seq_along(unique(progressions$branch_id))*2),
+      directed=FALSE
     )
 
   milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
@@ -111,7 +112,7 @@ run_slicer <- function(counts,
     id = "SLICER",
     cell_ids = rownames(expression_filtered),
     milestone_ids = milestone_ids,
-    milestone_network = milestone_network %>% select(from, to, length),
+    milestone_network = milestone_network %>% select(from, to, length, directed),
     milestone_percentages = milestone_percentages %>% select(cell_id, milestone_id, percentage),
     dimred_samples = traj_lle,
     dimred_clust = branches

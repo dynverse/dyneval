@@ -76,6 +76,7 @@ run_wishbone <- function(counts,
   } else {
     milestone_network <- tibble(from=c("M1"), to=c("M2"), branch=c(1))
   }
+  milestone_network <- milestone_network %>% mutate(directed=TRUE)
 
   progressions <- left_join(model, milestone_network, by="branch")
 
@@ -104,7 +105,7 @@ run_wishbone <- function(counts,
     id = "Wishbone",
     cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
-    milestone_network = milestone_network %>% select(from, to, length),
+    milestone_network = milestone_network %>% select(from, to, length, directed),
     progressions = progressions %>% select(cell_id, from, to, percentage),
     space = space,
     model=model

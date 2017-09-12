@@ -55,7 +55,7 @@ run_scoup <- function(
     mutate(percentage = percentage * (time/maxtime)) %>%
     mutate(from="M1")
 
-  milestone_network <- tibble(from="M1", to=paste0("M", seq_len(nbranch) + 1), length=1)
+  milestone_network <- tibble(from="M1", to=paste0("M", seq_len(nbranch) + 1), length=1, directed=TRUE)
 
   wrap_ti_prediction(
     ti_type = "branching",

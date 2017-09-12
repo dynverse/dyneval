@@ -79,7 +79,7 @@ run_slice <- function(
     select(cell_id, state)
 
   # each stable state is a milestone
-  milestone_network <- sc@model$lineageModel %>% igraph::as_data_frame() %>% rename(length=weight)
+  milestone_network <- sc@model$lineageModel %>% igraph::as_data_frame() %>% rename(length=weight) %>% mutate(directed=TRUE)
 
   # now extract the pseudotimes
   # this is not directly available for us, we will use the method's functions to constuct small trajectories between every stable state (SLICE uses principal curves)
