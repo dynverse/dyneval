@@ -5,7 +5,7 @@
 \title{Run a method on a set of tasks with a set of parameters}
 \usage{
 execute_method(tasks, method, parameters, give_start_cell = FALSE,
-  suppress_output = TRUE)
+  give_cell_grouping = FALSE, suppress_output = TRUE)
 }
 \arguments{
 \item{tasks}{the tasks on which to evaluate}
@@ -15,6 +15,8 @@ execute_method(tasks, method, parameters, give_start_cell = FALSE,
 \item{parameters}{the parameters to evaluate with}
 
 \item{give_start_cell}{whether a start cell should be provided even though a method doesn't require it}
+
+\item{give_cell_grouping}{whether a cell grouping should be provided even though a method doesn't require it}
 
 \item{suppress_output}{whether or not to suppress the outputted messages}
 }
