@@ -1,12 +1,12 @@
 #' Description for monocle DDRTree
 #' @export
-description_monocle_ddrtree <- function() description_monocle("DDRTree")
+description_monocle_ddrtree <- function() generic_monocle_description("DDRTree")
 
 #' Description for monocle PQTree
 #' @export
-description_monocle_pqtree <- function() description_monocle("ICA")
+description_monocle_pqtree <- function() generic_monocle_description("ICA")
 
-description_monocle <- function(reduction_method) {
+generic_monocle_description <- function(reduction_method) {
   if(reduction_method == "DDRTree") {
     par_set = makeParamSet(
       makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
