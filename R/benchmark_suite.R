@@ -1,15 +1,30 @@
+#' A benchmark suite with which to run all the methods on the different tasks
+#'
+#' @param tasks A tibble of tasks
+#' @param task_group A grouping vector for the different tasks
+#' @param task_fold A fold index vector for the different tasks
+#' @param out_dir The folder in which to output intermediate and final results
+#' @param num_cores How many cores to use per mlrMBO process
+#' @param metrics Which metrics to use
+#' @param num_iterations The number of iterations to run
+#' @param num_init_params The number of initial parameters to evaluate
+#' @param num_repeats The number of times to repeat the mlr process, for each group and each fold
+#'
 #' @importFrom testthat expect_equal
 #' @importFrom PRISM qsub_lapply override_qsub_config
 #' @importFrom ParamHelpers generateDesignOfDefaults generateDesign
+#'
+#' @export
 benchmark_suite_submit <- function(
   tasks, task_group, task_fold,
+  out_dir,
   methods = get_descriptions(as_tibble = F),
   num_cores = 4,
   metrics = c("auc_R_nx", "robbie_network_score"),
   num_iterations = 20,
   num_init_params = 100,
-  output_root_folder = "results/"
-  ) {
+  num_repeats = 1
+) {
   testthat::expect_equal(nrow(tasks), length(task_group))
   testthat::expect_equal(nrow(tasks), length(task_fold))
 
@@ -26,16 +41,18 @@ benchmark_suite_submit <- function(
   control_test$iters <- 1
   control_test$propose.points <- 1
 
+  ## Grid settings
   grid <- expand.grid(
-    fold_i = unique(tasks$subtask_ix),
-    group_sel = unique(select_tasks$group),
-    repeat_i = seq_len(1),
+    fold_i = sort(unique(task_fold)),
+    group_sel = sort(unique(task_group)),
+    repeat_i = seq_len(num_repeats),
     stringsAsFactors = F
   )
 
   ## Run MBO
   for (method in methods) {
-    method_folder <- paste0(output_root_folder, method$short_name)
+    # determine where to store certain outputs
+    method_folder <- paste0(out_dir, method$short_name)
     output_file <- paste0(method_folder, "/output.rds")
     qsubhandle_file <- paste0(method_folder, "/qsubhandle.rds")
 
@@ -44,32 +61,40 @@ benchmark_suite_submit <- function(
     if (!file.exists(output_file) && !file.exists(qsubhandle_file)) {
       cat("Submitting ", method$name, "\n", sep="")
 
+      # create an objective function
       obj_fun <- make_obj_fun(method, metrics = metrics)
 
+      # generate initial parameters
       design <- bind_rows(
         ParamHelpers::generateDesignOfDefaults(method$par_set),
         ParamHelpers::generateDesign(n = num_init_params, par.set = method$par_set)
       )
 
+      # cluster params
+      qsub_config <- PRISM::override_qsub_config(
+        wait = F,
+        num_cores = num_cores,
+        memory = "20G",
+        name = paste0("D_", method$short_name),
+        remove_tmp_folder = F,
+        stop_on_error = F,
+        verbose = F,
+        max_wall_time = "99:00:00",
+        execute_before = " export R_MAX_NUM_DLLS=200"
+      )
+      qsub_packages <- c("dplyr", "purr", "dyneval", "mlrMBO", "parallelMap")
+      qsub_environment <-  c(
+        "method", "obj_fun", "design",
+        "tasks", "task_group", "task_fold",
+        "num_cores", "metrics", "impute_fun",
+        "control_train", "control_test", "grid")
+
+      # submit to the cluster
       qsub_handle <- PRISM::qsub_lapply(
         X = seq_len(nrow(grid)),
-        qsub_environment = c(
-          "method", "obj_fun", "design",
-          "tasks", "task_group", "task_fold",
-          "num_cores", "metrics", "impute_fun",
-          "control_train", "control_test", "grid"),
-        qsub_packages = c("dplyr", "purr", "dyneval", "mlrMBO", "parallelMap"),
-        qsub_config = PRISM::override_qsub_config(
-          wait = F,
-          num_cores = num_cores,
-          memory = "20G",
-          name = paste0("D_", method$short_name),
-          remove_tmp_folder = F,
-          stop_on_error = F,
-          verbose = F,
-          max_wall_time = "99:00:00",
-          execute_before = " export R_MAX_NUM_DLLS=200"
-        ),
+        qsub_environment = qsub_environment,
+        qsub_packages = qsub_packages,
+        qsub_config = qsub_config,
         FUN = function(grid_i) {
           fold_i <- grid[grid_i,]$fold_i
           group_sel <- grid[grid_i,]$group_sel
@@ -82,14 +107,14 @@ benchmark_suite_submit <- function(
             design = design,
             control = control_train,
             show.info = T,
-            more.args = list(tasks = select_tasks %>% filter(group == group_sel, subtask_ix != fold_i))
+            more.args = list(tasks = tasks[task_group == group_sel & task_fold != fold_i,])
           )
           tune_test <- mbo(
             obj_fun,
             design = tune_train$opt.path$env$path %>% select(-starts_with("y_"), -one_of("y")),
             control = control_test,
             show.info = T,
-            more.args = list(tasks = select_tasks %>% filter(group == group_sel, subtask_ix == fold_i))
+            more.args = list(tasks = tasks[task_group == group_sel & task_fold == fold_i,])
           )
           parallelStop()
 
@@ -171,7 +196,7 @@ benchmark_suite_submit <- function(
 #
 #   ## Process results
 #   for (method in methods) {
-#     method_folder <- paste0(output_root_folder, method$short_name)
+#     method_folder <- paste0(out_dir, method$short_name)
 #     output_file <- paste0(method_folder, "/output.rds")
 #     qsubhandle_file <- paste0(method_folder, "/qsubhandle.rds")
 #

@@ -5,30 +5,41 @@ library(mlrMBO)
 library(parallelMap)
 library(PRISM)
 
-output_root_folder <- "results/output_dyngen_paramtraincv/"
-dir.create(output_root_folder, recursive = T)
+out_dir <- "~/Workspace/dynresults/output_dyngen_paramtraincv/"
+dir.create(out_dir, recursive = T)
 
-## load datasets
-.datasets_location = "../dyngen/results/4/" # needs to be defined, to let dyngen know where the datasets are
-# tasks <- load_datasets(8) # this function takes way too long due to the geodesic distances being calculated
-# saveRDS(tasks, paste0(.datasets_location, "tasks.rds"))
-tasks <- readRDS(paste0(.datasets_location, "tasks.rds")) %>%
-  mutate(group = paste0(platform_id, "_", takesetting_type)) %>%
-  group_by(group, ti_type) %>% mutate(subtask_ix = seq_len(n())) %>%
-  ungroup()
+# easy test
+select_tasks <- generate_toy_datasets()
+task_group <- rep("group", nrow(select_tasks))
+task_fold <- gsub(".*_", "", select_tasks$id) %>% as.integer()
+methods <- get_descriptions(as_tibble = F)
+benchmark_suite_submit(select_tasks, task_group, task_fold, methods = methods, out_dir = out_dir)
 
-## select datasets # limit for now
-select_tasks <- tasks %>% filter(platform_id == "fluidigm_c1", takesetting_type == "snapshot") %>% arrange(ti_type, subtask_ix)
-
-# limit even further
-select_tasks <- select_tasks %>% filter(subtask_ix %in% c(1,2), ti_type == "consecutive_bifurcating")
-
-dyneval:::benchmark_suite_submit(select_tasks, select_tasks$group, select_tasks$subtask_ix)
 
 
 
 
-# load(paste0(output_root_folder, "temp.RData"))
+## load datasets
+# .datasets_location = "~/Workspace/dynresults/dyngen_v4/"
+# # tasks <- load_datasets(8) # this function takes way too long due to the geodesic distances being calculated
+# # saveRDS(tasks, paste0(.datasets_location, "tasks.rds"))
+# tasks <- readRDS(paste0(.datasets_location, "tasks.rds")) %>%
+#   mutate(group = paste0(platform_id, "_", takesetting_type)) %>%
+#   group_by(group, ti_type) %>% mutate(subtask_ix = seq_len(n())) %>%
+#   ungroup()
+#
+# ## select datasets # limit for now
+# select_tasks <- tasks %>% filter(platform_id == "fluidigm_c1", takesetting_type == "snapshot") %>% arrange(ti_type, subtask_ix)
+#
+# # limit even further
+# select_tasks <- select_tasks %>% filter(subtask_ix %in% c(1,2), ti_type == "consecutive_bifurcating")
+
+
+
+
+
+
+# load(paste0(out_dir, "temp.RData"))
 #
 # qsub_handle$stop_on_error <- F
 # qsub_handle$verbose <- F
@@ -97,8 +108,8 @@ dyneval:::benchmark_suite_submit(select_tasks, select_tasks$group, select_tasks$
 #
 # output <- qsub_retrieve(qsub_handle, post_fun = post_fun, wait = F)
 #
-# # save(output, file = paste0(output_root_folder, "temp_output.RData"))
-# load(paste0(output_root_folder, "temp_output.RData"))
+# # save(output, file = paste0(out_dir, "temp_output.RData"))
+# load(paste0(out_dir, "temp_output.RData"))
 #
 # method_names <- methods %>% map_chr(~ .$name)
 # grid %>% as_data_frame %>% mutate(method_str = method_names[method_i])
@@ -150,8 +161,8 @@ dyneval:::benchmark_suite_submit(select_tasks, select_tasks$group, select_tasks$
 # ggplot(best_grouped_scores) + geom_bar(aes(method_fac, Q_global, fill = method_fac), stat = "identity", position = "dodge") + facet_grid(fold_type~ti_type)
 
 #
-# pdf(paste0(output_root_folder, "1_celltree_overallscore.pdf"), 10, 4)
-# # png(paste0(output_root_folder, "1_celltree_overallscore.png"), 1000, 400)
+# pdf(paste0(out_dir, "1_celltree_overallscore.pdf"), 10, 4)
+# # png(paste0(out_dir, "1_celltree_overallscore.png"), 1000, 400)
 # ggplot(scores %>% filter(y_train >= 0, y_test >= 0)) +
 #   geom_vline(aes(xintercept = y_train), scores %>% filter(param_i == 1)) +
 #   geom_hline(aes(yintercept = y_test), scores %>% filter(param_i == 1)) +
@@ -163,8 +174,8 @@ dyneval:::benchmark_suite_submit(select_tasks, select_tasks$group, select_tasks$
 #   coord_equal()
 # dev.off()
 #
-# pdf(paste0(output_root_folder, "2_celltree_groupedscore.pdf"), 16, 12)
-# # png(paste0(output_root_folder, "2_celltree_groupedscore.png"), 1600, 1200)
+# pdf(paste0(out_dir, "2_celltree_groupedscore.pdf"), 16, 12)
+# # png(paste0(out_dir, "2_celltree_groupedscore.png"), 1600, 1200)
 # ggplot(grouped_scores %>% select(-auc_lcmc) %>% spread(fold_type, max_lcmc)) +
 #   geom_vline(aes(xintercept = train), grouped_scores %>% select(-auc_lcmc) %>% spread(fold_type, max_lcmc) %>% filter(param_i == 1)) +
 #   geom_hline(aes(yintercept = test), grouped_scores %>% select(-auc_lcmc) %>% spread(fold_type, max_lcmc) %>% filter(param_i == 1)) +
