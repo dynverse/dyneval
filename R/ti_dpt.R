@@ -4,7 +4,7 @@ description_dpt <- function() create_description(
   name = "DPT",
   short_name = "DPT",
   package_loaded = c("destiny"),
-  package_required = c(),
+  package_required = c("dynutils", "reshape2"),
   par_set = makeParamSet(
     makeDiscreteParam(id = "sigma", default = "local", values = c("local", "global")),
     makeDiscreteParam(id = "distance", default = "euclidean", values = c("euclidean", "cosine", "rankcor")),
@@ -20,6 +20,8 @@ description_dpt <- function() create_description(
   plot_fun = plot_dpt
 )
 
+#' @importFrom dynutils scale_quantile
+#' @importFrom reshape2 melt
 run_dpt <- function(counts,
                     start_cell_id = NULL,
                     sigma = "local",
@@ -28,29 +30,45 @@ run_dpt <- function(counts,
                     density_norm = T,
                     n_local_lower = 5,
                     n_local_upper = 7,
-                    w_width = .1,
-                    branching=TRUE) {
+                    w_width = .1) {
   requireNamespace("destiny")
 
   n_local <- seq(n_local_lower, n_local_upper, by = 1)
 
   expr <- log2(counts+1)
 
-  dm <- destiny::DiffusionMap(expr, sigma = sigma, distance = distance, n_eigs = n_eigs, density_norm = density_norm, n_local = n_local)
-  dpt <- destiny::DPT(dm, w_width = w_width, branching=branching)
+  dm <- destiny::DiffusionMap(
+    expr,
+    sigma = sigma,
+    distance = distance,
+    n_eigs = n_eigs,
+    density_norm = density_norm,
+    n_local = n_local
+  )
+  dpt <- destiny::DPT(dm, w_width = w_width)
 
   tips <- destiny::tips(dpt)
   milestone_ids <- paste0("DPT", tips)
 
-  milestone_percentages <- bind_rows(lapply(milestone_ids, function(x) data_frame(cell_id = rownames(expr), milestone_id = x, percentage = dpt[[x]]))) %>%
+  dists <- sapply(milestone_ids, function(dn) dpt[[dn]]) %>%
+    dynutils::scale_quantile()
+  rownames(dists) <- rownames(expr)
+  milestone_percentages <- dists %>%
+    reshape2::melt(varnames = c("cell_id", "milestone_id")) %>%
+    mutate(
+      cell_id = as.character(cell_id),
+      milestone_id = as.character(milestone_id),
+      percentage = 1 - value
+    ) %>%
     group_by(cell_id) %>%
     mutate(percentage = percentage / sum(percentage)) %>%
-    ungroup()
+    ungroup() %>%
+    select(cell_id, milestone_id, percentage)
 
   milestone_network <- bind_rows(lapply(seq_along(milestone_ids), function(i) {
-    from <- milestone_ids[[i]]
+    fr <- milestone_ids[[i]]
     index <- tips[[i]]
-    data_frame(from = from, to = milestone_ids, length = dpt[[from]][tips])
+    data_frame(from = fr, to = milestone_ids, length = dpt[[fr]][tips])
   })) %>% filter(row_number() %in% c(2, 3)) %>% mutate(directed=FALSE)
 
   wrap_ti_prediction(

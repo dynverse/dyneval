@@ -17,7 +17,7 @@ check_or_perform_dimred <- function(object, insert_phantom_edges) {
 #'  \code{\link{wrap_ti_prediction}}
 #' @param insert_phantom_edges attempt to plot bifurcating edges correctly automatically
 #'
-#' @importFrom dynutils scale_uniformily
+#' @importFrom dynutils scale_uniform
 #' @importFrom igraph graph_from_data_frame layout_with_kk E
 #' @importFrom RColorBrewer brewer.pal
 #' @importFrom grDevices col2rgb rainbow rgb
@@ -71,7 +71,7 @@ dimred_trajectory <- function(traj_object, insert_phantom_edges = T) {
 
   # reduce dimensionality on milestone_network
   gr <- graph_from_data_frame(structure %>% rename(weight = length), vertices = milestone_ids)
-  space_milest_m <- layout_with_kk(gr, maxiter = 200) %>% scale_uniformily()
+  space_milest_m <- layout_with_kk(gr, maxiter = 200) %>% scale_uniform()
   dimnames(space_milest_m) <- list(milestone_ids, paste0("Comp", seq_len(ncol(space_milest_m))))
 
   # project dimensionality to samples
