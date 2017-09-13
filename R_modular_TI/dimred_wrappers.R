@@ -11,41 +11,41 @@ dimred_simlr = function(x, ndim=3, nclusters=4) {
 }
 
 dimred_mds = function(x, ndim=3) {
-  space = SCORPIUS::reduce.dimensionality(SCORPIUS::correlation.distance(x),ndim = ndim)
+  space = SCORPIUS::reduce_dimensionality(SCORPIUS::correlation_distance(x),ndim = ndim)
   process_dimred(space)
 }
 
 dimred_mds_sammon = function(x, ndim=3) {
-  dist = SCORPIUS::correlation.distance(x)
+  dist = SCORPIUS::correlation_distance(x)
   space <- MASS::sammon(dist, k = ndim)$points
   process_dimred(space)
 }
 
 dimred_mds_isomds = function(x, ndim=3) {
-  dist = SCORPIUS::correlation.distance(x)
+  dist = SCORPIUS::correlation_distance(x)
   space <- MASS::isoMDS(dist, k = ndim)$points
   process_dimred(space)
 }
 
 dimred_lmds = function(x, ndim=3) {
-  mds.out <- dambiutils::mds_withlandmarks(x %>% as.data.frame, SCORPIUS::correlation.distance, k = ndim, landmark.method = "naive", num.landmarks = min(1000, round(nrow(x)*0.1)), num.seed.landmarks = 10, pca.normalisation = F)
+  mds.out <- dambiutils::mds_withlandmarks(x %>% as.data.frame, SCORPIUS::correlation_distance, k = ndim, landmark.method = "naive", num.landmarks = min(1000, round(nrow(x)*0.1)), num.seed.landmarks = 10, pca.normalisation = F)
   process_dimred(mds.out$S)
 }
 
 dimred_mds_smacof = function(x, ndim=3) {
-  dist = SCORPIUS::correlation.distance(x)
+  dist = SCORPIUS::correlation_distance(x)
   space <- smacof::mds(as.dist(dist), type = "ratio", ndim = ndim)$conf
   process_dimred(space)
 }
 
 dimred_tsne = function(x, ndim=3) {
-  space = Rtsne::Rtsne(as.dist(SCORPIUS::correlation.distance(x)), dims = ndim, is_distance = TRUE)$Y
+  space = Rtsne::Rtsne(as.dist(SCORPIUS::correlation_distance(x)), dims = ndim, is_distance = TRUE)$Y
   rownames(space) = rownames(x)
   process_dimred(space)
 }
 
 dimred_dp = function(x, ndim=3, neigen=3) {
-  space = diffusionMap::diffuse(as.dist(SCORPIUS::correlation.distance(x)), neigen=neigen)
+  space = diffusionMap::diffuse(as.dist(SCORPIUS::correlation_distance(x)), neigen=neigen)
   process_dimred(space$X[,seq_len(ndim)])
 }
 

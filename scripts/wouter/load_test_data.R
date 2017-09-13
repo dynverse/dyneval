@@ -6,7 +6,7 @@ check_dependencies()
 set.seed(1)
 tasks <- generate_toy_datasets()
 
-i <- 2
+i <- 1
 counts <- tasks$counts[[i]]
 special_cells <- tasks$special_cells[[i]]
 cell_grouping <- tasks$cell_grouping[[i]]

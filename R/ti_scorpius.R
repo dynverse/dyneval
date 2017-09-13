@@ -27,7 +27,7 @@ run_scorpius <- function(counts,
 
   expression <- log2(as.matrix(counts)+1)
 
-  dist <- SCORPIUS::correlation.distance(expression, method = distance_method)
+  dist <- SCORPIUS::correlation_distance(expression, method = distance_method)
   space <- SCORPIUS::reduce.dimensionality(dist, ndim = num_dimensions)
   traj <- SCORPIUS::infer.trajectory(space, k = num_clusters, thresh = thresh, maxit = maxit, stretch = stretch, smoother = smoother)
 
