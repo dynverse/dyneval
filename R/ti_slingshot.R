@@ -8,7 +8,7 @@ description_slingshot <- function() create_description(
   par_set = makeParamSet(
     makeIntegerParam(id = "ndim", lower = 2L, upper = 20L, default = 3L),
     makeIntegerParam(id = "nclus", lower = 2L, upper = 40L, default = 5L),
-    makeNumericParam(id = "shrink", lower = 0, uppr = 1, default=1),
+    makeNumericParam(id = "shrink", lower = 0, upper = 1, default=1),
     makeLogicalParam(id = "reweight", default=TRUE),
     makeLogicalParam(id = "drop.multi", default=TRUE),
     makeNumericParam(id = "thresh", lower = -5L, upper = 5L, default = -3L, trafo = function(x) 10^x),
@@ -38,7 +38,7 @@ run_slingshot <- function(
   thresh=0.001,
   maxit=15,
   stretch=2,
-  smoother = "smoother",
+  smoother = "smooth.spline",
   shrink.method = "cosine"
 ) {
   requireNamespace("slingshot")
@@ -87,7 +87,7 @@ run_slingshot <- function(
     maxit=maxit,
     stretch=stretch,
     smoother = smoother,
-    shrink.method = cosine
+    shrink.method = shrink.method
   )
   pt <- slingshot::pseudotime(sds)
 
