@@ -19,6 +19,7 @@ description_slicer <- function() create_description(
 
 run_slicer <- function(counts,
                       start_cell_id,
+                      end_cell_ids = NULL,
                       kmin = 10,
                       m = 2,
                       min_branch_len = 5,
@@ -35,7 +36,12 @@ run_slicer <- function(counts,
   k <- SLICER::select_k(expression_filtered, kmin=kmin)
   traj_lle <- lle::lle(expression_filtered, m=m, k)$Y
   traj_graph <- SLICER::conn_knn_graph(traj_lle, k=k)
-  ends <- SLICER::find_extreme_cells(traj_graph, traj_lle)
+
+  if (is.null(end_cell_ids)) {
+    ends <- SLICER::find_extreme_cells(traj_graph, traj_lle)
+  } else {
+    ends <- match(c(start_cell_id, end_cell_ids), rownames(counts))
+  }
 
   start <- which(rownames(expression_filtered) == start_cell_id)
   cells_ordered <- SLICER::cell_order(traj_graph, start)
