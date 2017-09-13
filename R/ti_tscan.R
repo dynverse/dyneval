@@ -52,7 +52,7 @@ run_tscan <- function(counts,
   exprmclust_clusternum <- seq(exprmclust_clusternum_lower, exprmclust_clusternum_upper, 1)
   cds_2 <- TSCAN::exprmclust(
     cds_1,
-    clusternum = exprmclust_clusternum,
+    clusternum = 2,
     modelNames = modelNames,
     reduce = T
   )
@@ -65,7 +65,7 @@ run_tscan <- function(counts,
     milestone_network,
     tibble(
       from=end_milestones,
-      to=as.character(seq(max(as.numeric(milestone_network$to)), length.out=length(end_milestones)))
+      to=as.character(seq(max(as.numeric(milestone_network$to))+1, length.out=length(end_milestones)))
     )
   )
 
