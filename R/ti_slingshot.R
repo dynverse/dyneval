@@ -8,7 +8,16 @@ description_slingshot <- function() create_description(
   par_set = makeParamSet(
     makeIntegerParam(id = "ndim", lower = 2L, upper = 20L, default = 3L),
     makeIntegerParam(id = "nclus", lower = 2L, upper = 40L, default = 5L),
+    makeNumericParam(id = "shrink", lower = 0, uppr = 1, default=1),
+    makeLogicalParam(id = "reweight", default=TRUE),
+    makeLogicalParam(id = "drop.multi", default=TRUE),
+    makeNumericParam(id = "thresh", lower = -5L, upper = 5L, default = -3L, trafo = function(x) 10^x),
+    makeIntegerParam(id = "maxit", lower = 0, upper = 50, default = 10),
+    makeNumericParam(id = "stretch", lower = 0, upper = 5, default = 2),
+    makeDiscreteParam(id = "smoother", default = "smooth.spline", values = c("smooth.spline", "lowess", "periodic.lowess")),
+    makeDiscreteParam(id = "shrink.method", default = "cosine", values = c("cosine", "tricube", "density")),
     makeDiscreteParam(id = "dimred_name", values = names(list_dimred_methods()), default="pca")
+
   ),
   properties = c(),
   run_fun = run_slingshot,
@@ -18,9 +27,19 @@ description_slingshot <- function() create_description(
 #' @importFrom dynutils list_as_tibble
 run_slingshot <- function(
   counts,
+  start_cell_id = NULL,
+  end_cell_ids = NULL,
   ndim = 3,
   nclus = 5,
-  dimred_name = "pca"
+  dimred_name = "pca",
+  shrink=1,
+  reweight=TRUE,
+  drop.multi=TRUE,
+  thresh=0.001,
+  maxit=15,
+  stretch=2,
+  smoother = "smoother",
+  shrink.method = "cosine"
 ) {
   requireNamespace("slingshot")
 
@@ -43,10 +62,33 @@ run_slingshot <- function(
   # clustering
   labels <- kmeans(space, centers = nclus)$cluster
 
-  #plot(space, col = rainbow(nclus)[labels], pch=16, asp = 1)
-
   # actual slingshot algorithm ----------------
-  sds <- slingshot::slingshot(space, labels)
+  if(!is.null(start_cell_id)) {
+    start.clus <- labels[[start_cell_id]]
+  } else {
+    start.clus <- NULL
+  }
+  if(!is.null(end_cell_ids)) {
+    end.clus <- unique(labels[end_cell_ids])
+  } else {
+    end.clus <- NULL
+  }
+
+
+  sds <- slingshot::slingshot(
+    space,
+    labels,
+    start.clus=start.clus,
+    end.clus=end.clus,
+    shrink=shrink,
+    reweight=reweight,
+    drop.multi=drop.multi,
+    thresh=thresh,
+    maxit=maxit,
+    stretch=stretch,
+    smoother = smoother,
+    shrink.method = cosine
+  )
   pt <- slingshot::pseudotime(sds)
 
   #pt %>% {.[is.na(.)] = 0;.} %>% pheatmap::pheatmap(scale="none", cluster_cols=FALSE)
