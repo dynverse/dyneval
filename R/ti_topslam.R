@@ -87,7 +87,7 @@ plot_topslam <- function(prediction) {
   ggplot() +
     geom_raster(aes(x, y, fill=energy), data=prediction$wad) +
     geom_contour(aes(x, y, z=energy, weight=energy), data=prediction$wad, binwidth = 0.05, color="#222222", alpha=0.4) +
-    geom_point(aes(Comp1, Comp2, color=time), data=model) +
+    geom_point(aes(Comp1, Comp2, color=time), data=prediction$model) +
     scale_fill_gradientn(colors=c("grey75", "white")) +
     viridis::scale_color_viridis()
 }
