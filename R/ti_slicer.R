@@ -18,7 +18,7 @@ description_slicer <- function() create_description(
 )
 
 run_slicer <- function(counts,
-                      start_cell_id = sample(rownames(counts), 1),
+                      start_cell_id,
                       kmin = 10,
                       m = 2,
                       min_branch_len = 5,
