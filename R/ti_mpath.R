@@ -29,7 +29,6 @@ run_mpath <- function(counts, cell_grouping,
 
   sampleInfo <- cell_grouping %>% rename(GroupID=group_id)
 
-  # never use method = kmeans, dark monsters from the abiss reside there!
   landmark_cluster <- landmark_designation(
     fakeFile(t(counts)),
     "output_disabled",
