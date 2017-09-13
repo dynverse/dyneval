@@ -25,6 +25,8 @@ run_ouija <- function(
   ) {
   requireNamespace("ouija")
 
+  rstan_options(auto_write = TRUE)
+
   oui <- ouija::ouija(
     counts,
     iter=iter,
