@@ -3,7 +3,7 @@
 description_ouija <- function() create_description(
   name = "ouija",
   short_name = "ouija",
-  package_required = c("ouija"),
+  package_required = c("ouija", "rstan"),
   package_loaded = c(),
   par_set = makeParamSet(
     makeIntegerParam(id = "iter", lower = 2, upper = 500, default = 20), # default 10000!
@@ -24,8 +24,9 @@ run_ouija <- function(
     normalise_expression = TRUE
   ) {
   requireNamespace("ouija")
+  requireNamespace("rstan")
 
-  rstan_options(auto_write = TRUE)
+  rstan::rstan_options(auto_write = TRUE)
 
   oui <- ouija::ouija(
     counts,

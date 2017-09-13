@@ -23,6 +23,7 @@ description_dpt <- function() create_description(
 #' @importFrom dynutils scale_quantile
 #' @importFrom reshape2 melt
 run_dpt <- function(counts,
+                    start_cell_id = NULL,
                     sigma = "local",
                     distance = "euclidean",
                     n_eigs = 20,
@@ -44,7 +45,13 @@ run_dpt <- function(counts,
     density_norm = density_norm,
     n_local = n_local
   )
-  dpt <- destiny::DPT(dm, w_width = w_width)
+
+  if(!is.null(start_cell_id)) {
+    dpt <- destiny::DPT(dm, w_width = w_width, tips=which(rownames(counts) %in% start_cell_id))
+  } else {
+    dpt <- destiny::DPT(dm, w_width = w_width)
+  }
+
 
   tips <- destiny::tips(dpt)
   milestone_ids <- paste0("DPT", tips)

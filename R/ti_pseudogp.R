@@ -100,7 +100,7 @@ plot_pseudogp <- function(prediction) {
     ggplot() +
     geom_boxplot(aes(mean_time, time, group=cell_id))
 
-  posteriorCurvePlot(prediction$dimreds_samples, prediction$le_fit, nsamples=50, posterior_mean = TRUE)
+  posteriorCurvePlot(prediction$dimreds_samples, prediction$le_fit, nsamples=min(max(model$sample_posterior_times$sample_id), 50), posterior_mean = TRUE)
 }
 
 
