@@ -21,6 +21,7 @@ description_dpt <- function() create_description(
 )
 
 run_dpt <- function(counts,
+                    start_cell_id = NULL,
                     sigma = "local",
                     distance = "euclidean",
                     n_eigs = 20,
