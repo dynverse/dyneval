@@ -28,8 +28,8 @@ run_scorpius <- function(counts,
   expression <- log2(as.matrix(counts)+1)
 
   dist <- SCORPIUS::correlation_distance(expression, method = distance_method)
-  space <- SCORPIUS::reduce.dimensionality(dist, ndim = num_dimensions)
-  traj <- SCORPIUS::infer.trajectory(space, k = num_clusters, thresh = thresh, maxit = maxit, stretch = stretch, smoother = smoother)
+  space <- SCORPIUS::reduce_dimensionality(dist, ndim = num_dimensions)
+  traj <- SCORPIUS::infer_trajectory(space, k = num_clusters, thresh = thresh, maxit = maxit, stretch = stretch, smoother = smoother)
 
   milestone_ids <- c("milestone_A", "milestone_B")
   milestone_network <- data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1, directed=TRUE)
