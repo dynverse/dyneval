@@ -6,6 +6,9 @@ description_tscan <- function() create_description(
   package_loaded = c("mclust", "igraph", "ggplot2"),
   package_required = c("TSCAN"),
   par_set = makeParamSet(
+    makeNumericParam(id = "minexpr_percent", lower=0, upper=1, default=0),
+    makeNumericParam(id = "minexpr_value", lower=0, upper=10, default=0),
+    makeNumericParam(id = "cvcutoff", lower=0, upper=5, default=0),
     makeIntegerParam(id = "exprmclust_clusternum_lower", lower = 2L, upper = 20L, default = 2),
     makeIntegerParam(id = "exprmclust_clusternum_upper", lower = 2L, upper = 20L, default = 9),
     makeDiscreteParam(id = "modelNames", default = "VVV", values = c("EII", "VII", "EEI", "VEI", "EVI", "VVI", "EEE", "EVE", "VEE", "VVE", "EEV", "VEV", "EVV", "VVV")),
@@ -17,12 +20,13 @@ description_tscan <- function() create_description(
 )
 
 run_tscan <- function(counts,
-                      minexpr_percent = 1,
-                      minexpr_value = .5,
-                      cvcutoff = 1,
+                      minexpr_percent = 0,
+                      minexpr_value = 0,
+                      cvcutoff = 0,
                       exprmclust_clusternum_lower = 2,
                       exprmclust_clusternum_upper = 9,
-                      modelNames = "VVV") {
+                      modelNames = "VVV"
+  ) {
   requireNamespace("TSCAN")
   expr <- t(as.matrix(counts))
   # cds_1 <- TSCAN::preprocess(
@@ -40,37 +44,51 @@ run_tscan <- function(counts,
     logbase = 2,
     pseudocount = 1,
     clusternum = NULL,
-    minexpr_value = 0,
-    minexpr_percent = 0,
-    cvcutoff = 0)
+    minexpr_value = minexpr_value,
+    minexpr_percent = minexpr_percent,
+    cvcutoff = cvcutoff
+  )
 
   exprmclust_clusternum <- seq(exprmclust_clusternum_lower, exprmclust_clusternum_upper, 1)
   cds_2 <- TSCAN::exprmclust(
     cds_1,
     clusternum = exprmclust_clusternum,
     modelNames = modelNames,
-    reduce = T)
+    reduce = T
+  )
 
   cds_3 <- TSCAN::TSCANorder(cds_2)
 
-  milestone_ids <- paste0("milestone_", c(head(cds_3, 1), tail(cds_3, 1)))
-  milestone_network <- data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1, directed=TRUE)
-
-  pseudotime <- setNames(percent_rank(match(rownames(counts), cds_3)), rownames(counts))
-  milestone_percentages <- bind_rows(
-    tibble::data_frame(cell_id = rownames(counts), milestone_id = milestone_ids[[1]], percentage = 1 - pseudotime),
-    tibble::data_frame(cell_id = rownames(counts), milestone_id = milestone_ids[[2]], percentage = pseudotime)
+  milestone_network <- cds_2$MSTtree %>% igraph::as_data_frame() %>% select(-weight) %>% mutate(directed=TRUE)
+  end_milestones <- setdiff(milestone_network$to, milestone_network$from)
+  milestone_network <- bind_rows(
+    milestone_network,
+    tibble(
+      from=end_milestones,
+      to=as.character(seq(max(as.numeric(milestone_network$to)), length.out=length(end_milestones)))
+    )
   )
 
-  milestone_percentages <- milestone_percentages %>% filter(!is.na(percentage))
+  model <- tibble(cluster_id = cds_2$clusterid, cell_id = names(cds_2$clusterid)) %>%
+    mutate(rank = match(cell_id, cds_3), cluster_id=as.character(cluster_id)) %>%
+    group_by(cluster_id) %>%
+    mutate(percentage=order(rank)/n()) %>%
+    ungroup()
+  progressions <- model %>%
+    left_join(milestone_network, by=c("cluster_id"="from")) %>%
+    group_by(cell_id) %>%
+    mutate(percentage=percentage/n()) %>%
+    rename(from=cluster_id)
+
+  milestone_network <- progressions %>% group_by(from, to) %>% summarise(length=n(), directed=TRUE) %>% ungroup()
 
   wrap_ti_prediction(
-    ti_type = "linear",
+    ti_type = "branching",
     id = "TSCAN",
     cell_ids = rownames(counts),
-    milestone_ids = milestone_ids,
+    milestone_ids = unique(c(milestone_network$from, milestone_network$to)),
     milestone_network = milestone_network,
-    milestone_percentages = milestone_percentages,
+    progressions = progressions %>% select(cell_id, from, to, percentage),
     dimred_samples = cds_2$pcareduceres,
     dimred_clust = cds_2$clusterid,
     clust_centers = cds_2$clucenter,
