@@ -59,12 +59,13 @@ create_description <- function(
 #' @param method the method to evaluate
 #' @param parameters the parameters to evaluate with
 #' @param give_start_cell whether a start cell should be provided even though a method doesn't require it
+#' @param give_endt_cells whether end cells should be provided even though a method doesn't require it
 #' @param give_cell_grouping whether a cell grouping should be provided even though a method doesn't require it
 #' @param suppress_output whether or not to suppress the outputted messages
 #'
 #' @importFrom utils capture.output
 #' @export
-execute_method <- function(tasks, method, parameters, give_start_cell = FALSE, give_cell_grouping = FALSE, suppress_output = TRUE) {
+execute_method <- function(tasks, method, parameters, give_start_cell = FALSE, give_end_cells = FALSE, give_cell_grouping = FALSE, suppress_output = TRUE) {
   # Run the method on each of the tasks
   method_futures <- future(
     {
@@ -96,6 +97,18 @@ execute_method <- function(tasks, method, parameters, give_start_cell = FALSE, g
             give_start_cell
           ) {
             arglist$start_cell_id <- task$special_cells$start_cell_id
+          }
+        }
+
+        # Include end cells if method requires it
+        if ("end_cell_ids" %in% formalArgs(method$run_fun)) {
+          # Some methods do not require end cells, but can use it, determined by whether the default end_cell_ids is NULL
+          # Give the end cells if the end cells are needed, OR if give_end_cells is TRUE
+          if(
+            (!is.null(as.list(args(method$run_fun))$end_cell_ids)) |
+            give_end_cells
+          ) {
+            arglist$end_cell_ids <- task$special_cells$end_cell_ids
           }
         }
 
