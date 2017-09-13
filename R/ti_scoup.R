@@ -30,8 +30,6 @@ run_scoup <- function(
   tmp_dir <- paste0(tempfile(), "/")
   dir.create(tmp_dir)
 
-  nbranch <- 2
-
   start_group <- cell_grouping %>% filter(cell_id == start_cell_id) %>% pull(group_id)
   start_ix <- cell_grouping %>% filter(group_id==start_group) %>% pull(cell_id)
 
