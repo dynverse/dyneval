@@ -17,11 +17,11 @@ execute_method(tasks, method, parameters, give_start_cell = FALSE,
 
 \item{give_start_cell}{whether a start cell should be provided even though a method doesn't require it}
 
+\item{give_end_cells}{whether end cells should be provided even though a method doesn't require it}
+
 \item{give_cell_grouping}{whether a cell grouping should be provided even though a method doesn't require it}
 
 \item{suppress_output}{whether or not to suppress the outputted messages}
-
-\item{give_endt_cells}{whether end cells should be provided even though a method doesn't require it}
 }
 \description{
 Run a method on a set of tasks with a set of parameters
