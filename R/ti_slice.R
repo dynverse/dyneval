@@ -31,6 +31,7 @@ description_slice <- function() create_description(
 
 run_slice <- function(
     counts,
+    cell_grouping = NULL,
     lm.method = "clustering",
     model.type = "tree",
     ss.method = "all",
@@ -46,8 +47,14 @@ run_slice <- function(
 
   requireNamespace("igraph")
 
+  if(!is.null(cell_grouping)) {
+    cellidentity <- cell_grouping %>% slice(match(rownames(counts), cell_id)) %>% pull(group_id)
+  } else {
+    cellidentity <- rep(1, nrow(counts))
+  }
+
   sc <- construct(exprmatrix=t(counts) %>% as.data.frame(),
-                  cellidentity=factor(rep(1, nrow(counts)))) ## CAN GIVE
+                  cellidentity=cellidentity) ## CAN GIVE
 
 
   km <- rep(runif(ncol(counts) * ncol(counts))) %>% matrix(ncol=ncol(counts))
