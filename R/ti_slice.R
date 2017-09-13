@@ -48,9 +48,9 @@ run_slice <- function(
   requireNamespace("igraph")
 
   if(!is.null(cell_grouping)) {
-    cellidentity <- cell_grouping %>% slice(match(rownames(counts), cell_id)) %>% pull(group_id)
+    cellidentity <- factor(cell_grouping %>% slice(match(rownames(counts), cell_id)) %>% pull(group_id))
   } else {
-    cellidentity <- rep(1, nrow(counts))
+    cellidentity <- factor(rep(1, nrow(counts)))
   }
 
   sc <- construct(exprmatrix=t(counts) %>% as.data.frame(),
