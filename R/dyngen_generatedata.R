@@ -24,9 +24,10 @@ generate_toy_datasets <- function(ti_types = c("linear", "bifurcating", "cycle")
     cell_ids <- unique(progressions$cell_id)
     milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
 
-    # todo: replace with real special_cells
+    end_milestones <- milestone_ids[!(milestone_ids %in% milestone_network$from)]
     special_cells <- list(
-      start_cell_id = progressions %>% arrange(from, to, percentage) %>% pull(cell_id) %>% first
+      start_cell_id = progressions %>% arrange(from, to, percentage) %>% pull(cell_id) %>% first,
+      end_cell_ids = progressions %>% filter(to %in% end_milestones) %>% group_by(to) %>% arrange(percentage) %>% summarise(cell_id=cell_id[which.max(percentage)]) %>% pull(cell_id)
     )
 
     task <- wrap_ti_task_data(
