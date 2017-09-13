@@ -27,7 +27,7 @@ statenet = tribble(
 
 
 cellsoi = cellinfo %>% filter((assignment %in% c("MEF", "d2_induced", "d2_intermediate", "d5_earlyiN", "d5_intermediate", "Myocyte", "Neuron"))) %>% pull(cell_name)
-space = SCORPIUS::reduce.dimensionality(SCORPIUS::correlation.distance(expression[cellsoi, ]), ndim=3)
+space = SCORPIUS::reduce.dimensionality(SCORPIUS::correlation_distance(expression[cellsoi, ]), ndim=3)
 space = tsne(expression[cellsoi, ], ndim=2)
 traj = SCORPIUS::infer.trajectory(space)
 #space = ica(expression)

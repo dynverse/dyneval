@@ -29,7 +29,7 @@ max_entropy = scent::CompMaxSR(scent_data$adjMC)
 result = PRISM::qsub_lapply(colnames(scent_data$expMC), function(cell) {scent::CompSRana(scent_data$expMC[, cell], as.matrix(scent_data$adjMC), maxSR=max_entropy)}, qsub_environment = list2env(lst(max_entropy, scent_data)))
 
 
-space = SCORPIUS::reduce.dimensionality(SCORPIUS::correlation.distance(expression))
+space = SCORPIUS::reduce.dimensionality(SCORPIUS::correlation_distance(expression))
 traj = SCORPIUS::infer.trajectory(space)
 plot(traj$time, map_dbl(result, "sr"))
 

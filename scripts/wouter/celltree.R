@@ -76,9 +76,9 @@ pheatmap::pheatmap(t(percentages), cluster_cols=F, cluster_rows=F, annotation_co
 plot(mst.tree, vertex.color = c("red", "blue")[(percentages[4, ] > 0) + 1], vertex.shape="circle", layout=layout.mds(mst.tree), vertex.label="", vertex.size=3)
 
 
-dists = SCORPIUS::correlation.distance(expression)
-dists = SCORPIUS::euclidean.distance(t(scale(t(expression))))
-space = SCORPIUS::reduce.dimensionality(dists)
+dists = SCORPIUS::correlation_distance(expression)
+dists = SCORPIUS::euclidean_distance(t(scale(t(expression))))
+space = SCORPIUS::reduce_dimensionality(dists)
 SCORPIUS::draw.trajectory.plot(space, cellinfo$piecestateid)
 SCORPIUS::draw.trajectory.plot(space, percentages[3, ])
 
