@@ -31,6 +31,7 @@ Imports:
   methods,
   mlrMBO,
   netdist,
+  parallelMap,
   ParamHelpers,
   pheatmap,
   PRISM,
