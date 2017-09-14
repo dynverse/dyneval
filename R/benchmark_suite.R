@@ -12,6 +12,7 @@
 #' @param num_init_params The number of initial parameters to evaluate
 #' @param num_repeats The number of times to repeat the mlr process, for each group and each fold
 #'
+#' @importFrom mlrMBO makeMBOControl setMBOControlTermination setMBOControlInfill
 #' @importFrom testthat expect_equal
 #' @importFrom PRISM qsub_lapply override_qsub_config
 #' @importFrom ParamHelpers generateDesignOfDefaults generateDesign
