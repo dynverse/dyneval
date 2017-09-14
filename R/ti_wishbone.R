@@ -36,7 +36,7 @@ run_wishbone <- function(counts,
 
   requireNamespace("jsonlite")
   temp_folder <- tempfile()
-  dir.create(temp_folder, recursive = T)
+  dir.create(temp_folder, recursive = TRUE)
 
   counts %>%
     {log2(.+1)} %>%
@@ -57,7 +57,7 @@ run_wishbone <- function(counts,
         "source bin/activate",
         "python {find.package('Wishbone')}/wrapper.py {temp_folder}",
         .sep = ";"))
-    ), stdout = T, stderr = T
+    ), stdout = TRUE, stderr = TRUE
   )
 
   print(output)
@@ -98,7 +98,7 @@ run_wishbone <- function(counts,
 #   plot(tasks$progressions[[1]]$percentage %>% unlist(), space$Comp1)
 
   # remove temporary output
-  unlink(temp_folder, recursive = T)
+  unlink(temp_folder, recursive = TRUE)
 
   wrap_ti_prediction(
     ti_type = "linear",

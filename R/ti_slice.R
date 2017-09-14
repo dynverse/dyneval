@@ -101,7 +101,7 @@ run_slice <- function(
     toid <- match(to, names(all_vertices))
 
     # has to use pc here, because the other method does not return all cells
-    sc <- getTrajectories(sc, method="pc", start=fromid, end=toid, do.plot=F, do.trim=FALSE)
+    sc <- getTrajectories(sc, method="pc", start=fromid, end=toid, do.plot=FALSE, do.trim=FALSE)
     times <- sc@transitions[[1]]$i.pseudotime %>% tibble::rownames_to_column("cell_id") %>% mutate(from=from, to=to)  %>% rename(time=ptime) %>% select(cell_id, from, to, time)
   })
   #

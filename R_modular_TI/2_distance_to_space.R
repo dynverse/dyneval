@@ -63,7 +63,7 @@ imp_distance_to_space <- list(
     method_name = "Rtsne_Rtsne",
     method_type = "distance_dimensionality_reduction",
     method_function = function(distance, num_dimensions) {
-      sp <- Rtsne::Rtsne(as.dist(distance), dims = num_dimensions, is_distance = T)$Y
+      sp <- Rtsne::Rtsne(as.dist(distance), dims = num_dimensions, is_distance = TRUE)$Y
       list(
         space = clean_dimred_output(sp, rownames(distance))
       )

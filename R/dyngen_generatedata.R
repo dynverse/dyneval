@@ -10,7 +10,7 @@
 #'
 #' @export
 generate_toy_datasets <- function(ti_types = c("linear", "bifurcating", "cycle"), num_replicates = 3, num_cells = 99, num_genes = 101) {
-  settings <- expand.grid(ti_type = ti_types, replicate = seq_len(num_replicates), stringsAsFactors = F)
+  settings <- expand.grid(ti_type = ti_types, replicate = seq_len(num_replicates), stringsAsFactors = FALSE)
 
   list_as_tibble(lapply(seq_len(nrow(settings)), function(rowi) {
     list2env(extract_row_to_list(settings, rowi), environment())

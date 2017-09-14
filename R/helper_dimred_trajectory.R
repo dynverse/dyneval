@@ -23,7 +23,7 @@ check_or_perform_dimred <- function(object, insert_phantom_edges) {
 #' @importFrom grDevices col2rgb rainbow rgb
 #'
 #' @export
-dimred_trajectory <- function(traj_object, insert_phantom_edges = T) {
+dimred_trajectory <- function(traj_object, insert_phantom_edges = TRUE) {
   #name <- paste0(traj_object$type, "/", traj_object$ti_type, "/", traj_object$name)
   name <- traj_object$id
 
@@ -46,7 +46,7 @@ dimred_trajectory <- function(traj_object, insert_phantom_edges = T) {
 
   # determine colour for sample by mixing milestone colours
   mix_colours <- function(milid, milpct) {
-    colour_rgb <- apply(col_milest_rgb[milid,,drop=F], 2, function(x) sum(x * milpct))
+    colour_rgb <- apply(col_milest_rgb[milid,,drop=FALSE], 2, function(x) sum(x * milpct))
     do.call(rgb, as.list(c(colour_rgb, maxColorValue = 256)))
   }
   colours_samples <-
@@ -76,7 +76,7 @@ dimred_trajectory <- function(traj_object, insert_phantom_edges = T) {
 
   # project dimensionality to samples
   mix_dimred <- function(milid, milpct) {
-    apply(space_milest_m[milid,,drop=F], 2, function(x) sum(x * milpct)) %>% t %>% as_data_frame
+    apply(space_milest_m[milid,,drop=FALSE], 2, function(x) sum(x * milpct)) %>% t %>% as_data_frame
   }
   space_samples <-
     milestone_percentages %>%
@@ -91,22 +91,22 @@ dimred_trajectory <- function(traj_object, insert_phantom_edges = T) {
     milestone_id = milestone_ids,
     space_milest_m[milestone_ids,],
     colour = col_milest_hex[milestone_ids],
-    stringsAsFactors = F)
+    stringsAsFactors = FALSE)
 
   space_lines <- data.frame(
     name,
     from = milestone_network$from,
-    from = space_milest_m[milestone_network$from,,drop=F],
+    from = space_milest_m[milestone_network$from,,drop=FALSE],
     to = milestone_network$to,
-    to = space_milest_m[milestone_network$to,,drop=F],
+    to = space_milest_m[milestone_network$to,,drop=FALSE],
     row.names = NULL,
-    stringsAsFactors = F)
+    stringsAsFactors = FALSE)
 
   space_samples <- data.frame(
     name,
     space_samples,
     colour = colours_samples[space_samples$cell_id],
-    stringsAsFactors = F)
+    stringsAsFactors = FALSE)
 
   l <- lst(
     space_milestones = space_milestones,

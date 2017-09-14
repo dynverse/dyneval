@@ -6,7 +6,7 @@
 \usage{
 execute_evaluation(tasks, method, parameters, metrics = c("mean_R_nx",
   "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic",
-  "robbie_network_score"), suppress_output = TRUE)
+  "robbie_network_score"))
 }
 \arguments{
 \item{tasks}{the tasks on which to evaluate}
@@ -15,9 +15,8 @@ execute_evaluation(tasks, method, parameters, metrics = c("mean_R_nx",
 
 \item{parameters}{the parameters to evaluate with}
 
-\item{metrics}{which metrics to use}
-
-\item{suppress_output}{whether or not to suppress the outputted messages}
+\item{metrics}{which metrics to use;
+see \code{\link{calculate_metrics}} for a list of which metrics are available.}
 }
 \description{
 Running an evaluation of a method on a set of tasks with a set of parameters

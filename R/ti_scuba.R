@@ -6,7 +6,7 @@ description_scuba <- function() create_description(
   package_loaded = c(),
   package_required = c("jsonlite", "readr", "SCUBA"),
   par_set = makeParamSet(
-    makeLogicalParam(id = "rigorous_gap_stats", default = T),
+    makeLogicalParam(id = "rigorous_gap_stats", default = TRUE),
     makeIntegerParam(id = "N_dim", lower=2, upper=20, default=2),
     makeNumericParam(id = "low_gene_threshold", lower = 0, upper = 5, default = 1),
     makeNumericParam(id = "low_gene_fraction_max", lower = 0, upper = 1, default = 0.7),
@@ -29,7 +29,7 @@ run_scuba <- function(counts,
 
   requireNamespace("jsonlite")
   temp_folder <- tempfile()
-  dir.create(temp_folder, recursive = T)
+  dir.create(temp_folder, recursive = TRUE)
 
   counts %>%
     #{log2(. + 1)} %>%
@@ -76,7 +76,7 @@ run_scuba <- function(counts,
   )
 
   # remove temporary output
-  unlink(temp_folder, recursive = T)
+  unlink(temp_folder, recursive = TRUE)
 
   wrap_ti_prediction(
     ti_type = "linear",
