@@ -116,6 +116,8 @@ execute_method <- function(
             arglist[[param_name]] <-
               if (param_name == "task") {
                 task
+              } else if (param_name == "cell_grouping") {
+                task$cell_grouping
               } else {
                 task$special_cells[[param_name]]
               }
