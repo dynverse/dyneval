@@ -19,6 +19,7 @@ calculate_metrics(task, model, metrics)
   \item GEDEVO Graph Edit Distance: \code{"ged"}
   \item Earth Mover's Distance on orbit counts: \code{"net_emd"}
   \item Genetic Algorithm for aligning small graphs: \code{"robbie_network_score"}
+  \item Mantel test p-value: \code{"mantel_pval"}
 }}
 }
 \description{

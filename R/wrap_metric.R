@@ -150,9 +150,9 @@ calculate_metrics <- function(task, model, metrics) {
   }
 
   # Compute the mantel test
-  if ("mantel_pvalue" %in% metrics) {
+  if ("mantel_pval" %in% metrics) {
     time0 <- Sys.time()
-    mantel <- vegan::mantel(task$geodesic_dist, model$geodesic_dist, permutations = 1000, alternative="greater")
+    mantel <- vegan::mantel(task$geodesic_dist, model$geodesic_dist, permutations = 1000)
     summary$mantel_pval <- -log10(mantel$signif)
     time1 <- Sys.time()
     summary$time_mantel <- as.numeric(difftime(time1, time0, units = "sec"))
