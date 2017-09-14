@@ -1,5 +1,7 @@
 context("Testing TI method wrappers")
 
+library(ggplot2)
+
 test_that("Descriptions can be retrieved", {
   tib <- get_descriptions()
   expect_that(tib, is_a("tbl"))
@@ -90,6 +92,66 @@ test_that("Testing execute_method with dummy method", {
 
     pdf("/dev/null")
     expect_error( print(dummy$plot_fun(method_out$model)), NA)
+    dev.off()
+
+    expect_equal( nrow(method_out$summary), 1 )
+  }
+})
+
+test_that("Testing timeout of execute_method", {
+  data(toy_tasks)
+
+  timeouter <- dyneval:::create_description(
+    name = "timeouter",
+    short_name = "timeout",
+    package_loaded = c("dplyr"),
+    package_required = c(),
+    par_set = ParamHelpers::makeParamSet(
+      ParamHelpers::makeNumericParam(id = "sleep_time", lower = 1, upper = 20, default = 10)
+    ),
+    properties = c(),
+    run_fun = function(counts, sleep_time = 10) {
+      Sys.sleep(sleep_time)
+
+      pt <- apply(counts, 1, "mean")
+      pt <- (pt - min(pt)) / (max(pt) - min(pt))
+      milestone_ids <- c("start", "end")
+      milestone_network <- data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1, directed=TRUE)
+      progressions <- data_frame(cell_id = names(pt), from = milestone_ids[[1]], to = milestone_ids[[2]], percentage = pt)
+
+      wrap_ti_prediction(
+        ti_type = "linear",
+        id = "dum3",
+        cell_ids = rownames(counts),
+        milestone_ids = milestone_ids,
+        milestone_network = milestone_network,
+        progressions = progressions
+      )
+    },
+    plot_fun = function(out) {
+      ggplot(out$progressions, aes(percentage, percentage)) +
+        geom_point(size = 2.2) +
+        geom_point(aes(colour = percentage), size = 2) +
+        scale_colour_distiller(palette = "RdBu")
+    }
+  )
+
+  num_datasets <- nrow(toy_tasks)
+
+  # should take about 20 seconds, but will timeout after 10
+  expect_error(execute_method(toy_tasks, timeouter, parameters = list(sleep_time = 10 / num_datasets), timeout = 5))
+
+  # this should finish correctly
+  method_outs <- execute_method(toy_tasks, timeouter, parameters = list(sleep_time = 2 / num_datasets), timeout = 10)
+
+  for (i in seq_along(method_outs)) {
+    method_out <- method_outs[[i]]
+
+    expect_is( method_out$model, "dyneval::ti_wrapper" )
+    expect_is( method_out$summary, "data.frame" )
+
+    pdf("/dev/null")
+    expect_error( print(timeouter$plot_fun(method_out$model)), NA)
     dev.off()
 
     expect_equal( nrow(method_out$summary), 1 )
