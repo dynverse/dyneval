@@ -2,13 +2,12 @@
 #'
 #' @param method the method to wrap an evaluation function around
 #' @param noisy whether or not the metric is noisy or not
-#' @param suppress_output whether or not to suppress the output
-#' @param metrics which metrics to evaluate with
+#' @param metrics which metrics to evaluate with;
+#'   see \code{\link{calculate_metrics}} for a list of which metrics are available.
 #'
 #' @importFrom smoof makeSingleObjectiveFunction makeMultiObjectiveFunction
 #' @export
-make_obj_fun <- function(method, noisy = F, suppress_output = T,
-                         metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "robbie_network_score")) {
+make_obj_fun <- function(method, metrics, noisy = FALSE) {
   # Use different makefunction if there are multiple metrics versus one
   if (length(metrics) > 1) {
     make_fun <- function(...) makeMultiObjectiveFunction(..., n.objectives = length(metrics))
@@ -19,18 +18,17 @@ make_obj_fun <- function(method, noisy = F, suppress_output = T,
   # Wrap the method function in an evaluation function
   make_fun(
     name = "TItrain",
-    vectorized = F,
-    minimize = rep(F, length(metrics)),
+    vectorized = FALSE,
+    minimize = rep(FALSE, length(metrics)),
     noisy = noisy,
-    has.simple.signature = F,
+    has.simple.signature = FALSE,
     par.set = method$par_set,
     fn = function(x, tasks)
       execute_evaluation(
         tasks = tasks,
         method = method,
         parameters = x,
-        metrics = metrics,
-        suppress_output = suppress_output))
+        metrics = metrics))
 }
 
 #' For returning a poor score when a method errors
@@ -51,7 +49,8 @@ impute_y_fun <- function(num_objectives, error_score = -1) {
 #' Running an evaluation of a method on a set of tasks with a set of parameters
 #'
 #' @inheritParams execute_method
-#' @param metrics which metrics to use
+#' @param metrics which metrics to use;
+#'   see \code{\link{calculate_metrics}} for a list of which metrics are available.
 #'
 #' @export
 #' @importFrom dynutils override_setseed extract_row_to_list
@@ -61,10 +60,9 @@ execute_evaluation <- function(
   tasks,
   method,
   parameters,
-  metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "robbie_network_score"),
-  suppress_output = TRUE) {
+  metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "robbie_network_score")) {
 
-  method_outputs <- execute_method(tasks, method, parameters, suppress_output)
+  method_outputs <- execute_method(tasks, method, parameters)
 
   # Calculate scores
   summary_outs <- lapply(seq_len(nrow(tasks)), function(i) {
@@ -91,8 +89,8 @@ execute_evaluation <- function(
       method_output$summary,
       time_geodesic = time_geodesic,
       metrics_output$summary,
-      stringsAsFactors = F,
-      check.names = F
+      stringsAsFactors = FALSE,
+      check.names = FALSE
     )
 
     # Return the output
@@ -113,7 +111,23 @@ execute_evaluation <- function(
   score
 }
 
+#' Calculate the performance of a model with respect to a task
+#'
+#' @param task the original task
+#' @param model the predicted model
+#' @param metrics which metrics to evaluate:
+#' \enumerate{
+#'   \item Coranking of geodesic distances: \code{"mean_R_nx"}, \code{"auc_R_nx"}, \code{"Q_local"}, \code{"Q_global"}
+#'   \item Spearman correlation of geodesic distances: \code{"correlation"}
+#'   \item Isomorphism of the two networks: \code{"isomorphic"}
+#'   \item GEDEVO Graph Edit Distance: \code{"ged"}
+#'   \item Earth Mover's Distance on orbit counts: \code{"net_emd"}
+#'   \item Genetic Algorithm for aligning small graphs: \code{"robbie_network_score"}
+#' }
+#'
 #' @importFrom igraph is_isomorphic_to graph_from_data_frame
+#'
+#' @export
 calculate_metrics <- function(task, model, metrics) {
   summary <- data.frame(row.names = 1)
 
@@ -184,8 +198,6 @@ calculate_metrics <- function(task, model, metrics) {
 #'
 #' @param traj the trajectory
 #'
-#' @export
-#'
 #' @importFrom igraph graph_from_data_frame E distances
 #' @importFrom transport transport
 #' @import dplyr
@@ -201,14 +213,14 @@ compute_emlike_dist <- function(traj) {
     sn_filt <- milestone_network %>% filter(from == sn)
     dis_vec <- setNames(sn_filt$length, sn_filt$to)
     phantom_edges <-
-      expand.grid(from = sn_filt$to, to = sn_filt$to, stringsAsFactors = F) %>%
+      expand.grid(from = sn_filt$to, to = sn_filt$to, stringsAsFactors = FALSE) %>%
       filter(from < to) %>%
       left_join(milestone_network, by = c("from", "to")) %>%
       filter(is.na(length)) %>%
       mutate(length = dis_vec[from] + dis_vec[to])
     phantom_edges
   }))
-  gr <- igraph::graph_from_data_frame(bind_rows(milestone_network %>% mutate(length = 2 * length), phantom_edges), directed = F, vertices = milestone_ids)
+  gr <- igraph::graph_from_data_frame(bind_rows(milestone_network %>% mutate(length = 2 * length), phantom_edges), directed = FALSE, vertices = milestone_ids)
   milestone_distances <- igraph::distances(gr, weights = igraph::E(gr)$length, mode = "all")
 
   # transport percentages data
@@ -242,15 +254,15 @@ compute_emlike_dist <- function(traj) {
       NULL
     } else {
       milestones <- which(fromto_matrix[mid,] == 1)
-      dist_milestones <- milestone_distances[milestones, milestones, drop = F]
-      sample_pcts <- pct[sample_node, milestones, drop = F]
+      dist_milestones <- milestone_distances[milestones, milestones, drop = FALSE]
+      sample_pcts <- pct[sample_node, milestones, drop = FALSE]
       closest_to_nodes <-
         sample_pcts %*% dist_milestones %>%
         reshape2::melt(varnames = c("from", "to"), value.name = "length") %>%
         mutate(from = as.character(from), to = as.character(to))
 
       closest_to_samples <-
-        expand.grid(from = rownames(sample_pcts), to = rownames(sample_pcts), stringsAsFactors = F) %>%
+        expand.grid(from = rownames(sample_pcts), to = rownames(sample_pcts), stringsAsFactors = FALSE) %>%
         filter(from < to)
       closest_to_samples$length <- sapply(seq_len(nrow(closest_to_samples)), function(xi) {
         a <- sample_pcts[closest_to_samples$from[[xi]],]
@@ -281,7 +293,7 @@ compute_emlike_dist <- function(traj) {
     }
   }))
 
-  gr2 <- igraph::graph_from_data_frame(closest, directed = F, vertices = c(milestone_ids, cell_ids))
+  gr2 <- igraph::graph_from_data_frame(closest, directed = FALSE, vertices = c(milestone_ids, cell_ids))
   gr2 %>% igraph::distances(v = cell_ids, to = cell_ids, weights = igraph::E(gr2)$length)
 }
 
@@ -289,8 +301,6 @@ compute_emlike_dist <- function(traj) {
 #'
 #' @param gold_dist A data frame containing the pairwise distances in the original space
 #' @param pred_dist A data frame containing the pairwise distances in the new space
-#'
-#' @export
 #'
 #' @importFrom coRanking coranking LCMC
 #' @importFrom tibble lst
@@ -350,7 +360,6 @@ compute_coranking <- function(gold_dist, pred_dist) {
 #' @importFrom glue glue
 #' @importFrom utils write.table
 #' @importFrom GEDEVO run_GEDEVO
-#' @export
 calculate_ged <- function(net1, net2) {
   net1 <- net1 %>% mutate(dir="u") %>% select(from, dir, to)
   net2 <- net2 %>% mutate(dir="u") %>% select(from, dir, to)
@@ -371,12 +380,6 @@ calculate_ged <- function(net1, net2) {
 
 
 
-
-
-
-
-
-
 ## Robie network score ----------------------------
 score_map <- function(permutation, net, net_ref) {
   net_mapped <- net[permutation, permutation]
@@ -392,7 +395,7 @@ complete_matrix <- function(mat, dim, fill=0) {
 get_adjacency <- function(net, nodes=unique(c(net$from, net$to))) {
   newnet <- net %>%
     mutate(from=factor(from, levels=nodes), to=factor(to, levels=nodes)) %>%
-    reshape2::acast(from~to, value.var="length", fill=0, drop=F)
+    reshape2::acast(from~to, value.var="length", fill=0, drop=FALSE)
 
   newnet[lower.tri(newnet)] = newnet[lower.tri(newnet)] + t(newnet)[lower.tri(newnet)] # make symmetric
 
@@ -404,7 +407,6 @@ get_adjacency <- function(net, nodes=unique(c(net$from, net$to))) {
 #' @param net1 the first network to compare
 #' @param net2 the second network to compare
 #' @importFrom GA ga
-#' @export
 calculate_robbie_network_score <- function(net1, net2) {
   nodes1 <- unique(c(net1$from, net1$to))
   nodes2 <- unique(c(net2$from, net2$to))

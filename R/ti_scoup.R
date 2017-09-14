@@ -37,10 +37,10 @@ run_scoup <- function(
   means <- apply(counts[start_ix,], 2, mean)
   distr.df <- data.frame(i = seq_along(vars) - 1, means, vars)
 
-  write.table(t(counts), file = paste0(tmp_dir, "data"), sep = "\t", row.names = F, col.names = F)
-  write.table(distr.df, file = paste0(tmp_dir, "init"), sep = "\t", row.names = F, col.names = F)
+  write.table(t(counts), file = paste0(tmp_dir, "data"), sep = "\t", row.names = FALSE, col.names = FALSE)
+  write.table(distr.df, file = paste0(tmp_dir, "init"), sep = "\t", row.names = FALSE, col.names = FALSE)
 
-  SCOUP::run_SCOUP("sp", glue::glue("sp {tmp_dir}data {tmp_dir}init {tmp_dir}time_sp {tmp_dir}gpara {ncol(counts)} {nrow(counts)} {ndim}"), verbose = T)
+  SCOUP::run_SCOUP("sp", glue::glue("sp {tmp_dir}data {tmp_dir}init {tmp_dir}time_sp {tmp_dir}gpara {ncol(counts)} {nrow(counts)} {ndim}"), verbose = TRUE)
   SCOUP::run_SCOUP("scoup", glue::glue("scoup -k {nbranch} {tmp_dir}data {tmp_dir}init {tmp_dir}time_sp {tmp_dir}gpara {tmp_dir}cpara {tmp_dir}ll {ncol(counts)} {nrow(counts)} -m {m} -M {M}"))
 
   model <- read.table(paste0(tmp_dir, "cpara"))

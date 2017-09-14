@@ -5,7 +5,7 @@
 #' @importFrom utils lsf.str
 #' @importFrom dynutils list_as_tibble
 #' @export
-get_descriptions <- function(as_tibble = T) {
+get_descriptions <- function(as_tibble = TRUE) {
   requireNamespace("dyneval")
   functions <- lsf.str(asNamespace("dyneval"))
   description_functions <- functions[grep("description_", functions)]
@@ -23,7 +23,7 @@ get_descriptions <- function(as_tibble = T) {
 #'
 #' @export
 check_dependencies <- function() {
-  for (descr in get_descriptions(as_tibble = F)) {
+  for (descr in get_descriptions(as_tibble = FALSE)) {
     required_packages <- c(descr$package_loaded, descr$package_required)
     installed <- required_packages %in% rownames(installed.packages())
     if (any(!installed)) {
@@ -61,11 +61,17 @@ create_description <- function(
 #' @param give_start_cell whether a start cell should be provided even though a method doesn't require it
 #' @param give_end_cells whether end cells should be provided even though a method doesn't require it
 #' @param give_cell_grouping whether a cell grouping should be provided even though a method doesn't require it
-#' @param suppress_output whether or not to suppress the outputted messages
 #'
 #' @importFrom utils capture.output
 #' @export
-execute_method <- function(tasks, method, parameters, give_start_cell = FALSE, give_end_cells = FALSE, give_cell_grouping = FALSE, suppress_output = TRUE) {
+execute_method <- function(
+  tasks,
+  method,
+  parameters,
+  give_start_cell = FALSE,
+  give_end_cells = FALSE,
+  give_cell_grouping = FALSE
+) {
   # Run the method on each of the tasks
   method_futures <- future(
     {
@@ -135,13 +141,7 @@ execute_method <- function(tasks, method, parameters, give_start_cell = FALSE, g
         oldwd <- getwd() # set working directory, to avoid polluting the working directory
         setwd(tempdir())
         tryCatch({
-          if (suppress_output) {
-            capture.output({
-              model <- do.call(method$run_fun, arglist)
-            })
-          } else {
-            model <- do.call(method$run_fun, arglist)
-          }
+          model <- do.call(method$run_fun, arglist)
         }, finally=setwd(oldwd)) # make sure working directory is always set to original even when errored
         time1 <- Sys.time()
         summary$time_method <- as.numeric(difftime(time1, time0, units = "sec"))
@@ -155,7 +155,7 @@ execute_method <- function(tasks, method, parameters, give_start_cell = FALSE, g
 
       outputs
     },
-    globals = c("tasks", "method", "parameters", "suppress_output", "give_start_cell", "give_cell_grouping"),
+    globals = c("tasks", "method", "parameters", "give_start_cell", "give_cell_grouping"),
     packages = c("dyneval", "dynutils", method$package_loaded),
     evaluator = plan("multisession")
   )

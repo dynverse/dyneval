@@ -3,8 +3,8 @@ imp_trajectory_inference <- list(
     method_name = "princurve_princurve",
     method_type = "trajectory_inference",
     method_function = function(space) {
-      fit <- princurve::principal.curve(space, trace = F, stretch = 0, plot.true = F)
-      path <- fit$s[fit$tag,,drop=F]
+      fit <- princurve::principal.curve(space, trace = FALSE, stretch = 0, plot.true = FALSE)
+      path <- fit$s[fit$tag,,drop=FALSE]
       time <- setNames(fit$lambda, rownames(space))
       list(
         pseudotime = time, trajectory = path

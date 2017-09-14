@@ -1,6 +1,6 @@
 generate_parameters <- function(parameter_sets) {
   dplyr::bind_rows(lapply(parameter_sets, function(param_set) {
-    do.call("expand.grid", c(param_set, list(stringsAsFactors = F)))
+    do.call("expand.grid", c(param_set, list(stringsAsFactors = FALSE)))
   }))
 }
 
@@ -11,6 +11,5 @@ generate_parameters <- function(parameter_sets) {
 #'
 #' @export
 get_parameter_row <- function(method, parameter_row) {
-
-  na.omit(as.list(method$expanded_parameters[parameter_row,,drop=F]))
+  na.omit(as.list(method$expanded_parameters[parameter_row,,drop=FALSE]))
 }

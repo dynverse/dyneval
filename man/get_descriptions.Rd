@@ -4,7 +4,7 @@
 \alias{get_descriptions}
 \title{Return all TI descriptions}
 \usage{
-get_descriptions(as_tibble = T)
+get_descriptions(as_tibble = TRUE)
 }
 \arguments{
 \item{as_tibble}{Whether or not to return the descriptions as a tibble}

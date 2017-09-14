@@ -6,7 +6,7 @@ for (taski in seq_len(nrow(toy_tasks))) {
   task <- extract_row_to_list(toy_tasks, taski)
 
   test_that(paste0("Perform dimred on trajectory with task ", task$id), {
-    dimred <- dimred_trajectory(task, insert_phantom_edges = T)
+    dimred <- dimred_trajectory(task, insert_phantom_edges = TRUE)
 
     # check dimred$space_milestones
     milestone_ids <- task$milestone_ids
@@ -34,7 +34,7 @@ for (taski in seq_len(nrow(toy_tasks))) {
     expect_equal( space_samples$cell_id, cell_ids )
 
     # try different param
-    dimred2 <- dimred_trajectory(task, insert_phantom_edges = F)
+    dimred2 <- dimred_trajectory(task, insert_phantom_edges = FALSE)
     # dimred2
   })
 }

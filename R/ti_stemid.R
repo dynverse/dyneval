@@ -22,7 +22,7 @@ description_stemid <- function() create_description(
     makeNumericParam(id = "thr_lower", lower = -100, default = -40, upper = -1),
     makeNumericParam(id = "thr_upper", lower = -100, default = -40, upper = -1),
     makeNumericParam(id = "outdistquant", lower = 0, default = .95, upper = 1),
-    makeLogicalParam(id = "nmode", default = F),
+    makeLogicalParam(id = "nmode", default = FALSE),
     makeNumericParam(id = "pdishuf", lower = 2, default = log10(2000), upper = 3.5, trafo = function(x) ceiling(10)^x),
     makeNumericParam(id = "pthr", lower = -4, default = -2, upper = 0, trafo = function(x) 10^x),
     makeNumericParam(id = "pethr", lower = -4, default = -2, upper = 0, trafo = function(x) 10^x),
@@ -51,7 +51,7 @@ run_stemid <- function(
   thr_lower = -40,
   thr_upper = -1,
   outdistquant = .95,
-  nmode = F,
+  nmode = FALSE,
   pdishuf = 2000,
   pthr = .01,
   pethr = .01
@@ -61,7 +61,7 @@ run_stemid <- function(
   requireNamespace("reshape2")
 
   # initialize SCseq object with transcript counts
-  sc <- StemID:::SCseq(data.frame(t(counts), check.names = F, stringsAsFactors = F))
+  sc <- StemID:::SCseq(data.frame(t(counts), check.names = FALSE, stringsAsFactors = FALSE))
 
   # filtering of expression data
   sc <- StemID:::filterdata(sc, mintotal = 1, minexpr = 0, minnumber = 0, maxexpr = Inf, downsample = TRUE, dsn = 1)
@@ -107,7 +107,7 @@ run_stemid <- function(
 
   # converting to milestone network
   gr_df <- data_frame(from = seq_along(trl$kid)+1, to = trl$kid, weight = dc[cbind(from, to)])
-  gr <- igraph::graph_from_data_frame(gr_df, directed = F, vertices = milestone_ids)
+  gr <- igraph::graph_from_data_frame(gr_df, directed = FALSE, vertices = milestone_ids)
   milestone_network <- igraph::distances(gr) %>%
     {.[upper.tri(., diag=TRUE)] = NA; .} %>% # no bidirectionality
     reshape2::melt(varnames = c("from", "to"), value.name = "length") %>%

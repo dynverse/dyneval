@@ -4,7 +4,7 @@ test_that("Descriptions can be retrieved", {
   tib <- get_descriptions()
   expect_that(tib, is_a("tbl"))
 
-  lis <- get_descriptions(as_tibble = F)
+  lis <- get_descriptions(as_tibble = FALSE)
   expect_that(lis, is_a("list"))
 
   for (descr in lis) {

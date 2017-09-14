@@ -9,7 +9,7 @@ description_celltree_maptpx <- function() create_description(
     makeDiscreteParam(id = "method", values = "maptpx", default = "maptpx"),
     makeIntegerParam(id = "num_topics_lower", lower = 2L, upper = 15L, default = 2),
     makeIntegerParam(id = "num_topics_upper", lower = 2L, upper = 15L, default = 15),
-    makeNumericParam(id = "sd_filter", lower = log(.01), upper = log(5.0), default = log(.5), special.vals = list(F), trafo = exp),
+    makeNumericParam(id = "sd_filter", lower = log(.01), upper = log(5.0), default = log(.5), special.vals = list(FALSE), trafo = exp),
     makeNumericParam(id = "tot_iter", lower = log(10^4), upper = log(10^7), default = log(10^6), trafo = function(x) round(exp(x))),
     makeNumericParam(id = "tolerance", lower = log(.001), upper = log(.5), default = log(.05), trafo = exp),
     makeNumericParam(id = "width_scale_factor", lower = 1.01, default = 1.2, upper = 2),
@@ -30,7 +30,7 @@ description_celltree_gibbs <- function() create_description(
   par_set = makeParamSet(
     makeDiscreteParam(id = "method", values = "Gibbs", default = "Gibbs"),
     makeIntegerParam(id = "num_topics", lower = 2L, default = 4L, upper = 15L),
-    makeNumericParam(id = "sd_filter", lower = log(.01), upper = log(5.0), default = log(.5), special.vals = list(F), trafo = exp),
+    makeNumericParam(id = "sd_filter", lower = log(.01), upper = log(5.0), default = log(.5), special.vals = list(FALSE), trafo = exp),
     makeNumericParam(id = "tot_iter", lower = log(50), upper = log(500), default = log(200), trafo = function(x) round(exp(x))),
     makeNumericParam(id = "tolerance", lower = log(10^-7), upper = log(10^-3), default = log(10^-5), trafo = exp),
     makeNumericParam(id = "width_scale_factor", lower = log(.1), default = log(1.2), upper = log(100), trafo = exp)
@@ -50,7 +50,7 @@ description_celltree_vem <- function() create_description(
   par_set = makeParamSet(
     makeDiscreteParam(id = "method", values = "VEM", default = "VEM"),
     makeIntegerParam(id = "num_topics", lower = 2L, default = 4L, upper = 15L),
-    makeNumericParam(id = "sd_filter", lower = log(.01), upper = log(5.0), default = log(.5), special.vals = list(F), trafo = exp),
+    makeNumericParam(id = "sd_filter", lower = log(.01), upper = log(5.0), default = log(.5), special.vals = list(FALSE), trafo = exp),
     makeNumericParam(id = "tot_iter", lower = log(10^4), upper = log(10^7), default = log(10^6), trafo = function(x) round(exp(x))),
     makeNumericParam(id = "tolerance", lower = log(10^-7), upper = log(10^-3), default = log(10^-5), trafo = exp),
     makeNumericParam(id = "width_scale_factor", lower = log(.1), default = log(1.5), upper = log(100), trafo = exp)
@@ -82,13 +82,13 @@ run_celltree <- function(counts,
     t(expression) + min(expression) + 1,
     k.topics = num_topics,
     method = method,
-    log.scale = F,
+    log.scale = FALSE,
     sd.filter = sd_filter,
     tot.iter = tot_iter,
     tol = tolerance)
 
   # put the parameters for the backbones in separate list, for adding optional cell_grouping and (if grouping is given) start group
-  backbone_params <- list(lda_out, width.scale.factor = width_scale_factor, only.mst = F, merge.sequential.backbone = F)
+  backbone_params <- list(lda_out, width.scale.factor = width_scale_factor, only.mst = FALSE, merge.sequential.backbone = FALSE)
 
   if(!is.null(cell_grouping)) {
     backbone_params$grouping <- cell_grouping %>% slice(match(cell_id, rownames(counts))) %>% pull(group_id)
