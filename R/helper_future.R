@@ -21,10 +21,10 @@
 #' dyneval:::wait_or_kill(
 #'   expr = {
 #'     Sys.sleep(100) # really long function
-#'     data_frame(result = "finished", time = sleeper_time)
+#'     data.frame(result = "finished", time = sleeper_time)
 #'   },
 #'   wait_time = 10,
-#'   cancel_output_fun = function(t) data_frame(result = "killed", time = t),
+#'   cancel_output_fun = function(t) data.frame(result = "killed", time = t),
 #'   check_interval = 1,
 #'   verbose = TRUE
 #' )
