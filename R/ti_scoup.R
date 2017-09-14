@@ -25,8 +25,8 @@ run_scoup <- function(
   nbranch = 2,
   m = 20,
   M = 20,
-  ndim=3
-  ) {
+  ndim = 3
+) {
   requireNamespace("SCOUP")
 
   tmp_dir <- paste0(tempfile(), "/")
