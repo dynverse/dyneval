@@ -134,6 +134,15 @@ calculate_metrics <- function(task, model, metrics) {
     summary$time_correlation <- as.numeric(difftime(time1, time0, units = "sec"))
   }
 
+  # Compute the mantel test
+  if ("mantel_pvalue" %in% metrics) {
+    time0 <- Sys.time()
+    mantel <- vegan::mantel(task$geodesic_dist, model$geodesic_dist, permutations = 1000, alternative="greater")
+    summary$mantel_pval <- mantel$signif
+    time1 <- Sys.time()
+    summary$time_mantel <- as.numeric(difftime(time1, time0, units = "sec"))
+  }
+
   net1 <- dynutils::simplify_network(model$milestone_network)
   net2 <- dynutils::simplify_network(task$milestone_network) %>% filter(to != "FILTERED_CELLS")
 
