@@ -90,7 +90,7 @@ benchmark_suite_submit <- function(
         max_wall_time = "99:00:00",
         execute_before = "export R_MAX_NUM_DLLS=300"
       )
-      qsub_packages <- c("dplyr", "purr", "dyneval", "mlrMBO", "parallelMap")
+      qsub_packages <- c("dplyr", "purrr", "dyneval", "mlrMBO", "parallelMap")
       qsub_environment <-  c(
         "method", "obj_fun", "design",
         "tasks", "task_group", "task_fold",
