@@ -45,7 +45,8 @@ Imports:
   tibble, 
   tidyr,
   transport,
-  viridis
+  viridis,
+  vegan
 Suggests:
   cellTree,
   coda,
