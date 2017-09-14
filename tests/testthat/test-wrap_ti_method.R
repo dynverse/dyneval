@@ -24,11 +24,14 @@ for (i in seq_len(nrow(methods))) {
   test_that(paste0("Checking ", method$short_name), {
     par_set <- method$par_set
 
+    # fix for paramhelpers
+    discreteNameToValue <- ParamHelpers::discreteNameToValue
+
     # must be able to generate a 100 random parameters
-    design <- generateDesign(100, par_set)
+    design <- ParamHelpers::generateDesign(100, par_set)
 
     # must be able to generate the default parameters
-    design <- generateDesignOfDefaults(par_set)
+    design <- ParamHelpers::generateDesignOfDefaults(par_set)
 
     parset_params <- names(par_set$pars)
     runfun_params <- setdiff(formalArgs(method$run_fun), c("counts", "start_cell_id", "stop_cell_ids", "cell_grouping", "task"))
