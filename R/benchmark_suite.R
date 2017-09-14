@@ -12,7 +12,7 @@
 #' @param num_init_params The number of initial parameters to evaluate
 #' @param num_repeats The number of times to repeat the mlr process, for each group and each fold
 #'
-#' @importFrom mlrMBO makeMBOControl setMBOControlTermination setMBOControlInfill
+#' @importFrom mlrMBO makeMBOControl setMBOControlTermination setMBOControlInfill makeMBOInfillCritDIB
 #' @importFrom testthat expect_equal
 #' @importFrom PRISM qsub_lapply override_qsub_config
 #' @importFrom ParamHelpers generateDesignOfDefaults generateDesign
@@ -20,7 +20,9 @@
 #'
 #' @export
 benchmark_suite_submit <- function(
-  tasks, task_group, task_fold,
+  tasks,
+  task_group,
+  task_fold,
   out_dir,
   methods = get_descriptions(as_tibble = TRUE),
   num_cores = 4,
@@ -35,12 +37,12 @@ benchmark_suite_submit <- function(
   testthat::expect_is(methods, "tbl")
 
   ## MBO settings
-  control_train <- makeMBOControl(
+  control_train <- mlrMBO::makeMBOControl(
     n.objectives = length(metrics),
     propose.points = num_cores,
     impute.y.fun = impute_y_fun(length(metrics))) %>%
-    setMBOControlTermination(iters = num_iterations) %>%
-    setMBOControlInfill(makeMBOInfillCritDIB())
+    mlrMBO::setMBOControlTermination(iters = num_iterations) %>%
+    mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritDIB())
   control_test <- control_train
   control_test$iters <- 1
   control_test$propose.points <- 1
