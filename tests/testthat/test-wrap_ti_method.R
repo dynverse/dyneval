@@ -16,6 +16,27 @@ test_that("Descriptions can be retrieved", {
   }
 })
 
+methods <- get_descriptions()
+
+for (i in seq_len(nrow(methods))) {
+  method <- dynutils::extract_row_to_list(methods, i)
+
+  test_that(paste0("Checking ", method$short_name), {
+    par_set <- method$par_set
+
+    # must be able to generate a 100 random parameters
+    design <- generateDesign(100, par_set)
+
+    # must be able to generate the default parameters
+    design <- generateDesignOfDefaults(par_set)
+
+    parset_params <- names(par_set$pars)
+    runfun_params <- setdiff(formalArgs(method$run_fun), c("counts", "start_cell_id", "stop_cell_ids", "cell_grouping", "task"))
+
+    expect_equal( parset_params[parset_params %in% runfun_params], parset_params )
+  })
+}
+
 test_that("Checking for dependencies does not produce an error", {
   expect_error(check_dependencies(), NA)
 })

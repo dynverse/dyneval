@@ -9,6 +9,7 @@ description_monocle_pqtree <- function() generic_monocle_description("ICA")
 generic_monocle_description <- function(reduction_method) {
   if(reduction_method == "DDRTree") {
     par_set = makeParamSet(
+      makeDiscreteParam(id = "reduction_method", values = "DDRTree", default = "DDRTree"),
       makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
       makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
       makeIntegerParam(id = "maxIter", lower = 1L, default = 20L, upper = 100L),
@@ -23,6 +24,7 @@ generic_monocle_description <- function(reduction_method) {
     )
   } else if(reduction_method == "ICA"){
     par_set = makeParamSet(
+      makeDiscreteParam(id = "reduction_method", values = "ICA", default = "ICA"),
       makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
       makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
       makeNumericParam(id = "lambda", lower = 0, default = 5, upper = 100),
@@ -39,24 +41,9 @@ generic_monocle_description <- function(reduction_method) {
     package_required = c(),
     par_set = par_set,
     properties = c("tibble"),#, "dimred", "dimred_traj", "pseudotime"), # todo: implement other outputs
-    run_fun = ifelse(reduction_method == "DDRTree", run_monocle_ddrtree, run_monocle_pqtree),
+    run_fun = run_monocle,
     plot_fun = plot_monocle
   )
-}
-
-run_monocle_ddrtree <- function(...) {
-  args <- list(...)
-  print(args)
-  args$reduction_method <- "DDRTree"
-
-  do.call(run_monocle, args)
-}
-
-run_monocle_pqtree <- function(...) {
-  args <- list(...)
-  args$reduction_method <- "ICA"
-
-  do.call(run_monocle, args)
 }
 
 #' @importFrom igraph degree all_shortest_paths distances
