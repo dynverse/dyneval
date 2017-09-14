@@ -12,7 +12,7 @@ dir.create(out_dir, recursive = T)
 select_tasks <- generate_toy_datasets()
 task_group <- rep("group", nrow(select_tasks))
 task_fold <- gsub(".*_", "", select_tasks$id) %>% as.integer()
-methods <- get_descriptions(as_tibble = F)
+methods <- get_descriptions(as_tibble = T)
 benchmark_suite_submit(select_tasks, task_group, task_fold, methods = methods, out_dir = out_dir)
 
 
