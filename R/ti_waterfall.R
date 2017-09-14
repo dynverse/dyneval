@@ -13,12 +13,12 @@ description_waterfall <- function() create_description(
   plot_fun = plot_waterfall
 )
 
-run_waterfall <- function(counts, k = 10) {
+run_waterfall <- function(counts, num_clusters = 10) {
   requireNamespace("Waterfall")
 
   # Run waterfall
   expr <- log2(counts+1)
-  ps <- Waterfall::pseudotimeprog.foo(t(expr), k = k)
+  ps <- Waterfall::pseudotimeprog.foo(t(expr), k = num_clusters)
 
   # create output
   cell_ids <- rownames(counts)
