@@ -26,7 +26,7 @@ test_that("Future helper works correctly", {
   library(parallelMap)
   sleeper_times <- sample(c(seq(1,8), seq(12,20)), 20, replace = T)
   wait_time <- 10
-  parallelStartMulticore(cpus = 8, show.info = TRUE)
+  parallelStartMulticore(cpus = 2, show.info = TRUE)
   outp <- bind_rows(parallelMap(test_fun, sleeper_times, more.args = list(wait_time = wait_time)))
   parallelStop()
   expected_result <- ifelse(sleeper_times < wait_time, "finished", "killed")
