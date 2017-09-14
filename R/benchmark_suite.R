@@ -28,10 +28,10 @@ benchmark_suite_submit <- function(
   num_init_params = 100,
   num_repeats = 1
 ) {
-  testthat::expect_is(tasks, "tibble")
+  testthat::expect_is(tasks, "tbl")
   testthat::expect_equal(nrow(tasks), length(task_group))
   testthat::expect_equal(nrow(tasks), length(task_fold))
-  testthat::expect_is(methods, "tibble")
+  testthat::expect_is(methods, "tbl")
 
   ## MBO settings
   control_train <- makeMBOControl(
