@@ -7,8 +7,8 @@
 benchmark_suite_submit(tasks, task_group, task_fold, out_dir, timeout = 60 *
   nrow(tasks), methods = get_descriptions(as_tibble = TRUE),
   metrics = c("auc_R_nx", "robbie_network_score"), num_cores = 4,
-  memory = "20G", num_iterations = 20, num_init_params = 100,
-  num_repeats = 1)
+  memory = "20G", max_wall_time = "72:00:00", num_iterations = 20,
+  num_init_params = 100, num_repeats = 1)
 }
 \arguments{
 \item{tasks}{A tibble of tasks.}
@@ -26,7 +26,11 @@ benchmark_suite_submit(tasks, task_group, task_fold, out_dir, timeout = 60 *
 \item{metrics}{Which metrics to use;
 see \code{\link{calculate_metrics}} for a list of which metrics are available.}
 
-\item{num_cores}{How many cores to use per mlrMBO process.}
+\item{num_cores}{The number of cores to allocate per mlr run.}
+
+\item{memory}{The memory to allocate per core.}
+
+\item{max_wall_time}{The maximum amount of time each fold is allowed to run.}
 
 \item{num_iterations}{The number of iterations to run.}
 
