@@ -123,6 +123,7 @@ execute_evaluation <- function(
 #'   \item GEDEVO Graph Edit Distance: \code{"ged"}
 #'   \item Earth Mover's Distance on orbit counts: \code{"net_emd"}
 #'   \item Genetic Algorithm for aligning small graphs: \code{"robbie_network_score"}
+#'   \item Mantel test p-value: \code{"mantel_pval"}
 #' }
 #'
 #' @importFrom igraph is_isomorphic_to graph_from_data_frame
@@ -152,7 +153,7 @@ calculate_metrics <- function(task, model, metrics) {
   if ("mantel_pvalue" %in% metrics) {
     time0 <- Sys.time()
     mantel <- vegan::mantel(task$geodesic_dist, model$geodesic_dist, permutations = 1000, alternative="greater")
-    summary$mantel_pval <- mantel$signif
+    summary$mantel_pval <- -log10(mantel$signif)
     time1 <- Sys.time()
     summary$time_mantel <- as.numeric(difftime(time1, time0, units = "sec"))
   }
