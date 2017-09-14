@@ -10,7 +10,15 @@ select_tasks <- generate_toy_datasets()
 task_group <- rep("group", nrow(select_tasks))
 task_fold <- gsub(".*_", "", select_tasks$id) %>% as.integer()
 methods <- get_descriptions(as_tibble = T)
-benchmark_suite_submit(select_tasks, task_group, task_fold, out_dir = out_dir, methods = methods)
+benchmark_suite_submit(
+  select_tasks,
+  task_group,
+  task_fold,
+  out_dir = out_dir,
+  methods = methods,
+  timeout = 60 * nrow(select_tasks),
+  memory = "10G"
+)
 
 
 

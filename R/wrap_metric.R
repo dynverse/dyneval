@@ -1,13 +1,11 @@
 #' Used for wrapping an evaluation function around a TI method
 #'
-#' @param method the method to wrap an evaluation function around
+#' @inheritParams execute_evaluation
 #' @param noisy whether or not the metric is noisy or not
-#' @param metrics which metrics to evaluate with;
-#'   see \code{\link{calculate_metrics}} for a list of which metrics are available.
 #'
 #' @importFrom smoof makeSingleObjectiveFunction makeMultiObjectiveFunction
 #' @export
-make_obj_fun <- function(method, metrics, noisy = FALSE) {
+make_obj_fun <- function(method, metrics, timeout, noisy = FALSE) {
   # Use different makefunction if there are multiple metrics versus one
   if (length(metrics) > 1) {
     make_fun <- function(...) makeMultiObjectiveFunction(..., n.objectives = length(metrics))
@@ -28,7 +26,8 @@ make_obj_fun <- function(method, metrics, noisy = FALSE) {
         tasks = tasks,
         method = method,
         parameters = x,
-        metrics = metrics))
+        metrics = metrics,
+        timeout = timeout))
 }
 
 #' For returning a poor score when a method errors
@@ -56,13 +55,8 @@ impute_y_fun <- function(num_objectives, error_score = -1) {
 #' @importFrom dynutils override_setseed extract_row_to_list
 #' @importFrom future future value plan
 #' @importFrom netdist gdd net_emd
-execute_evaluation <- function(
-  tasks,
-  method,
-  parameters,
-  metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic", "robbie_network_score")) {
-
-  method_outputs <- execute_method(tasks, method, parameters)
+execute_evaluation <- function(tasks, method, parameters, metrics, timeout) {
+  method_outputs <- execute_method(tasks = tasks, method = method, parameters = parameters, timeout = timeout)
 
   # Calculate scores
   summary_outs <- lapply(seq_len(nrow(tasks)), function(i) {

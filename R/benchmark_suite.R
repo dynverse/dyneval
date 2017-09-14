@@ -1,16 +1,17 @@
 #' A benchmark suite with which to run all the methods on the different tasks
 #'
-#' @param tasks A tibble of tasks
-#' @param task_group A grouping vector for the different tasks
-#' @param task_fold A fold index vector for the different tasks
-#' @param out_dir The folder in which to output intermediate and final results
-#' @param methods A tibble of TI methods
-#' @param num_cores How many cores to use per mlrMBO process
+#' @param tasks A tibble of tasks.
+#' @param task_group A grouping vector for the different tasks.
+#' @param task_fold A fold index vector for the different tasks.
+#' @param out_dir The folder in which to output intermediate and final results.
+#' @param methods A tibble of TI methods.
 #' @param metrics Which metrics to use;
 #'   see \code{\link{calculate_metrics}} for a list of which metrics are available.
-#' @param num_iterations The number of iterations to run
-#' @param num_init_params The number of initial parameters to evaluate
-#' @param num_repeats The number of times to repeat the mlr process, for each group and each fold
+#' @param timeout The number of seconds 1 method has to solve each of the tasks before a timeout is generated.
+#' @param num_cores How many cores to use per mlrMBO process.
+#' @param num_iterations The number of iterations to run.
+#' @param num_init_params The number of initial parameters to evaluate.
+#' @param num_repeats The number of times to repeat the mlr process, for each group and each fold.
 #'
 #' @importFrom mlrMBO makeMBOControl setMBOControlTermination setMBOControlInfill makeMBOInfillCritDIB
 #' @importFrom testthat expect_equal
@@ -24,9 +25,12 @@ benchmark_suite_submit <- function(
   task_group,
   task_fold,
   out_dir,
+  timeout = 60 * nrow(tasks),
   methods = get_descriptions(as_tibble = TRUE),
-  num_cores = 4,
   metrics = c("auc_R_nx", "robbie_network_score"),
+  num_cores = 4,
+  memory = "20G",
+  max_wall_time = "72:00:00",
   num_iterations = 20,
   num_init_params = 100,
   num_repeats = 1
@@ -70,7 +74,7 @@ benchmark_suite_submit <- function(
       cat("Submitting ", method$name, "\n", sep="")
 
       # create an objective function
-      obj_fun <- make_obj_fun(method, metrics = metrics)
+      obj_fun <- make_obj_fun(method = method, metrics = metrics, timeout = timeout)
 
       # generate initial parameters
       design <- bind_rows(
@@ -82,12 +86,12 @@ benchmark_suite_submit <- function(
       qsub_config <- PRISM::override_qsub_config(
         wait = FALSE,
         num_cores = num_cores,
-        memory = "20G",
+        memory = memory,
         name = paste0("D_", method$short_name),
         remove_tmp_folder = FALSE,
         stop_on_error = FALSE,
         verbose = FALSE,
-        max_wall_time = "99:00:00",
+        max_wall_time = max_wall_time,
         execute_before = "export R_MAX_NUM_DLLS=300"
       )
       qsub_packages <- c("dplyr", "purrr", "dyneval", "mlrMBO", "parallelMap")
