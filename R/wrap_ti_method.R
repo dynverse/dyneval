@@ -82,7 +82,7 @@ execute_method <- function(
     cancel_output_fun = function(time) stop("Timeout after ", time, " seconds"),
     check_interval = 1,
     verbose = FALSE,
-    globals = c("tasks", "method", "parameters", "give_start_cell", "give_cell_grouping"),
+    globals = c("tasks", "method", "parameters", "give_start_cell", "give_end_cells", "give_cell_grouping"),
     packages = c("dyneval", "dynutils", method$package_loaded),
     expr = {
       # Load required namespaces
@@ -104,55 +104,38 @@ execute_method <- function(
         arglist <- c(list(counts = task$counts), parameters)
 
         # Add prior information
-        # Include start cell if method requires it
-        if ("start_cell_id" %in% formalArgs(method$run_fun)) {
-          # Some methods do not require a start cell, but can use it, determined by whether the default start_cell_id is NULL
-          # Give the start cell if the start cell is needed, OR if give_start_cell is TRUE
-          if(
-            (!is.null(as.list(args(method$run_fun))$start_cell_id)) |
-            give_start_cell
-          ) {
-            arglist$start_cell_id <- task$special_cells$start_cell_id
-          }
-        }
+        # Including the task is only used for perturbing the gold standard, not used by any real methods
+        param_names <- c("start_cell_id", "end_cell_id", "cell_grouping", "task")
+        param_bools <- c(give_start_cell, give_end_cells, give_cell_grouping, FALSE)
 
-        # Include end cells if method requires it
-        if ("end_cell_ids" %in% formalArgs(method$run_fun)) {
-          # Some methods do not require end cells, but can use it, determined by whether the default end_cell_ids is NULL
-          # Give the end cells if the end cells are needed, OR if give_end_cells is TRUE
-          if(
-            (!is.null(as.list(args(method$run_fun))$end_cell_ids)) |
-            give_end_cells
-          ) {
-            arglist$end_cell_ids <- task$special_cells$end_cell_ids
-          }
-        }
+        for (i in seq_along(param_names)) {
+          param_name <- param_names[[i]]
+          param_bool <- param_bools[[i]]
 
-        # Include cell_grouping if method requires it
-        if ("cell_grouping" %in% formalArgs(method$run_fun)) {
-          # Some methods do not require a grouping, but can use it, determined by whether the default grouping is NULL
-          # Give the grouping if the grouping is needed, OR if give_cell_grouping is TRUE
-          if(
-            (!is.null(as.list(args(method$run_fun))$cell_grouping)) |
-            give_cell_grouping
-          ) {
-            arglist$cell_grouping <- task$cell_grouping
+          if (param_name %in% formalArgs(method$run_fun) | param_bool) {
+            arglist[[param_name]] <-
+              if (param_name == "task") {
+                task
+              } else {
+                task$special_cells[[param_name]]
+              }
           }
-        }
-
-        # Include task (only used for perturbing the gold standard, not used by any real methods)
-        if ("task" %in% formalArgs(method$run_fun)) {
-          arglist$task <- task
         }
 
         # Run model on task with given parameters. Suppress output if need be.
         time0 <- Sys.time()
 
-        oldwd <- getwd() # set working directory, to avoid polluting the working directory
+        # set working directory to a temporary directory, to avoid polluting the working directory
+        # if a method starts writing output to the working directory
+        oldwd <- getwd()
         setwd(tempdir())
+
         tryCatch({
           model <- do.call(method$run_fun, arglist)
-        }, finally=setwd(oldwd)) # make sure working directory is always set to original even when errored
+        }, finally = {
+          # make sure working directory is always set to original even when errored
+          setwd(oldwd)
+        })
         time1 <- Sys.time()
         summary$time_method <- as.numeric(difftime(time1, time0, units = "sec"))
 
