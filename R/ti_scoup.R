@@ -16,6 +16,8 @@ description_scoup <- function() create_description(
   plot_fun = plot_scoup
 )
 
+#' @importFrom utils read.table
+#' @importFrom stats var
 run_scoup <- function(
   counts,
   cell_grouping,
@@ -33,7 +35,7 @@ run_scoup <- function(
   start_group <- cell_grouping %>% filter(cell_id == start_cell_id) %>% pull(group_id)
   start_ix <- cell_grouping %>% filter(group_id==start_group) %>% pull(cell_id)
 
-  vars <- apply(counts[start_ix,], 2, var)
+  vars <- apply(counts[start_ix,], 2, stats::var)
   means <- apply(counts[start_ix,], 2, mean)
   distr.df <- data.frame(i = seq_along(vars) - 1, means, vars)
 
@@ -43,7 +45,7 @@ run_scoup <- function(
   SCOUP::run_SCOUP("sp", glue::glue("sp {tmp_dir}data {tmp_dir}init {tmp_dir}time_sp {tmp_dir}gpara {ncol(counts)} {nrow(counts)} {ndim}"), verbose = TRUE)
   SCOUP::run_SCOUP("scoup", glue::glue("scoup -k {nbranch} {tmp_dir}data {tmp_dir}init {tmp_dir}time_sp {tmp_dir}gpara {tmp_dir}cpara {tmp_dir}ll {ncol(counts)} {nrow(counts)} -m {m} -M {M}"))
 
-  model <- read.table(paste0(tmp_dir, "cpara"))
+  model <- utils::read.table(paste0(tmp_dir, "cpara"))
   colnames(model) <- c("time", paste0("M", seq_len(ncol(model)-1)+1))
   model <- model %>% mutate(cell_id = rownames(counts))
 
