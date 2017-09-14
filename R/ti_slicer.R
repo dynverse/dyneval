@@ -99,7 +99,7 @@ run_slicer <- function(counts,
     filter(!(paste0(milestone_id_from, milestone_id_to) %in% branch_milestone_combinations))
 
   # group the representatives, according to close distance
-  gr <- igraph::graph_from_data_frame(close_representatives %>% select(from = milestone_id_from, to = milestone_id_to), directed = F, vertices = milestone_ids)
+  gr <- igraph::graph_from_data_frame(close_representatives %>% select(from = milestone_id_from, to = milestone_id_to), directed = FALSE, vertices = milestone_ids)
   milestone_groups <- igraph::components(gr)$membership
 
   # now map old milestones to new milestones
