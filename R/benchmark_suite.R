@@ -20,6 +20,7 @@
 #' @importFrom PRISM qsub_lapply override_qsub_config
 #' @importFrom ParamHelpers generateDesignOfDefaults generateDesign
 #' @importFrom parallelMap parallelStartMulticore parallelStop
+#' @importFrom rgenoud genoud
 #'
 #' @export
 benchmark_suite_submit <- function(
