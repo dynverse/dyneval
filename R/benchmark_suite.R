@@ -4,11 +4,13 @@
 #' @param task_group A grouping vector for the different tasks.
 #' @param task_fold A fold index vector for the different tasks.
 #' @param out_dir The folder in which to output intermediate and final results.
+#' @param timeout The number of seconds 1 method has to solve each of the tasks before a timeout is generated.
 #' @param methods A tibble of TI methods.
 #' @param metrics Which metrics to use;
 #'   see \code{\link{calculate_metrics}} for a list of which metrics are available.
-#' @param timeout The number of seconds 1 method has to solve each of the tasks before a timeout is generated.
-#' @param num_cores How many cores to use per mlrMBO process.
+#' @param num_cores The number of cores to allocate per mlr run.
+#' @param memory The memory to allocate per core.
+#' @param max_wall_time The maximum amount of time each fold is allowed to run.
 #' @param num_iterations The number of iterations to run.
 #' @param num_init_params The number of initial parameters to evaluate.
 #' @param num_repeats The number of times to repeat the mlr process, for each group and each fold.
