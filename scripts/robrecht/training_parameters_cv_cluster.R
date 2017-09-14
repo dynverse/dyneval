@@ -14,13 +14,13 @@ benchmark_suite_submit(
   task_fold,
   out_dir = out_dir,
   methods = methods,
-  timeout = 60 * nrow(select_tasks),
+  timeout = 600,
   memory = "10G",
   num_iterations = 5,
   num_init_params = 16
 )
 
-
+benchmark_suite_retrieve(out_dir)
 
 
 
