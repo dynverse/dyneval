@@ -55,12 +55,13 @@ create_description <- function(
 }
 
 #' Run a method on a set of tasks with a set of parameters
-#' @param tasks the tasks on which to evaluate
-#' @param method the method to evaluate
-#' @param parameters the parameters to evaluate with
-#' @param give_start_cell whether a start cell should be provided even though a method doesn't require it
-#' @param give_end_cells whether end cells should be provided even though a method doesn't require it
-#' @param give_cell_grouping whether a cell grouping should be provided even though a method doesn't require it
+#' @param tasks The tasks on which to evaluate.
+#' @param method The method to evaluate.
+#' @param parameters The parameters to evaluate with.
+#' @param give_start_cell Whether a start cell should be provided even though a method doesn't require it.
+#' @param give_end_cells Whether end cells should be provided even though a method doesn't require it.
+#' @param give_cell_grouping Whether a cell grouping should be provided even though a method doesn't require it.
+#' @param timeout Kill execution after a given amount of time.
 #'
 #' @importFrom utils capture.output
 #' @export
@@ -70,11 +71,20 @@ execute_method <- function(
   parameters,
   give_start_cell = FALSE,
   give_end_cells = FALSE,
-  give_cell_grouping = FALSE
+  give_cell_grouping = FALSE,
+  timeout = Inf
 ) {
+  # dry run of the wait_or_kill method
+  dry_run <- wait_or_kill({1}, wait_time = 5, function(x) x, .1)
   # Run the method on each of the tasks
-  method_futures <- future(
-    {
+  wait_or_kill(
+    wait_time = timeout,
+    cancel_output_fun = function(time) stop("Timeout after ", time, " seconds"),
+    check_interval = 1,
+    verbose = FALSE,
+    globals = c("tasks", "method", "parameters", "give_start_cell", "give_cell_grouping"),
+    packages = c("dyneval", "dynutils", method$package_loaded),
+    expr = {
       # Load required namespaces
       for (pack in method$package_required) {
         suppressMessages(do.call(requireNamespace, list(pack)))
@@ -154,10 +164,6 @@ execute_method <- function(
       override_setseed(orig_setseed)
 
       outputs
-    },
-    globals = c("tasks", "method", "parameters", "give_start_cell", "give_cell_grouping"),
-    packages = c("dyneval", "dynutils", method$package_loaded),
-    evaluator = plan("multisession")
+    }
   )
-  value(method_futures)
 }

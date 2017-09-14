@@ -9,11 +9,11 @@ execute_evaluation(tasks, method, parameters, metrics = c("mean_R_nx",
   "robbie_network_score"))
 }
 \arguments{
-\item{tasks}{the tasks on which to evaluate}
+\item{tasks}{The tasks on which to evaluate.}
 
-\item{method}{the method to evaluate}
+\item{method}{The method to evaluate.}
 
-\item{parameters}{the parameters to evaluate with}
+\item{parameters}{The parameters to evaluate with.}
 
 \item{metrics}{which metrics to use;
 see \code{\link{calculate_metrics}} for a list of which metrics are available.}

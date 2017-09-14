@@ -5,20 +5,22 @@
 \title{Run a method on a set of tasks with a set of parameters}
 \usage{
 execute_method(tasks, method, parameters, give_start_cell = FALSE,
-  give_end_cells = FALSE, give_cell_grouping = FALSE)
+  give_end_cells = FALSE, give_cell_grouping = FALSE, timeout = Inf)
 }
 \arguments{
-\item{tasks}{the tasks on which to evaluate}
+\item{tasks}{The tasks on which to evaluate.}
 
-\item{method}{the method to evaluate}
+\item{method}{The method to evaluate.}
 
-\item{parameters}{the parameters to evaluate with}
+\item{parameters}{The parameters to evaluate with.}
 
-\item{give_start_cell}{whether a start cell should be provided even though a method doesn't require it}
+\item{give_start_cell}{Whether a start cell should be provided even though a method doesn't require it.}
 
-\item{give_end_cells}{whether end cells should be provided even though a method doesn't require it}
+\item{give_end_cells}{Whether end cells should be provided even though a method doesn't require it.}
 
-\item{give_cell_grouping}{whether a cell grouping should be provided even though a method doesn't require it}
+\item{give_cell_grouping}{Whether a cell grouping should be provided even though a method doesn't require it.}
+
+\item{timeout}{Kill execution after a given amount of time.}
 }
 \description{
 Run a method on a set of tasks with a set of parameters

@@ -15,6 +15,7 @@
 #' @importFrom testthat expect_equal
 #' @importFrom PRISM qsub_lapply override_qsub_config
 #' @importFrom ParamHelpers generateDesignOfDefaults generateDesign
+#' @importFrom parallelMap parallelStartMulticore parallelStop
 #'
 #' @export
 benchmark_suite_submit <- function(
@@ -31,8 +32,6 @@ benchmark_suite_submit <- function(
   testthat::expect_equal(nrow(tasks), length(task_group))
   testthat::expect_equal(nrow(tasks), length(task_fold))
   testthat::expect_is(methods, "tibble")
-
-
 
   ## MBO settings
   control_train <- makeMBOControl(
@@ -86,7 +85,7 @@ benchmark_suite_submit <- function(
         stop_on_error = FALSE,
         verbose = FALSE,
         max_wall_time = "99:00:00",
-        execute_before = " export R_MAX_NUM_DLLS=200"
+        execute_before = "export R_MAX_NUM_DLLS=300"
       )
       qsub_packages <- c("dplyr", "purr", "dyneval", "mlrMBO", "parallelMap")
       qsub_environment <-  c(
