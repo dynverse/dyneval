@@ -4,18 +4,15 @@
 \alias{make_obj_fun}
 \title{Used for wrapping an evaluation function around a TI method}
 \usage{
-make_obj_fun(method, noisy = F, suppress_output = T,
-  metrics = c("mean_R_nx", "auc_R_nx", "Q_global", "Q_local", "correlation",
-  "isomorphic", "robbie_network_score"))
+make_obj_fun(method, metrics, noisy = FALSE)
 }
 \arguments{
 \item{method}{the method to wrap an evaluation function around}
 
+\item{metrics}{which metrics to evaluate with;
+see \code{\link{calculate_metrics}} for a list of which metrics are available.}
+
 \item{noisy}{whether or not the metric is noisy or not}
-
-\item{suppress_output}{whether or not to suppress the output}
-
-\item{metrics}{which metrics to evaluate with}
 }
 \description{
 Used for wrapping an evaluation function around a TI method

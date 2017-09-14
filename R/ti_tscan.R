@@ -31,7 +31,7 @@ run_tscan <- function(counts,
   expr <- t(as.matrix(counts))
   # cds_1 <- TSCAN::preprocess(
   #   expr,
-  #   takelog = T,
+  #   takelog = TRUE,
   #   logbase = 2,
   #   clusternum = preprocess_clusternum,
   #   pseudocount = pseudocount,
@@ -40,7 +40,7 @@ run_tscan <- function(counts,
   #   cvcutoff = cvcutoff)
   cds_1 <- TSCAN::preprocess(
     expr,
-    takelog = T,
+    takelog = TRUE,
     logbase = 2,
     pseudocount = 1,
     clusternum = NULL,

@@ -53,7 +53,7 @@ wrap_method <- function(method_name, method_type, method_function, parameter_set
     #   wrapped_output[[i]] <- wrap_data_object(output_types[[i]], method_output[[i]])
     # }
     # wrapped_output
-    mapply(output_types, method_output, FUN = wrap_data_object, SIMPLIFY = F)
+    mapply(output_types, method_output, FUN = wrap_data_object, SIMPLIFY = FALSE)
   }
   expanded_parameters <- generate_parameters(parameter_sets)
   wrapped_method <- list(

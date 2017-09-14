@@ -27,7 +27,7 @@ run_topslam <- function(counts,
                       ) {
   requireNamespace("jsonlite")
   temp_folder <- tempfile()
-  dir.create(temp_folder, recursive = T)
+  dir.create(temp_folder, recursive = TRUE)
 
   counts %>%
     {log2(.+1)} %>%
@@ -49,7 +49,7 @@ run_topslam <- function(counts,
         "source bin/activate",
         "python {find.package('topslam')}/wrapper.py {temp_folder}",
         .sep = ";"))
-    ), stdout = T, stderr = T
+    ), stdout = TRUE, stderr = TRUE
   )
 
   print(output)
@@ -68,7 +68,7 @@ run_topslam <- function(counts,
   milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
 
   # remove temporary output
-  unlink(temp_folder, recursive = T)
+  unlink(temp_folder, recursive = TRUE)
 
   prediction <- wrap_ti_prediction(
     ti_type = "linear",

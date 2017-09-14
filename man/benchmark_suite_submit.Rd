@@ -5,7 +5,7 @@
 \title{A benchmark suite with which to run all the methods on the different tasks}
 \usage{
 benchmark_suite_submit(tasks, task_group, task_fold, out_dir,
-  methods = get_descriptions(as_tibble = F), num_cores = 4,
+  methods = get_descriptions(as_tibble = TRUE), num_cores = 4,
   metrics = c("auc_R_nx", "robbie_network_score"), num_iterations = 20,
   num_init_params = 100, num_repeats = 1)
 }
@@ -18,9 +18,12 @@ benchmark_suite_submit(tasks, task_group, task_fold, out_dir,
 
 \item{out_dir}{The folder in which to output intermediate and final results}
 
+\item{methods}{A tibble of TI methods}
+
 \item{num_cores}{How many cores to use per mlrMBO process}
 
-\item{metrics}{Which metrics to use}
+\item{metrics}{Which metrics to use;
+see \code{\link{calculate_metrics}} for a list of which metrics are available.}
 
 \item{num_iterations}{The number of iterations to run}
 

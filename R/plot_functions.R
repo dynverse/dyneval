@@ -7,7 +7,7 @@
 #' @importFrom grid arrow
 #'
 #' @export
-plot_default <- function(object, insert_phantom_edges = T) {
+plot_default <- function(object, insert_phantom_edges = TRUE) {
   dimred_object <- check_or_perform_dimred(object, insert_phantom_edges)
   with(dimred_object, {
     ggplot() +
@@ -35,7 +35,7 @@ plot_default <- function(object, insert_phantom_edges = T) {
 #' @importFrom grid arrow
 #'
 #' @export
-plot_combined <- function(original_object, new_object, insert_phantom_edges = T) {
+plot_combined <- function(original_object, new_object, insert_phantom_edges = TRUE) {
   original_dimred <- check_or_perform_dimred(original_object, insert_phantom_edges)
   new_dimred <- check_or_perform_dimred(new_object, insert_phantom_edges)
 
@@ -70,7 +70,7 @@ plot_combined <- function(original_object, new_object, insert_phantom_edges = T)
 plot_emdist <- function(traj, dist, dimred = NULL, ...) {
   pct <- traj$milestone_percentages %>%
     reshape2::acast(cell_id ~ milestone_id, value.var = "percentage", fill = 0) %>%
-    as.data.frame(check.names = F)
+    as.data.frame(check.names = FALSE)
 
   if (is.null(dimred)) {
     dimred <- dimred_trajectory(traj)
@@ -80,20 +80,20 @@ plot_emdist <- function(traj, dist, dimred = NULL, ...) {
 
   pheatmap::pheatmap(
     dist,
-    cluster_rows = T,
-    cluster_cols = T,
+    cluster_rows = TRUE,
+    cluster_cols = TRUE,
     annotation_col = pct,
     annotation_row = pct,
     annotation_colors = ann_colours,
-    legend = F,
-    legend_labels = F,
-    legend_breaks = F,
+    legend = FALSE,
+    legend_labels = FALSE,
+    legend_breaks = FALSE,
     border_color = NA,
-    show_rownames = F,
-    show_colnames = F,
-    annotation_legend = F,
-    annotation_names_row = F,
-    annotation_names_col = F,
+    show_rownames = FALSE,
+    show_colnames = FALSE,
+    annotation_legend = FALSE,
+    annotation_names_row = FALSE,
+    annotation_names_col = FALSE,
     fontsize = 20 / length(traj$milestone_ids),
     ...
   )

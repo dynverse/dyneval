@@ -13,22 +13,22 @@ generic_monocle_description <- function(reduction_method) {
       makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
       makeIntegerParam(id = "maxIter", lower = 1L, default = 20L, upper = 100L),
       makeNumericParam(id = "sigma", lower = 0, default = .001, upper = 100),
-      makeLogicalParam(id = "lambda_null", default = T),
+      makeLogicalParam(id = "lambda_null", default = TRUE),
       makeNumericParam(id = "lambda", lower = 0, default = 5, upper = 100),
-      makeLogicalParam(id = "ncenter_null", default = T),
+      makeLogicalParam(id = "ncenter_null", default = TRUE),
       makeIntegerParam(id = "ncenter", lower = 3, default = 5, upper = 20),
       makeNumericParam(id = "param.gamma", lower = 0, default = 20, upper = 1e5),
       makeNumericParam(id = "tol", lower = 0, default = .001, upper = 10),
-      makeLogicalParam(id = "auto_param_selection", default = T)
+      makeLogicalParam(id = "auto_param_selection", default = TRUE)
     )
   } else if(reduction_method == "ICA"){
     par_set = makeParamSet(
       makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
       makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
       makeNumericParam(id = "lambda", lower = 0, default = 5, upper = 100),
-      makeLogicalParam(id = "ncenter_null", default = T),
+      makeLogicalParam(id = "ncenter_null", default = TRUE),
       makeNumericParam(id = "tol", lower = 0, default = .001, upper = 10),
-      makeLogicalParam(id = "auto_param_selection", default = T)
+      makeLogicalParam(id = "auto_param_selection", default = TRUE)
     )
   }
 
@@ -68,13 +68,13 @@ run_monocle <- function(counts,
                         norm_method = "vstExprs",
                         maxIter = 20,
                         sigma = 0.001,
-                        lambda_null = T,
+                        lambda_null = TRUE,
                         lambda = NULL,
-                        ncenter_null = T,
+                        ncenter_null = TRUE,
                         ncenter = NULL,
                         param.gamma = 20,
                         tol = 0.001,
-                        auto_param_selection = T) {
+                        auto_param_selection = TRUE) {
   requireNamespace("monocle")
 
   if (lambda_null) lambda <- NULL
