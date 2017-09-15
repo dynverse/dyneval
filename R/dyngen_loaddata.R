@@ -28,7 +28,6 @@ load_datasets_info <- function() {
 #' @export
 #'
 #' @importFrom dyngen load_dataset
-#' @importFrom dynutils list_as_tibble get_cell_grouping compute_emlike_dist
 #'
 #' @examples
 #' \dontrun{

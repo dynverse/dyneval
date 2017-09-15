@@ -1,5 +1,5 @@
 check_or_perform_dimred <- function(object, insert_phantom_edges) {
-  if (is_ti_wrapper(object)) {
+  if (is_ti_data_wrapper(object)) {
     dimred_object <- dimred_trajectory(object, insert_phantom_edges = insert_phantom_edges)
   } else if (is_ti_dimred_wrapper(object)) {
     dimred_object <- object
@@ -17,7 +17,6 @@ check_or_perform_dimred <- function(object, insert_phantom_edges) {
 #'  \code{\link{wrap_ti_prediction}}
 #' @param insert_phantom_edges attempt to plot bifurcating edges correctly automatically
 #'
-#' @importFrom dynutils scale_uniform
 #' @importFrom igraph graph_from_data_frame layout_with_kk E
 #' @importFrom RColorBrewer brewer.pal
 #' @importFrom grDevices col2rgb rainbow rgb
