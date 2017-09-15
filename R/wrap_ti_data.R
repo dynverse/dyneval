@@ -101,9 +101,9 @@ abstract_wrapper <- function(
   }
 
   if (is.null(progressions)) {
-    progressions <- dyngen::convert_milestone_percentages_to_progressions(cell_ids, milestone_ids, milestone_network, milestone_percentages)
+    progressions <- dynutils::convert_milestone_percentages_to_progressions(cell_ids, milestone_ids, milestone_network, milestone_percentages)
   } else if (is.null(milestone_percentages)) {
-    milestone_percentages <- dyngen::convert_progressions_to_milestone_percentages(cell_ids, milestone_ids, milestone_network, progressions)
+    milestone_percentages <- dynutils::convert_progressions_to_milestone_percentages(cell_ids, milestone_ids, milestone_network, progressions)
   }
 
   if (!is.data.frame(milestone_percentages) || ncol(milestone_percentages) != 3 || any(colnames(milestone_percentages) != c("cell_id", "milestone_id", "percentage"))) {
