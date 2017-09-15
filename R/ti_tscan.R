@@ -10,9 +10,8 @@ description_tscan <- function() create_description(
     makeNumericParam(id = "minexpr_value", lower=0, upper=10, default=0),
     makeNumericParam(id = "cvcutoff", lower=0, upper=5, default=0),
     makeIntegerParam(id = "exprmclust_clusternum_lower", lower = 2L, upper = 20L, default = 2L),
-    makeIntegerParam(id = "exprmclust_clusternum_upper", lower = 2L, upper = 20L, default = 9L),
-    makeDiscreteParam(id = "modelNames", default = "VVV", values = c("EII", "VII", "EEI", "VEI", "EVI", "VVI", "EEE", "EVE", "VEE", "VVE", "EEV", "VEV", "EVV", "VVV")),
-    forbidden = quote(exprmclust_clusternum_lower > exprmclust_clusternum_upper)
+    makeIntegerParam(id = "exprmclust_clusternum_upper", lower = 2L, upper = 20L, default = 9L, requires = expression(exprmclust_clusternum_lower <= exprmclust_clusternum_upper)),
+    makeDiscreteParam(id = "modelNames", default = "VVV", values = c("EII", "VII", "EEI", "VEI", "EVI", "VVI", "EEE", "EVE", "VEE", "VVE", "EEV", "VEV", "EVV", "VVV"))
   ),
   properties = c(),
   run_fun = run_tscan,
