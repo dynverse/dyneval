@@ -13,12 +13,12 @@ description_slice <- function() create_description(
     makeDiscreteParam(id = "community.method", default = "louvain", values = c("fast_greedy", "edge_betweenness", "label_prop", "leading_eigen","louvain","spinglass", "walktrap", "auto")),
     makeDiscreteParam(id = "cluster.method", default = "kmeans", values = c("kmeans", "pam")),
     makeDiscreteParam(id = "k", default = 0, values = c(0, 3:20)),
-    makeIntegerParam(id = "k.max", lower = 3, upper = 20, default = 10),
-    makeIntegerParam(id = "B", lower = 3, upper = 500, default = 100),
+    makeIntegerParam(id = "k.max", lower = 3L, upper = 20L, default = 10L),
+    makeIntegerParam(id = "B", lower = 3L, upper = 500L, default = 100L),
     makeDiscreteParam(id = "k.opt.method", default = "firstmax", values = c("firstmax", "globalmax", "Tibs2001SEmax", "firstSEmax", "globalSEmax"))
-    # makeIntegerParam(id = "B.size", lower = 10, upper = 10000, default = 1000),
-    # makeIntegerParam(id = "B.num", lower = 1, upper = 100, default = 1),
-    # makeIntegerParam(id = "clustering.k", lower = 1, upper = 100, default = 1),
+    # makeIntegerParam(id = "B.size", lower = 10L, upper = 10000L, default = 1000L),
+    # makeIntegerParam(id = "B.num", lower = 1L, upper = 100L, default = 1L),
+    # makeIntegerParam(id = "clustering.k", lower = 1L, upper = 100L, default = 1L),
     # makeDiscreteParam(id = "calculation", default = "bootstrap", values = c("bootstrap", "deterministic"))
 
   ),

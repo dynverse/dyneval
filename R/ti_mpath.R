@@ -8,7 +8,7 @@ description_mpath <- function() create_description(
   par_set = makeParamSet(
     makeDiscreteParam(id = "distMethod", default = "euclidean", values = c("pearson", "kendall", "spearman", "euclidean")),
     makeDiscreteParam(id = "method", default = "diversity_size", values = c("kmeans", "diversity", "size", "diversity_size")),
-    makeIntegerParam(id = "numcluster", lower = 3, default = 11, upper = 30),
+    makeIntegerParam(id = "numcluster", lower = 3L, default = 11L, upper = 30L),
     makeNumericParam(id = "diversity_cut", lower = .1, default = .6, upper = 1),
     makeNumericParam(id = "size_cut", lower = .01, default = .05, upper = 1)
   ),

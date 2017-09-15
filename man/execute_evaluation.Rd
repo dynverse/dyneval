@@ -4,9 +4,7 @@
 \alias{execute_evaluation}
 \title{Running an evaluation of a method on a set of tasks with a set of parameters}
 \usage{
-execute_evaluation(tasks, method, parameters, metrics = c("mean_R_nx",
-  "auc_R_nx", "Q_global", "Q_local", "correlation", "isomorphic",
-  "robbie_network_score"))
+execute_evaluation(tasks, method, parameters, metrics, timeout)
 }
 \arguments{
 \item{tasks}{The tasks on which to evaluate.}
@@ -17,6 +15,8 @@ execute_evaluation(tasks, method, parameters, metrics = c("mean_R_nx",
 
 \item{metrics}{which metrics to use;
 see \code{\link{calculate_metrics}} for a list of which metrics are available.}
+
+\item{timeout}{Kill execution after a given amount of time.}
 }
 \description{
 Running an evaluation of a method on a set of tasks with a set of parameters

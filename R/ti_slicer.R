@@ -6,8 +6,8 @@ description_slicer <- function() create_description(
   package_loaded = c("SLICER"),
   package_required = c("lle", "igraph"),
   par_set = makeParamSet(
-    makeIntegerParam(id = "kmin", lower = 2L, upper = 20L, default = 10),
-    makeIntegerParam(id = "m", lower = 2L, upper = 20L, default = 2),
+    makeIntegerParam(id = "kmin", lower = 2L, upper = 20L, default = 10L),
+    makeIntegerParam(id = "m", lower = 2L, upper = 20L, default = 2L),
     makeNumericParam(id = "min_branch_len", lower = 0.5, upper = 20, default = 5),
     makeNumericParam(id = "min_representative_percentage", lower = 0.5, upper = 1, default = 0.8),
     makeNumericParam(id = "max_same_milestone_distance", lower = 0.1, upper = 10, default = 0.1)

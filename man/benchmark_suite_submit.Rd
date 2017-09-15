@@ -4,32 +4,39 @@
 \alias{benchmark_suite_submit}
 \title{A benchmark suite with which to run all the methods on the different tasks}
 \usage{
-benchmark_suite_submit(tasks, task_group, task_fold, out_dir,
-  methods = get_descriptions(as_tibble = TRUE), num_cores = 4,
-  metrics = c("auc_R_nx", "robbie_network_score"), num_iterations = 20,
+benchmark_suite_submit(tasks, task_group, task_fold, out_dir, timeout = 60 *
+  nrow(tasks), methods = get_descriptions(as_tibble = TRUE),
+  metrics = c("auc_R_nx", "robbie_network_score"), num_cores = 4,
+  memory = "20G", max_wall_time = "72:00:00", num_iterations = 20,
   num_init_params = 100, num_repeats = 1)
 }
 \arguments{
-\item{tasks}{A tibble of tasks}
+\item{tasks}{A tibble of tasks.}
 
-\item{task_group}{A grouping vector for the different tasks}
+\item{task_group}{A grouping vector for the different tasks.}
 
-\item{task_fold}{A fold index vector for the different tasks}
+\item{task_fold}{A fold index vector for the different tasks.}
 
-\item{out_dir}{The folder in which to output intermediate and final results}
+\item{out_dir}{The folder in which to output intermediate and final results.}
 
-\item{methods}{A tibble of TI methods}
+\item{timeout}{The number of seconds 1 method has to solve each of the tasks before a timeout is generated.}
 
-\item{num_cores}{How many cores to use per mlrMBO process}
+\item{methods}{A tibble of TI methods.}
 
 \item{metrics}{Which metrics to use;
 see \code{\link{calculate_metrics}} for a list of which metrics are available.}
 
-\item{num_iterations}{The number of iterations to run}
+\item{num_cores}{The number of cores to allocate per mlr run.}
 
-\item{num_init_params}{The number of initial parameters to evaluate}
+\item{memory}{The memory to allocate per core.}
 
-\item{num_repeats}{The number of times to repeat the mlr process, for each group and each fold}
+\item{max_wall_time}{The maximum amount of time each fold is allowed to run.}
+
+\item{num_iterations}{The number of iterations to run.}
+
+\item{num_init_params}{The number of initial parameters to evaluate.}
+
+\item{num_repeats}{The number of times to repeat the mlr process, for each group and each fold.}
 }
 \description{
 A benchmark suite with which to run all the methods on the different tasks

@@ -8,8 +8,8 @@ description_gpfates <- function() create_description(
   par_set = makeParamSet(
     makeNumericParam(id = "log_expression_cutoff", lower = 0.5, upper = 5, default = 2),
     makeNumericParam(id = "min_cells_expression_cutoff", lower = 0, upper = 20, default = 2),
-    makeIntegerParam(id = "nfates", lower=1, upper=20, default=1),
-    makeIntegerParam(id = "ndims", lower=1, upper=5, default=2)
+    makeIntegerParam(id = "nfates", lower=1L, upper=20L, default=1L),
+    makeIntegerParam(id = "ndims", lower=1L, upper=5L, default=2L)
   ),
   properties = c(),
   run_fun = run_gpfates,

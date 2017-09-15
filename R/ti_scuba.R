@@ -7,10 +7,10 @@ description_scuba <- function() create_description(
   package_required = c("jsonlite", "readr", "SCUBA"),
   par_set = makeParamSet(
     makeLogicalParam(id = "rigorous_gap_stats", default = TRUE),
-    makeIntegerParam(id = "N_dim", lower=2, upper=20, default=2),
+    makeIntegerParam(id = "N_dim", lower=2L, upper=20L, default=2L),
     makeNumericParam(id = "low_gene_threshold", lower = 0, upper = 5, default = 1),
     makeNumericParam(id = "low_gene_fraction_max", lower = 0, upper = 1, default = 0.7),
-    makeIntegerParam(id = "min_split", lower=1, upper=100, default=15),
+    makeIntegerParam(id = "min_split", lower=1L, upper=100L, default=15L),
     makeNumericParam(id = "min_percentage_split", lower=0, upper=1, default=0.25)
   ),
   properties = c(),

@@ -6,19 +6,19 @@ description_waterfall <- function() create_description(
   package_loaded = c(),
   package_required = c("Waterfall"),
   par_set = makeParamSet(
-    makeIntegerParam(id = "num_clusters", lower = 2, default = 10, upper = 20)
+    makeIntegerParam(id = "num_clusters", lower = 2L, default = 10L, upper = 20L)
   ),
   properties = c("pseudotime"),
   run_fun = run_waterfall,
   plot_fun = plot_waterfall
 )
 
-run_waterfall <- function(counts, k = 10) {
+run_waterfall <- function(counts, num_clusters = 10) {
   requireNamespace("Waterfall")
 
   # Run waterfall
   expr <- log2(counts+1)
-  ps <- Waterfall::pseudotimeprog.foo(t(expr), k = k)
+  ps <- Waterfall::pseudotimeprog.foo(t(expr), k = num_clusters)
 
   # create output
   cell_ids <- rownames(counts)
