@@ -58,10 +58,7 @@ benchmark_suite_submit <- function(
     "regr.randomForest",
     se.method = "jackknife",
     predict.type = "se",
-    keep.inbag = TRUE)# %>%
-    # mlr::makeImputeWrapper(classes = list(
-    #   numeric = mlr::imputeMax(2),
-    #   factor = mlr::imputeConstant("__miss__")))
+    keep.inbag = TRUE)
 
   ## Grid settings
   grid <- expand.grid(

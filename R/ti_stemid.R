@@ -20,12 +20,13 @@ description_stemid <- function() create_description(
     makeIntegerParam(id = "outlg", lower = 0L, default = 2L, upper = 100L),
     makeNumericParam(id = "probthr", lower = -10, default = -3, upper = -1, trafo = function(x) 10^x),
     makeNumericParam(id = "thr_lower", lower = -100, default = -40, upper = -1),
-    makeNumericParam(id = "thr_upper", lower = -100, default = -40, upper = -1, requires = expression(thr_lower <= thr_upper)),
+    makeNumericParam(id = "thr_upper", lower = -100, default = -40, upper = -1),
     makeNumericParam(id = "outdistquant", lower = 0, default = .95, upper = 1),
     makeLogicalParam(id = "nmode", default = FALSE),
     makeNumericParam(id = "pdishuf", lower = 2, default = log10(2000), upper = 3.5, trafo = function(x) ceiling(10)^x),
     makeNumericParam(id = "pthr", lower = -4, default = -2, upper = 0, trafo = function(x) 10^x),
-    makeNumericParam(id = "pethr", lower = -4, default = -2, upper = 0, trafo = function(x) 10^x)
+    makeNumericParam(id = "pethr", lower = -4, default = -2, upper = 0, trafo = function(x) 10^x),
+    forbidden = quote(thr_lower > thr_upper)
   ),
   properties = c(),
   run_fun = run_stemid,
