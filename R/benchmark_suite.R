@@ -18,7 +18,7 @@
 #' @importFrom testthat expect_equal
 #' @importFrom PRISM qsub_lapply override_qsub_config
 #' @importFrom mlrMBO makeMBOControl setMBOControlTermination setMBOControlInfill makeMBOInfillCritDIB
-#' @importFrom mlr makeLearner makeImputeWrapper imputeMax imputeConstant
+#' @importFrom mlr makeLearner
 #' @importFrom ParamHelpers generateDesignOfDefaults generateDesign
 #' @importFrom parallelMap parallelStartMulticore parallelStop
 #'
@@ -60,10 +60,10 @@ benchmark_suite_submit <- function(
     "regr.randomForest",
     se.method = "jackknife",
     predict.type = "se",
-    keep.inbag = TRUE) %>%
-    mlr::makeImputeWrapper(classes = list(
-      numeric = mlr::imputeMax(2),
-      factor = mlr::imputeConstant("__miss__")))
+    keep.inbag = TRUE)# %>%
+    # mlr::makeImputeWrapper(classes = list(
+    #   numeric = mlr::imputeMax(2),
+    #   factor = mlr::imputeConstant("__miss__")))
 
   ## Grid settings
   grid <- expand.grid(
