@@ -75,7 +75,7 @@ benchmark_suite_submit <- function(
 
   ## Run MBO
   for (methodi in seq_len(nrow(methods))) {
-    method <- extract_row_to_list(methods, methodi)
+    method <- dynutils::extract_row_to_list(methods, methodi)
 
     # determine where to store certain outputs
     method_folder <- paste0(out_dir, method$short_name)
@@ -138,6 +138,7 @@ benchmark_suite_submit <- function(
           )
           tune_test <- mbo(
             obj_fun,
+            learner = learner,
             design = tune_train$opt.path$env$path %>% select(-starts_with("y_"), -one_of("y")),
             control = control_test,
             show.info = TRUE,
