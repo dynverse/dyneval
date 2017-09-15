@@ -64,6 +64,7 @@ create_description <- function(
 #' @param timeout Kill execution after a given amount of time.
 #'
 #' @importFrom utils capture.output
+#' @importFrom dynutils wait_or_kill
 #' @export
 execute_method <- function(
   tasks,
@@ -77,7 +78,7 @@ execute_method <- function(
   # dry run of the wait_or_kill method
   dry_run <- wait_or_kill({1}, wait_time = 5, function(x) x, .1)
   # Run the method on each of the tasks
-  wait_or_kill(
+  dynutils::wait_or_kill(
     wait_time = timeout,
     cancel_output_fun = function(time) stop("Timeout after ", time, " seconds"),
     check_interval = 1,
