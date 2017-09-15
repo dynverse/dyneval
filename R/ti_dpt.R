@@ -11,8 +11,9 @@ description_dpt <- function() create_description(
     makeIntegerParam(id = "n_eigs", lower = 3L, upper = 100L, default = 20L),
     makeLogicalParam(id = "density_norm", default = TRUE),
     makeIntegerParam(id = "n_local_lower", lower = 2L, upper = 20L, default = 5L),
-    makeIntegerParam(id = "n_local_upper", lower = 2L, upper = 20L, default = 7L, requires = expression(n_local_lower <= n_local_upper)),
-    makeNumericParam(id = "w_width", lower = -4, upper = 0, default = log(.1), trafo = exp)
+    makeIntegerParam(id = "n_local_upper", lower = 2L, upper = 20L, default = 7L),
+    makeNumericParam(id = "w_width", lower = -4, upper = 0, default = log(.1), trafo = exp),
+    forbidden = quote(n_local_lower > n_local_upper)
   ),
   properties = c(),
   run_fun = run_dpt,
