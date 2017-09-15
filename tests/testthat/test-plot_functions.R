@@ -1,6 +1,6 @@
 context("Plot functions")
 
-data(toy_tasks)
+data("toy_tasks", package="dyntoy")
 
 for (taski in seq_len(nrow(toy_tasks))) {
   task <- extract_row_to_list(toy_tasks, taski)
