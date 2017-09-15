@@ -56,6 +56,13 @@ benchmark_suite_submit <- function(
   control_test <- control_train
   control_test$iters <- 1
   control_test$propose.points <- 1
+  learner <- mlr::makeLearner(
+    "regr.randomForest",
+    se.method = "jackknife",
+    keep.inbag = TRUE) %>%
+    makeImputeWrapper(classes = list(
+      numeric = imputeMax(2),
+      factor = imputeConstant("__miss__")))
 
   ## Grid settings
   grid <- expand.grid(
@@ -122,6 +129,7 @@ benchmark_suite_submit <- function(
           parallelStartMulticore(cpus = num_cores, show.info = TRUE)
           tune_train <- mbo(
             obj_fun,
+            learner = learner,
             design = design,
             control = control_train,
             show.info = TRUE,
