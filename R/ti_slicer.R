@@ -76,7 +76,7 @@ run_slicer <- function(counts,
 
   progressions <- progressions %>% left_join(milestone_network, by="branch_id")
 
-  milestone_percentages <- convert_progressions_to_milestone_percentages(rownames(expression), milestone_ids, milestone_network, progressions)
+  milestone_percentages <- dynutils::convert_progressions_to_milestone_percentages(rownames(expression), milestone_ids, milestone_network, progressions)
 
   representatives <- milestone_percentages %>% group_by(cell_id) %>% summarise(milestone_id=milestone_id[which.max(percentage)], percentage=max(percentage))
 

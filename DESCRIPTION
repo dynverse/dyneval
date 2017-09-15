@@ -20,6 +20,7 @@ Imports:
   dplyr, 
   dyngen,
   dynutils,
+  dyntoy,
   future,
   GA,
   GEDEVO,
@@ -108,5 +109,6 @@ Remotes:
   rcannood/dynutils,
   rcannood/PRISM,
   rcannood/SCORPIUS,
-  Zouter/dyngen
+  Zouter/dyngen,
+  Zouter/dyntoy
 
