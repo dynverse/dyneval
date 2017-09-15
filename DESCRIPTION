@@ -47,7 +47,6 @@ Imports:
   testthat,
   tibble, 
   tidyr,
-  transport,
   viridis,
   vegan
 Suggests:
