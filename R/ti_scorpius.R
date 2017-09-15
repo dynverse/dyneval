@@ -9,8 +9,8 @@ description_scorpius <- function() create_description(
     makeDiscreteParam(id = "distance_method", default = "spearman", values = c("spearman", "pearson", "kendall")),
     makeIntegerParam(id = "num_dimensions", lower = 2L, default = 3L, upper = 20L),
     makeIntegerParam(id = "num_clusters", lower = 2L, default = 4L, upper = 20L, special.vals = list(NULL)),
-    makeNumericParam(id = "thresh", lower = -5L, upper = 5L, default = -3L, trafo = function(x) 10^x),
-    makeIntegerParam(id = "maxit", lower = 0, upper = 50, default = 10),
+    makeNumericParam(id = "thresh", lower = -5, upper = 5, default = -3, trafo = function(x) 10^x),
+    makeIntegerParam(id = "maxit", lower = 0L, upper = 50L, default = 10L),
     makeNumericParam(id = "stretch", lower = 0, upper = 5, default = 0),
     makeDiscreteParam(id = "smoother", default = "smooth.spline", values = c("smooth.spline", "lowess", "periodic.lowess"))
 

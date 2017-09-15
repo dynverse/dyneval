@@ -17,7 +17,7 @@ generic_monocle_description <- function(reduction_method) {
       makeLogicalParam(id = "lambda_null", default = TRUE),
       makeNumericParam(id = "lambda", lower = 0, default = 5, upper = 100),
       makeLogicalParam(id = "ncenter_null", default = TRUE),
-      makeIntegerParam(id = "ncenter", lower = 3, default = 5, upper = 20),
+      makeIntegerParam(id = "ncenter", lower = 3L, default = 5L, upper = 20L),
       makeNumericParam(id = "param.gamma", lower = 0, default = 20, upper = 1e5),
       makeNumericParam(id = "tol", lower = 0, default = .001, upper = 10),
       makeLogicalParam(id = "auto_param_selection", default = TRUE)

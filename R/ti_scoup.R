@@ -6,9 +6,9 @@ description_scoup <- function() create_description(
   package_required = c(),
   package_loaded = c(),
   par_set = makeParamSet(
-    makeIntegerParam(id = "nbranch", lower = 1L, upper = 20L, default = 3),
-    makeIntegerParam(id = "m", lower = 2L, upper = 1000L, default = 50),
-    makeIntegerParam(id = "M", lower = 2L, upper = 10000L, default = 50)
+    makeIntegerParam(id = "nbranch", lower = 1L, upper = 20L, default = 3L),
+    makeIntegerParam(id = "m", lower = 2L, upper = 1000L, default = 50L),
+    makeIntegerParam(id = "M", lower = 2L, upper = 10000L, default = 50L)
     ## TODO.... :(
   ),
   properties = c(),

@@ -6,7 +6,7 @@ description_waterfall <- function() create_description(
   package_loaded = c(),
   package_required = c("Waterfall"),
   par_set = makeParamSet(
-    makeIntegerParam(id = "num_clusters", lower = 2, default = 10, upper = 20)
+    makeIntegerParam(id = "num_clusters", lower = 2L, default = 10L, upper = 20L)
   ),
   properties = c("pseudotime"),
   run_fun = run_waterfall,
