@@ -9,6 +9,7 @@ description_monocle_pqtree <- function() generic_monocle_description("ICA")
 generic_monocle_description <- function(reduction_method) {
   if(reduction_method == "DDRTree") {
     par_set = makeParamSet(
+      makeDiscreteParam(id = "reduction_method", values = "DDRTree", default = "DDRTree"),
       makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
       makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
       makeIntegerParam(id = "maxIter", lower = 1L, default = 20L, upper = 100L),
@@ -16,13 +17,14 @@ generic_monocle_description <- function(reduction_method) {
       makeLogicalParam(id = "lambda_null", default = TRUE),
       makeNumericParam(id = "lambda", lower = 0, default = 5, upper = 100),
       makeLogicalParam(id = "ncenter_null", default = TRUE),
-      makeIntegerParam(id = "ncenter", lower = 3, default = 5, upper = 20),
+      makeIntegerParam(id = "ncenter", lower = 3L, default = 5L, upper = 20L),
       makeNumericParam(id = "param.gamma", lower = 0, default = 20, upper = 1e5),
       makeNumericParam(id = "tol", lower = 0, default = .001, upper = 10),
       makeLogicalParam(id = "auto_param_selection", default = TRUE)
     )
   } else if(reduction_method == "ICA"){
     par_set = makeParamSet(
+      makeDiscreteParam(id = "reduction_method", values = "ICA", default = "ICA"),
       makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
       makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
       makeNumericParam(id = "lambda", lower = 0, default = 5, upper = 100),
@@ -39,24 +41,9 @@ generic_monocle_description <- function(reduction_method) {
     package_required = c(),
     par_set = par_set,
     properties = c("tibble"),#, "dimred", "dimred_traj", "pseudotime"), # todo: implement other outputs
-    run_fun = ifelse(reduction_method == "DDRTree", run_monocle_ddrtree, run_monocle_pqtree),
+    run_fun = run_monocle,
     plot_fun = plot_monocle
   )
-}
-
-run_monocle_ddrtree <- function(...) {
-  args <- list(...)
-  print(args)
-  args$reduction_method <- "DDRTree"
-
-  do.call(run_monocle, args)
-}
-
-run_monocle_pqtree <- function(...) {
-  args <- list(...)
-  args$reduction_method <- "ICA"
-
-  do.call(run_monocle, args)
 }
 
 #' @importFrom igraph degree all_shortest_paths distances
@@ -89,7 +76,7 @@ run_monocle <- function(counts,
 
   # estimate sparameters
   cds_1 <- estimateSizeFactors(cds_1)
-  cds_1 <- estimateDispersions(cds_1)
+  cds_1 <- estimateDispersions(cds_1, cores = 1)
 
   # reduce dimension
   if(reduction_method == "DDRTree") {
@@ -97,7 +84,7 @@ run_monocle <- function(counts,
                              reduction_method = reduction_method,
                              max_components = num_dimensions, norm_method = norm_method,
                              maxIter = maxIter, sigma = sigma, lambda = lambda, ncenter = ncenter,
-                             param.gamma = param.gamma, tol = tol, auto_param_selection = auto_param_selection)
+                             param.gamma = param.gamma, tol = tol, auto_param_selection = auto_param_selection, cores = 1)
   } else if (reduction_method == "ICA") {
     cds_2 <- reduceDimension(cds_1,
                              reduction_method = reduction_method,

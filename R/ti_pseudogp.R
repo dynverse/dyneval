@@ -13,7 +13,7 @@ description_pseudogp <- function() create_description(
     makeIntegerParam(id = "chains", lower = 1L, upper = 20L, default = 1L),
     makeIntegerParam(id = "iter", lower = 10L, upper = 1000L, default = 1000L),
     makeLogicalVectorParam(id = "dimreds", len = length(list_dimred_methods()), default = names(list_dimred_methods()) == "pca"),
-    makeDiscreteParam(id = "intialise_from", values=c("random", "principal_curve", "pca"), default="random")
+    makeDiscreteParam(id = "initialise_from", values=c("random", "principal_curve", "pca"), default="random")
   ),
   properties = c(),
   run_fun = run_pseudogp,

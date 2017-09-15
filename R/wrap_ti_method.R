@@ -27,7 +27,7 @@ check_dependencies <- function() {
     required_packages <- c(descr$package_loaded, descr$package_required)
     installed <- required_packages %in% rownames(installed.packages())
     if (any(!installed)) {
-      warning(sQuote(descr$name), " requires the following packages still to be installed: ", paste(sQuote(required_packages[!installed]), collapse = ", "))
+      message(sQuote(descr$name), " requires the following packages still to be installed: ", paste(sQuote(required_packages[!installed]), collapse = ", "))
     }
   }
 }
@@ -116,6 +116,8 @@ execute_method <- function(
             arglist[[param_name]] <-
               if (param_name == "task") {
                 task
+              } else if (param_name == "cell_grouping") {
+                task$cell_grouping
               } else {
                 task$special_cells[[param_name]]
               }

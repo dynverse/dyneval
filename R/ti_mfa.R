@@ -6,13 +6,13 @@ description_mfa <- function() create_description(
   package_required = c("mfa"),
   package_loaded = c(),
   par_set = makeParamSet(
-    makeIntegerParam(id = "b", lower = 1, upper = 10, default = 2),
-    makeIntegerParam(id = "iter", lower = 20, upper = 5000, default = 2000),
-    makeIntegerParam(id = "thin", lower = 1, upper = 20, default = 1),
-    makeIntegerParam(id = "pc_initialise", lower = 1, upper = 5, default = 1),
+    makeIntegerParam(id = "b", lower = 1L, upper = 10L, default = 2L),
+    makeIntegerParam(id = "iter", lower = 20L, upper = 5000L, default = 2000L),
+    makeIntegerParam(id = "thin", lower = 1L, upper = 20L, default = 1L),
+    makeIntegerParam(id = "pc_initialise", lower = 1L, upper = 5L, default = 1L),
     makeNumericParam(id = "prop_collapse", lower = 0, upper = 1, default = 0),
-    makeLogicalParam(id = "scale_input",default = TRUE),
-    makeLogicalParam(id = "zero_inflation",default = FALSE)
+    makeLogicalParam(id = "scale_input", default = TRUE),
+    makeLogicalParam(id = "zero_inflation", default = FALSE)
   ),
   properties = c(),
   run_fun = run_mfa,

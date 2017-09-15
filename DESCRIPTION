@@ -12,9 +12,11 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.0.1
 Depends:
-  R (>= 3.4.0)
+  R (>= 3.4.0),
+  ParamHelpers
 Imports: 
   coRanking,
+  DiceKriging,
   dplyr, 
   dyngen,
   dynutils,
@@ -29,16 +31,17 @@ Imports:
   jsonlite,
   magrittr, 
   methods,
+  mlr,
   mlrMBO,
   netdist,
   parallelMap,
-  ParamHelpers,
   pheatmap,
   PRISM,
   purrr, 
+  RColorBrewer,
   readr,
   reshape2,
-  RColorBrewer,
+  rgenoud,
   smoof,
   stringr,
   testthat,

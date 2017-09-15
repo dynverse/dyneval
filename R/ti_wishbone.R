@@ -6,12 +6,12 @@ description_wishbone <- function() create_description(
   package_loaded = c(),
   package_required = c("jsonlite", "Wishbone"),
   par_set = makeParamSet(
-    makeIntegerParam(id = "knn", lower=2, upper=100, default=10),
-    makeIntegerParam(id = "n_diffusion_components", lower=2, upper=20, default=10),
-    makeIntegerParam(id = "n_pca_components", lower=2, upper=30, default=15),
+    makeIntegerParam(id = "knn", lower=2L, upper=100L, default=10L),
+    makeIntegerParam(id = "n_diffusion_components", lower=2L, upper=20L, default=10L),
+    makeIntegerParam(id = "n_pca_components", lower=2L, upper=30L, default=15L),
     makeLogicalParam(id = "branch", default = TRUE),
-    makeIntegerParam(id = "k", lower=2, upper=100, default=15),
-    makeIntegerParam(id = "num_waypoints", lower=2, upper=500, default=250),
+    makeIntegerParam(id = "k", lower=2L, upper=100L, default=15L),
+    makeIntegerParam(id = "num_waypoints", lower=2L, upper=500L, default=250L),
     makeLogicalParam(id = "normalize", default = TRUE),
     makeNumericParam(id = "epsilon", lower=0.1, upper=10, default=1)
   ),

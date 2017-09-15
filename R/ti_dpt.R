@@ -8,10 +8,10 @@ description_dpt <- function() create_description(
   par_set = makeParamSet(
     makeDiscreteParam(id = "sigma", default = "local", values = c("local", "global")),
     makeDiscreteParam(id = "distance", default = "euclidean", values = c("euclidean", "cosine", "rankcor")),
-    makeIntegerParam(id = "n_eigs", lower = 3, upper = 100, default = 20),
+    makeIntegerParam(id = "n_eigs", lower = 3L, upper = 100L, default = 20L),
     makeLogicalParam(id = "density_norm", default = TRUE),
-    makeIntegerParam(id = "n_local_lower", lower = 2L, upper = 20L, default = 5),
-    makeIntegerParam(id = "n_local_upper", lower = 2L, upper = 20L, default = 7),
+    makeIntegerParam(id = "n_local_lower", lower = 2L, upper = 20L, default = 5L),
+    makeIntegerParam(id = "n_local_upper", lower = 2L, upper = 20L, default = 7L),
     makeNumericParam(id = "w_width", lower = -4, upper = 0, default = log(.1), trafo = exp),
     forbidden = quote(n_local_lower > n_local_upper)# | (sigma == "global" && distance %in% c("cosine", "rankcor")))
   ),
