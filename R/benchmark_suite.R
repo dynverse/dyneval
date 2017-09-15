@@ -21,9 +21,8 @@
 #' @importFrom mlr makeLearner
 #' @importFrom ParamHelpers generateDesignOfDefaults generateDesign
 #' @importFrom parallelMap parallelStartMulticore parallelStop
-#'
-#' @importFrom rgenoud genoud
-#' @importFrom DiceKriging km
+#' @importFrom dynutils extract_row_to_list
+#' @importFrom randomForest randomForest
 #'
 #' @export
 benchmark_suite_submit <- function(
