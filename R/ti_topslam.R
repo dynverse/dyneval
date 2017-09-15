@@ -6,10 +6,10 @@ description_topslam <- function() create_description(
   package_loaded = c(),
   package_required = c("jsonlite", "topslam"),
   par_set = makeParamSet(
-    makeIntegerParam(id = "n_components", lower=2, upper=10, default=2),
-    makeIntegerParam(id = "n_neighbors", lower=2, upper=100, default=10),
-    makeIntegerParam(id = "linear_dims", lower=0, upper=5, default=0),
-    makeIntegerParam(id = "max_iters", lower=100, upper=1000, default=200),
+    makeIntegerParam(id = "n_components", lower=2L, upper=10L, default=2L),
+    makeIntegerParam(id = "n_neighbors", lower=2L, upper=100L, default=10L),
+    makeIntegerParam(id = "linear_dims", lower=0L, upper=5L, default=0L),
+    makeIntegerParam(id = "max_iters", lower=100L, upper=1000L, default=200L),
     makeLogicalVectorParam(id = "dimreds", len = 5, default = rep(TRUE, 5))
   ),
   properties = c(),

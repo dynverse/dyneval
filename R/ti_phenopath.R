@@ -6,7 +6,7 @@ description_phenopath <- function() create_description(
   package_required = c("phenopath"),
   package_loaded = c(),
   par_set = makeParamSet(
-    makeIntegerParam(id = "thin", lower = 2, upper = 500, default = 40),
+    makeIntegerParam(id = "thin", lower = 2L, upper = 500L, default = 40L),
     makeDiscreteParam(id = "z_init", default = 1, values = list(1, 2, 3, 4, 5, "random")),
     makeLogicalParam(id="model_mu", default=FALSE),
     makeLogicalParam(id="scale_y", default=TRUE)

@@ -13,9 +13,9 @@ description_embeddr <- function() create_description(
     makeNumericParam(id = "t", lower = -5L, upper = 5L, default = 0, trafo = function(x) 10^x),
     makeDiscreteParam(id = "symmetrize", default = "mean", values = c("mean", "ceil", "floor")),
     makeDiscreteParam(id = "measure_type", default = "unorm", values = c("unorm", "norm")),
-    makeIntegerParam(id = "p", lower = 2, upper = 10, default = 2),
+    makeIntegerParam(id = "p", lower = 2L, upper = 10L, default = 2L),
     makeNumericParam(id = "thresh", lower = -5L, upper = 5L, default = -3L, trafo = function(x) 10^x),
-    makeIntegerParam(id = "maxit", lower = 0, upper = 50, default = 10),
+    makeIntegerParam(id = "maxit", lower = 0L, upper = 50L, default = 10L),
     makeNumericParam(id = "stretch", lower = 0, upper = 5, default = 2),
     makeDiscreteParam(id = "smoother", default = "smooth.spline", values = c("smooth.spline", "lowess", "periodic.lowess"))
   ),
