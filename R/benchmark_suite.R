@@ -190,7 +190,10 @@ benchmark_suite_retrieve <- function(out_dir) {
 }
 
 benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
-  list2env(data, environment())
+  grid <- data$grid
+  tasks <- data$tasks
+  task_group <- data$task_group
+  task_fold <- data$task_fold
 
   grid_i <- rds_i
   fold_i <- grid$fold_i[[rds_i]]
