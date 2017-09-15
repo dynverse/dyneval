@@ -15,9 +15,10 @@
 #' @param num_init_params The number of initial parameters to evaluate.
 #' @param num_repeats The number of times to repeat the mlr process, for each group and each fold.
 #'
-#' @importFrom mlrMBO makeMBOControl setMBOControlTermination setMBOControlInfill makeMBOInfillCritDIB
 #' @importFrom testthat expect_equal
 #' @importFrom PRISM qsub_lapply override_qsub_config
+#' @importFrom mlrMBO makeMBOControl setMBOControlTermination setMBOControlInfill makeMBOInfillCritDIB
+#' @importFrom mlr makeLearner makeImputeWrapper imputeMax imputeConstant
 #' @importFrom ParamHelpers generateDesignOfDefaults generateDesign
 #' @importFrom parallelMap parallelStartMulticore parallelStop
 #'
@@ -80,12 +81,6 @@ benchmark_suite_submit <- function(
 
       # create an objective function
       obj_fun <- make_obj_fun(method = method, metrics = metrics, timeout = timeout)
-
-      # due to some bug in paramhelpers when
-      # there is a discrete parameter in the par_set,
-      # there is a forbidden region, and ParamHelpers has not been
-      # loaded by the package
-      discreteNameToValue <- ParamHelpers::discreteNameToValue
 
       # generate initial parameters
       design <- bind_rows(
