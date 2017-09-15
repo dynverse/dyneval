@@ -19,7 +19,6 @@ generate_toy_datasets <- function(ti_types = c("linear", "bifurcating", "cycle")
     progressions <- dyngen::random_progressions_tented(milestone_network, ncells = num_cells)
     expression <- dyngen::generate_expression(milestone_network, progressions, ngenes = num_genes)
     counts <- dyngen::generate_counts(expression)
-    colnames(counts) <- paste0("G", seq_len(ncol(counts)))
 
     cell_ids <- unique(progressions$cell_id)
     milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
