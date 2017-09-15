@@ -1,5 +1,6 @@
 context("Plot functions")
 
+library(dyntoy)
 data(toy_tasks)
 
 for (taski in seq_len(nrow(toy_tasks))) {
