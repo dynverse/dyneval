@@ -23,12 +23,6 @@ generate_toy_datasets <- function(ti_types = c("linear", "bifurcating", "cycle")
     cell_ids <- unique(progressions$cell_id)
     milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
 
-    end_milestones <- milestone_ids[!(milestone_ids %in% milestone_network$from)]
-    special_cells <- list(
-      start_cell_id = progressions %>% arrange(from, to, percentage) %>% pull(cell_id) %>% first,
-      end_cell_ids = progressions %>% filter(to %in% end_milestones) %>% group_by(to) %>% arrange(percentage) %>% summarise(cell_id=cell_id[which.max(percentage)]) %>% pull(cell_id)
-    )
-
     task <- wrap_ti_task_data(
       ti_type = ti_type,
       id = paste0(ti_type, "_", replicate),
@@ -42,7 +36,7 @@ generate_toy_datasets <- function(ti_types = c("linear", "bifurcating", "cycle")
 
     task$type <- "ti_toy"
     task$cell_grouping <- get_cell_grouping(task$milestone_percentages)
-    task$geodesic_dist <- compute_emlike_dist(task)
+    task$geodesic_dist <- dynutils::compute_emlike_dist(task)
 
     task
   }))

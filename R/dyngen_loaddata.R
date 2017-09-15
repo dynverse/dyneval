@@ -84,7 +84,7 @@ load_datasets <- function(mc_cores = 1, datasets_info = load_datasets_info()) {
       special_cells = special_cells
     )
     out$cell_grouping = get_cell_grouping(out$milestone_percentages)
-    out$geodesic_dist <- compute_emlike_dist(out)
+    out$geodesic_dist <- dynutils::compute_emlike_dist(out)
     out
   })
   task_wrapped %>%
