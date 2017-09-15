@@ -1,4 +1,5 @@
 library(dyneval)
+library(tidyverse)
 
 out_dir <- "~/Workspace/dynresults/output_dyngen_paramtraincv/"
 dir.create(out_dir, recursive = T)
@@ -14,8 +15,10 @@ benchmark_suite_submit(
   task_fold,
   out_dir = out_dir,
   methods = methods,
+  metrics = c("auc_R_nx", "robbie_network_score"),
   timeout = 600,
-  memory = "10G",
+  memory = "16G",
+  num_cores = 2,
   num_iterations = 5,
   num_init_params = 16
 )
