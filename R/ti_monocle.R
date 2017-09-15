@@ -76,7 +76,7 @@ run_monocle <- function(counts,
 
   # estimate sparameters
   cds_1 <- estimateSizeFactors(cds_1)
-  cds_1 <- estimateDispersions(cds_1)
+  cds_1 <- estimateDispersions(cds_1, cores = 1)
 
   # reduce dimension
   if(reduction_method == "DDRTree") {
@@ -84,7 +84,7 @@ run_monocle <- function(counts,
                              reduction_method = reduction_method,
                              max_components = num_dimensions, norm_method = norm_method,
                              maxIter = maxIter, sigma = sigma, lambda = lambda, ncenter = ncenter,
-                             param.gamma = param.gamma, tol = tol, auto_param_selection = auto_param_selection)
+                             param.gamma = param.gamma, tol = tol, auto_param_selection = auto_param_selection, cores = 1)
   } else if (reduction_method == "ICA") {
     cds_2 <- reduceDimension(cds_1,
                              reduction_method = reduction_method,
