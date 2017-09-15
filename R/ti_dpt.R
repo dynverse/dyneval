@@ -19,7 +19,6 @@ description_dpt <- function() create_description(
   plot_fun = plot_dpt
 )
 
-#' @importFrom dynutils scale_quantile
 #' @importFrom reshape2 melt
 run_dpt <- function(counts,
                     start_cell_id = NULL,

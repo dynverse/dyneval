@@ -3,7 +3,6 @@
 #' @param as_tibble Whether or not to return the descriptions as a tibble
 #'
 #' @importFrom utils lsf.str
-#' @importFrom dynutils list_as_tibble
 #' @export
 get_descriptions <- function(as_tibble = TRUE) {
   requireNamespace("dyneval")
@@ -64,7 +63,6 @@ create_description <- function(
 #' @param timeout Kill execution after a given amount of time.
 #'
 #' @importFrom utils capture.output
-#' @importFrom dynutils wait_or_kill
 #' @export
 execute_method <- function(
   tasks,

@@ -52,7 +52,6 @@ impute_y_fun <- function(num_objectives, error_score = -1) {
 #'   see \code{\link{calculate_metrics}} for a list of which metrics are available.
 #'
 #' @export
-#' @importFrom dynutils override_setseed extract_row_to_list compute_emlike_dist
 #' @importFrom netdist gdd net_emd
 execute_evaluation <- function(tasks, method, parameters, metrics, timeout) {
   method_outputs <- execute_method(tasks = tasks, method = method, parameters = parameters, timeout = timeout)
@@ -120,7 +119,6 @@ execute_evaluation <- function(tasks, method, parameters, metrics, timeout) {
 #' }
 #'
 #' @importFrom igraph is_isomorphic_to graph_from_data_frame
-#' @importFrom dynutils simplify_network
 #'
 #' @export
 calculate_metrics <- function(task, model, metrics) {

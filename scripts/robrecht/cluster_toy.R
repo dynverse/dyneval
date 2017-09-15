@@ -1,4 +1,5 @@
 library(dyneval)
+library(dyntoy)
 library(tidyverse)
 
 out_dir <- "~/Workspace/dynverse/dynresults/cluster_toy/"

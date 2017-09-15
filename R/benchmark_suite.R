@@ -21,7 +21,6 @@
 #' @importFrom mlr makeLearner
 #' @importFrom ParamHelpers generateDesignOfDefaults generateDesign
 #' @importFrom parallelMap parallelStartMulticore parallelStop
-#' @importFrom dynutils extract_row_to_list
 #' @importFrom randomForest randomForest
 #'
 #' @export
