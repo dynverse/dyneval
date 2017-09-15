@@ -67,12 +67,7 @@ test_that("Testing create_description with dummy method", {
 
 
 test_that("Testing execute_method with dummy method", {
-<<<<<<< HEAD
   data("toy_tasks", package="dyntoy")
-=======
-  library(dyntoy)
-  data(toy_tasks)
->>>>>>> 0975d4366f964ceb515bbd013866357750bf0d8e
 
   dummy <- dyneval:::create_description(
     name = "dummy 2",
