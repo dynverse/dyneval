@@ -7,7 +7,6 @@ test_that("Retrieving dimred_methods", {
   expect_named(methods)
 })
 
-
 data("toy_tasks", package="dyntoy")
 
 for (taski in seq_len(nrow(toy_tasks))) {

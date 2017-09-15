@@ -18,16 +18,14 @@ test_that("Descriptions can be retrieved", {
 
 methods <- get_descriptions()
 
-library(ParamHelpers)
-
 for (i in seq_len(nrow(methods))) {
   method <- dynutils::extract_row_to_list(methods, i)
 
   test_that(paste0("Checking ", method$short_name), {
     par_set <- method$par_set
 
-    # must be able to generate a 100 random parameters
-    design <- ParamHelpers::generateDesign(100, par_set)
+    # must be able to generate a 10 random parameters
+    design <- ParamHelpers::generateDesign(10, par_set)
 
     # must be able to generate the default parameters
     design <- ParamHelpers::generateDesignOfDefaults(par_set)
@@ -69,7 +67,12 @@ test_that("Testing create_description with dummy method", {
 
 
 test_that("Testing execute_method with dummy method", {
+<<<<<<< HEAD
   data("toy_tasks", package="dyntoy")
+=======
+  library(dyntoy)
+  data(toy_tasks)
+>>>>>>> 0975d4366f964ceb515bbd013866357750bf0d8e
 
   dummy <- dyneval:::create_description(
     name = "dummy 2",

@@ -3,7 +3,7 @@ Type: Package
 Title: Evaluating trajectory inference methods
 Version: 0.1.0
 Authors@R: c(
-  person("Robrecht", "Cannoodt", email = "robrecht.cannoodt@ugent.be", role = c("aut", "cre")),
+  person("Robrecht", "Cannoodt", email = "robrecht.cannoodt@gmail.com", role = c("aut", "cre")),
   person("Wouter", "Saelens", email = "wouter.saelens@ugent.be", role = c("aut")),
   person("Helena", "Todorov", email = "helena.todorov@ugent.be", role = c("aut")))
 Description: dyneval provides an evaluation pipeline including metrics, wrappers for TI methods and plotting functions.
@@ -15,12 +15,10 @@ Depends:
   R (>= 3.4.0)
 Imports: 
   coRanking,
-  DiceKriging,
   dplyr, 
   dyngen,
   dynutils,
   dyntoy,
-  future,
   GA,
   GEDEVO,
   ggplot2,
@@ -39,10 +37,10 @@ Imports:
   pheatmap,
   PRISM,
   purrr, 
+  randomForest,
   RColorBrewer,
   readr,
   reshape2,
-  rgenoud,
   smoof,
   stringr,
   testthat,

@@ -77,6 +77,7 @@ wrap_ti_prediction <- function(
   )
 }
 
+#' @importFrom dynutils convert_milestone_percentages_to_progressions convert_progressions_to_milestone_percentages
 abstract_wrapper <- function(
   type,
   ti_type,

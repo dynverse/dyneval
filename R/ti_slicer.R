@@ -17,6 +17,7 @@ description_slicer <- function() create_description(
   plot_fun = plot_slicer
 )
 
+#' @importFrom dynutils convert_progressions_to_milestone_percentages
 run_slicer <- function(counts,
                       start_cell_id,
                       end_cell_ids = NULL,
