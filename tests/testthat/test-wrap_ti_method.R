@@ -69,7 +69,7 @@ test_that("Testing create_description with dummy method", {
 
 
 test_that("Testing execute_method with dummy method", {
-  data(toy_tasks)
+  data("toy_tasks", package="dyntoy")
 
   dummy <- dyneval:::create_description(
     name = "dummy 2",
@@ -122,7 +122,7 @@ test_that("Testing execute_method with dummy method", {
 })
 
 test_that("Testing timeout of execute_method", {
-  data(toy_tasks)
+  data("toy_tasks", package="dyntoy")
 
   timeouter <- dyneval:::create_description(
     name = "timeouter",
