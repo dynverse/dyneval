@@ -157,7 +157,7 @@ benchmark_suite_submit <- function(
 #'
 #' @param out_dir The folder in which to output intermediate and final results.
 #'
-#' @importFrom PRISM qsub_retrieve
+#' @importFrom PRISM qsub_retrieve qacct
 #' @export
 benchmark_suite_retrieve <- function(out_dir) {
   method_names <- list.files(out_dir)
@@ -168,9 +168,10 @@ benchmark_suite_retrieve <- function(out_dir) {
 
     if (!file.exists(output_file) && file.exists(qsubhandle_file)) {
       data <- readRDS(qsubhandle_file)
+      qsub_handle <- data$qsub_handle
 
       output <- qsub_retrieve(
-        data$qsub_handle,
+        qsub_handle,
         post_fun = function(rds_i, out_rds) {
           benchmark_suite_retrieve_helper(rds_i, out_rds, data)
         },
@@ -179,6 +180,19 @@ benchmark_suite_retrieve <- function(out_dir) {
 
       if (!is.null(output)) {
         cat("Saving output of ", method_name, "\n", sep = "")
+
+        which_errored <- sapply(output, is.na)
+        outputs <- lapply(output, function(x) if(is.na(x)) NULL else x)
+        errors <- lapply(output, function(x) if(!is.na(x)) NULL else attr(x, "qsub_error"))
+        qacct <- qacct(qsub_handle)
+
+        rds_lst <- lst(
+          outputs,
+          which_errored,
+          errors,
+          qacct,
+          qsub_handle
+        )
         saveRDS(output, output_file)
       }
     }
@@ -246,16 +260,20 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
     ## group them together per task_group
     eval_grp <- eval_ind %>%
       left_join(tasks %>% mutate(task_fold, task_group) %>% select(task_id = id, ti_type, task_fold, task_group), by = "task_id") %>%
-      group_by(ti_type, task_group, grid_i, repeat_i, fold_i, group_sel, iteration_i, param_i, fold_type, method_name,
-               method_short_name) %>%
+      group_by(
+        ti_type, task_group, grid_i, repeat_i, fold_i,
+        group_sel, iteration_i, param_i, fold_type,
+        method_name, method_short_name
+      ) %>%
       select(-task_id, -task_fold) %>%
       summarise_all(mean) %>% ungroup()
+
+    lst(eval_summ, eval_summ_gath, eval_ind, eval_grp)
   } else {
-    eval_summ <- NULL
-    eval_summ_gath <- NULL
-    eval_ind <- NULL
-    eval_grp <- NULL
+    x <- NA
+    attr(x, "qsub_error") <- "All parameters produced errors, resulting in a default error score"
+    x
   }
 
-  lst(eval_summ, eval_summ_gath, eval_ind, eval_grp)
+
 }
