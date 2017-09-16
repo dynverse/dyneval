@@ -32,7 +32,7 @@ benchmark_suite_submit(
   memory = "16G",
   num_cores = 2,
   num_iterations = 10,
-  num_init_params = 1100
+  num_init_params = 100
 )
 
 benchmark_suite_retrieve(out_dir)
