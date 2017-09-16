@@ -182,8 +182,8 @@ benchmark_suite_retrieve <- function(out_dir) {
         cat("Saving output of ", method_name, "\n", sep = "")
 
         which_errored <- sapply(output, is.na)
-        outputs <- lapply(output, function(x) if(is.na(x)) NULL else x)
-        errors <- lapply(output, function(x) if(!is.na(x)) NULL else attr(x, "qsub_error"))
+        outputs <- lapply(output, function(x) if(length(x) == 1 && is.na(x)) NULL else x)
+        errors <- lapply(output, function(x) if(length(x) == 1 &&!is.na(x)) attr(x, "qsub_error") else NULL)
         qacct <- qacct(qsub_handle)
 
         rds_lst <- lst(
