@@ -1,5 +1,6 @@
 .onLoad <- function(libname, pkgname){
-  cat("Loading discreteNameToValue in your global environment -- this is a dirty fix.\n")
+  requireNamespace("ParamHelpers")
+  packageStartupMessage("Loading discreteNameToValue in your global environment -- this is a dirty fix.")
   assign(
     "discreteNameToValue",
     ParamHelpers::discreteNameToValue,
