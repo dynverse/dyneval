@@ -13,11 +13,12 @@ tasks <- readRDS(paste0(out_dir, "tasks.rds")) %>%
   filter(
     platform_id == "fluidigm_c1",
     takesetting_type == "snapshot",
-    ti_type == "consecutive_bifurcating")
+    ti_type == "consecutive_bifurcating",
+    model_replicate %in% c(1,2))
 
 
 task_group <- rep("group", nrow(tasks))
-task_fold <- gsub(".*_", "", tasks$id) %>% as.integer()
+task_fold <- tasks$model_replicate
 methods <- get_descriptions(as_tibble = T)
 
 benchmark_suite_submit(
@@ -27,11 +28,11 @@ benchmark_suite_submit(
   out_dir = out_dir,
   methods = methods,
   metrics = c("auc_R_nx", "robbie_network_score"),
-  timeout = 600,
+  timeout = 1200,
   memory = "16G",
   num_cores = 2,
-  num_iterations = 5,
-  num_init_params = 16
+  num_iterations = 10,
+  num_init_params = 1100
 )
 
 benchmark_suite_retrieve(out_dir)
