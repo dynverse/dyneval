@@ -42,6 +42,8 @@ load_datasets <- function(mc_cores = 1, datasets_info = load_datasets_info()) {
 
     list2env(dataset, environment())
 
+    colnames(counts) <- paste0("Gene", seq_len(ncol(counts)))
+
     cell_ids <- rownames(counts)
 
     sample_info <- cellinfo %>%
