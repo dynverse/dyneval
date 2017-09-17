@@ -14,6 +14,7 @@
 #' @param num_iterations The number of iterations to run.
 #' @param num_init_params The number of initial parameters to evaluate.
 #' @param num_repeats The number of times to repeat the mlr process, for each group and each fold.
+#' @param save_r2g_to_outdir Save the r2gridengine output to \code{out_dir} instead of the default \code{local_tmp_path}.
 #'
 #' @importFrom testthat expect_equal
 #' @importFrom PRISM qsub_lapply override_qsub_config
@@ -37,7 +38,8 @@ benchmark_suite_submit <- function(
   max_wall_time = "72:00:00",
   num_iterations = 20,
   num_init_params = 100,
-  num_repeats = 1
+  num_repeats = 1,
+  save_r2g_to_outdir = FALSE
 ) {
   testthat::expect_is(tasks, "tbl")
   testthat::expect_equal(nrow(tasks), length(task_group))
@@ -65,7 +67,7 @@ benchmark_suite_submit <- function(
     fold_i = sort(unique(task_fold)),
     group_sel = sort(unique(task_group)),
     repeat_i = seq_len(num_repeats),
-    stringsAsFactors = F
+    stringsAsFactors = FALSE
   )
 
   ## Run MBO
@@ -103,6 +105,10 @@ benchmark_suite_submit <- function(
         max_wall_time = max_wall_time,
         execute_before = "export R_MAX_NUM_DLLS=300"
       )
+      if (save_r2g_to_outdir) {
+        qsub_config$local_tmp_path <- paste0(method_folder, "/r2gridengine")
+        dir.create(qsub_config$local_tmp_path, recursive = T, showWarnings = F)
+      }
       qsub_packages <- c("dplyr", "purrr", "dyneval", "mlrMBO", "parallelMap")
       qsub_environment <-  c(
         "method", "obj_fun", "design",

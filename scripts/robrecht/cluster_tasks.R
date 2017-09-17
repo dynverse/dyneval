@@ -27,12 +27,13 @@ benchmark_suite_submit(
   task_fold,
   out_dir = out_dir,
   methods = methods,
-  metrics = c("auc_R_nx", "robbie_network_score"),
+  metrics = c("correlation", "robbie_network_score"),
   timeout = 1200,
   memory = "16G",
   num_cores = 2,
   num_iterations = 10,
-  num_init_params = 100
+  num_init_params = 100,
+  save_r2g_to_outdir = TRUE
 )
 
 benchmark_suite_retrieve(out_dir)
