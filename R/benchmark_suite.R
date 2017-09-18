@@ -60,7 +60,8 @@ benchmark_suite_submit <- function(
     "regr.randomForest",
     se.method = "jackknife",
     predict.type = "se",
-    keep.inbag = TRUE)
+    keep.inbag = TRUE
+  )
 
   ## Grid settings
   grid <- expand.grid(
