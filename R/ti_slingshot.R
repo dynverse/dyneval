@@ -14,7 +14,7 @@ description_slingshot <- function() create_description(
     makeNumericParam(id = "thresh", lower = -5, upper = 5, default = -3, trafo = function(x) 10^x),
     makeIntegerParam(id = "maxit", lower = 0L, upper = 50L, default = 10L),
     makeNumericParam(id = "stretch", lower = 0, upper = 5, default = 2),
-    makeDiscreteParam(id = "smoother", default = "smooth.spline", values = c("smooth.spline", "lowess", "periodic.lowess")),
+    makeDiscreteParam(id = "smoother", default = "smooth.spline", values = c("smooth.spline", "loess", "periodic.lowess")),
     makeDiscreteParam(id = "shrink.method", default = "cosine", values = c("cosine", "tricube", "density")),
     makeDiscreteParam(id = "dimred_name", values = names(list_dimred_methods()), default="pca")
 
