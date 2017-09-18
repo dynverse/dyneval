@@ -8,7 +8,7 @@ benchmark_suite_submit(tasks, task_group, task_fold, out_dir, timeout = 60 *
   nrow(tasks), methods = get_descriptions(as_tibble = TRUE),
   metrics = c("auc_R_nx", "robbie_network_score"), num_cores = 4,
   memory = "20G", max_wall_time = "72:00:00", num_iterations = 20,
-  num_init_params = 100, num_repeats = 1)
+  num_init_params = 100, num_repeats = 1, save_r2g_to_outdir = FALSE)
 }
 \arguments{
 \item{tasks}{A tibble of tasks.}
@@ -37,6 +37,8 @@ see \code{\link{calculate_metrics}} for a list of which metrics are available.}
 \item{num_init_params}{The number of initial parameters to evaluate.}
 
 \item{num_repeats}{The number of times to repeat the mlr process, for each group and each fold.}
+
+\item{save_r2g_to_outdir}{Save the r2gridengine output to \code{out_dir} instead of the default \code{local_tmp_path}.}
 }
 \description{
 A benchmark suite with which to run all the methods on the different tasks
