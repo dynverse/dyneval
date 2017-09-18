@@ -24,7 +24,6 @@ description_slingshot <- function() create_description(
   plot_fun = plot_slingshot
 )
 
-#' @importFrom dynutils list_as_tibble
 run_slingshot <- function(
   counts,
   start_cell_id = NULL,

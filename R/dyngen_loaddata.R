@@ -28,7 +28,6 @@ load_datasets_info <- function() {
 #' @export
 #'
 #' @importFrom dyngen load_dataset
-#' @importFrom dynutils list_as_tibble get_cell_grouping compute_emlike_dist
 #'
 #' @examples
 #' \dontrun{
@@ -42,6 +41,8 @@ load_datasets <- function(mc_cores = 1, datasets_info = load_datasets_info()) {
     dataset <- dyngen::load_dataset(dataset_id)
 
     list2env(dataset, environment())
+
+    colnames(counts) <- paste0("Gene", seq_len(ncol(counts)))
 
     cell_ids <- rownames(counts)
 
@@ -67,7 +68,7 @@ load_datasets <- function(mc_cores = 1, datasets_info = load_datasets_info()) {
         to = as.character(to)
       )
 
-    out <- wrap_ti_task_data(
+    out <- dynutils::wrap_ti_task_data(
       ti_type = model$modulenetname,
       id = dataset_id,
       cell_ids = cell_ids,
@@ -87,7 +88,6 @@ load_datasets <- function(mc_cores = 1, datasets_info = load_datasets_info()) {
     out$geodesic_dist <- dynutils::compute_emlike_dist(out)
     out
   })
-  task_wrapped %>%
-    dynutils::list_as_tibble %>%
+  dynutils::list_as_tibble(task_wrapped) %>%
     left_join(datasets_info, by = c("id" = "id"))
 }

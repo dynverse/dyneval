@@ -8,11 +8,12 @@ description_celltree_maptpx <- function() create_description(
   par_set = makeParamSet(
     makeDiscreteParam(id = "method", values = "maptpx", default = "maptpx"),
     makeIntegerParam(id = "num_topics_lower", lower = 2L, upper = 15L, default = 2L),
-    makeIntegerParam(id = "num_topics_upper", lower = 2L, upper = 15L, default = 15L, requires = expression(num_topics_lower <= num_topics_upper)),
+    makeIntegerParam(id = "num_topics_upper", lower = 2L, upper = 15L, default = 15L),
     makeNumericParam(id = "sd_filter", lower = log(.01), upper = log(5.0), default = log(.5), special.vals = list(FALSE), trafo = exp),
     makeNumericParam(id = "tot_iter", lower = log(10^4), upper = log(10^7), default = log(10^6), trafo = function(x) as.integer(round(exp(x)))),
     makeNumericParam(id = "tolerance", lower = log(.001), upper = log(.5), default = log(.05), trafo = exp),
-    makeNumericParam(id = "width_scale_factor", lower = 1.01, default = 1.2, upper = 2)
+    makeNumericParam(id = "width_scale_factor", lower = 1.01, default = 1.2, upper = 2),
+    forbidden = quote(num_topics_lower > num_topics_upper)
   ),
   properties = c(),
   run_fun = run_celltree,

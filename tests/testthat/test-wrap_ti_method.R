@@ -19,7 +19,7 @@ test_that("Descriptions can be retrieved", {
 methods <- get_descriptions()
 
 for (i in seq_len(nrow(methods))) {
-  method <- dynutils::extract_row_to_list(methods, i)
+  method <- extract_row_to_list(methods, i)
 
   test_that(paste0("Checking ", method$short_name), {
     par_set <- method$par_set
@@ -67,12 +67,7 @@ test_that("Testing create_description with dummy method", {
 
 
 test_that("Testing execute_method with dummy method", {
-<<<<<<< HEAD
   data("toy_tasks", package="dyntoy")
-=======
-  library(dyntoy)
-  data(toy_tasks)
->>>>>>> 0975d4366f964ceb515bbd013866357750bf0d8e
 
   dummy <- dyneval:::create_description(
     name = "dummy 2",
@@ -113,7 +108,7 @@ test_that("Testing execute_method with dummy method", {
   for (i in seq_along(method_outs)) {
     method_out <- method_outs[[i]]
 
-    expect_is( method_out$model, "dyneval::ti_wrapper" )
+    expect_true( dynutils::is_ti_data_wrapper(method_out$model) )
     expect_is( method_out$summary, "data.frame" )
 
     pdf("/dev/null")
@@ -173,7 +168,7 @@ test_that("Testing timeout of execute_method", {
   for (i in seq_along(method_outs)) {
     method_out <- method_outs[[i]]
 
-    expect_is( method_out$model, "dyneval::ti_wrapper" )
+    expect_true( dynutils::is_ti_data_wrapper(method_out$model) )
     expect_is( method_out$summary, "data.frame" )
 
     pdf("/dev/null")
