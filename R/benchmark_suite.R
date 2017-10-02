@@ -164,7 +164,7 @@ benchmark_suite_submit <- function(
 #'
 #' @param out_dir The folder in which to output intermediate and final results.
 #'
-#' @importFrom PRISM qsub_retrieve qacct
+#' @importFrom PRISM qsub_retrieve qacct qstat_j
 #' @export
 benchmark_suite_retrieve <- function(out_dir) {
   method_names <- list.files(out_dir)
@@ -190,8 +190,8 @@ benchmark_suite_retrieve <- function(out_dir) {
         wait = FALSE
       )
 
-      qacct <- qacct(qsub_handle)
-      qstat <- qstat(qsub_handle)
+      qacct_out <- qacct(qsub_handle)
+      qstat_out <- qstat_j(qsub_handle)
 
       if (!is.null(output)) {
         cat("Success! Saving output.\n", sep = "")
@@ -216,8 +216,8 @@ benchmark_suite_retrieve <- function(out_dir) {
         outputs,
         which_errored,
         errors,
-        qacct,
-        qstat,
+        qacct_out,
+        qstat_out,
         qsub_handle
       )
 
