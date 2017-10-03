@@ -164,18 +164,23 @@ benchmark_suite_submit <- function(
 #'
 #' @param out_dir The folder in which to output intermediate and final results.
 #'
-#' @importFrom PRISM qsub_retrieve qacct
+#' @importFrom PRISM qsub_retrieve qacct qstat_j
 #' @export
 benchmark_suite_retrieve <- function(out_dir) {
   method_names <- list.files(out_dir)
-  for (method_name in method_names) {
+  lapply(method_names, function(method_name) {
     method_folder <- paste0(out_dir, method_name)
     output_file <- paste0(method_folder, "/output.rds")
     qsubhandle_file <- paste0(method_folder, "/qsubhandle.rds")
 
-    if (!file.exists(output_file) && file.exists(qsubhandle_file)) {
+    if (file.exists(output_file)) {
+      cat(method_name, ": Reading previous output\n", sep = "")
+      readRDS(output_file)
+    } else if (!file.exists(output_file) && file.exists(qsubhandle_file)) {
+      cat(method_name, ": Attempting to retrieve output from cluster: ", sep = "")
       data <- readRDS(qsubhandle_file)
       qsub_handle <- data$qsub_handle
+      num_tasks <- qsub_handle$num_tasks
 
       output <- qsub_retrieve(
         qsub_handle,
@@ -185,25 +190,46 @@ benchmark_suite_retrieve <- function(out_dir) {
         wait = FALSE
       )
 
+      qacct_out <- qacct(qsub_handle)
+      qstat_out <- qstat_j(qsub_handle)
+
       if (!is.null(output)) {
-        cat("Saving output of ", method_name, "\n", sep = "")
+        cat("Success! Saving output.\n", sep = "")
 
         which_errored <- sapply(output, is.na)
         outputs <- lapply(output, function(x) if(length(x) == 1 && is.na(x)) NULL else x)
         errors <- lapply(output, function(x) if(length(x) == 1 &&!is.na(x)) attr(x, "qsub_error") else NULL)
-        qacct <- qacct(qsub_handle)
 
-        rds_lst <- lst(
-          outputs,
-          which_errored,
-          errors,
-          qacct,
-          qsub_handle
-        )
-        saveRDS(output, output_file)
+        output_succeeded <- TRUE
+
+      } else {
+        cat("Failed. Maybe the job has not finished yet?\n", sep = "")
+
+        output_succeeded <- FALSE
+        outputs <- lapply(seq_len(num_tasks), function(i) NULL)
+        which_errored <- rep(TRUE, num_tasks)
+        errors <- rep("qsub_retrieve of results failed. Maybe the job has not finished yet?", num_tasks)
       }
+
+      rds_lst <- lst(
+        method_name,
+        outputs,
+        which_errored,
+        errors,
+        qacct_out,
+        qstat_out,
+        qsub_handle
+      )
+
+      if (output_succeeded) {
+        saveRDS(rds_lst, output_file)
+      }
+
+      rds_lst
+    } else {
+      stop("Could not find an output.rds or qsubhandle.rds file in out_dir = ", sQuote(out_dir))
     }
-  }
+  })
 }
 
 benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
