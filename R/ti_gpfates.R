@@ -26,34 +26,13 @@ run_gpfates <- function(
   nfates=2,
   ndims=2
 ) {
+  requireNamespace("GPfates")
 
-  temp_folder <- tempdir()
+  gp_out <- GPfates::GPfates(counts, nfates, ndims, log_expression_cutoff, min_cells_expression_cutoff)
 
-  counts %>%
-    t %>%
-    write.table(paste0(temp_folder, "expression.csv"), sep="\t")
-
-  counts %>%
-    {data.frame(cell_id=rownames(.), row.names=rownames(.))} %>%
-    write.table(paste0(temp_folder, "cellinfo.csv"), sep="\t")
-
-  system2(
-    "/bin/bash",
-    args = c(
-      "-c",
-      shQuote(glue::glue(
-        "cd {find.package('GPfates')}/venv",
-        "source bin/activate",
-        "python3 {find.package('GPfates')}/wrapper.py {temp_folder} {log_expression_cutoff} {min_cells_expression_cutoff} {nfates} {ndims}",
-        .sep = ";"))
-    )
-  )
-
-  pseudotime <- read_csv(glue::glue("{temp_folder}pseudotimes.csv"), col_names = c("cell_id", "time"))
-
-  phi <- read_csv(glue::glue("{temp_folder}phi.csv"), col_names = c("cell_id", glue::glue("M{seq_len(nfates)}")), skip = 1)
-
-  dr <- read_csv(glue::glue("{temp_folder}dr.csv"), col_names = c("cell_id", glue::glue("Comp{seq_len(5)}")), skip = 1)
+  pseudotime <- gp_out$pseudotime
+  phi <- gp_out$phi
+  dr <- gp_out$dr
 
   pseudotime <- pseudotime %>% mutate(time=(time-min(time))/(max(time) - min(time)))
 
