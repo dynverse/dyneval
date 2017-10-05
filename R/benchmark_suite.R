@@ -18,7 +18,7 @@
 #'
 #' @importFrom testthat expect_equal
 #' @importFrom PRISM qsub_lapply override_qsub_config
-#' @importFrom mlrMBO makeMBOControl setMBOControlTermination setMBOControlInfill makeMBOInfillCritDIB
+#' @importFrom mlrMBO makeMBOControl setMBOControlTermination setMBOControlInfill makeMBOInfillCritDIB makeMBOInfillCritCB
 #' @importFrom mlr makeLearner
 #' @importFrom ParamHelpers generateDesignOfDefaults generateDesign
 #' @importFrom parallelMap parallelStartMulticore parallelStop
@@ -51,8 +51,13 @@ benchmark_suite_submit <- function(
     n.objectives = length(metrics),
     propose.points = num_cores,
     impute.y.fun = impute_y_fun(length(metrics))) %>%
-    mlrMBO::setMBOControlTermination(iters = num_iterations) %>%
-    mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritDIB())
+    mlrMBO::setMBOControlTermination(iters = num_iterations)
+
+  if (length(metrics) == 1) {
+    control_train <- control_train %>% mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritCB())
+  } else {
+    control_train <- control_train %>% mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritDIB())
+  }
   control_test <- control_train
   control_test$iters <- 1
   control_test$propose.points <- 1
