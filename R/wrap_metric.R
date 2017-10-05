@@ -366,8 +366,8 @@ calculate_robbie_network_score <- function(
 calculate_hele_network_score <- function(net1, net2) {
   # net1 <- tibble(from=c(1, 2, 2), to=c(2, 1, 1), directed=TRUE, length=1)
   # net2 <- tibble(from=c(1, 2, 2), to=c(2, 3, 4), directed=TRUE, length=1)
-  net1 <- tibble(from=1, to=1, directed=TRUE, length=1)
-  net2 <- tibble(from=1, to=1, directed=TRUE, length=1)
+  # net1 <- tibble(from=1, to=1, directed=TRUE, length=1)
+  # net2 <- tibble(from=1, to=1, directed=TRUE, length=1)
 
   net1 <- dynutils::simplify_network(net1)
   net2 <- dynutils::simplify_network(net2)
