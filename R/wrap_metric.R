@@ -292,9 +292,14 @@ complete_matrix <- function(mat, dim, fill=0) {
 }
 
 get_adjacency <- function(net, nodes=unique(c(net$from, net$to))) {
-  newnet <- net %>%
-    mutate(from=factor(from, levels=nodes), to=factor(to, levels=nodes)) %>%
-    reshape2::acast(from~to, value.var="length", fill=0, drop=FALSE)
+  if(nrow(net) == 0) { # special case for circular
+    newnet <- matrix(rep(0, length(nodes)))
+    dimnames(newnet) <- list(nodes, nodes)
+  } else {
+    newnet <- net %>%
+      mutate(from=factor(from, levels=nodes), to=factor(to, levels=nodes)) %>%
+      reshape2::acast(from~to, value.var="length", fill=0, drop=FALSE)
+  }
 
   newnet[lower.tri(newnet)] = newnet[lower.tri(newnet)] + t(newnet)[lower.tri(newnet)] # make symmetric
 
@@ -305,11 +310,17 @@ get_adjacency <- function(net, nodes=unique(c(net$from, net$to))) {
 #'
 #' @param net1 the first network to compare
 #' @param net2 the second network to compare
+#' @param nodes1 nodes in `net1`, defaults to unique from and to
+#' @param nodes2 nodes in `net2`, defaults to unique from and to
+#' @param normalize_weights Whether to normalize the lengths of each network
 #' @importFrom GA ga
-calculate_robbie_network_score <- function(net1, net2) {
-  nodes1 <- unique(c(net1$from, net1$to))
-  nodes2 <- unique(c(net2$from, net2$to))
-
+calculate_robbie_network_score <- function(
+  net1,
+  net2,
+  nodes1=unique(c(net1$from, net1$to)),
+  nodes2=unique(c(net2$from, net2$to)),
+  normalize_weights=TRUE
+) {
   if(length(nodes1) < length(nodes2)) {
     nodes3 <- nodes2
     net3 <- net2
@@ -329,15 +340,47 @@ calculate_robbie_network_score <- function(net1, net2) {
     }
   }
 
-  net <- get_adjacency(net1)
-  net_ref <- get_adjacency(net2)
+  net <- get_adjacency(net1, nodes1)
+  net_ref <- get_adjacency(net2, nodes2)
   net_ref <- complete_matrix(net_ref, nrow(net))
 
+  if(nrow(net) == 1) {
+    return(score_map(1, net, net_ref))
+  }
+
   # normalize weights
-  net <- net/sum(net)
-  net_ref <- net_ref/sum(net_ref)
+  if(normalize_weights) {
+    net <- net/sum(net)
+    net_ref <- net_ref/sum(net_ref)
+  }
 
   results <- GA::ga("permutation", score_map, net=net, net_ref=net_ref, min=rep(1, length(nodes1)), max=rep(length(nodes1), length(nodes1)), maxiter=10, monitor=FALSE)
 
   results@fitnessValue
 }
+
+#' Compute the helenie network score (any resemblances to real-life persons is purely coincidental)
+#'
+#' @param net1 the first network to compare
+#' @param net2 the second network to compare
+calculate_hele_network_score <- function(net1, net2) {
+  # net1 <- tibble(from=c(1, 2, 2), to=c(2, 1, 1), directed=TRUE, length=1)
+  # net2 <- tibble(from=c(1, 2, 2), to=c(2, 3, 4), directed=TRUE, length=1)
+  net1 <- tibble(from=1, to=1, directed=TRUE, length=1)
+  net2 <- tibble(from=1, to=1, directed=TRUE, length=1)
+
+  net1 <- dynutils::simplify_network(net1)
+  net2 <- dynutils::simplify_network(net2)
+
+  net1 <- net1 %>% igraph::graph_from_data_frame(directed=T) %>% igraph::make_line_graph()
+  net2 <- net2 %>% igraph::graph_from_data_frame(directed=T) %>% igraph::make_line_graph()
+
+  nodes1 <- net1 %>% igraph::V() %>% as.numeric()
+  nodes2 <- net2 %>% igraph::V() %>% as.numeric()
+
+  net1 <- net1 %>% igraph::as_data_frame() %>% mutate(length=1)
+  net2 <- net2 %>% igraph::as_data_frame() %>% mutate(length=1)
+
+  calculate_robbie_network_score(net1, net2, nodes1, nodes2, normalize_weights=FALSE)
+}
+
