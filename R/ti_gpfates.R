@@ -21,10 +21,10 @@ description_gpfates <- function() create_description(
 #' @importFrom utils write.table
 run_gpfates <- function(
   counts,
-  log_expression_cutoff=2,
-  min_cells_expression_cutoff=2,
-  nfates=2,
-  ndims=2
+  nfates = 1,
+  ndims = 2,
+  log_expression_cutoff = 2,
+  min_cells_expression_cutoff = 2
 ) {
   requireNamespace("GPfates")
 
