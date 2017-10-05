@@ -129,8 +129,8 @@ benchmark_suite_submit <- function(
           repeat_i <- grid[grid_i,]$repeat_i
 
           ## start parameter optimisation
-          parallelStartMulticore(cpus = num_cores, show.info = TRUE)
-          tune_train <- mbo(
+          parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
+          tune_train <- mlrMBO::mbo(
             obj_fun,
             learner = learner,
             design = design,
@@ -138,7 +138,7 @@ benchmark_suite_submit <- function(
             show.info = TRUE,
             more.args = list(tasks = tasks[task_group == group_sel & task_fold != fold_i,])
           )
-          tune_test <- mbo(
+          tune_test <- mlrMBO::mbo(
             obj_fun,
             learner = learner,
             design = tune_train$opt.path$env$path %>% select(-starts_with("y_"), -one_of("y")),
@@ -146,7 +146,7 @@ benchmark_suite_submit <- function(
             show.info = TRUE,
             more.args = list(tasks = tasks[task_group == group_sel & task_fold == fold_i,])
           )
-          parallelStop()
+          parallelMap::parallelStop()
 
           list(design = design, tune_train = tune_train, tune_test = tune_test)
         })
