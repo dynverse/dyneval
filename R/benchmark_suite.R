@@ -167,7 +167,7 @@ benchmark_suite_submit <- function(
 #' @importFrom PRISM qsub_retrieve qacct qstat_j
 #' @export
 benchmark_suite_retrieve <- function(out_dir) {
-  method_names <- list.dirs(out_dir, full.names = F) %>% discard(~ . == "")
+  method_names <- list.dirs(out_dir, full.names = FALSE, recursive = FALSE) %>% discard(~ . == "")
   bind_rows(lapply(method_names, function(method_name) {
     method_folder <- paste0(out_dir, method_name)
     output_file <- paste0(method_folder, "/output.rds")
