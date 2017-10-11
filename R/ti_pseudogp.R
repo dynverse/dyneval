@@ -37,99 +37,71 @@ run_pseudogp <- function(
 
   spaces <- list_dimred_methods()[dimreds] %>% map(~.(counts, 2)) # only 2 dimensions are allowed
 
-  le_fit <- fitPseudotime(spaces, smoothing_alpha, smoothing_beta, iter = iter, chains = chains, initialise_from = initialise_from, pseudotime_var=pseudotime_var, pseudotime_mean=pseudotime_mean)
-  nsamples <- iter/2
-  #posteriorCurvePlot(spaces, le_fit, nsamples=nsamples, posterior_mean = TRUE)
+  le_fit <- pseudogp::fitPseudotime(
+    X = spaces,
+    smoothing_alpha = smoothing_alpha,
+    smoothing_beta = smoothing_beta,
+    iter = iter,
+    chains = chains,
+    initialise_from = initialise_from,
+    pseudotime_var = pseudotime_var,
+    pseudotime_mean = pseudotime_mean)
+
+  num_samples <- iter / 2
 
   pst <- rstan::extract(le_fit, pars = "t", permute = FALSE)
   lambda <- rstan::extract(le_fit, pars = "lambda", permute = FALSE)
   sigma <- rstan::extract(le_fit, pars = "sigma", permute = FALSE)
 
   # not necessary, but can be used for plotting: the times of every sample across chains
-  sample_posterior_times <- map(seq_len(chains), ~coda::mcmc(pst[, ., ])) %>%
-    do.call(rbind, .)
-  colnames(sample_posterior_times) <- rownames(counts)
-  sample_posterior_times <- sample_posterior_times %>%
-    reshape2::melt(varnames=c("sample_id", "cell_id"), value.name="time") %>%
-    mutate(chain_id = floor((sample_id-1)/(max(sample_id) / chains)) + 1)
+  sample_posterior_times <-
+    map_df(seq_len(chains), function(chain_id) {
+      mat <- pst[,chain_id,] %>% coda::mcmc() %>% as.matrix()
+      colnames(mat) <- rownames(counts)
+      mat %>%
+        reshape2::melt(varnames = c("sample_id", "cell_id"), value.name = "time") %>%
+        as_data_frame() %>%
+        mutate(cell_id = as.character(cell_id), chain_id = chain_id)
+    })
 
   # calculate the final pseudotime by averaging over the modes of every chain
-  chain_posterior_times <- map(seq_len(chains), ~MCMCglmm::posterior.mode(coda::mcmc(pst[, ., ]))) %>%
-    do.call(rbind, .)
-  colnames(chain_posterior_times) <- rownames(counts)
-  chain_posterior_times <- chain_posterior_times %>% reshape2::melt(varnames = c("chain_id", "cell_id"), value.name="time")
+  chain_posterior_times <-
+    map_df(seq_len(chains), function(chain_id) {
+      vec <- pst[,chain_id,] %>% coda::mcmc() %>% MCMCglmm::posterior.mode()
+      data_frame(chain_id, cell_id = rownames(counts), time = vec)
+    })
 
   # calculate progressions and milestone network
   progressions <- chain_posterior_times %>%
     group_by(cell_id) %>%
-    summarise(percentage=mean(time)) %>%
-    mutate(from="M1", to="M2") %>%
-    mutate(cell_id = as.character(cell_id))
+    summarise(percentage = mean(time)) %>%
+    mutate(from = "M1", to = "M2") %>%
+    select(cell_id, from, to, percentage)
 
-  milestone_network <- tibble(from="M1", to="M2", length=1, directed=TRUE)
+  milestone_network <- tibble(from = "M1", to = "M2", length = 1, directed = TRUE)
 
   wrap_ti_prediction(
     ti_type = "linear",
     id = "pseudogp",
     cell_ids = rownames(counts),
     milestone_ids = c("M1", "M2"),
-    milestone_network = milestone_network %>% select(from, to, length, directed),
-    progressions = progressions %>% select(cell_id, from, to, percentage),
+    milestone_network = milestone_network,
+    progressions = progressions,
     dimreds_samples = spaces,
     sample_posterior_times = sample_posterior_times,
     chain_posterior_times = chain_posterior_times,
+    num_samples = num_samples,
     le_fit = le_fit
   )
 }
 
 plot_pseudogp <- function(prediction) {
-  extract <- rstan::extract
+  requireNamespace("pseudogp")
 
-  # variability between samples and chains
-  prediction$sample_posterior_times %>%
-    group_by(cell_id) %>%
-    mutate(mean_time=mean(time)) %>%
-    ggplot() +
-    geom_boxplot(aes(mean_time, time, group=cell_id, color=factor(chain_id)), width=0.01) +
-    facet_wrap(~chain_id)
-
-  # variability between chains, eg. to check whether there is a structure present in the data
-  prediction$chain_posterior_times %>%
-    group_by(cell_id) %>%
-    mutate(mean_time=mean(time)) %>%
-    ggplot() +
-    geom_boxplot(aes(mean_time, time, group=cell_id))
-
-  posteriorCurvePlot(prediction$dimreds_samples, prediction$le_fit, nsamples=min(max(model$sample_posterior_times$sample_id), 50), posterior_mean = TRUE)
-}
-
-
-posteriorCurvePlot <- function (X, fit, posterior_mean = TRUE, nsamples = 50, nnt = 80,
-          point_colour = "darkred", curve_colour = "black", point_alpha = 1,
-          curve_alpha = 0.5, grid_nrow = NULL, grid_ncol = NULL, use_cowplot = TRUE,
-          standardize_ranges = FALSE, ...)
-{
-  requireNamespace("cowplot")
-  if (is.matrix(X))
-    X <- list(X)
-  Ns <- length(X)
-  chains <- length(fit@inits)
-  message(paste("Plotting traces for", Ns, "representation(s) and",
-                chains, "chain(s)"))
-  plots <- vector("list", Ns)
-  pst <- rstan::extract(fit, pars = "t", permute = FALSE)
-  lambda <- rstan::extract(fit, pars = "lambda", permute = FALSE)
-  sigma <- rstan::extract(fit, pars = "sigma", permute = FALSE)
-  for (i in 1:Ns) {
-    l <- lambda[, , (2 * i - 1):(2 * i), drop = FALSE]
-    s <- sigma[, , (2 * i - 1):(2 * i), drop = FALSE]
-    plt <- pseudogp:::makeEnvelopePlot(pst, l, s, X[[i]], chains, posterior_mean,
-                            nsamples, nnt, point_colour, curve_colour, point_alpha,
-                            curve_alpha, use_cowplot, standardize_ranges)
-    plots[[i]] <- plt
-  }
-  gplt <- cowplot::plot_grid(plotlist = plots, labels = names(X),
-                             nrow = grid_nrow, ncol = grid_ncol)
-  return(gplt)
+  pseudogp::posteriorCurvePlot(
+    X = prediction$dimreds_samples,
+    fit = prediction$le_fit,
+    nsamples = min(prediction$num_samples, 50),
+    posterior_mean = TRUE)
 }
 
