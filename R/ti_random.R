@@ -23,7 +23,7 @@ run_shuffled <- function(counts, task, dummy_param = .5) {
     ti_type = task$ti_type,
     id = paste0(task$id, "_shuffled"),
     cell_ids = task$cell_ids,
-    milestone_ids =task$milestone_ids,
+    milestone_ids = task$milestone_ids,
     milestone_network = task$milestone_network,
     progressions = progressions
   )
