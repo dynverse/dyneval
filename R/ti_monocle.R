@@ -1,14 +1,14 @@
 #' Description for monocle DDRTree
 #' @export
-description_monocle_ddrtree <- function() generic_monocle_description("DDRTree")
+description_monocle_ddrtree <- function() abstract_monocle_description("DDRTree")
 
 #' Description for monocle PQTree
 #' @export
-description_monocle_pqtree <- function() generic_monocle_description("ICA")
+description_monocle_pqtree <- function() abstract_monocle_description("ICA")
 
-generic_monocle_description <- function(reduction_method) {
+abstract_monocle_description <- function(reduction_method) {
   if(reduction_method == "DDRTree") {
-    par_set = makeParamSet(
+    par_set <- makeParamSet(
       makeDiscreteParam(id = "reduction_method", values = "DDRTree", default = "DDRTree"),
       makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
       makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
@@ -22,10 +22,8 @@ generic_monocle_description <- function(reduction_method) {
       makeNumericParam(id = "tol", lower = 0, default = .001, upper = 10),
       makeLogicalParam(id = "auto_param_selection", default = TRUE)
     )
-    run_fun <- run_monocle
-    formals(run_fun)$reduction_method <- "DDRTree"
   } else if(reduction_method == "ICA"){
-    par_set = makeParamSet(
+    par_set <- makeParamSet(
       makeDiscreteParam(id = "reduction_method", values = "ICA", default = "ICA"),
       makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
       makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
@@ -34,9 +32,10 @@ generic_monocle_description <- function(reduction_method) {
       makeNumericParam(id = "tol", lower = 0, default = .001, upper = 10),
       makeLogicalParam(id = "auto_param_selection", default = TRUE)
     )
-    run_fun <- run_monocle
-    formals(run_fun)$reduction_method <- "ICA"
   }
+
+  run_fun <- run_monocle
+  formals(run_fun)$reduction_method <- reduction_method
 
   create_description(
     name = glue::glue("monocle with {ifelse(reduction_method == 'DDRTree', 'DDRTree', 'ICA and PQTree')}"),
@@ -44,7 +43,7 @@ generic_monocle_description <- function(reduction_method) {
     package_loaded = c("monocle", "igraph", "reshape2"),
     package_required = c(),
     par_set = par_set,
-    properties = c("tibble"),#, "dimred", "dimred_traj", "pseudotime"), # todo: implement other outputs
+    properties = c(),
     run_fun = run_fun,
     plot_fun = plot_monocle
   )
