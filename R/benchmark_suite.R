@@ -278,6 +278,10 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
   ) %>% filter(param_i <= nrow(train_out$opt.path$env$path)) %>%
     as_data_frame()
 
+  if ("y" %in% colnames(eval_summ_gath)) {
+    eval_summ_gath <- eval_summ_gath %>% rename(y_1 = y)
+  }
+
   if (!all(eval_summ_gath$y_1 == -1)) {
     eval_summ <- eval_summ_gath %>%
       gather(eval_metric, score, starts_with("y_"), starts_with("time")) %>%
