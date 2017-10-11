@@ -150,8 +150,8 @@ calculate_metrics <- function(task, model, metrics) {
     summary$time_mantel <- as.numeric(difftime(time1, time0, units = "sec"))
   }
 
-  net1 <- dynutils::simplify_network(model$milestone_network)
-  net2 <- dynutils::simplify_network(task$milestone_network) %>% filter(to != "FILTERED_CELLS")
+  net1 <- dynutils::simplify_milestone_network(model$milestone_network)
+  net2 <- dynutils::simplify_milestone_network(task$milestone_network) %>% filter(to != "FILTERED_CELLS")
 
   # Compute the milestone network isomorphic
   if ("isomorphic" %in% metrics) {
