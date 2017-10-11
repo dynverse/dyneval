@@ -22,6 +22,8 @@ generic_monocle_description <- function(reduction_method) {
       makeNumericParam(id = "tol", lower = 0, default = .001, upper = 10),
       makeLogicalParam(id = "auto_param_selection", default = TRUE)
     )
+    run_fun <- run_monocle
+    formals(run_fun)$reduction_method <- "DDRTree"
   } else if(reduction_method == "ICA"){
     par_set = makeParamSet(
       makeDiscreteParam(id = "reduction_method", values = "ICA", default = "ICA"),
@@ -32,6 +34,8 @@ generic_monocle_description <- function(reduction_method) {
       makeNumericParam(id = "tol", lower = 0, default = .001, upper = 10),
       makeLogicalParam(id = "auto_param_selection", default = TRUE)
     )
+    run_fun <- run_monocle
+    formals(run_fun)$reduction_method <- "ICA"
   }
 
   create_description(
@@ -41,7 +45,7 @@ generic_monocle_description <- function(reduction_method) {
     package_required = c(),
     par_set = par_set,
     properties = c("tibble"),#, "dimred", "dimred_traj", "pseudotime"), # todo: implement other outputs
-    run_fun = run_monocle,
+    run_fun = run_fun,
     plot_fun = plot_monocle
   )
 }
@@ -72,21 +76,21 @@ run_monocle <- function(counts,
   expr <- counts
   #expr <- log2(as.matrix(counts)+1)
   featureData <- new("AnnotatedDataFrame", data.frame(row.names = colnames(expr), gene_short_name = colnames(expr)))
-  cds_1 <- newCellDataSet(t(expr), featureData = featureData)
+  cds_1 <- monocle::newCellDataSet(t(expr), featureData = featureData)
 
   # estimate sparameters
-  cds_1 <- estimateSizeFactors(cds_1)
-  cds_1 <- estimateDispersions(cds_1, cores = 1)
+  cds_1 <- monocle::estimateSizeFactors(cds_1)
+  cds_1 <- monocle::estimateDispersions(cds_1, cores = 1)
 
   # reduce dimension
   if(reduction_method == "DDRTree") {
-    cds_2 <- reduceDimension(cds_1,
+    cds_2 <- monocle::reduceDimension(cds_1,
                              reduction_method = reduction_method,
                              max_components = num_dimensions, norm_method = norm_method,
                              maxIter = maxIter, sigma = sigma, lambda = lambda, ncenter = ncenter,
                              param.gamma = param.gamma, tol = tol, auto_param_selection = auto_param_selection, cores = 1)
   } else if (reduction_method == "ICA") {
-    cds_2 <- reduceDimension(cds_1,
+    cds_2 <- monocle::reduceDimension(cds_1,
                              reduction_method = reduction_method,
                              max_components = num_dimensions, norm_method = norm_method,
                              tol = tol, auto_param_selection = auto_param_selection)
@@ -94,7 +98,7 @@ run_monocle <- function(counts,
 
 
   # order the cells
-  cds_3 <- orderCells(cds_2, reverse = FALSE)
+  cds_3 <- monocle::orderCells(cds_2, reverse = FALSE)
 
   orderingData <- cds_3@auxOrderingData[[reduction_method]] # location of ordering data depends on reduction method
   # retrieve the graph and the root cell, also depends on reduction method (-_-)
