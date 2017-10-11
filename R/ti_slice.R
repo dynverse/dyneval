@@ -139,7 +139,7 @@ run_slice <- function(
       do.plot = FALSE,
       do.trim = FALSE
     )
-    times <- sc_tmp@transitions[[1]]$i.pseudotime %>%
+    sc_tmp@transitions[[1]]$i.pseudotime %>%
       rownames_to_column("cell_id") %>%
       mutate(from = from, to = to) %>%
       select(cell_id, from, to, percentage = ptime)
@@ -151,12 +151,13 @@ run_slice <- function(
   #  - check whether the state of a cell is in the from or to
   #  - get the earliest timepoint
   progressions <- pseudotimes %>%
-    left_join(states, by ="cell_id") %>%
+    left_join(states, by = "cell_id") %>%
     filter((state == from) | (state == to)) %>%
     group_by(cell_id) %>%
     arrange(percentage) %>%
     filter(row_number() == 1) %>%
-    select(-state)
+    select(-state) %>%
+    ungroup()
 
   wrap_ti_prediction(
     ti_type = "tree",
@@ -171,14 +172,13 @@ run_slice <- function(
 
 #' @import ggplot2
 plot_slice <- function(prediction) {
-  requireNamespace("SLICE")
   requireNamespace("igraph")
 
   sc <- prediction$sc
   list2env(sc@model, environment())
 
   # Copied from the code of SLICE itself
-
+  # This code is painful to watch
   ss.cells.df <- cells.df
 
   g <- ggplot() + ggtitle("Inferred Lineage Model") + labs(x="PC1", y="PC2")
@@ -198,9 +198,14 @@ plot_slice <- function(prediction) {
   }
   g <- g + geom_segment(data=edge.df, aes(x=src.x, y=src.y, xend=dst.x, yend=dst.y), size=I(2), linetype="solid", col=I("black"), alpha=0.6, arrow=arrow(), na.rm=TRUE)
 
-
-  g <- g + SLICE:::SLICE_theme_opts()
-  g <- g + theme(axis.line.x = element_line(size=0.5), axis.line.y=element_line(size=0.5))
+  g <- g +
+    theme(strip.background = element_rect(colour = 'white', fill = 'white')) +
+    theme(panel.border = element_blank(), axis.line = element_line()) +
+    theme(panel.grid.minor.x = element_blank(), panel.grid.minor.y = element_blank()) +
+    theme(panel.grid.major.x = element_blank(), panel.grid.major.y = element_blank()) +
+    theme(panel.background = element_rect(fill='white')) +
+    theme(legend.key = element_blank()) +
+    theme(axis.line.x = element_line(size=0.5), axis.line.y=element_line(size=0.5))
 
   g
 }
