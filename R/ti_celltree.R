@@ -48,8 +48,8 @@ abstract_celltree_description <- function(method) {
   create_description(
     name = glue::glue("cellTree with {method}"),
     short_name = glue::glue("CT{method}"),
-    package_loaded = c("cellTree"),
-    package_required = c(),
+    package_loaded = c(),
+    package_required = c("cellTree"),
     par_set = par_set,
     properties = c(),
     run_fun = run_fun,
@@ -75,6 +75,7 @@ run_celltree <- function(counts,
 
   expression <- log2(counts+1)
 
+  # infer the LDA model
   lda_out <- cellTree::compute.lda(
     t(expression) + min(expression) + 1,
     k.topics = num_topics,
@@ -84,9 +85,16 @@ run_celltree <- function(counts,
     tot.iter = tot_iter,
     tol = tolerance)
 
-  # put the parameters for the backbones in separate list, for adding optional cell_grouping and (if grouping is given) start group
-  backbone_params <- list(lda_out, width.scale.factor = width_scale_factor, only.mst = FALSE, merge.sequential.backbone = FALSE)
+  # put the parameters for the backbones in a list,
+  # for adding optional cell_grouping and (if grouping is given) start group
+  backbone_params <- list(
+    lda.results = lda_out,
+    width.scale.factor = width_scale_factor,
+    only.mst = FALSE,
+    merge.sequential.backbone = FALSE
+  )
 
+  # if these parameters are available, add them to the list
   if(!is.null(cell_grouping)) {
     backbone_params$grouping <- cell_grouping %>% slice(match(cell_id, rownames(counts))) %>% pull(group_id)
     if(!is.null(start_cell_id)) {
@@ -94,68 +102,28 @@ run_celltree <- function(counts,
     }
   }
 
+  # construct the backbone tree
   mst_tree <- do.call(cellTree::compute.backbone.tree, backbone_params)
 
-  backbone_gr <- igraph::induced_subgraph(mst_tree, igraph::get.vertex.attribute(mst_tree, "is.backbone"))
-  tomerge <- names(igraph::V(backbone_gr))[igraph::degree(backbone_gr) == 2]
-  backbone <- igraph::as_long_data_frame(backbone_gr) %>% select(from = from_name, to = to_name, weight, arrow.mode)
-
-  for (node in tomerge) {
-    subgraph <- backbone %>% filter((from == node) | (to == node))
-    includeds <- unlist(subgraph$included)
-    newnodes <- subgraph %>% {c(.$from, .$to)} %>% keep(~.!=node)
-
-    backbone <- backbone %>% filter((from != node) & (to != node)) %>% bind_rows(list(from=newnodes[[1]], to=newnodes[[2]], included=list(c(includeds, node))))
-  }
-  backbone <- backbone %>% tidyr::unnest()
-
-  backbonenodes <- names(igraph::V(mst_tree))[igraph::get.vertex.attribute(mst_tree, "is.backbone")]
-  sidenodes <- names(igraph::V(mst_tree))[!igraph::get.vertex.attribute(mst_tree, "is.backbone")]
-  centralnodes <- unique(c(backbone$from, backbone$to))
-  names(centralnodes) <- seq_along(centralnodes)
-  sidenodes2backbone <-  igraph::as_long_data_frame(mst_tree) %>% select(from = from_name, to = to_name, weight, arrow.mode) %>% filter(to %in% sidenodes) %$% set_names(from, to)
-
-  percentages <- tibble()
-  for (node in names(igraph::V(mst_tree))) {
-    if (node %in% names(sidenodes2backbone)) {
-      realnode <- as.character(sidenodes2backbone[[node]])
-    } else {
-      realnode <- node
-    }
-
-    if(realnode %in% centralnodes) {
-      percentages <- percentages %>% bind_rows(tibble(milestone=as.character(which(centralnodes == realnode)), cell=node, percentage=1))
-    } else {
-      centralnodesoi <- backbone %>% filter(included == realnode) %>% {c(.$from, .$to)}
-      distances <- igraph::distances(mst_tree, realnode, centralnodesoi)
-      percentages <- percentages %>% bind_rows(tibble(milestone=as.character(match(centralnodesoi, centralnodes)), cell=node, percentage=1-distances[1, ]/sum(distances)))
-    }
-  }
-
-  milestone_percentages <- percentages %>% mutate(cell_id = rownames(expression)[as.integer(cell)], milestone_id = paste0("milestone_", milestone)) %>% select(cell_id, milestone_id, percentage)
-  milestone_ids <- paste0("milestone_", names(centralnodes))
-
-  # rename milestones
-  milestone_network <- backbone %>% tidyr::nest(included) %>% dplyr::select(from, to) %>% mutate(
-    from = milestone_ids[match(from, centralnodes)],
-    to = milestone_ids[match(to, centralnodes)],
-    length = 1,
-    directed=TRUE
-  )
+  # simplify sample graph to just its backbone
+  edges <- igraph::as_data_frame(mst_tree, "edges") %>% select(from, to, length = weight) %>% mutate(directed = FALSE)
+  is_trajectory <- igraph::V(mst_tree)$is.backbone %>% setNames(names(igraph::V(mst_tree)))
+  out <- dynutils::simplify_sample_graph(edges, is_trajectory, is_directed = FALSE)
 
   # wrap output
   wrap_ti_prediction(
     ti_type = "tree",
     id = "cellTree",
     cell_ids = rownames(counts),
-    milestone_ids = milestone_ids,
-    milestone_network = milestone_network,
-    milestone_percentages = milestone_percentages,
+    milestone_ids = out$milestone_ids,
+    milestone_network = out$milestone_network,
+    progressions = out$progressions,
     mst_tree = mst_tree
   )
 }
 
-plot_celltree <- function(ti_predictions) {
+plot_celltree <- function(prediction) {
   requireNamespace("cellTree")
-  cellTree::ct.plot.topics(ti_predictions$mst_tree)
+  requireNamespace("igraph")
+  igraph::plot.igraph(prediction$mst_tree)
 }
