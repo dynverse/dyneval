@@ -35,7 +35,7 @@ benchmark_suite_submit <- function(
   metrics = c("auc_R_nx", "robbie_network_score"),
   num_cores = 4,
   memory = "20G",
-  max_wall_time = "72:00:00",
+  max_wall_time = NULL,
   num_iterations = 20,
   num_init_params = 100,
   num_repeats = 1,
@@ -141,7 +141,10 @@ benchmark_suite_submit <- function(
             design = design,
             control = control_train,
             show.info = TRUE,
-            more.args = list(tasks = tasks[task_group == group_sel & task_fold != fold_i,])
+            more.args = list(
+              tasks = tasks[task_group == group_sel & task_fold != fold_i,],
+              output_model = FALSE #"models/"
+            )
           )
           tune_test <- mlrMBO::mbo(
             obj_fun,
@@ -149,7 +152,10 @@ benchmark_suite_submit <- function(
             design = tune_train$opt.path$env$path %>% select(-starts_with("y_"), -one_of("y")),
             control = control_test,
             show.info = TRUE,
-            more.args = list(tasks = tasks[task_group == group_sel & task_fold == fold_i,])
+            more.args = list(
+              tasks = tasks[task_group == group_sel & task_fold == fold_i,],
+              output_model = FALSE #"models/"
+            )
           )
           parallelMap::parallelStop()
 
