@@ -134,6 +134,9 @@ benchmark_suite_submit <- function(
           repeat_i <- grid[grid_i,]$repeat_i
 
           ## start parameter optimisation
+          # TODO: If the models should be outputted, change the output_model
+          # and process the output
+
           parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
           tune_train <- mlrMBO::mbo(
             obj_fun,

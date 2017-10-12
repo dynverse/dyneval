@@ -4,7 +4,8 @@
 \alias{execute_evaluation}
 \title{Running an evaluation of a method on a set of tasks with a set of parameters}
 \usage{
-execute_evaluation(tasks, method, parameters, metrics, timeout)
+execute_evaluation(tasks, method, parameters, metrics, timeout,
+  output_model = TRUE)
 }
 \arguments{
 \item{tasks}{The tasks on which to evaluate.}
@@ -17,6 +18,9 @@ execute_evaluation(tasks, method, parameters, metrics, timeout)
 see \code{\link{calculate_metrics}} for a list of which metrics are available.}
 
 \item{timeout}{Kill execution after a given amount of time.}
+
+\item{output_model}{Whether or not the model will be outputted.
+If this is a character string, it will save the model in the requested folder.}
 }
 \description{
 Running an evaluation of a method on a set of tasks with a set of parameters
