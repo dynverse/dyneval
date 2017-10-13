@@ -5,6 +5,7 @@
 #'
 #' @import ggplot2
 #' @importFrom grid arrow
+#' @importFrom cowplot theme_cowplot
 #'
 #' @export
 plot_default <- function(object, insert_phantom_edges = TRUE) {
@@ -21,7 +22,8 @@ plot_default <- function(object, insert_phantom_edges = TRUE) {
       scale_x_continuous(limits = c(-.55, .55)) +
       scale_y_continuous(limits = c(-.55, .55)) +
       coord_equal() +
-      labs(x = "Component 1", y = "Component 2")
+      labs(x = "Component 1", y = "Component 2") +
+      cowplot::theme_cowplot()
   })
 }
 
@@ -33,6 +35,7 @@ plot_default <- function(object, insert_phantom_edges = TRUE) {
 #'
 #' @import ggplot2
 #' @importFrom grid arrow
+#' @importFrom cowplot theme_cowplot
 #'
 #' @export
 plot_combined <- function(original_object, new_object, insert_phantom_edges = TRUE) {
@@ -52,7 +55,8 @@ plot_combined <- function(original_object, new_object, insert_phantom_edges = TR
       scale_x_continuous(limits = c(-.55, .55)) +
       scale_y_continuous(limits = c(-.55, .55)) +
       coord_equal() +
-      labs(x = "Component 1", y = "Component 2")
+      labs(x = "Component 1", y = "Component 2") +
+      cowplot::theme_cowplot()
   })
 }
 
