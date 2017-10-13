@@ -17,13 +17,12 @@ check_or_perform_dimred <- function(object, insert_phantom_edges) {
 #'  \code{\link{wrap_ti_prediction}}
 #' @param insert_phantom_edges attempt to plot bifurcating edges correctly automatically
 #'
-#' @importFrom igraph graph_from_data_frame layout_with_kk E
+#' @importFrom igraph graph_from_data_frame layout_with_kk
 #' @importFrom RColorBrewer brewer.pal
 #' @importFrom grDevices col2rgb rainbow rgb
 #'
 #' @export
 dimred_trajectory <- function(traj_object, insert_phantom_edges = TRUE) {
-  #name <- paste0(traj_object$type, "/", traj_object$ti_type, "/", traj_object$name)
   name <- traj_object$id
 
   # retrieve some objects to work with
@@ -69,44 +68,39 @@ dimred_trajectory <- function(traj_object, insert_phantom_edges = TRUE) {
   }
 
   # reduce dimensionality on milestone_network
-  gr <- graph_from_data_frame(structure %>% rename(weight = length), vertices = milestone_ids)
-  space_milest_m <- layout_with_kk(gr, maxiter = 200) %>% scale_uniform()
+  gr <- igraph::graph_from_data_frame(structure %>% rename(weight = length), vertices = milestone_ids)
+  space_milest_m <- igraph::layout_with_kk(gr, maxiter = 200) %>% scale_uniform()
   dimnames(space_milest_m) <- list(milestone_ids, paste0("Comp", seq_len(ncol(space_milest_m))))
+  space_milest_df <- space_milest_m %>% as.data.frame() %>% rownames_to_column()
 
   # project dimensionality to samples
   mix_dimred <- function(milid, milpct) {
     apply(space_milest_m[milid,,drop=FALSE], 2, function(x) sum(x * milpct)) %>% t %>% as_data_frame
   }
-  space_samples <-
-    milestone_percentages %>%
+
+  # create output for samples
+  space_samples <- milestone_percentages %>%
     group_by(cell_id) %>%
     do(mix_dimred(.$milestone_id, .$percentage)) %>%
     ungroup %>%
-    slice(match(cell_ids, cell_id))
+    slice(match(cell_ids, cell_id)) %>%
+    mutate(name, colour = colours_samples[cell_id])
 
-  # format data
-  space_milestones <- data.frame(
-    name,
-    milestone_id = milestone_ids,
-    space_milest_m[milestone_ids,],
-    colour = col_milest_hex[milestone_ids],
-    stringsAsFactors = FALSE)
+  # create output for milestones
+  space_milestones <- space_milest_df %>%
+    rename(milestone_id = rowname) %>%
+    mutate(
+      name,
+      colour = col_milest_hex[milestone_ids]
+    )
 
-  space_lines <- data.frame(
-    name,
-    from = milestone_network$from,
-    from = space_milest_m[milestone_network$from,,drop=FALSE],
-    to = milestone_network$to,
-    to = space_milest_m[milestone_network$to,,drop=FALSE],
-    row.names = NULL,
-    stringsAsFactors = FALSE)
+  # create output for edges between milestones
+  space_lines <- milestone_network %>%
+    mutate(name) %>%
+    left_join(space_milest_df %>% select(from = rowname, from.Comp1 = Comp1, from.Comp2 = Comp2), by = "from") %>%
+    left_join(space_milest_df %>% select(to = rowname, to.Comp1 = Comp1, to.Comp2 = Comp2), by = "to")
 
-  space_samples <- data.frame(
-    name,
-    space_samples,
-    colour = colours_samples[space_samples$cell_id],
-    stringsAsFactors = FALSE)
-
+  # return all output
   l <- lst(
     space_milestones = space_milestones,
     space_lines = space_lines,
@@ -118,4 +112,59 @@ dimred_trajectory <- function(traj_object, insert_phantom_edges = TRUE) {
 
 is_ti_dimred_wrapper <- function(object) {
   "dyneval::ti_dimred_wrapper" %in% class(object)
+}
+
+# this is solely used to create spacing between nodes in dimred_trajectory, but
+# should be fixed to work well with undirected graphs
+add_phantom_edges <- function(milestone_ids, milestone_network) {
+  is_directed <- any(milestone_network$directed)
+
+  phantom_links1 <- bind_rows(lapply(milestone_ids, function(x) {
+    strx <- milestone_network %>%
+      filter(from == x)
+
+    if (nrow(strx) > 1) {
+      strx <- strx %>%
+        mutate(
+          angle = seq(0, 120/360*pi*2, length.out = n()),
+          x = length * cos(angle),
+          y = length * sin(angle)
+        )
+      poss <- strx %>% select(x, y) %>% as.matrix
+      rownames(poss) <- strx$to
+      poss %>%
+        dist %>%
+        as.matrix %>%
+        reshape2::melt(varnames = c("from", "to"), value.name = "length") %>%
+        mutate(from = as.character(from), to = as.character(to), directed = is_directed) %>%
+        filter(from != to)
+    } else {
+      NULL
+    }
+  }))
+  phantom_links2 <- bind_rows(lapply(milestone_ids, function(x) {
+    strx <- milestone_network %>%
+      filter(to == x)
+
+    if (nrow(strx) > 1) {
+      strx <- strx %>%
+        mutate(
+          angle = seq(0, 120/360*pi*2, length.out = n()),
+          x = length * cos(angle),
+          y = length * sin(angle)
+        )
+      poss <- strx %>% select(x, y) %>% as.matrix
+      rownames(poss) <- strx$from
+      poss %>%
+        dist %>%
+        as.matrix %>%
+        reshape2::melt(varnames = c("from", "to"), value.name = "length") %>%
+        mutate(from = as.character(from), to = as.character(to), directed = is_directed) %>%
+        filter(from != to)
+    } else {
+      NULL
+    }
+  }))
+
+  bind_rows(milestone_network, phantom_links1, phantom_links2)
 }
