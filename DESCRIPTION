@@ -52,7 +52,6 @@ Imports:
 Suggests:
   cellTree,
   coda,
-  cowplot,
   destiny,
   diffusionMap,
   embeddr,
