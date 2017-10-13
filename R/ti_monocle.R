@@ -59,7 +59,6 @@ abstract_monocle_description <- function(reduction_method) {
   )
 }
 
-#' @importFrom igraph as_data_frame
 run_monocle <- function(counts,
                         reduction_method,
                         start_cell_id = NULL,
@@ -69,6 +68,7 @@ run_monocle <- function(counts,
                         num_paths = NULL) {
   requireNamespace("monocle")
   requireNamespace("BiocGenerics")
+  requireNamespace("igraph")
 
   # TODO: implement num_paths prior
 

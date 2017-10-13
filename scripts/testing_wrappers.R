@@ -10,6 +10,7 @@ library(ggplot2)
 dataset <- dynutils::extract_row_to_list(dyntoy::toy_tasks, 5)
 counts <- dataset$counts
 # start_cell_id <- dataset$special_cells$start_cell_id
+cell_grouping <- dataset$cell_grouping
 
 # dpt
 start_cell_id = NULL
@@ -58,3 +59,10 @@ max_components <- 2
 norm_method <- "vstExprs"
 auto_param_selection <- TRUE
 num_paths <- NULL
+
+# mpath
+distMethod = "euclidean"
+method = "kmeans"
+numcluster = 11
+diversity_cut = .6
+size_cut = .05

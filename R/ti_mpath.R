@@ -17,9 +17,13 @@ description_mpath <- function() create_description(
   plot_fun = plot_mpath
 )
 
-run_mpath <- function(counts, cell_grouping,
-                      distMethod = "euclidean", method = "kmeans",
-                      numcluster = 11, diversity_cut = .6, size_cut = .05) {
+run_mpath <- function(counts,
+                      cell_grouping,
+                      distMethod = "euclidean",
+                      method = "kmeans",
+                      numcluster = 11,
+                      diversity_cut = .6,
+                      size_cut = .05) {
   # function to save a data.frame in a temporary directory and return the file's location
   fakeFile <- function(x) {
     loc <- tempfile()
