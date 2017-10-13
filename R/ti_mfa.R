@@ -3,8 +3,8 @@
 description_mfa <- function() create_description(
   name = "mfa",
   short_name = "mfa",
-  package_required = c("mfa"),
   package_loaded = c(),
+  package_required = c("mfa"),
   par_set = makeParamSet(
     makeIntegerParam(id = "b", lower = 1L, upper = 10L, default = 2L),
     makeIntegerParam(id = "iter", lower = 20L, upper = 5000L, default = 2000L),
@@ -31,7 +31,20 @@ run_mfa <- function(
 ) {
   requireNamespace("mfa")
 
-  m <- mfa::mfa(counts, b=b, iter=iter, thin=thin, zero_inflation=zero_inflation, pc_initialise = pc_initialise, prop_collapse=prop_collapse, scale_input = scale_input)
+  # log transform data
+  expr <- log2(counts + 1)
+
+  # perform MFA
+  m <- mfa::mfa(
+    y = expr,
+    b = b,
+    iter = iter,
+    thin = thin,
+    zero_inflation = zero_inflation,
+    pc_initialise = pc_initialise,
+    prop_collapse = prop_collapse,
+    scale_input = scale_input
+  )
   ms <- summary(m)
 
   milestone_network <- tibble(from="M0", to=paste0("M", seq_len(b)), length=1, directed=TRUE)
@@ -54,4 +67,14 @@ run_mfa <- function(
   )
 }
 
-plot_mfa <- plot_default
+plot_mfa <- function(prediction) {
+  # qplot(synth$pst, ms$pseudotime, color = factor(synth$branch)) +
+  #   xlab('True pseudotime') + ylab('Inferred pseudotime') +
+  #   scale_color_discrete(name = 'True\nbranch')
+  # And we can equivalently plot the PCA representation coloured by MAP branch:
+  #
+  #   mutate(df_synth, inferred_branch = ms[['branch']]) %>%
+  #   ggplot(aes(x = PC1, y = PC2, color = inferred_branch)) +
+  #   geom_point() +
+  #   scale_color_discrete(name = 'Inferred\nbranch')
+}
