@@ -8,8 +8,8 @@ description_gpfates <- function() create_description(
   par_set = makeParamSet(
     makeNumericParam(id = "log_expression_cutoff", lower = 0.5, upper = 5, default = 2),
     makeNumericParam(id = "min_cells_expression_cutoff", lower = 0, upper = 20, default = 2),
-    makeIntegerParam(id = "nfates", lower=1L, upper=20L, default=1L),
-    makeIntegerParam(id = "ndims", lower=1L, upper=5L, default=2L)
+    makeIntegerParam(id = "nfates", lower = 1L, upper = 20L, default = 1L),
+    makeIntegerParam(id = "ndims", lower = 1L, upper = 5L, default = 2L)
   ),
   properties = c(),
   run_fun = run_gpfates,
@@ -26,9 +26,16 @@ run_gpfates <- function(
   log_expression_cutoff = 2,
   min_cells_expression_cutoff = 2
 ) {
+  # documentation was not very detailed, so we had a hard time figuring out what the parameters were
   requireNamespace("GPfates")
 
-  gp_out <- GPfates::GPfates(counts, nfates, ndims, log_expression_cutoff, min_cells_expression_cutoff)
+  gp_out <- GPfates::GPfates(
+    counts,
+    nfates,
+    ndims,
+    log_expression_cutoff,
+    min_cells_expression_cutoff
+  )
 
   pseudotime <- gp_out$pseudotime
   phi <- gp_out$phi
