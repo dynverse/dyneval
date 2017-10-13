@@ -23,12 +23,12 @@ description_mfa <- function() create_description(
 run_mfa <- function(
   counts,
   b = 2,
-  iter=2000,
-  thin=1,
-  zero_inflation=FALSE,
-  pc_initialise=1,
-  prop_collapse=0,
-  scale_input=TRUE
+  iter = 2000,
+  thin = 1,
+  zero_inflation = FALSE,
+  pc_initialise = 1,
+  prop_collapse = 0,
+  scale_input = TRUE
 ) {
   requireNamespace("mfa")
 

@@ -69,13 +69,19 @@ dimred_trajectory <- function(traj_object, insert_phantom_edges = TRUE) {
 
   # reduce dimensionality on milestone_network
   gr <- igraph::graph_from_data_frame(structure %>% rename(weight = length), vertices = milestone_ids)
-  space_milest_m <- igraph::layout_with_kk(gr, maxiter = 200) %>% scale_uniform()
-  dimnames(space_milest_m) <- list(milestone_ids, paste0("Comp", seq_len(ncol(space_milest_m))))
-  space_milest_df <- space_milest_m %>% as.data.frame() %>% rownames_to_column()
+  layout <-
+    if (length(igraph::V(gr)) > 2) {
+      igraph::layout_with_kk(gr, maxiter = 200)
+    } else {
+      igraph::layout.auto(gr)
+    }
+  layout <- layout %>% scale_uniform()
+  dimnames(layout) <- list(milestone_ids, paste0("Comp", seq_len(ncol(layout))))
+  space_milest_df <- layout %>% as.data.frame() %>% rownames_to_column()
 
   # project dimensionality to samples
   mix_dimred <- function(milid, milpct) {
-    apply(space_milest_m[milid,,drop=FALSE], 2, function(x) sum(x * milpct)) %>% t %>% as_data_frame
+    apply(layout[milid,,drop=FALSE], 2, function(x) sum(x * milpct)) %>% t %>% as_data_frame
   }
 
   # create output for samples
