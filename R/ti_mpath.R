@@ -29,7 +29,7 @@ run_mpath <- function(counts, cell_grouping,
 
   sampleInfo <- cell_grouping %>% rename(GroupID=group_id)
 
-  landmark_cluster <- landmark_designation(
+  landmark_cluster <- Mpath::landmark_designation(
     fakeFile(t(counts)),
     "output_disabled",
     fakeFile(sampleInfo),
@@ -38,12 +38,24 @@ run_mpath <- function(counts, cell_grouping,
     numcluster = numcluster,
     diversity_cut = diversity_cut,
     size_cut = size_cut,
-    saveRes = FALSE)
+    saveRes = FALSE
+  )
 
-  network <- build_network(t(counts), landmark_cluster, distMethod = distMethod)
-  trimmed_network <- trim_net(network)
+  network <- Mpath::build_network(
+    t(counts),
+    landmark_cluster,
+    distMethod = distMethod
+  )
 
-  ordering <- nbor_order(t(counts), landmark_cluster, unique(landmark_cluster$landmark_cluster))
+  trimmed_network <- Mpath::trim_net(
+    network
+  )
+
+  ordering <- Mpath::nbor_order(
+    t(counts),
+    landmark_cluster,
+    unique(landmark_cluster$landmark_cluster)
+  )
 
   trimmed_network[upper.tri(trimmed_network)] = 0
   attr(trimmed_network, "class") = "matrix"
