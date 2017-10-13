@@ -57,7 +57,6 @@ run_ouija <- function(
   )
 }
 
-#' @import ggplot2
 plot_ouija <- function(prediction) {
   ouija::plot_switch_times(prediction$oui)
 }

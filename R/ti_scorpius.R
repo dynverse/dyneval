@@ -51,7 +51,6 @@ run_scorpius <- function(counts,
   )
 }
 
-#' @import ggplot2
 #' @importFrom viridis scale_color_viridis
 plot_scorpius <- function(ti_predictions) {
   sample_df <- data.frame(

@@ -49,5 +49,4 @@ run_phenopath <- function(
   )
 }
 
-#' @import ggplot2
 plot_phenopath <- plot_default
