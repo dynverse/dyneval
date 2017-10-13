@@ -84,10 +84,11 @@ run_mfa <- function(
 }
 
 plot_mfa <- function(prediction) {
-  ms <- prediction$ms
-  pca_out <- prediction$pca_out
-
+  df <- data.frame(
+    prediction$pca_out,
+    prediction$ms
+  )
   ggplot() +
-    geom_point(aes(PC1, PC2, colour = branch), data.frame(pca_out, ms)) +
+    geom_point(aes(PC1, PC2, colour = branch), df) +
     cowplot::theme_cowplot()
 }
