@@ -19,6 +19,7 @@ description_mfa <- function() create_description(
   plot_fun = plot_mfa
 )
 
+#' @importFrom stats prcomp
 run_mfa <- function(
   counts,
   b = 2,
@@ -45,36 +46,48 @@ run_mfa <- function(
     prop_collapse = prop_collapse,
     scale_input = scale_input
   )
+
+  # obtain results
   ms <- summary(m)
 
-  milestone_network <- tibble(from="M0", to=paste0("M", seq_len(b)), length=1, directed=TRUE)
-  progressions <- ms %>% mutate(
-    from="M0",
-    to=paste0("M", branch),
-    percentage=(pseudotime - min(pseudotime))/(max(pseudotime) - min(pseudotime)),
-    cell_id=rownames(counts)
+  # create milestone network
+  milestone_ids <- paste0("M", seq(0, b))
+  milestone_network <- data_frame(
+    from = "M0",
+    to = paste0("M", seq_len(b)),
+    length = 1,
+    directed = TRUE
   )
 
+  # create progressions
+  progressions <- with(ms, data_frame(
+    cell_id = rownames(counts),
+    from = "M0",
+    to = paste0("M", branch),
+    percentage = (pseudotime - min(pseudotime)) / (max(pseudotime) - min(pseudotime))
+  ))
+
+  # pca for visualisation only
+  pca_out <- stats::prcomp(expr)$x[,1:2]
+
+  # return output
   wrap_ti_prediction(
     ti_type = "multifurcating",
     id = "mfa",
     cell_ids = rownames(counts),
-    milestone_ids = unique(c(milestone_network$from, milestone_network$to)),
+    milestone_ids = milestone_ids,
     milestone_network = milestone_network,
-    progressions = progressions %>% dplyr::select(cell_id, from, to, percentage),
-    m_fit = m,
-    ms = ms
+    progressions = progressions,
+    ms = ms,
+    pca_out = pca_out
   )
 }
 
 plot_mfa <- function(prediction) {
-  # qplot(synth$pst, ms$pseudotime, color = factor(synth$branch)) +
-  #   xlab('True pseudotime') + ylab('Inferred pseudotime') +
-  #   scale_color_discrete(name = 'True\nbranch')
-  # And we can equivalently plot the PCA representation coloured by MAP branch:
-  #
-  #   mutate(df_synth, inferred_branch = ms[['branch']]) %>%
-  #   ggplot(aes(x = PC1, y = PC2, color = inferred_branch)) +
-  #   geom_point() +
-  #   scale_color_discrete(name = 'Inferred\nbranch')
+  ms <- prediction$ms
+  pca_out <- prediction$pca_out
+
+  ggplot() +
+    geom_point(aes(PC1, PC2, colour = branch), data.frame(pca_out, ms)) +
+    cowplot::theme_cowplot()
 }
