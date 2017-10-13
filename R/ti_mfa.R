@@ -54,5 +54,4 @@ run_mfa <- function(
   )
 }
 
-#' @import ggplot2
 plot_mfa <- plot_default

@@ -170,7 +170,6 @@ run_slice <- function(
   )
 }
 
-#' @import ggplot2
 plot_slice <- function(prediction) {
   requireNamespace("igraph")
 
