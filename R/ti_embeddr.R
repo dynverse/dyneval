@@ -84,6 +84,7 @@ run_embeddr <- function(counts,
     mutate(from = milestone_ids[[1]], to = milestone_ids[[2]]) %>%
     select(cell_id, from, to, percentage = pseudotime)
 
+  # creating extra output for visualisation purposes
   dimred_samples <- sce@reducedDimension %>%
     as.data.frame() %>%
     rownames_to_column("cell_id")
@@ -91,6 +92,7 @@ run_embeddr <- function(counts,
     arrange(pseudotime) %>%
     select(pseudotime, starts_with("trajectory_"))
 
+  # return output
   wrap_ti_prediction(
     ti_type = "linear",
     id = "embeddr",
