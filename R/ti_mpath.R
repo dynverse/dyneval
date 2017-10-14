@@ -17,6 +17,7 @@ description_mpath <- function() create_description(
   plot_fun = plot_mpath
 )
 
+#' @importFrom utils write.table
 run_mpath <- function(counts,
                       cell_grouping,
                       distMethod = "euclidean",
@@ -24,112 +25,125 @@ run_mpath <- function(counts,
                       numcluster = 11,
                       diversity_cut = .6,
                       size_cut = .05) {
-  # function to save a data.frame in a temporary directory and return the file's location
-  fakeFile <- function(x) {
-    loc <- tempfile()
-    write.table(x, file=loc, sep="\t")
-    loc
-  }
+  requireNamespace("igraph")
 
-  sampleInfo <- cell_grouping %>% rename(GroupID=group_id)
+  # write data to files
+  tmp <- tempfile(pattern = "mpath")
+  counts_file <- paste0(tmp, "_counts.tsv")
+  sampleinfo_file <- paste0(tmp, "_sampleinfo.tsv")
 
-  landmark_cluster <- Mpath::landmark_designation(
-    fakeFile(t(counts)),
-    "output_disabled",
-    fakeFile(sampleInfo),
-    distMethod = distMethod,
-    method = method,
-    numcluster = numcluster,
-    diversity_cut = diversity_cut,
-    size_cut = size_cut,
-    saveRes = FALSE
-  )
+  utils::write.table(t(counts), counts_file, sep = "\t")
+  utils::write.table(cell_grouping %>% rename(GroupID = group_id), sampleinfo_file, sep = "\t")
 
-  network <- Mpath::build_network(
-    t(counts),
-    landmark_cluster,
-    distMethod = distMethod
-  )
-
-  trimmed_network <- Mpath::trim_net(
-    network
-  )
-
-  ordering <- Mpath::nbor_order(
-    t(counts),
-    landmark_cluster,
-    unique(landmark_cluster$landmark_cluster)
-  )
-
-  trimmed_network[upper.tri(trimmed_network)] = 0
-  attr(trimmed_network, "class") = "matrix"
-
-  mpath_network <- trimmed_network %>%
-    as.matrix() %>%
-    reshape2::melt(varnames = c("from", "to")) %>%
-    filter(value == 1) %>%
-    select(-value) %>%
-    mutate(from = as.character(from), to = as.character(to))
-
-  milestone_network <- mpath_network
-
-  # add milestones for landmarks with only outgoing edges
-  beginning_milestones <- unique(c(milestone_network$from, milestone_network$to)) %>%
-    keep(~!(. %in% milestone_network$from))
-
-  milestone_network <- bind_rows(
-    milestone_network,
-    tibble(
-      from = beginning_milestones,
-      to = paste0("extra_", seq_along(beginning_milestones))
+  # designate landmarks
+  tryCatch({
+    landmark_cluster <- Mpath::landmark_designation(
+      rpkmFile = counts_file,
+      baseName = NULL,
+      sampleFile = sampleinfo_file,
+      distMethod = distMethod,
+      method = method,
+      numcluster = numcluster,
+      diversity_cut = diversity_cut,
+      size_cut = size_cut,
+      saveRes = FALSE
     )
+  },
+  finally = {
+    file.remove(counts_file)
+    file.remove(sampleinfo_file)
+  })
+
+  milestone_ids <- unique(landmark_cluster$landmark_cluster)
+
+  # build network
+  network <- Mpath::build_network(
+    exprs = t(counts),
+    baseName = NULL,
+    landmark_cluster = landmark_cluster,
+    distMethod = distMethod,
+    writeRes = FALSE
   )
 
-  # add ordering and from and to from milestone_network
-  progressions1 <- landmark_cluster %>%
-    rename(cell_id=cell) %>%
-    mutate(global_rank=match(cell_id, ordering)) %>%
-    filter(!is.na(global_rank)) %>%
-    rename(from=landmark_cluster) %>%
-    left_join(milestone_network, by=c("from"))
+  # trim network
+  trimmed_network <- Mpath::trim_net(
+    nb12 = network,
+    writeRes = FALSE
+  )
 
-  # calculate time based on ordering
-  progressions <- progressions1 %>%
-    group_by(from, to) %>%
-    mutate(percentage=(global_rank - min(global_rank))/(max(global_rank) - min(global_rank))) %>%
-    ungroup() %>%
+  # create final milestone network
+  class(trimmed_network) <- NULL
+  milestone_network <- trimmed_network %>%
+    reshape2::melt(varnames = c("from", "to"), value.name = "length") %>%
+    mutate_if(is.factor, as.character) %>%
+    filter(length > 0, from < to) %>%
+    mutate(directed = FALSE)
+
+  # find an edge for each cell to sit on
+  connections <- bind_rows(
+    milestone_network %>% mutate(landmark_cluster = from, percentage = 0),
+    milestone_network %>% mutate(landmark_cluster = to, percentage = 1)
+  )
+  progressions <-
+    landmark_cluster %>%
+    left_join(connections, by = "landmark_cluster") %>%
+    select(cell_id = cell, from, to, percentage) %>%
+    na.omit %>%
     group_by(cell_id) %>%
-    mutate(percentage=percentage/n()) %>%
+    arrange(desc(percentage)) %>%
+    slice(1) %>%
     ungroup()
 
-  milestone_network <- progressions %>% group_by(from, to) %>% summarise(length=n()) %>%
-    right_join(milestone_network, by=c("from", "to")) %>%
-    ungroup() %>%
-    mutate(directed=FALSE)
+  # The nbor ordering can't really be used in this
+  # gr <- milestone_network %>%
+  #   igraph::graph_from_data_frame(directed = FALSE, vertices = milestone_ids)
+  #
+  # # randomly select start milestone
+  # start_node <- igraph::degree(gr) %>% keep(~. == 1) %>% names() %>% sample(1)
+  #
+  # # create ordering of landmarks
+  # lm_order <- igraph::distances(gr, v = start_node)[1,] %>% sort %>% names
+  #
+  # # create cell ordering
+  # ordering <- Mpath::nbor_order(
+  #   t(counts),
+  #   landmark_cluster,
+  #   lm_order = lm_order,
+  #   writeRes = FALSE
+  # )
 
+  # return output
   wrap_ti_prediction(
     ti_type = "tree",
     id = "Mpath",
     cell_ids = rownames(counts),
-    milestone_ids = unique(c(milestone_network$from, milestone_network$to)),
-    milestone_network = milestone_network %>% select(from, to, length, directed),
-    progressions = progressions %>% select(cell_id, from, to, percentage) %>% mutate(cell_id=as.character(cell_id)),
+    milestone_ids = milestone_ids,
+    milestone_network = milestone_network,
+    progressions = progressions,
     landmark_cluster = landmark_cluster,
-    mpath_network = mpath_network,
     cell_grouping = cell_grouping
   )
 }
 
+# TODO: migrate to ggplot!
 plot_mpath <- function(prediction) {
   requireNamespace("igraph")
 
-  pie_sizes <- prediction$landmark_cluster %>% left_join(prediction$cell_grouping, by=c("cell"="cell_id")) %>%
-    mutate(group_id=factor(group_id)) %>%
+  # milestone net as igraph
+  g <- prediction$milestone_network %>%
+    filter(to != "FILTERED_CELLS") %>%
+    igraph::graph_from_data_frame(directed = F)
+
+  # calculate sizes of pie chunks
+  pie_sizes <- prediction$landmark_cluster %>%
+    left_join(prediction$cell_grouping, by = c("cell"="cell_id")) %>%
+    mutate(group_id = factor(group_id)) %>%
     group_by(landmark_cluster) %>%
-    summarise(counts=list(as.numeric(table(group_id)))) %>%
+    summarise(counts = list(as.numeric(table(group_id)))) %>%
     {set_names(.$counts, .$landmark_cluster)}
 
-  g <- prediction$mpath_network %>% igraph::graph_from_data_frame()
   pie_sizes <- pie_sizes[names(igraph::V(g))]
-  g %>% igraph::plot.igraph(vertex.shape="pie",vertex.pie=pie_sizes)
+
+  # plot graph
+  igraph::plot.igraph(g, vertex.shape = "pie",vertex.pie = pie_sizes)
 }
