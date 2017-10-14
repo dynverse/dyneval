@@ -29,7 +29,8 @@ dimred_trajectory <- function(traj_object, insert_phantom_edges = TRUE) {
   cell_ids <- traj_object$cell_ids
   milestone_ids <- traj_object$milestone_ids
   num_milestones <- length(milestone_ids)
-  milestone_network <- traj_object$milestone_network
+  milestone_network <- traj_object$milestone_network %>%
+    filter(to != "FILTERED_CELLS")
   milestone_percentages <- traj_object$milestone_percentages
 
   # determine colours associated with each milestone

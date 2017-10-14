@@ -9,6 +9,7 @@
 plot_default <- function(object, insert_phantom_edges = TRUE) {
   dimred_object <- check_or_perform_dimred(object, insert_phantom_edges)
 
+  # TODO: remove breaks without removing axis lines
   with(dimred_object, {
     segment_aes <- aes(x = from.Comp1, xend = to.Comp1, y = from.Comp2, yend = to.Comp2)
     ggplot() +
