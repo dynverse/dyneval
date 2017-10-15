@@ -176,7 +176,7 @@ make_legend_plot <- function(annotation_colours) {
 make_piegraph_plot <- function(gr, clustering, labels) {
   requireNamespace("igraph")
 
-  # plot de graph
+  # Perform dimred for graph
   lay <- gr %>%
     igraph::layout_with_kk() %>%
     dynutils::scale_quantile(0)
@@ -186,10 +186,11 @@ make_piegraph_plot <- function(gr, clustering, labels) {
   )
   lay_df <- lay %>% as.data.frame %>% rownames_to_column()
 
+  # Retrieve the edges
   mst_df <- igraph::as_data_frame(gr)
   colnames(mst_df) <- c("i", "j", "dist")
 
-  # kijken hoeveel van welke category er in iedere node zit
+  # Make a histogram of the labels versus the clusters
   categories <- if (is.factor(labels)) levels(labels) else sort(unique(labels))
   clusters <- names(igraph::V(gr))
   node_counts <-
@@ -200,24 +201,24 @@ make_piegraph_plot <- function(gr, clustering, labels) {
     })
   num_labels <- rowSums(node_counts)
 
-  # stel een kleurenschema op
+  # Determine a colour scheme
   annotation_colours <- setNames(RColorBrewer::brewer.pal(ncol(node_counts), "Set2"), colnames(node_counts))
 
-  # attach positions of mst_df
+  # Attach positions to edges
   mst_df_with_pos <- data.frame(
     mst_df,
     i = lay[mst_df[,1],,drop=F],
     j = lay[mst_df[,2],,drop=F]
   )
 
-  # maak een plot van de lijntjes
+  # Make a line plot
   max_size <- .075
   p <- ggplot(data.frame(lay), aes(X, Y)) +
     geom_segment(aes(x = i.X, xend = j.X, y = i.Y, yend = j.Y), data.frame(mst_df_with_pos)) +
     cowplot::theme_nothing() +
     coord_equal()
 
-  # maak subplots voor elk van de nodes
+  # Make pie plots for each of the nodes
   subplots <- lapply(seq_len(nrow(node_counts)), function(i) {
     x <- lay[i,"X"]
     y <- lay[i,"Y"]
@@ -228,13 +229,11 @@ make_piegraph_plot <- function(gr, clustering, labels) {
     ggimage::geom_subview(subplot, x, y, width, width)
   })
 
-  # maak een plot van de legende
+  # Make a legend plot
   legends <- make_legend_plot(annotation_colours)
 
-  # combineer alle plots
-  combined_plot <- Reduce("+", c(list(p), subplots)) + coord_equal()
-
-  combined_plot +
+  # Combine all plots
+  Reduce("+", c(list(p), subplots)) +
     ggimage::geom_subview(legends, .15, .15, .2, .2) +
     geom_text(aes(X, Y, label = rowname), lay_df)
 }
