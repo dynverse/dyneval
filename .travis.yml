@@ -10,6 +10,8 @@ addons:
       - libgsl-dev
       - libsdl1.2-dev
       - libreadline-dev
+      - imagemagick
+      - libfftw3-dev
 install:
  - R -e 'install.packages("devtools")'
  - R -e 'devtools::install(dependencies = TRUE, upgrade_dependencies = TRUE)'
