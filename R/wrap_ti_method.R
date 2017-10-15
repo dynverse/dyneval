@@ -57,7 +57,7 @@ create_description <- function(
   if (override_runfun_params) {
     default_params <- par_set %>%
       generateDesignOfDefaults(trafo = T) %>%
-      extract_row_to_list(1)
+      ParamHelpers::dfRowToList(par_set, 1)
 
     if(!all(names(default_params) %in% formalArgs(run_fun))) {
       stop("Not all default params described in par_set are listed in the run_fun.")
