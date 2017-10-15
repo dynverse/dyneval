@@ -6,7 +6,7 @@ description_monocle2_ddrtree <- function() abstract_monocle_description("DDRTree
 #' @export
 description_monocle1_ica <- function() abstract_monocle_description("ICA")
 
-# These don't work yet.
+# These reduction methods are not implemented yet.
 #
 # #' Description for monocle SimplePPT
 # #' @export
@@ -21,23 +21,21 @@ description_monocle1_ica <- function() abstract_monocle_description("ICA")
 # description_monocle2_sgltree <- function() abstract_monocle_description("SGL-tree")
 
 abstract_monocle_description <- function(reduction_method) {
-  if(reduction_method == "DDRTree") {
-    par_set <- makeParamSet(
-      makeDiscreteParam(id = "reduction_method", values = "DDRTree", default = "DDRTree"),
+  par_set <- switch(
+    reduction_method,
+    DDRTree = makeParamSet(
+      makeDiscreteParam(id = "reduction_method", values = reduction_method, default = reduction_method),
       makeIntegerParam(id = "max_components", lower = 2L, default = 2L, upper = 20L),
       makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
       makeLogicalParam(id = "auto_param_selection", default = TRUE)
-    )
-  } else {
-    par_set <- makeParamSet(
+    ),
+    ICA = makeParamSet(
       makeDiscreteParam(id = "reduction_method", values = reduction_method, default = reduction_method),
       makeIntegerParam(id = "max_components", lower = 2L, default = 2L, upper = 20L),
-      makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none"))
+      makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
+      makeIntegerParam(id = "num_paths", lower = 1L, default = 1L, upper = 20L)
     )
-  }
-
-  run_fun <- run_monocle
-  formals(run_fun)$reduction_method <- reduction_method
+  )
 
   short_name <- c(
     "DDRTree" = "mnclDDR",
@@ -51,10 +49,10 @@ abstract_monocle_description <- function(reduction_method) {
     name = glue::glue("monocle with {reduction_method}"),
     short_name = short_name[reduction_method],
     package_loaded = c("monocle"),
-    package_required = c("BiocGenerics"),
+    package_required = c("BiocGenerics", "igraph", "Biobase"),
     par_set = par_set,
     properties = c(),
-    run_fun = run_fun,
+    run_fun = run_monocle,
     plot_fun = plot_monocle
   )
 }
@@ -69,15 +67,16 @@ run_monocle <- function(counts,
   requireNamespace("monocle")
   requireNamespace("BiocGenerics")
   requireNamespace("igraph")
+  requireNamespace("Biobase")
 
-  # TODO: implement num_paths prior
+  # TODO: implement num_paths prior for monocle 1
 
   # just in case
   if (is.factor(norm_method)) norm_method <- as.character(norm_method)
 
   # load in the new dataset
-  pd <- new("AnnotatedDataFrame", data.frame(row.names = rownames(counts)))
-  fd <- new("AnnotatedDataFrame", data.frame(row.names = colnames(counts), gene_short_name = colnames(counts)))
+  pd <- Biobase::AnnotatedDataFrame(data.frame(row.names = rownames(counts)))
+  fd <- Biobase::AnnotatedDataFrame(data.frame(row.names = colnames(counts), gene_short_name = colnames(counts)))
   cds <- monocle::newCellDataSet(t(counts), pd, fd)
 
   # estimate size factors and dispersions
@@ -97,15 +96,26 @@ run_monocle <- function(counts,
   cds <- monocle::orderCells(cds, num_paths = num_paths)
 
   # extract the igraph and which cells are on the trajectory
-  gr <- monocle::minSpanningTree(cds)
-  is_trajectory <- setNames(rep(TRUE, nrow(counts)), rownames(counts))
+  gr <-
+    if (reduction_method == "DDRTree") {
+      monocle::minSpanningTree(cds)
+    } else if (reduction_method == "ICA") {
+      cds@auxOrderingData$ICA$cell_ordering_tree
+    }
+  to_keep <- setNames(rep(TRUE, nrow(counts)), rownames(counts))
 
   # convert to milestone representation
+  edges <- igraph::as_data_frame(gr, "edges")
+
+  if ("weight" %in% edges) {
+    edges <- edges %>% rename(length = weight)
+  } else {
+    edges <- edges %>% mutate(length = 1)
+  }
+
   out <- dynutils::simplify_sample_graph(
-    edges = igraph::as_data_frame(gr, "edges") %>%
-      rename(length = weight) %>%
-      mutate(directed = FALSE),
-    is_trajectory = is_trajectory,
+    edges =  edges %>% mutate(directed = FALSE),
+    to_keep = to_keep,
     is_directed = FALSE
   )
 
@@ -121,7 +131,7 @@ run_monocle <- function(counts,
   )
 }
 
-plot_monocle <- function(predictions) {
+plot_monocle <- function(prediction) {
   requireNamespace("monocle")
-  monocle::plot_cell_trajectory(predictions$cds)
+  monocle::plot_cell_trajectory(prediction$cds)
 }

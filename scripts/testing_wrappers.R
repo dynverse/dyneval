@@ -10,7 +10,7 @@ library(ggplot2)
 dataset <- dynutils::extract_row_to_list(dyntoy::toy_tasks, 5)
 counts <- dataset$counts
 # start_cell_id <- dataset$special_cells$start_cell_id
-cell_grouping <- dataset$cell_grouping
+# cell_grouping <- dataset$cell_grouping
 
 # dpt
 start_cell_id = NULL
@@ -59,6 +59,13 @@ max_components <- 2
 norm_method <- "vstExprs"
 auto_param_selection <- TRUE
 num_paths <- NULL
+
+# monocle 1
+reduction_method <- "ICA"
+max_components <- 2
+norm_method <- "vstExprs"
+auto_param_selection <- TRUE
+num_paths <- 1
 
 # mpath
 distMethod = "euclidean"
