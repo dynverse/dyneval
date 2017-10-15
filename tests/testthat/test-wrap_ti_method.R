@@ -47,7 +47,9 @@ test_that("Testing create_description with dummy method", {
     short_name = "dum1",
     package_loaded = c("dynverse"),
     package_required = c("tidyverse"),
-    par_set = ParamHelpers::makeParamSet(),
+    par_set = ParamHelpers::makeParamSet(
+      ParamHelpers::makeDiscreteParam(id = "param", default = "banana", values = c("apple", "banana", "cherry"))
+    ),
     properties = c("space", "trajectory"),
     run_fun = function(counts, param = "fjioiw") "pie",
     plot_fun = function(out) "cake"
