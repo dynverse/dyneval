@@ -50,6 +50,7 @@ Imports:
   viridis,
   vegan
 Suggests:
+  Biobase,
   BiocGenerics,
   cellTree,
   coda,
@@ -83,6 +84,7 @@ Suggests:
   MCMCglmm
 Remotes:
   alan-turing-institute/network-comparison,
+  bioc::Biobase,
   bioc::BiocGenerics,
   bioc::cellTree,
   bioc::destiny,
