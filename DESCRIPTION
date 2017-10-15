@@ -23,6 +23,7 @@ Imports:
   GA,
   GEDEVO,
   ggplot2,
+  ggimage,
   glue,
   grDevices,
   grid,
