@@ -11,7 +11,7 @@ description_pseudogp <- function() create_description(
     makeNumericParam(id = "pseudotime_mean", lower = 0, upper = 1, default = 0.5),
     makeNumericParam(id = "pseudotime_var", lower = 0.01, upper = 1, default = 1),
     makeIntegerParam(id = "chains", lower = 1L, upper = 20L, default = 1L),
-    makeNumericParam(id = "iter", lower = 1L, upper = 3L, default = 3L, trafo = function(x) floor(10^x)),
+    makeNumericParam(id = "iter", lower = 1, upper = 3, default = 3, trafo = function(x) floor(10^x)),
     makeLogicalVectorParam(id = "dimreds", len = length(list_dimred_methods()), default = names(list_dimred_methods()) == "pca"),
     makeDiscreteParam(id = "initialise_from", values=c("random", "principal_curve", "pca"), default="random")
   ),

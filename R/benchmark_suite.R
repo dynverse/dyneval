@@ -54,9 +54,11 @@ benchmark_suite_submit <- function(
     mlrMBO::setMBOControlTermination(iters = num_iterations)
 
   if (length(metrics) == 1) {
-    control_train <- control_train %>% mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritCB())
+    control_train <- control_train %>%
+      mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritCB())
   } else {
-    control_train <- control_train %>% mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritDIB())
+    control_train <- control_train %>%
+      mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritDIB())
   }
   control_test <- control_train
   control_test$iters <- 1

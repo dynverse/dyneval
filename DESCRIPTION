@@ -15,6 +15,7 @@ Depends:
   R (>= 3.4.0)
 Imports: 
   coRanking,
+  cowplot,
   dplyr, 
   dyngen,
   dynutils,
@@ -22,6 +23,7 @@ Imports:
   GA,
   GEDEVO,
   ggplot2,
+  ggimage,
   glue,
   grDevices,
   grid,
@@ -49,9 +51,10 @@ Imports:
   viridis,
   vegan
 Suggests:
+  Biobase,
+  BiocGenerics,
   cellTree,
   coda,
-  cowplot,
   destiny,
   diffusionMap,
   embeddr,
@@ -82,13 +85,15 @@ Suggests:
   MCMCglmm
 Remotes:
   alan-turing-institute/network-comparison,
+  bioc::Biobase,
+  bioc::BiocGenerics,
   bioc::cellTree,
   bioc::destiny,
-  bioc::monocle,
   bioc::scater,
   bioc::TSCAN,
   dynverse/GEDEVO,
   dynverse/GPfates,
+  dynverse/monocle,
   dynverse/Mpath,
   dynverse/SCOUP,
   dynverse/SCUBA,
