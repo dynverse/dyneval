@@ -20,25 +20,29 @@ description_pseudogp <- function() create_description(
   plot_fun = plot_pseudogp
 )
 
-run_pseudogp <- function(
-  counts,
-  dimreds = names(list_dimred_methods()) == "pca",
-  chains = 1,
-  iter = 1000,
-  smoothing_alpha = 10,
-  smoothing_beta = 3,
-  pseudotime_mean = 0.5,
-  pseudotime_var = 1,
-  initialise_from = "random"
-) {
+run_pseudogp <- function(counts,
+                         dimreds = names(list_dimred_methods()) == "pca",
+                         chains = 1,
+                         iter = 1000,
+                         smoothing_alpha = 10,
+                         smoothing_beta = 3,
+                         pseudotime_mean = 0.5,
+                         pseudotime_var = 1,
+                         initialise_from = "random") {
   requireNamespace("pseudogp")
   requireNamespace("rstan")
   requireNamespace("coda")
   requireNamespace("MCMCglmm")
 
-  spaces <- list_dimred_methods()[dimreds] %>% map(~.(counts, 2)) # only 2 dimensions are allowed
+  # log transform counts
+  expr <- log2(counts + 1)
 
-  le_fit <- pseudogp::fitPseudotime(
+  # perform dimreds
+  spaces <- dyneval:::list_dimred_methods()[dimreds] %>%
+    map(~.(expr, 2)) # only 2 dimensions per dimred are allowed
+
+  # fit probabilistic pseudotime model
+  fit <- pseudogp::fitPseudotime(
     X = spaces,
     smoothing_alpha = smoothing_alpha,
     smoothing_beta = smoothing_beta,
@@ -46,63 +50,70 @@ run_pseudogp <- function(
     chains = chains,
     initialise_from = initialise_from,
     pseudotime_var = pseudotime_var,
-    pseudotime_mean = pseudotime_mean)
+    pseudotime_mean = pseudotime_mean
+  )
 
-  num_samples <- iter / 2
+  # extract pseudotime
+  pst <- rstan::extract(fit, pars = "t")$t
+  tmcmc <- coda::mcmc(pst)
+  pseudotimes <- MCMCglmm::posterior.mode(tmcmc)
 
-  pst <- rstan::extract(le_fit, pars = "t", permute = FALSE)
-  lambda <- rstan::extract(le_fit, pars = "lambda", permute = FALSE)
-  sigma <- rstan::extract(le_fit, pars = "sigma", permute = FALSE)
+  # collect data for visualisation purposes
+  # code is adapted from pseudogp::posteriorCurvePlot
+  pst <- rstan::extract(fit, pars = "t", permute = FALSE)
+  lambda <- rstan::extract(fit, pars = "lambda", permute = FALSE)
+  sigma <- rstan::extract(fit, pars = "sigma", permute = FALSE)
 
-  # not necessary, but can be used for plotting: the times of every sample across chains
-  sample_posterior_times <-
-    map_df(seq_len(chains), function(chain_id) {
-      mat <- pst[,chain_id,] %>% coda::mcmc() %>% as.matrix()
-      colnames(mat) <- rownames(counts)
-      mat %>%
-        reshape2::melt(varnames = c("sample_id", "cell_id"), value.name = "time") %>%
-        as_data_frame() %>%
-        mutate(cell_id = as.character(cell_id), chain_id = chain_id)
-    })
-
-  # calculate the final pseudotime by averaging over the modes of every chain
-  chain_posterior_times <-
-    map_df(seq_len(chains), function(chain_id) {
-      vec <- pst[,chain_id,] %>% coda::mcmc() %>% MCMCglmm::posterior.mode()
-      data_frame(chain_id, cell_id = rownames(counts), time = vec)
-    })
-
-  # calculate progressions and milestone network
-  progressions <- chain_posterior_times %>%
-    group_by(cell_id) %>%
-    summarise(percentage = mean(time)) %>%
-    mutate(from = "M1", to = "M2") %>%
-    select(cell_id, from, to, percentage)
-
-  milestone_network <- tibble(from = "M1", to = "M2", length = 1, directed = TRUE)
-
-  wrap_ti_prediction(
-    ti_type = "linear",
+  # return output
+  wrap_linear_ti_prediction(
     id = "pseudogp",
     cell_ids = rownames(counts),
-    milestone_ids = c("M1", "M2"),
-    milestone_network = milestone_network,
-    progressions = progressions,
-    dimreds_samples = spaces,
-    sample_posterior_times = sample_posterior_times,
-    chain_posterior_times = chain_posterior_times,
-    num_samples = num_samples,
-    le_fit = le_fit
+    pseudotimes = pseudotimes,
+    spaces = spaces,
+    chains = chains,
+    pst = pst,
+    lambda = lambda,
+    sigma = sigma
   )
 }
 
+#' @importFrom cowplot plot_grid
 plot_pseudogp <- function(prediction) {
+  # code is adapted from pseudogp::posteriorCurvePlot
   requireNamespace("pseudogp")
 
-  pseudogp::posteriorCurvePlot(
-    X = prediction$dimreds_samples,
-    fit = prediction$le_fit,
-    nsamples = min(prediction$num_samples, 50),
-    posterior_mean = TRUE)
+  spaces <- prediction$spaces
+  chains <- prediction$chains
+  pst <- prediction$pst
+  lambda <- prediction$lambda
+  sigma <- prediction$sigma
+
+  Ns <- length(spaces)
+
+  plots <- lapply(seq_len(Ns), function(i) {
+    l <- lambda[, , (2 * i - 1):(2 * i), drop = FALSE]
+    s <- sigma[, , (2 * i - 1):(2 * i), drop = FALSE]
+    sp <- spaces[[i]]
+    plt <- pseudogp:::makeEnvelopePlot(
+      pst,
+      l,
+      s,
+      sp,
+      chains,
+      posterior_mean = TRUE,
+      ncurves = min(50, nrow(sp)),
+      nnt = 80,
+      point_colour = "darkred",
+      curve_colour = "black",
+      point_alpha = 1,
+      curve_alpha = .05,
+      use_cowplot = TRUE,
+      standardize_ranges = FALSE
+    )
+  })
+  cowplot::plot_grid(
+    plotlist = plots,
+    labels = names(spaces)
+  )
 }
 
