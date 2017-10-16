@@ -170,9 +170,11 @@ make_legend_plot <- function(annotation_colours) {
   ) + labs(title = "Legend")
 }
 
+# EBimage importFrom is because ggimage requires EBimage bioc dependency
 #' @importFrom RColorBrewer brewer.pal
 #' @importFrom cowplot theme_nothing plot_grid
 #' @importFrom ggimage geom_subview
+#' @importFrom EBImage fillHull 
 make_piegraph_plot <- function(gr, clustering, labels) {
   requireNamespace("igraph")
 
