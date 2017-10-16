@@ -72,7 +72,7 @@ run_wishbone <- function(
   # now scale the times between 0 and 1 => percentages
   progressions <- progressions %>%
     group_by(branch) %>%
-    mutate(percentage=(time - min(time))/(max(time) - min(time))) %>%
+    mutate(percentage = dynutils::scale_minmax(time)) %>%
     ungroup()
 
   milestone_ids <- unique(c(milestone_network$from, milestone_network$to))

@@ -64,7 +64,7 @@ run_mfa <- function(
     cell_id = rownames(counts),
     from = "M0",
     to = paste0("M", branch),
-    percentage = (pseudotime - min(pseudotime)) / (max(pseudotime) - min(pseudotime))
+    percentage = dynutils::scale_minmax(pseudotime)
   ))
 
   # pca for visualisation only

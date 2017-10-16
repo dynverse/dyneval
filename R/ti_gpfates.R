@@ -41,7 +41,7 @@ run_gpfates <- function(
     verbose = verbose
   )
 
-  pseudotime <- gp_out$pseudotime %>% mutate(time = (time - min(time)) / (max(time) - min(time)))
+  pseudotime <- gp_out$pseudotime %>% mutate(time = dynutils::scale_minmax(time))
   phi <- gp_out$phi
   dr <- gp_out$dr
 

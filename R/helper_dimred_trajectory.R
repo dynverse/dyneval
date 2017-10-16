@@ -64,7 +64,7 @@ dimred_trajectory <- function(traj_object, insert_phantom_edges = TRUE) {
   # adjust weights on structure to make it easier to plot
   if (min(structure$length) * 3 < max(structure$length)) {
     structure <- structure %>% mutate(
-      length = sqrt((length - min(length)) / (max(length) - min(length)) + .5)
+      length = sqrt(dynutils::scale_minmax(length) + .5)
     )
   }
 

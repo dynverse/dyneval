@@ -80,4 +80,10 @@ response_type = "switch"
 inference_type = "hmc"
 normalise_expression = TRUE
 
+# phenopath
+thin = 40
+z_init = 1
+model_mu = FALSE
+scale_y = TRUE
+
 
