@@ -14,14 +14,17 @@ description_shuffled <- function() create_description(
 )
 
 run_shuffled <- function(counts, task, dummy_param = .5) {
+  # permute cell labels
   allcells <- rownames(counts)
-  mapper <- setNames(allcells, sample(allcells))
-  progressions <- task$progressions
-  progressions$cell_id <- mapper[progressions$cell_id]
+  mapper <- setNames(sample(allcells), allcells)
+  progressions <- task$progressions %>% mutate(
+    cell_id = mapper[cell_id]
+  )
 
+  # return output
   wrap_ti_prediction(
     ti_type = task$ti_type,
-    id = paste0(task$id, "_shuffled"),
+    id = "shuffled",
     cell_ids = task$cell_ids,
     milestone_ids = task$milestone_ids,
     milestone_network = task$milestone_network,
