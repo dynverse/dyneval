@@ -31,6 +31,7 @@ run_pseudogp <- function(
   pseudotime_var = 1,
   initialise_from = "random"
 ) {
+  requireNamespace("pseudogp")
   requireNamespace("rstan")
   requireNamespace("coda")
   requireNamespace("MCMCglmm")
