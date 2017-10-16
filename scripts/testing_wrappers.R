@@ -86,4 +86,12 @@ z_init = 1
 model_mu = FALSE
 scale_y = TRUE
 
-
+# pseudogp
+dimreds = names(dyneval:::list_dimred_methods()) == "pca"
+chains = 1
+iter = 1000
+smoothing_alpha = 10
+smoothing_beta = 3
+pseudotime_mean = 0.5
+pseudotime_var = 1
+initialise_from = "random"
