@@ -298,12 +298,10 @@ get_adjacency <- function(net, nodes=unique(c(net$from, net$to))) {
   } else {
     newnet <- net %>%
       mutate(from=factor(from, levels=nodes), to=factor(to, levels=nodes)) %>%
-      reshape2::acast(from~to, value.var="length", fill=0, drop=FALSE)
+      reshape2::acast(from~to, value.var="length", fill=0, drop=FALSE, fun.aggregate=sum)
   }
+  newnet + t(newnet)
 
-  newnet[lower.tri(newnet)] = newnet[lower.tri(newnet)] + t(newnet)[lower.tri(newnet)] # make symmetric
-
-  newnet
 }
 
 #' Compute the robbie network score (any resemblances to real-life persons is purely coincidental)
@@ -321,25 +319,16 @@ calculate_robbie_network_score <- function(
   nodes2=unique(c(net2$from, net2$to)),
   normalize_weights=TRUE
 ) {
-  if(length(nodes1) < length(nodes2)) {
-    nodes3 <- nodes2
-    net3 <- net2
-    nodes2 <- nodes1
-    net2 <- net1
-    nodes1 <- nodes3
-    net1 <- net3
-  }
+  optimize_robbie_network_score(net1, net2, nodes1, nodes2, normalize_weights)@fitnessValue
+}
 
-  # if both networks have only one edge...
-  if(nrow(net1) == 1) {
-    # special cases: either the networks are a cycle, or contain one linear edge
-    if(length(unique(c(net1$from, net1$to))) == length(unique(c(net2$from, net2$to)))) {
-      return(1)
-    } else {
-      return(0)
-    }
-  }
-
+optimize_robbie_network_score <- function(
+  net1,
+  net2,
+  nodes1=unique(c(net1$from, net1$to)),
+  nodes2=unique(c(net2$from, net2$to)),
+  normalize_weights=TRUE
+) {
   net <- get_adjacency(net1, nodes1)
   net_ref <- get_adjacency(net2, nodes2)
   net_ref <- complete_matrix(net_ref, nrow(net))
@@ -354,9 +343,9 @@ calculate_robbie_network_score <- function(
     net_ref <- net_ref/sum(net_ref)
   }
 
-  results <- GA::ga("permutation", score_map, net=net, net_ref=net_ref, min=rep(1, length(nodes1)), max=rep(length(nodes1), length(nodes1)), maxiter=10, monitor=FALSE)
+  results <- GA::ga("permutation", score_map, net=net, net_ref=net_ref, min=rep(1, length(nodes1)), max=rep(length(nodes1), length(nodes1)), maxiter=100, monitor=FALSE, popSize=500, maxFitness = 1)
 
-  results@fitnessValue
+  results
 }
 
 #' Compute the helenie network score (any resemblances to real-life persons is purely coincidental)
@@ -368,6 +357,8 @@ calculate_hele_network_score <- function(net1, net2) {
   # net2 <- tibble(from=c(1, 2, 2), to=c(2, 3, 4), directed=TRUE, length=1)
   # net1 <- tibble(from=1, to=1, directed=TRUE, length=1)
   # net2 <- tibble(from=1, to=1, directed=TRUE, length=1)
+  # net1 <- tibble(from=c(1), to=c(1), directed=TRUE, length=1)
+  # net2 <- tibble(from=c(1), to=c(2), directed=TRUE, length=1)
 
   net1 <- dynutils::simplify_network(net1)
   net2 <- dynutils::simplify_network(net2)
@@ -384,3 +375,89 @@ calculate_hele_network_score <- function(net1, net2) {
   calculate_robbie_network_score(net1, net2, nodes1, nodes2, normalize_weights=FALSE)
 }
 
+
+
+score_map_lies <- function(map, map_grid, net1, net2, nodes1, nodes2) {
+  mapper <- map_grid[as.logical(map), ] %>% igraph::graph_from_data_frame(vertices=c(nodes1, nodes2)) %>% igraph::components() %>% .$membership
+
+  net1_mapped <- net1 %>% mutate(from=as.character(mapper[from]), to=as.character(mapper[to]))
+  net2_mapped <- net2 %>% mutate(from=as.character(mapper[from]), to=as.character(mapper[to]))
+
+  adj1 <- get_adjacency(net1_mapped, unique(as.character(mapper)))
+  adj2 <- get_adjacency(net2_mapped, unique(as.character(mapper)))
+
+  adj_diff <- 1-sum(abs(adj1 - adj2))/((sum(adj1) + sum(adj2)))
+
+  map_cost <- min(c(length(unique(mapper[nodes1]))/length(nodes1),length(unique(mapper[nodes2]))/length(nodes2)))
+
+  edge_diff <- 1-(nrow(net1_mapped) - nrow(net2_mapped))/(max(nrow(net1_mapped), nrow(net2_mapped)))
+
+  map_cost * adj_diff * edge_diff
+}
+
+calculatie_lies_network_score <- function(
+  net1,
+  net2
+) {
+  nodes1=unique(c(net1$from, net1$to))
+  nodes2=unique(c(net2$from, net2$to))
+  if(length(nodes1) < length(nodes2)) {
+    nodes3 <- nodes2
+    net3 <- net2
+    nodes2 <- nodes1
+    net2 <- net1
+    nodes1 <- nodes3
+    net1 <- net3
+  }
+
+  if(any(nodes1 %in% nodes2)) {
+    net1 <- net1 %>% mutate(from=paste0("__A", from), to=paste0("__A", to))
+    net2 <- net2 %>% mutate(from=paste0("__B", from), to=paste0("__B", to))
+    nodes1 <- unique(c(net1$from, net1$to))
+    nodes2 <- unique(c(net2$from, net2$to))
+  }
+
+  net1$length <- net1$length / sum(net1$length)
+  net2$length <- net2$length / sum(net2$length)
+
+  adj1 <- get_adjacency(net1)
+  adj2 <- get_adjacency(net2)
+
+  nodes1 <- unique(c(net1$from, net1$to))
+  nodes2 <- unique(c(net2$from, net2$to))
+
+  map_grid <- expand.grid(node1=nodes1, node2=nodes2)
+  map_size <- nrow(map_grid)
+
+  number2binary = function(number, noBits) {
+    binary_vector = rev(as.numeric(intToBits(number)))
+    if(missing(noBits)) {
+      return(binary_vector)
+    } else {
+      binary_vector[-(1:(length(binary_vector) - noBits))]
+    }
+  }
+
+  if(map_size <= 11) {
+    map_n <- 1:2^map_size
+    combinations <- map(map_n, number2binary, map_size) %>% map(as.logical)
+    scores <- map_dbl(combinations, score_map_lies, map_grid, net1, net2, nodes1, nodes2)
+    score <- max(scores)
+  } else {
+    permutation2map <- function(perm) {
+      (1:nrow(map_grid)) %in% ((0:(length(nodes1)-1)) * length(nodes1) + perm)
+    }
+    results <- optimize_robbie_network_score(net1, net2)
+    perm <- results@solution
+    initial <- apply(perm, 1, permutation2map) %>% t
+
+    map <- initial[1, ]
+    score_map_lies(map, map_grid, net1, net2, nodes1, nodes2)
+    microbenchmark::microbenchmark({score_map_lies(map, map_grid, net1, net2, nodes1, nodes2)})
+
+    results <- GA::ga("binary", score_map_lies, map_grid, net1, net2, nodes1, nodes2, nBits = map_size, maxiter=50, monitor=FALSE, popSize=50, run=5, suggestions=initial, maxFitness=1)
+    score <- results@fitnessValue
+  }
+
+  score
+}
