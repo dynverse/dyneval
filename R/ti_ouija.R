@@ -4,7 +4,7 @@ description_ouija <- function() create_description(
   name = "ouija",
   short_name = "ouija",
   package_required = c("ouija", "rstan"),
-  package_loaded = c(),
+  package_loaded = c("coda"),
   par_set = makeParamSet(
     makeIntegerParam(id = "iter", lower = 2L, upper = 500L, default = 20L), # default 10000!
     makeDiscreteParam(id = "response_type", default = "switch", values = c("switch", "transient")),
@@ -25,27 +25,52 @@ run_ouija <- function(
   ) {
   requireNamespace("ouija")
   requireNamespace("rstan")
+  requireNamespace("coda")
 
+  # write compiled instance of the stanmodel to HDD
   rstan::rstan_options(auto_write = TRUE)
 
+  # run ouija
   oui <- ouija::ouija(
-    counts,
-    iter=iter,
-    response_type=response_type,
-    inference_type=inference_type,
-    normalise_expression=normalise_expression
+    x = log2(counts + 1),
+    iter = iter,
+    response_type = response_type,
+    inference_type = inference_type,
+    normalise_expression = normalise_expression
   )
-  pseudotimes <- ouija::map_pseudotime(oui)
 
+  # obtain the pseudotimes
+  pseudotimes <- ouija::map_pseudotime(oui)
+  pseudotimes <- (pseudotimes - min(pseudotimes)) / (max(pseudotimes) - min(pseudotimes))
+
+  # produce output objects
   milestone_ids <- c("milestone_A", "milestone_B")
-  milestone_network <- tibble::data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1, directed=TRUE)
-  progressions <- tibble(
+  milestone_network <- data_frame(
+    from = milestone_ids[[1]],
+    to = milestone_ids[[2]],
+    length = 1,
+    directed = TRUE
+  )
+  progressions <- data_frame(
     cell_id = rownames(counts),
     from = milestone_ids[[1]],
     to = milestone_ids[[2]],
-    percentage=pseudotimes
+    percentage = pseudotimes
   )
 
+  # extract data for visualisation
+  # reworked code from ouija::plot_switch_times(oui)
+  # to avoid saving the whole oui object
+  k_trace <- rstan::extract(oui$fit, "k")$k
+  kmean <- colMeans(k_trace)
+  t0 <- rstan::extract(oui$fit, "t0")$t0
+  t0_means <- colMeans(t0)
+  t0_interval <- coda::HPDinterval(coda::mcmc(t0))
+  t0_df <- data_frame(t0_mean = t0_means, lower = t0_interval[, 1], upper = t0_interval[, 2], kmean = kmean)
+  t0_df$Gene <- colnames(oui$Y[, oui$response_type == "switch"])
+  t0_df$Gene <- factor(t0_df$Gene, t0_df$Gene[order(t0_means)])
+
+  # return output
   wrap_ti_prediction(
     ti_type = "linear",
     id = "ouija",
@@ -53,10 +78,27 @@ run_ouija <- function(
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
     progressions = progressions,
-    oui = oui
+    t0_df = t0_df
   )
 }
 
+#' @importFrom cowplot theme_cowplot
+#' @importFrom viridis viridis_pal
 plot_ouija <- function(prediction) {
-  ouija::plot_switch_times(prediction$oui)
+  requireNamespace("ouija")
+
+  t0_df <- prediction$t0_df
+
+  # reworked code from ouija::plot_switch_times(prediction$oui)
+  vpal <- viridis::viridis_pal()(8)
+
+  ggplot(t0_df, aes(x = Gene, y = t0_mean, fill = kmean)) +
+    geom_errorbar(aes(ymin = lower, ymax = upper), color = "grey60", width = 0.5, alpha = 0.5) +
+    coord_flip() +
+    geom_point(color = "grey50", shape = 21, size = 3) +
+    ylab("Switch point") +
+    scale_fill_gradient2(name = "Regulation", low = vpal[1], high = vpal[5]) +
+    scale_color_gradient2(name = "Regulation", low = vpal[1], high = vpal[5]) +
+    theme(legend.position = "top") +
+    cowplot::theme_cowplot()
 }
