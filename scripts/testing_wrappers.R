@@ -104,3 +104,15 @@ thresh = .001
 maxit = 10
 stretch = 0
 smoother = "smooth.spline"
+
+# SCOUP
+ndim = 3
+nbranch = 3
+max_ite1 = 10
+max_ite2 = 100
+alpha_min = .1
+alpha_max = 100
+t_min = .001
+t_max = 2
+sigma_squared_min = .1
+thresh = .01
