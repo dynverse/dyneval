@@ -138,3 +138,11 @@ k = 0
 k.max = 10
 B = 100
 k.opt.method = "firstmax"
+
+# SLICER
+end_cell_ids = NULL
+kmin = 10
+m = 2
+min_branch_len = 5
+min_representative_percentage = 0.8
+max_same_milestone_distance = 0.1
