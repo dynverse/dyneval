@@ -32,6 +32,7 @@ run_dpt <- function(counts,
                     w_width = .1) {
   requireNamespace("destiny")
 
+  # create n_local vector
   n_local <- seq(n_local_lower, n_local_upper, by = 1)
 
   expr <- log2(counts+1)
@@ -45,36 +46,34 @@ run_dpt <- function(counts,
     n_local = n_local
   )
 
-  if(!is.null(start_cell_id)) {
-    dpt <- destiny::DPT(dm, w_width = w_width, tips=which(rownames(counts) %in% start_cell_id))
-  } else {
-    dpt <- destiny::DPT(dm, w_width = w_width)
+  dpt_params <- lst(dm, w_width)
+
+  if (!is.null(start_cell_id)) {
+    dpt_params$tips <- which(rownames(counts) %in% start_cell_id)
   }
 
+  dpt <- do.call(destiny::DPT, dpt_params)
 
   tips <- destiny::tips(dpt)
   milestone_ids <- paste0("DPT", tips)
 
-  dists <- sapply(milestone_ids, function(dn) dpt[[dn]]) %>%
-    dynutils::scale_quantile()
-  rownames(dists) <- rownames(expr)
-  milestone_percentages <- dists %>%
-    reshape2::melt(varnames = c("cell_id", "milestone_id")) %>%
-    mutate(
-      cell_id = as.character(cell_id),
-      milestone_id = as.character(milestone_id),
-      percentage = 1 - value
-    ) %>%
+  milestone_percentages <- map_df(milestone_ids, function(mid) {
+    d <- dpt[[mid]]
+    dsc <- dynutils::scale_minmax(d)
+    data_frame(cell_id = rownames(expr), milestone_id = mid, percentage = 1 - dsc)
+  }) %>%
     group_by(cell_id) %>%
     mutate(percentage = percentage / sum(percentage)) %>%
-    ungroup() %>%
-    select(cell_id, milestone_id, percentage)
+    ungroup()
 
-  milestone_network <- bind_rows(lapply(seq_along(milestone_ids), function(i) {
-    fr <- milestone_ids[[i]]
-    index <- tips[[i]]
-    data_frame(from = fr, to = milestone_ids, length = dpt[[fr]][tips])
-  })) %>% filter(row_number() %in% c(2, 3)) %>% mutate(directed=FALSE)
+  milestone_network <- crossing(from = milestone_ids, to = milestone_ids) %>%
+    filter(from < to) %>%
+    rowwise() %>%
+    mutate(
+      length = dpt[[from]][[setNames(tips, milestone_ids)[[to]]]],
+      directed = FALSE
+    ) %>%
+    ungroup()
 
   wrap_ti_prediction(
     ti_type = "triangle",

@@ -18,8 +18,8 @@
 #'
 #' @importFrom testthat expect_equal
 #' @importFrom PRISM qsub_lapply override_qsub_config
-#' @importFrom mlrMBO makeMBOControl setMBOControlTermination setMBOControlInfill makeMBOInfillCritDIB
-#' @importFrom mlr makeLearner
+#' @importFrom mlrMBO makeMBOControl setMBOControlTermination setMBOControlInfill makeMBOInfillCritDIB makeMBOInfillCritCB
+#' @importFrom mlr makeLearner configureMlr
 #' @importFrom ParamHelpers generateDesignOfDefaults generateDesign
 #' @importFrom parallelMap parallelStartMulticore parallelStop
 #' @importFrom randomForest randomForest
@@ -35,7 +35,7 @@ benchmark_suite_submit <- function(
   metrics = c("auc_R_nx", "robbie_network_score"),
   num_cores = 4,
   memory = "20G",
-  max_wall_time = "72:00:00",
+  max_wall_time = NULL,
   num_iterations = 20,
   num_init_params = 100,
   num_repeats = 1,
@@ -46,16 +46,25 @@ benchmark_suite_submit <- function(
   testthat::expect_equal(nrow(tasks), length(task_fold))
   testthat::expect_is(methods, "tbl")
 
-  ## MBO settings
+  ## set settings for MBO parameter optimisation
   control_train <- mlrMBO::makeMBOControl(
     n.objectives = length(metrics),
     propose.points = num_cores,
     impute.y.fun = impute_y_fun(length(metrics))) %>%
-    mlrMBO::setMBOControlTermination(iters = num_iterations) %>%
-    mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritDIB())
+    mlrMBO::setMBOControlTermination(iters = num_iterations)
+  if (length(metrics) == 1) {
+    control_train <- control_train %>%
+      mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritCB())
+  } else {
+    control_train <- control_train %>%
+      mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritDIB())
+  }
   control_test <- control_train
   control_test$iters <- 1
   control_test$propose.points <- 1
+
+  ## create learner for predicting performance of new params
+  mlr::configureMlr(show.learner.output = FALSE)
   learner <- mlr::makeLearner(
     "regr.randomForest",
     se.method = "jackknife",
@@ -63,7 +72,8 @@ benchmark_suite_submit <- function(
     keep.inbag = TRUE
   )
 
-  ## Grid settings
+  ## create a grid for each of the folds, groups, and repeats.
+  ## one task will be created per row in this grid
   grid <- expand.grid(
     fold_i = sort(unique(task_fold)),
     group_sel = sort(unique(task_group)),
@@ -71,7 +81,7 @@ benchmark_suite_submit <- function(
     stringsAsFactors = FALSE
   )
 
-  ## Run MBO
+  ## run MBO for each method separatelly
   for (methodi in seq_len(nrow(methods))) {
     method <- dynutils::extract_row_to_list(methods, methodi)
 
@@ -82,6 +92,7 @@ benchmark_suite_submit <- function(
 
     dir.create(method_folder, recursive = TRUE, showWarnings = FALSE)
 
+    ## If no output or qsub handle exists yet
     if (!file.exists(output_file) && !file.exists(qsubhandle_file)) {
       cat("Submitting ", method$name, "\n", sep="")
 
@@ -94,7 +105,7 @@ benchmark_suite_submit <- function(
         ParamHelpers::generateDesign(n = num_init_params, par.set = method$par_set)
       )
 
-      # cluster params
+      # set parameters for the cluster
       qsub_config <- PRISM::override_qsub_config(
         wait = FALSE,
         num_cores = num_cores,
@@ -106,51 +117,73 @@ benchmark_suite_submit <- function(
         max_wall_time = max_wall_time,
         execute_before = "export R_MAX_NUM_DLLS=300"
       )
+
+      # if the cluster data needs to be saved to dyneval output folder
       if (save_r2g_to_outdir) {
         qsub_config$local_tmp_path <- paste0(method_folder, "/r2gridengine")
         dir.create(qsub_config$local_tmp_path, recursive = T, showWarnings = F)
       }
+
+      # which packages to load on the cluster
       qsub_packages <- c("dplyr", "purrr", "dyneval", "mlrMBO", "parallelMap")
+
+      # which data objects will need to be transferred to the cluster
       qsub_environment <-  c(
         "method", "obj_fun", "design",
         "tasks", "task_group", "task_fold",
         "num_cores", "metrics",
         "control_train", "control_test", "grid")
 
+      # the function to run on the cluster
+      qsub_x <- seq_len(nrow(grid))
+
+      qsub_fun <- function(grid_i) {
+        fold_i <- grid[grid_i,]$fold_i
+        group_sel <- grid[grid_i,]$group_sel
+        repeat_i <- grid[grid_i,]$repeat_i
+
+        ## start parameter optimisation
+        # TODO: If the models should be outputted, change the output_model
+        # and process the output
+
+        parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
+        tune_train <- mlrMBO::mbo(
+          obj_fun,
+          learner = learner,
+          design = design,
+          control = control_train,
+          show.info = TRUE,
+          more.args = list(
+            tasks = tasks[task_group == group_sel & task_fold != fold_i,],
+            output_model = FALSE #"models/"
+          )
+        )
+        tune_test <- mlrMBO::mbo(
+          obj_fun,
+          learner = learner,
+          design = tune_train$opt.path$env$path %>% select(-starts_with("y_"), -one_of("y")),
+          control = control_test,
+          show.info = TRUE,
+          more.args = list(
+            tasks = tasks[task_group == group_sel & task_fold == fold_i,],
+            output_model = FALSE #"models/"
+          )
+        )
+        parallelMap::parallelStop()
+
+        list(design = design, tune_train = tune_train, tune_test = tune_test)
+      }
+
       # submit to the cluster
       qsub_handle <- PRISM::qsub_lapply(
-        X = seq_len(nrow(grid)),
+        X = qsub_x,
         qsub_environment = qsub_environment,
         qsub_packages = qsub_packages,
         qsub_config = qsub_config,
-        FUN = function(grid_i) {
-          fold_i <- grid[grid_i,]$fold_i
-          group_sel <- grid[grid_i,]$group_sel
-          repeat_i <- grid[grid_i,]$repeat_i
+        FUN = qsub_fun
+      )
 
-          ## start parameter optimisation
-          parallelStartMulticore(cpus = num_cores, show.info = TRUE)
-          tune_train <- mbo(
-            obj_fun,
-            learner = learner,
-            design = design,
-            control = control_train,
-            show.info = TRUE,
-            more.args = list(tasks = tasks[task_group == group_sel & task_fold != fold_i,])
-          )
-          tune_test <- mbo(
-            obj_fun,
-            learner = learner,
-            design = tune_train$opt.path$env$path %>% select(-starts_with("y_"), -one_of("y")),
-            control = control_test,
-            show.info = TRUE,
-            more.args = list(tasks = tasks[task_group == group_sel & task_fold == fold_i,])
-          )
-          parallelStop()
-
-          list(design = design, tune_train = tune_train, tune_test = tune_test)
-        })
-
+      # save data and handle to RDS file
       out <- lst(
         method, obj_fun, design, tasks, task_group,
         task_fold, num_cores, metrics,
@@ -167,8 +200,8 @@ benchmark_suite_submit <- function(
 #' @importFrom PRISM qsub_retrieve qacct qstat_j
 #' @export
 benchmark_suite_retrieve <- function(out_dir) {
-  method_names <- list.files(out_dir)
-  lapply(method_names, function(method_name) {
+  method_names <- list.dirs(out_dir, full.names = FALSE, recursive = FALSE) %>% discard(~ . == "")
+  bind_rows(lapply(method_names, function(method_name) {
     method_folder <- paste0(out_dir, method_name)
     output_file <- paste0(method_folder, "/output.rds")
     qsubhandle_file <- paste0(method_folder, "/qsubhandle.rds")
@@ -182,7 +215,7 @@ benchmark_suite_retrieve <- function(out_dir) {
       qsub_handle <- data$qsub_handle
       num_tasks <- qsub_handle$num_tasks
 
-      output <- qsub_retrieve(
+      output <- PRISM::qsub_retrieve(
         qsub_handle,
         post_fun = function(rds_i, out_rds) {
           benchmark_suite_retrieve_helper(rds_i, out_rds, data)
@@ -190,46 +223,57 @@ benchmark_suite_retrieve <- function(out_dir) {
         wait = FALSE
       )
 
-      qacct_out <- qacct(qsub_handle)
-      qstat_out <- qstat_j(qsub_handle)
+      suppressWarnings({
+        qacct_out <- PRISM::qacct(qsub_handle)
+        qstat_out <- PRISM::qstat_j(qsub_handle)
+      })
 
       if (!is.null(output)) {
-        cat("Success! Saving output.\n", sep = "")
-
-        which_errored <- sapply(output, is.na)
-        outputs <- lapply(output, function(x) if(length(x) == 1 && is.na(x)) NULL else x)
-        errors <- lapply(output, function(x) if(length(x) == 1 &&!is.na(x)) attr(x, "qsub_error") else NULL)
+        cat("Output found! Saving output.\n", sep = "")
 
         output_succeeded <- TRUE
-
+        outputs <- lapply(output, function(x) {
+          if(length(x) == 1 && is.na(x)) {
+            list(which_errored = TRUE, error = attr(x, "qsub_error"))
+          } else {
+            x$which_errored <- FALSE
+            x$error <- NA
+            x
+          }
+        }) %>% list_as_tibble()
       } else {
-        cat("Failed. Maybe the job has not finished yet?\n", sep = "")
+        error_message <-
+          if (nrow(qstat_out) > 0) {
+            "job is still running"
+          } else {
+            "qsub_retrieve of results failed -- no output was produced, but job is not running any more"
+          }
 
+        cat("Output not found. ", error_message, ".\n", sep = "")
         output_succeeded <- FALSE
-        outputs <- lapply(seq_len(num_tasks), function(i) NULL)
-        which_errored <- rep(TRUE, num_tasks)
-        errors <- rep("qsub_retrieve of results failed. Maybe the job has not finished yet?", num_tasks)
+        outputs <- tibble(
+          which_errored = rep(TRUE, num_tasks),
+          error = rep(error_message, num_tasks)
+        )
       }
 
-      rds_lst <- lst(
+      out_rds <- outputs %>% mutate(
+        task_id = seq_len(n()),
         method_name,
-        outputs,
-        which_errored,
-        errors,
-        qacct_out,
-        qstat_out,
-        qsub_handle
-      )
+        qacct = lapply(seq_len(n()), function(i) extract_row_to_list(qacct_out, i)),
+        qstat = lapply(seq_len(n()), function(i) qstat_out),
+        qsub_handle = lapply(seq_len(n()), function(i) qsub_handle)
+      ) %>% select(method_name, task_id, which_errored, error, everything())
 
       if (output_succeeded) {
-        saveRDS(rds_lst, output_file)
+        saveRDS(out_rds, output_file)
       }
 
-      rds_lst
+      out_rds
     } else {
       stop("Could not find an output.rds or qsubhandle.rds file in out_dir = ", sQuote(out_dir))
     }
-  })
+  }))
 }
 
 benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
@@ -261,6 +305,10 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
     )
   ) %>% filter(param_i <= nrow(train_out$opt.path$env$path)) %>%
     as_data_frame()
+
+  if ("y" %in% colnames(eval_summ_gath)) {
+    eval_summ_gath <- eval_summ_gath %>% rename(y_1 = y)
+  }
 
   if (!all(eval_summ_gath$y_1 == -1)) {
     eval_summ <- eval_summ_gath %>%

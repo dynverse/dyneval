@@ -2,10 +2,10 @@
 % Please edit documentation in R/ti_celltree.R
 \name{description_celltree_vem}
 \alias{description_celltree_vem}
-\title{Description for celltree VEM}
+\title{Description for celltree vem}
 \usage{
 description_celltree_vem()
 }
 \description{
-Description for celltree VEM
+Description for celltree vem
 }

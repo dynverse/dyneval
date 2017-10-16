@@ -61,44 +61,51 @@ run_stemid <- function(
   requireNamespace("reshape2")
 
   # initialize SCseq object with transcript counts
-  sc <- StemID:::SCseq(data.frame(t(counts), check.names = FALSE, stringsAsFactors = FALSE))
+  sc <- StemID::SCseq(data.frame(t(counts), check.names = FALSE))
 
   # filtering of expression data
-  sc <- StemID:::filterdata(sc, mintotal = 1, minexpr = 0, minnumber = 0, maxexpr = Inf, downsample = TRUE, dsn = 1)
+  sc <- StemID::filterdata(sc, mintotal = 1, minexpr = 0, minnumber = 0, maxexpr = Inf, downsample = TRUE, dsn = 1)
 
   # k-medoids clustering
   do_gap <- num_cluster_method == "gap"
   do_sat <- num_cluster_method == "sat"
-  sc <- StemID:::clustexp(sc, clustnr = clustnr, bootnr = bootnr, metric = metric, do.gap = do_gap,
+  sc <- StemID::clustexp(sc, clustnr = clustnr, bootnr = bootnr, metric = metric, do.gap = do_gap,
                  sat = do_sat, SE.method = SE.method, SE.factor = SE.factor,
                  B.gap = B.gap, cln = cln, FUNcluster = FUNcluster)
 
   # compute t-SNE map
   sammonmap <- dimred_method == "sammon"
   initial_cmd <- dimred_method == "tsne_initcmd"
-  sc <- StemID:::comptsne(sc, sammonmap = sammonmap, initial_cmd = initial_cmd)
+  sc <- StemID::comptsne(sc, sammonmap = sammonmap, initial_cmd = initial_cmd)
 
   # detect outliers and redefine clusters
   thr <- 2^(thr_lower:thr_upper)
-  sc <- StemID:::findoutliers(sc, outminc = outminc, outlg = outlg, probthr = probthr, thr = thr, outdistquant = outdistquant)
+  sc <- StemID::findoutliers(
+    sc,
+    outminc = outminc,
+    outlg = outlg,
+    probthr = probthr,
+    thr = thr,
+    outdistquant = outdistquant
+  )
 
   # initialization
-  ltr <- StemID:::Ltree(sc)
+  ltr <- StemID::Ltree(sc)
 
   # computation of the entropy
-  ltr <- StemID:::compentropy(ltr)
+  ltr <- StemID::compentropy(ltr)
 
   # computation of the projections for all cells
-  ltr <- StemID:::projcells(ltr, cthr = 0, nmode = nmode)
+  ltr <- StemID::projcells(ltr, cthr = 0, nmode = nmode)
 
   # computation of the projections for all cells after randomization
-  ltr <- StemID:::projback(ltr, pdishuf = pdishuf, nmode = nmode)
+  ltr <- StemID::projback(ltr, pdishuf = pdishuf, nmode = nmode)
 
   # assembly of the lineage tree
-  ltr <- StemID:::lineagetree(ltr, pthr = pthr, nmode = nmode)
+  ltr <- StemID::lineagetree(ltr, pthr = pthr, nmode = nmode)
 
   # compute a spanning tree
-  ltr <- StemID:::compspantree(ltr)
+  ltr <- StemID::compspantree(ltr)
 
   dc <- ltr@trl$dc
   milestone_ids <- rownames(dc)

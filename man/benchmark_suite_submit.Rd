@@ -7,7 +7,7 @@
 benchmark_suite_submit(tasks, task_group, task_fold, out_dir, timeout = 60 *
   nrow(tasks), methods = get_descriptions(as_tibble = TRUE),
   metrics = c("auc_R_nx", "robbie_network_score"), num_cores = 4,
-  memory = "20G", max_wall_time = "72:00:00", num_iterations = 20,
+  memory = "20G", max_wall_time = NULL, num_iterations = 20,
   num_init_params = 100, num_repeats = 1, save_r2g_to_outdir = FALSE)
 }
 \arguments{

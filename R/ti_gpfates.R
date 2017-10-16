@@ -8,8 +8,8 @@ description_gpfates <- function() create_description(
   par_set = makeParamSet(
     makeNumericParam(id = "log_expression_cutoff", lower = 0.5, upper = 5, default = 2),
     makeNumericParam(id = "min_cells_expression_cutoff", lower = 0, upper = 20, default = 2),
-    makeIntegerParam(id = "nfates", lower=1L, upper=20L, default=1L),
-    makeIntegerParam(id = "ndims", lower=1L, upper=5L, default=2L)
+    makeIntegerParam(id = "nfates", lower = 1L, upper = 20L, default = 1L),
+    makeIntegerParam(id = "ndims", lower = 1L, upper = 5L, default = 2L)
   ),
   properties = c(),
   run_fun = run_gpfates,
@@ -21,79 +21,100 @@ description_gpfates <- function() create_description(
 #' @importFrom utils write.table
 run_gpfates <- function(
   counts,
-  log_expression_cutoff=2,
-  min_cells_expression_cutoff=2,
-  nfates=2,
-  ndims=2
+  nfates = 1,
+  ndims = 2,
+  log_expression_cutoff = 2,
+  min_cells_expression_cutoff = 2,
+  num_cores = 1,
+  verbose = FALSE
 ) {
+  # documentation was not very detailed, so we had a hard time figuring out what the parameters were
+  requireNamespace("GPfates")
 
-  temp_folder <- tempdir()
-
-  counts %>%
-    t %>%
-    write.table(paste0(temp_folder, "expression.csv"), sep="\t")
-
-  counts %>%
-    {data.frame(cell_id=rownames(.), row.names=rownames(.))} %>%
-    write.table(paste0(temp_folder, "cellinfo.csv"), sep="\t")
-
-  system2(
-    "/bin/bash",
-    args = c(
-      "-c",
-      shQuote(glue::glue(
-        "cd {find.package('GPfates')}/venv",
-        "source bin/activate",
-        "python3 {find.package('GPfates')}/wrapper.py {temp_folder} {log_expression_cutoff} {min_cells_expression_cutoff} {nfates} {ndims}",
-        .sep = ";"))
-    )
+  gp_out <- GPfates::GPfates(
+    counts = counts,
+    nfates = nfates,
+    ndims = ndims,
+    log_expression_cutoff = log_expression_cutoff,
+    min_cells_expression_cutoff = min_cells_expression_cutoff,
+    num_cores = num_cores,
+    verbose = verbose
   )
 
-  pseudotime <- read_csv(glue::glue("{temp_folder}pseudotimes.csv"), col_names = c("cell_id", "time"))
+  pseudotime <- gp_out$pseudotime %>% mutate(time = dynutils::scale_minmax(time))
+  phi <- gp_out$phi
+  dr <- gp_out$dr
 
-  phi <- read_csv(glue::glue("{temp_folder}phi.csv"), col_names = c("cell_id", glue::glue("M{seq_len(nfates)}")), skip = 1)
+  # get percentages of end milestones by multiplying the phi with the pseudotime
+  progressions <- phi %>%
+    gather(to, percentage, -cell_id) %>%
+    left_join(pseudotime, by = "cell_id") %>%
+    mutate(
+      percentage = percentage*time,
+      from = "M0"
+    ) %>%
+    select(cell_id, from, to, percentage)
 
-  dr <- read_csv(glue::glue("{temp_folder}dr.csv"), col_names = c("cell_id", glue::glue("Comp{seq_len(5)}")), skip = 1)
-
-  pseudotime <- pseudotime %>% mutate(time=(time-min(time))/(max(time) - min(time)))
-
-  # first get percentages of all final milestones, by getting their phi values, and multiplying by the pseudotime
-  milestone_percentages <- phi %>%
-    gather(milestone_id, percentage, -cell_id) %>%
-    left_join(pseudotime, by="cell_id") %>%
-    mutate(percentage=percentage*time)
-
-  # now add the starting milestone, just 1-pseudotime
-  milestone_percentages <- milestone_percentages %>% bind_rows(pseudotime %>% mutate(milestone_id="M0", percentage= 1-time)) %>% select(-time)
-
-  # now create the other objects
-  milestone_network <- tibble(
-    from="M0",
-    to=glue::glue("M{seq_len(nfates)}"),
-    length=1,
-    directed=TRUE
+  #  create milestone network
+  milestone_network <- data_frame(
+    from = "M0",
+    to = paste0("M", seq_len(nfates)),
+    length = 1,
+    directed = TRUE
   )
-  milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
+  milestone_ids <- paste0("M", seq(0, nfates))
 
+  # return output
   wrap_ti_prediction(
     ti_type = "GPfates",
     id = "GPfates",
     cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
-    milestone_percentages = milestone_percentages,
+    progressions = progressions,
     dimred_samples = dr,
     pseudotime = pseudotime
   )
 }
 
-## TODO extract OMGP
-plot_gpfates <- function(ti_predictions) {
-  sample_df <- data.frame(
-    ti_predictions$dimred_samples
-  ) %>% left_join(ti_predictions$pseudotime, by="cell_id")
-  ggplot() +
-    geom_point(aes(Comp1, Comp2, colour = time), sample_df) +
-    coord_equal() +
-    viridis::scale_color_viridis()
+plot_gpfates <- function(prediction, type = c("dimred", "assignment")) {
+  type <- match.arg(type)
+  sample_df <- prediction$dimred_samples %>%
+    left_join(prediction$pseudotime, by = "cell_id")
+
+  switch(
+    type,
+    dimred = {
+      max_trend <- prediction$milestone_percentages %>%
+        group_by(cell_id) %>%
+        arrange(desc(percentage)) %>%
+        slice(1) %>%
+        ungroup()
+
+      plot_df <- sample_df %>%
+        left_join(max_trend, by = "cell_id") %>%
+        mutate(trend = gsub("M", "Trend ", milestone_id))
+
+      ggplot() +
+        geom_point(aes(Comp1, Comp2, colour = trend), plot_df) +
+        coord_equal() +
+        cowplot::theme_cowplot() +
+        scale_color_brewer(palette = "Set2") +
+        labs(x = "Latent variable 1", y = "Latent variable 2", colour = "Fitted trend")
+
+      # TODO: Extract OGMP for plotting purposes. See dyneval #21
+    },
+    assignment = {
+      progression_df <- sample_df %>%
+        left_join(prediction$progressions, by = "cell_id") %>%
+        mutate(trend = gsub("M", "Trend ", to))
+
+      ggplot() +
+        geom_point(aes(time, percentage, colour = trend), progression_df) +
+        facet_wrap(~trend, ncol = 1) +
+        labs(x = "Pseudotime", y = "Trend assignment probability") +
+        cowplot::theme_cowplot() +
+        theme(legend.position = "none")
+    }
+  )
 }

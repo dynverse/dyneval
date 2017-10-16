@@ -160,7 +160,7 @@ run_slingshot <- function(
     cell_id = rownames(pt)
   ) %>%
     group_by(to) %>%
-    mutate(percentage = (time - min(time)) / (max(time) - min(time))) %>%
+    mutate(percentage = dynutils::scale_minmax(time)) %>%
     left_join(milestone_network, by="to") %>%
     ungroup()
 
