@@ -69,20 +69,7 @@ run_embeddr <- function(counts,
   )
 
   # construct milestone network
-  milestone_ids <- c("milestone_A", "milestone_B")
-
-  milestone_network <- data_frame(
-    from = milestone_ids[[1]],
-    to = milestone_ids[[2]],
-    length = 1,
-    directed = FALSE
-  )
-
-  # construct progressions
-  progressions <- as(sce@phenoData, "data.frame") %>%
-    rownames_to_column(var = "cell_id") %>%
-    mutate(from = milestone_ids[[1]], to = milestone_ids[[2]]) %>%
-    select(cell_id, from, to, percentage = pseudotime)
+  pseudotimes <- as(sce@phenoData, "data.frame")$pseudotime
 
   # creating extra output for visualisation purposes
   dimred_samples <- sce@reducedDimension %>%
@@ -93,13 +80,10 @@ run_embeddr <- function(counts,
     select(pseudotime, starts_with("trajectory_"))
 
   # return output
-  wrap_ti_prediction(
-    ti_type = "linear",
+  wrap_linear_ti_prediction(
     id = "embeddr",
     cell_ids = rownames(counts),
-    milestone_ids = milestone_ids,
-    milestone_network = milestone_network,
-    progressions = progressions,
+    pseudotimes = pseudotime,
     dimred_samples = dimred_samples,
     dimred_traj = dimred_traj
   )

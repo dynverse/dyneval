@@ -44,7 +44,7 @@ run_ouija <- function(
   )
 
   # obtain the pseudotimes
-  pseudotimes <- ouija::map_pseudotime(oui) %>% dynutils::scale_minmax()
+  pseudotimes <- ouija::map_pseudotime(oui)
 
   # run pca for visualisation purposes
   space <- stats::prcomp(expr)$x[,1:2] %>%
@@ -52,21 +52,6 @@ run_ouija <- function(
     rownames_to_column() %>%
     as_data_frame() %>%
     mutate(pseudotime = pseudotimes)
-
-  # produce output objects
-  milestone_ids <- c("milestone_A", "milestone_B")
-  milestone_network <- data_frame(
-    from = milestone_ids[[1]],
-    to = milestone_ids[[2]],
-    length = 1,
-    directed = FALSE
-  )
-  progressions <- data_frame(
-    cell_id = rownames(counts),
-    from = milestone_ids[[1]],
-    to = milestone_ids[[2]],
-    percentage = pseudotimes
-  )
 
   # extract data for visualisation
   # adapted from ouija::plot_switch_times(oui)
@@ -81,13 +66,10 @@ run_ouija <- function(
   t0_df$Gene <- factor(t0_df$Gene, t0_df$Gene[order(t0_means)])
 
   # return output
-  wrap_ti_prediction(
-    ti_type = "linear",
+  wrap_linear_ti_prediction(
     id = "ouija",
     cell_ids = rownames(counts),
-    milestone_ids = milestone_ids,
-    milestone_network = milestone_network,
-    progressions = progressions,
+    pseudotimes = pseudotimes,
     t0_df = t0_df,
     space = space
   )
