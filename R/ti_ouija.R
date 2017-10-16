@@ -6,7 +6,7 @@ description_ouija <- function() create_description(
   package_required = c("ouija", "rstan"),
   package_loaded = c("coda"),
   par_set = makeParamSet(
-    makeIntegerParam(id = "iter", lower = 2L, upper = 500L, default = 20L), # default 10000!
+    makeNumericParam(id = "iter", lower = log(2), upper = exp(50000), default = exp(10000), trafo = function(x) round(exp(x))),
     makeDiscreteParam(id = "response_type", default = "switch", values = c("switch", "transient")),
     makeDiscreteParam(id = "inference_type", default = "hmc", values = c("hmc", "vb")),
     makeLogicalParam(id = "normalise_expression", default = TRUE)
@@ -18,7 +18,7 @@ description_ouija <- function() create_description(
 
 run_ouija <- function(
     counts,
-    iter = 20,
+    iter = 1000, # default is actually 10'000.
     response_type = "switch",
     inference_type = "hmc",
     normalise_expression = TRUE
@@ -27,12 +27,16 @@ run_ouija <- function(
   requireNamespace("rstan")
   requireNamespace("coda")
 
+  # TODO: ouija assumes a small panel of marker genes chosen a priori!
+  # marker genes should also be a possible form of prior information
+  expr <- log2(counts + 1)
+
   # write compiled instance of the stanmodel to HDD
   rstan::rstan_options(auto_write = TRUE)
 
   # run ouija
   oui <- ouija::ouija(
-    x = log2(counts + 1),
+    x = expr,
     iter = iter,
     response_type = response_type,
     inference_type = inference_type,
@@ -59,7 +63,7 @@ run_ouija <- function(
   )
 
   # extract data for visualisation
-  # reworked code from ouija::plot_switch_times(oui)
+  # adapted from ouija::plot_switch_times(oui)
   # to avoid saving the whole oui object
   k_trace <- rstan::extract(oui$fit, "k")$k
   kmean <- colMeans(k_trace)
@@ -89,7 +93,8 @@ plot_ouija <- function(prediction) {
 
   t0_df <- prediction$t0_df
 
-  # reworked code from ouija::plot_switch_times(prediction$oui)
+  # adapted from ouija::plot_switch_times(prediction$oui)
+  # to avoid saving the whole oui file
   vpal <- viridis::viridis_pal()(8)
 
   ggplot(t0_df, aes(x = Gene, y = t0_mean, fill = kmean)) +
