@@ -107,12 +107,13 @@ smoother = "smooth.spline"
 
 # SCOUP
 ndim = 3
-nbranch = 3
+nbranch = 4
 max_ite1 = 10
-max_ite2 = 100
+max_ite2 = 40
 alpha_min = .1
 alpha_max = 100
 t_min = .001
 t_max = 2
 sigma_squared_min = .1
 thresh = .01
+verbose = TRUE
