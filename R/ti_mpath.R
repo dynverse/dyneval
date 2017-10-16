@@ -17,89 +17,97 @@ description_mpath <- function() create_description(
   plot_fun = plot_mpath
 )
 
-run_mpath <- function(counts, cell_grouping,
-                      distMethod = "euclidean", method = "kmeans",
-                      numcluster = 11, diversity_cut = .6, size_cut = .05) {
-  # function to save a data.frame in a temporary directory and return the file's location
-  fakeFile <- function(x) {
-    loc <- tempfile()
-    write.table(x, file=loc, sep="\t")
-    loc
-  }
+#' @importFrom utils write.table
+#' @importFrom stats na.omit
+run_mpath <- function(counts,
+                      cell_grouping,
+                      distMethod = "euclidean",
+                      method = "kmeans",
+                      numcluster = 11,
+                      diversity_cut = .6,
+                      size_cut = .05) {
+  requireNamespace("igraph")
 
-  sampleInfo <- cell_grouping %>% rename(GroupID=group_id)
+  sample_info <- cell_grouping %>% rename(GroupID = group_id) %>% as.data.frame
 
-  landmark_cluster <- landmark_designation(
-    fakeFile(t(counts)),
-    "output_disabled",
-    fakeFile(sampleInfo),
+  landmark_cluster <- Mpath::landmark_designation(
+    rpkmFile = t(counts),
+    baseName = NULL,
+    sampleFile = sample_info,
     distMethod = distMethod,
     method = method,
     numcluster = numcluster,
     diversity_cut = diversity_cut,
     size_cut = size_cut,
-    saveRes = FALSE)
-
-  network <- build_network(t(counts), landmark_cluster, distMethod = distMethod)
-  trimmed_network <- trim_net(network)
-
-  ordering <- nbor_order(t(counts), landmark_cluster, unique(landmark_cluster$landmark_cluster))
-
-  trimmed_network[upper.tri(trimmed_network)] = 0
-  attr(trimmed_network, "class") = "matrix"
-
-  mpath_network <- trimmed_network %>%
-    as.matrix() %>%
-    reshape2::melt(varnames = c("from", "to")) %>%
-    filter(value == 1) %>%
-    select(-value) %>%
-    mutate(from = as.character(from), to = as.character(to))
-
-  milestone_network <- mpath_network
-
-  # add milestones for landmarks with only outgoing edges
-  beginning_milestones <- unique(c(milestone_network$from, milestone_network$to)) %>%
-    keep(~!(. %in% milestone_network$from))
-
-  milestone_network <- bind_rows(
-    milestone_network,
-    tibble(
-      from = beginning_milestones,
-      to = paste0("extra_", seq_along(beginning_milestones))
-    )
+    saveRes = FALSE
   )
 
-  # add ordering and from and to from milestone_network
-  progressions1 <- landmark_cluster %>%
-    rename(cell_id=cell) %>%
-    mutate(global_rank=match(cell_id, ordering)) %>%
-    filter(!is.na(global_rank)) %>%
-    rename(from=landmark_cluster) %>%
-    left_join(milestone_network, by=c("from"))
+  milestone_ids <- unique(landmark_cluster$landmark_cluster)
 
-  # calculate time based on ordering
-  progressions <- progressions1 %>%
-    group_by(from, to) %>%
-    mutate(percentage=(global_rank - min(global_rank))/(max(global_rank) - min(global_rank))) %>%
-    ungroup() %>%
-    group_by(cell_id) %>%
-    mutate(percentage=percentage/n()) %>%
-    ungroup()
+  # catch situation where mpath only detects 1 landmark
+  if (length(milestone_ids) == 1) {
+    cell_ids <- rownames(counts)
+    milestone_network <- data_frame(
+      from = milestone_ids,
+      to = milestone_ids,
+      length = 1,
+      directed = FALSE
+    )
+    progressions <- data_frame(
+      cell_id = cell_ids,
+      from = milestone_ids,
+      to = milestone_ids,
+      percentage = 1
+    )
+  } else {
+    # build network
+    network <- Mpath::build_network(
+      exprs = t(counts),
+      baseName = NULL,
+      landmark_cluster = landmark_cluster,
+      distMethod = distMethod,
+      writeRes = FALSE
+    )
 
-  milestone_network <- progressions %>% group_by(from, to) %>% summarise(length=n()) %>%
-    right_join(milestone_network, by=c("from", "to")) %>%
-    ungroup() %>%
-    mutate(directed=FALSE)
+    # trim network
+    trimmed_network <- Mpath::trim_net(
+      nb12 = network,
+      writeRes = FALSE
+    )
 
+    # create final milestone network
+    class(trimmed_network) <- NULL
+    milestone_network <- trimmed_network %>%
+      reshape2::melt(varnames = c("from", "to"), value.name = "length") %>%
+      mutate_if(is.factor, as.character) %>%
+      filter(length > 0, from < to) %>%
+      mutate(directed = FALSE)
+
+    # find an edge for each cell to sit on
+    connections <- bind_rows(
+      milestone_network %>% mutate(landmark_cluster = from, percentage = 0),
+      milestone_network %>% mutate(landmark_cluster = to, percentage = 1)
+    )
+    progressions <-
+      landmark_cluster %>%
+      left_join(connections, by = "landmark_cluster") %>%
+      select(cell_id = cell, from, to, percentage) %>%
+      stats::na.omit %>%
+      group_by(cell_id) %>%
+      arrange(desc(percentage)) %>%
+      slice(1) %>%
+      ungroup()
+  }
+
+  # return output
   wrap_ti_prediction(
     ti_type = "tree",
     id = "Mpath",
     cell_ids = rownames(counts),
-    milestone_ids = unique(c(milestone_network$from, milestone_network$to)),
-    milestone_network = milestone_network %>% select(from, to, length, directed),
-    progressions = progressions %>% select(cell_id, from, to, percentage) %>% mutate(cell_id=as.character(cell_id)),
+    milestone_ids = milestone_ids,
+    milestone_network = milestone_network,
+    progressions = progressions,
     landmark_cluster = landmark_cluster,
-    mpath_network = mpath_network,
     cell_grouping = cell_grouping
   )
 }
@@ -107,13 +115,129 @@ run_mpath <- function(counts, cell_grouping,
 plot_mpath <- function(prediction) {
   requireNamespace("igraph")
 
-  pie_sizes <- prediction$landmark_cluster %>% left_join(prediction$cell_grouping, by=c("cell"="cell_id")) %>%
-    mutate(group_id=factor(group_id)) %>%
-    group_by(landmark_cluster) %>%
-    summarise(counts=list(as.numeric(table(group_id)))) %>%
-    {set_names(.$counts, .$landmark_cluster)}
+  # milestone net as igraph
+  gr <- igraph::graph_from_data_frame(
+    prediction$milestone_network %>% filter(to != "FILTERED_CELLS"),
+    directed = FALSE,
+    vertices = prediction$milestone_ids
+  )
 
-  g <- prediction$mpath_network %>% igraph::graph_from_data_frame()
-  pie_sizes <- pie_sizes[names(igraph::V(g))]
-  g %>% igraph::plot.igraph(vertex.shape="pie",vertex.pie=pie_sizes)
+  # collect info on cells
+  cell_ids <- prediction$cell_ids
+  labels <- prediction$cell_grouping %>% slice(match(cell_ids, cell_id)) %>% .$group_id
+  clustering <- prediction$progressions %>%
+    slice(match(cell_ids, cell_id)) %>%
+    {with(., ifelse(percentage == 0, from, to))}
+
+  # make plot
+  make_piegraph_plot(gr, clustering, labels)
 }
+
+#' @importFrom cowplot theme_nothing
+make_pie_plot <- function(x_count, annotation_colours, add_label = FALSE) {
+  count_df <- data_frame(
+    celltype = factor(names(x_count), levels = names(x_count)),
+    count = x_count,
+    percent = x_count / sum(x_count),
+    right = cumsum(percent),
+    left = right - percent
+  )
+  g <- ggplot() +
+    geom_rect(aes(xmin = 0, xmax = 1, ymin = 0, ymax = 1), fill = "white") +
+    geom_rect(aes(xmin = left, xmax = right, ymin = 0, ymax = 1, fill = celltype), count_df) +
+    geom_hline(yintercept = c(0, 1)) +
+    scale_fill_manual(values = annotation_colours) +
+    xlim(0, 1) +
+    cowplot::theme_nothing() +
+    coord_polar()
+  if (add_label) {
+    g +
+      geom_text(aes((left + right)/2, 1.5, label = celltype, colour = celltype), count_df) +
+      ylim(0, 2) +
+      scale_colour_manual(values = annotation_colours)
+  } else {
+    g + ylim(0, 1)
+  }
+}
+
+#' @importFrom cowplot theme_nothing
+make_legend_plot <- function(annotation_colours) {
+  count <- setNames(rep(1, length(annotation_colours)), names(annotation_colours))
+  make_pie_plot(
+    count,
+    annotation_colours,
+    add_label = TRUE
+  ) + labs(title = "Legend")
+}
+
+# EBimage importFrom is because ggimage requires EBimage bioc dependency
+#' @importFrom RColorBrewer brewer.pal
+#' @importFrom cowplot theme_nothing plot_grid
+#' @importFrom ggimage geom_subview
+#' @importFrom EBImage fillHull 
+make_piegraph_plot <- function(gr, clustering, labels) {
+  requireNamespace("igraph")
+
+  # Perform dimred for graph
+  lay <- gr %>%
+    igraph::layout_with_kk() %>%
+    dynutils::scale_quantile(0)
+  dimnames(lay) <- list(
+    igraph::V(gr)$name,
+    c("X", "Y")
+  )
+  lay_df <- lay %>% as.data.frame %>% rownames_to_column()
+
+  # Retrieve the edges
+  mst_df <- igraph::as_data_frame(gr)
+  colnames(mst_df) <- c("i", "j", "dist")
+
+  # Make a histogram of the labels versus the clusters
+  categories <- if (is.factor(labels)) levels(labels) else sort(unique(labels))
+  clusters <- names(igraph::V(gr))
+  node_counts <-
+    sapply(categories, function(ca) {
+      sapply(clusters, function(cl) {
+        sum(labels == ca & clustering == cl)
+      })
+    })
+  num_labels <- rowSums(node_counts)
+
+  # Determine a colour scheme
+  annotation_colours <- setNames(RColorBrewer::brewer.pal(ncol(node_counts), "Set2"), colnames(node_counts))
+
+  # Attach positions to edges
+  mst_df_with_pos <- data.frame(
+    mst_df,
+    i = lay[mst_df[,1],,drop=F],
+    j = lay[mst_df[,2],,drop=F]
+  )
+
+  # Make a line plot
+  max_size <- .075
+  p <- ggplot(data.frame(lay), aes(X, Y)) +
+    geom_segment(aes(x = i.X, xend = j.X, y = i.Y, yend = j.Y), data.frame(mst_df_with_pos)) +
+    cowplot::theme_nothing() +
+    coord_equal()
+
+  # Make pie plots for each of the nodes
+  subplots <- lapply(seq_len(nrow(node_counts)), function(i) {
+    x <- lay[i,"X"]
+    y <- lay[i,"Y"]
+    x_count <- node_counts[i,]
+    subplot <- make_pie_plot(x_count, annotation_colours)
+    area <- num_labels[[i]] / max(num_labels) * pi/4*max_size^2
+    width <- sqrt(area) * 4 / pi
+    ggimage::geom_subview(subplot, x, y, width, width)
+  })
+
+  # Make a legend plot
+  legends <- make_legend_plot(annotation_colours)
+
+  # Combine all plots
+  Reduce("+", c(list(p), subplots)) +
+    ggimage::geom_subview(legends, .15, .15, .2, .2) +
+    geom_text(aes(X, Y, label = rowname), lay_df)
+}
+
+

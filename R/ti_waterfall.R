@@ -22,19 +22,10 @@ run_waterfall <- function(counts, num_clusters = 10) {
 
   # create output
   cell_ids <- rownames(counts)
-  milestone_ids <- paste0("milestone_", 1:2)
-  milestone_network <- data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1, directed=TRUE)
-  progressions <- data_frame(cell_id = cell_ids, from = milestone_ids[[1]], to = milestone_ids[[2]], percentage = ps$pseudotime)
-
-  # wrap and return
-  wrap_ti_prediction(
-    ti_type = "linear",
+  wrap_linear_ti_prediction(
     id = "Waterfall",
     cell_ids = cell_ids,
-    milestone_ids = milestone_ids,
-    milestone_network = milestone_network,
-    progressions = progressions,
-    pseudotime = setNames(cell_ids, ps$pseudotime),
+    pseudotimes = ps$pseudotime,
     ps = ps
   )
 }

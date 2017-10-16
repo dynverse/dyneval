@@ -21,13 +21,17 @@ make_obj_fun <- function(method, metrics, timeout, noisy = FALSE) {
     noisy = noisy,
     has.simple.signature = FALSE,
     par.set = method$par_set,
-    fn = function(x, tasks)
+    fn = function(x, tasks, output_model) {
       execute_evaluation(
         tasks = tasks,
         method = method,
         parameters = x,
         metrics = metrics,
-        timeout = timeout))
+        timeout = timeout,
+        output_model = output_model
+      )
+    }
+  )
 }
 
 #' For returning a poor score when a method errors
@@ -50,14 +54,16 @@ impute_y_fun <- function(num_objectives, error_score = -1) {
 #' @inheritParams execute_method
 #' @param metrics which metrics to use;
 #'   see \code{\link{calculate_metrics}} for a list of which metrics are available.
+#' @param output_model Whether or not the model will be outputted.
+#'   If this is a character string, it will save the model in the requested folder.
 #'
 #' @export
 #' @importFrom netdist gdd net_emd
-execute_evaluation <- function(tasks, method, parameters, metrics, timeout) {
+execute_evaluation <- function(tasks, method, parameters, metrics, timeout, output_model = TRUE) {
   method_outputs <- execute_method(tasks = tasks, method = method, parameters = parameters, timeout = timeout)
 
   # Calculate scores
-  summary_outs <- lapply(seq_len(nrow(tasks)), function(i) {
+  outs <- lapply(seq_len(nrow(tasks)), function(i) {
     task <- extract_row_to_list(tasks, i)
 
     # Fetch method outputs
@@ -90,15 +96,31 @@ execute_evaluation <- function(tasks, method, parameters, metrics, timeout) {
   })
 
   # Combine the different outputs in three lists/data frames
-  models <- summary_outs %>% purrr::map(~ .$model)
-  summary <- summary_outs %>% purrr::map_df(~ .$summary)
+  models <- outs %>% purrr::map(~ .$model)
+  summary <- outs %>% purrr::map_df(~ .$summary)
 
   # Calculate the final score
   score <- summary %>% summarise_at(metrics, funs(mean)) %>% as.matrix %>% as.vector %>% setNames(metrics)
 
   # Return extra information
-  attr(score, "extras") <- list(.models = models, .summary = summary)
+  extras <- list(.summary = summary)
 
+  if (is.logical(output_model) && output_model) {
+    extras$.models <- models
+  } else if (is.character(output_model)) {
+    if (!dir.exists(output_model)) {
+      dir.create(output_model)
+    }
+    filename <- paste0(
+      output_model,
+      ifelse(grepl("/$", output_model), "", "/"),
+      dynutils::random_time_string(), ".rds"
+    )
+    saveRDS(models, file = filename)
+    extras$.models_file <- filename
+  }
+
+  attr(score, "extras") <- extras
   # Return output
   score
 }
@@ -150,8 +172,8 @@ calculate_metrics <- function(task, model, metrics) {
     summary$time_mantel <- as.numeric(difftime(time1, time0, units = "sec"))
   }
 
-  net1 <- dynutils::simplify_network(model$milestone_network)
-  net2 <- dynutils::simplify_network(task$milestone_network) %>% filter(to != "FILTERED_CELLS")
+  net1 <- dynutils::simplify_milestone_network(model$milestone_network)
+  net2 <- dynutils::simplify_milestone_network(task$milestone_network) %>% filter(to != "FILTERED_CELLS")
 
   # Compute the milestone network isomorphic
   if ("isomorphic" %in% metrics) {

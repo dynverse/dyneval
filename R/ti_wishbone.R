@@ -20,58 +20,44 @@ description_wishbone <- function() create_description(
   plot_fun = plot_wishbone
 )
 
-run_wishbone <- function(counts,
-                         start_cell_id,
-                         knn = 10,
-                         n_diffusion_components = 2,
-                         n_pca_components = 15,
-                         markers="~",
-                         branch=TRUE,
-                         k=15,
-                         num_waypoints=50,
-                         normalize=TRUE,
-                         epsilon=1
-                      ) {
+run_wishbone <- function(
+  counts,
+  start_cell_id,
+  knn = 10,
+  n_diffusion_components = 2,
+  n_pca_components = 15,
+  markers="~",
+  branch=TRUE,
+  k=15,
+  num_waypoints=50,
+  normalize=TRUE,
+  epsilon=1
+) {
   if(is.null(start_cell_id)) stop("Give start cell id")
 
-  requireNamespace("jsonlite")
-  temp_folder <- tempfile()
-  dir.create(temp_folder, recursive = TRUE)
+  requireNamespace("Wishbone")
 
-  counts %>%
-    {log2(.+1)} %>%
-    as.data.frame() %>%
-    write.table(paste0(temp_folder, "/counts.tsv"), sep="\t")
-
-  params <- as.list(environment())[formalArgs(run_wishbone)]
-  params <- params[-(names(params) == "counts")]
-  params[["components_list"]] <- seq_len(n_diffusion_components)-1
-  params %>% jsonlite::toJSON(auto_unbox=TRUE) %>% write(paste0(temp_folder, "/params.json"))
-
-  output <- system2(
-    "/bin/bash",
-    args = c(
-      "-c",
-      shQuote(glue::glue(
-        "cd {find.package('Wishbone')}/venv",
-        "source bin/activate",
-        "python {find.package('Wishbone')}/wrapper.py {temp_folder}",
-        .sep = ";"))
-    ), stdout = TRUE, stderr = TRUE
+  wb_out <- Wishbone::Wishbone(
+    counts = counts,
+    start_cell_id = start_cell_id,
+    knn = knn,
+    n_diffusion_components = n_diffusion_components,
+    n_pca_components = n_pca_components,
+    markers = markers,
+    branch = branch,
+    k = k,
+    num_waypoints = num_waypoints,
+    normalize = normalize,
+    epsilon = epsilon
   )
 
-  print(output)
+  branch_assignment <- wb_out$branch_assignment
+  trajectory <- wb_out$trajectory
+  space <- wb_out$space
 
-  branch_assignment <- jsonlite::read_json(paste0(temp_folder, "/branch.json")) %>%
-    unlist() %>%
-    {tibble(branch=., cell_id=names(.))}
-  trajectory <- jsonlite::read_json(paste0(temp_folder, "/trajectory.json")) %>%
-    unlist() %>%
-    {tibble(time=., cell_id=names(.))}
   model <- left_join(branch_assignment, trajectory, by="cell_id")
-  space <- read_csv(paste0(temp_folder, "/dm.csv")) %>% rename(cell_id=X1) %>% rename_if(is.numeric, funs(paste0("Comp", .)))
 
-  if(branch) {
+  if (branch) {
     milestone_network <- tibble(from=c("M1", "M2", "M2"), to=c("M2", "M3", "M4"), branch=c(1, 2, 3))
   } else {
     milestone_network <- tibble(from=c("M1"), to=c("M2"), branch=c(1))
@@ -86,19 +72,10 @@ run_wishbone <- function(counts,
   # now scale the times between 0 and 1 => percentages
   progressions <- progressions %>%
     group_by(branch) %>%
-    mutate(percentage=(time - min(time))/(max(time) - min(time))) %>%
+    mutate(percentage = dynutils::scale_minmax(time)) %>%
     ungroup()
 
   milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
-#
-#   ggplot(left_join(model, space, by="cell_id")) + geom_point(aes(Comp0, Comp1, color=branch)) + viridis::scale_color_viridis()
-#   ggplot(left_join(model, space, by="cell_id")) + geom_point(aes(Comp0, Comp1, color=time)) + viridis::scale_color_viridis()
-#   ggplot(left_join(tasks$progressions[[1]], space, by="cell_id")) + geom_point(aes(Comp0, Comp1, color=percentage)) + viridis::scale_color_viridis()
-#
-#   plot(tasks$progressions[[1]]$percentage %>% unlist(), space$Comp1)
-
-  # remove temporary output
-  unlink(temp_folder, recursive = TRUE)
 
   wrap_ti_prediction(
     ti_type = "linear",
