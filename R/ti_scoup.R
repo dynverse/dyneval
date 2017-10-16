@@ -30,14 +30,15 @@ run_scoup <- function(
   start_cell_id,
   ndim = 3,
   nbranch = 1,
-  max_ite1 = 1000,
-  max_ite2 = 10000,
+  max_ite1 = 100,
+  max_ite2 = 100,
   alpha_min = .1,
   alpha_max = 100,
   t_min = .001,
   t_max = 2,
   sigma_squared_min = .1,
-  thresh = .01
+  thresh = .01,
+  verbose = FALSE
 ) {
   requireNamespace("SCOUP")
 
@@ -65,20 +66,21 @@ run_scoup <- function(
     t_min = t_min,
     t_max = t_max,
     sigma_squared_min = sigma_squared_min,
-    thresh = thresh
-  ) %>%
-    rownames_to_column("cell_id")
-
-  maxtime <- max(model$time)
-
-  # for visualisation purposes, run pca
-  space <- stats::prcomp(expr)$x[,1:2]
+    thresh = thresh,
+    verbose = verbose
+  )
 
   # create progressions
-  progressions <- model %>%
+  progressions <- model$cpara %>%
+    rownames_to_column("cell_id") %>%
+    mutate(time = dynutils::scale_minmax(time)) %>%
     gather("to", "percentage", -cell_id, -time) %>%
-    mutate(percentage = percentage * time / maxtime) %>%
-    mutate(from = "M0") %>%
+    group_by(cell_id) %>%
+    mutate(
+      percentage = percentage / sum(percentage) * time,
+      from = "M0"
+    ) %>%
+    ungroup() %>%
     select(cell_id, from, to, percentage)
 
   # create milestone ids
@@ -100,15 +102,14 @@ run_scoup <- function(
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
     progressions = progressions,
-    model = model,
-    space = space
+    model = model
   )
 }
 
 #' @importFrom cowplot theme_cowplot
 plot_scoup <- function(prediction, type = c("dimred", "percentages")) {
   type <- match.arg(type)
-
+  palette <- setNames(seq_along(prediction$milestone_ids), prediction$milestone_ids)
   switch(
     type,
     dimred = {
@@ -120,22 +121,30 @@ plot_scoup <- function(prediction, type = c("dimred", "percentages")) {
         ungroup()
 
       # combine data
-      space_df <- prediction$space %>%
+      space_df <- prediction$model$dimred %>%
         as.data.frame %>%
         rownames_to_column(var = "cell_id") %>%
         left_join(celltypes, by = "cell_id")
 
       # make plot
       ggplot(space_df) +
-        geom_point(aes(PC1, PC2, colour = milestone_id)) +
+        geom_point(aes(Comp1, Comp2, colour = milestone_id), shape = 1) +
         cowplot::theme_cowplot() +
-        labs(colour = "Milestone")
+        scale_colour_manual(values = palette) +
+        labs(colour = "Milestone", x = "PC1", y = "PC2")
     },
     percentages = {
-      ggplot(prediction$model %>% gather("endstate", "percentage", -cell_id, -time)) +
-        geom_point(aes(time, percentage, color=endstate)) +
-        facet_wrap(~endstate, ncol = 1) +
-        cowplot::theme_cowplot()
+      df <- prediction$model$cpara %>%
+        rownames_to_column("cell_id") %>%
+        gather("endstate", "percentage", -cell_id, -time)
+      ggplot(df) +
+        geom_point(aes(time, percentage, color = endstate)) +
+        facet_grid(endstate ~ .) +
+        scale_y_continuous(breaks = c(0, 1)) +
+        scale_colour_manual(values = palette) +
+        labs(x = "Pseudotime", y = "Probability", colour = "Lineage") +
+        cowplot::theme_cowplot() +
+        theme(legend.position = "none")
     }
   )
 }
