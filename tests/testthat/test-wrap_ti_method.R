@@ -99,8 +99,7 @@ test_that("Testing execute_method with dummy method", {
     ),
     properties = c(),
     run_fun = function(counts, aggr_fun = "mean") {
-      pt <- apply(counts, 1, aggr_fun)
-      pt <- (pt - min(pt)) / (max(pt) - min(pt))
+      pt <- apply(counts, 1, aggr_fun) %>% dynutils::scale_minmax()
 
       milestone_ids <- c("start", "end")
       milestone_network <- data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1, directed=TRUE)
@@ -154,8 +153,7 @@ test_that("Testing timeout of execute_method", {
     run_fun = function(counts, sleep_time = 10) {
       Sys.sleep(sleep_time)
 
-      pt <- apply(counts, 1, "mean")
-      pt <- (pt - min(pt)) / (max(pt) - min(pt))
+      pt <- apply(counts, 1, "mean") %>% dynutils::scale_minmax()
       milestone_ids <- c("start", "end")
       milestone_network <- data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1, directed=TRUE)
       progressions <- data_frame(cell_id = names(pt), from = milestone_ids[[1]], to = milestone_ids[[2]], percentage = pt)

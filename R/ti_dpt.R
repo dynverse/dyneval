@@ -59,7 +59,7 @@ run_dpt <- function(counts,
 
   milestone_percentages <- map_df(milestone_ids, function(mid) {
     d <- dpt[[mid]]
-    dsc <- (d - min(d)) / (max(d) - min(d))
+    dsc <- dynutils::scale_minmax(d)
     data_frame(cell_id = rownames(expr), milestone_id = mid, percentage = 1 - dsc)
   }) %>%
     group_by(cell_id) %>%
