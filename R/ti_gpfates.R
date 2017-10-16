@@ -34,25 +34,30 @@ run_gpfates <- function(
   phi <- gp_out$phi
   dr <- gp_out$dr
 
-  pseudotime <- pseudotime %>% mutate(time=(time-min(time))/(max(time) - min(time)))
+  pseudotime <- pseudotime %>% mutate(time = (time-min(time))/(max(time) - min(time)))
 
   # first get percentages of all final milestones, by getting their phi values, and multiplying by the pseudotime
   milestone_percentages <- phi %>%
     gather(milestone_id, percentage, -cell_id) %>%
     left_join(pseudotime, by="cell_id") %>%
-    mutate(percentage=percentage*time)
+    mutate(percentage = percentage*time)
 
   # now add the starting milestone, just 1-pseudotime
-  milestone_percentages <- milestone_percentages %>% bind_rows(pseudotime %>% mutate(milestone_id="M0", percentage= 1-time)) %>% select(-time)
+  milestone_percentages <-
+    bind_rows(
+      milestone_percentages,
+      pseudotime %>% mutate(milestone_id="M0", percentage= 1-time)
+    ) %>%
+    select(-time)
 
-  # now create the other objects
-  milestone_network <- tibble(
-    from="M0",
-    to=glue::glue("M{seq_len(nfates)}"),
-    length=1,
-    directed=TRUE
+  # create milestone network
+  milestone_network <- data_frame(
+    from = "M0",
+    to = paste0("M", seq_len(nfates)),
+    length = 1,
+    directed = TRUE
   )
-  milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
+  milestone_ids <- paste0("M", seq(0, nfates))
 
   wrap_ti_prediction(
     ti_type = "GPfates",
@@ -70,7 +75,7 @@ run_gpfates <- function(
 plot_gpfates <- function(ti_predictions) {
   sample_df <- data.frame(
     ti_predictions$dimred_samples
-  ) %>% left_join(ti_predictions$pseudotime, by="cell_id")
+  ) %>% left_join(ti_predictions$pseudotime, by = "cell_id")
   ggplot() +
     geom_point(aes(Comp1, Comp2, colour = time), sample_df) +
     coord_equal() +
