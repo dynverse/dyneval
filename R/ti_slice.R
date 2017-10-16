@@ -10,7 +10,7 @@ description_slice <- function() create_description(
     makeDiscreteParam(id = "model.type", default = "tree", values = c("tree", "graph")),
     makeDiscreteParam(id = "ss.method", default = "all", values = c("all", "top", "pcst")),
     makeNumericParam(id = "ss.threshold", default=0.25, lower=0, upper=1),
-    makeDiscreteParam(id = "community.method", default = "louvain", values = c("fast_greedy", "edge_betweenness", "label_prop", "leading_eigen","louvain","spinglass", "walktrap", "auto")),
+    makeDiscreteParam(id = "community.method", default = "louvain", values = c("fast_greedy", "edge_betweenness", "label_prop", "leading_eigen", "louvain", "spinglass", "walktrap", "auto")),
     makeDiscreteParam(id = "cluster.method", default = "kmeans", values = c("kmeans", "pam")),
     makeDiscreteParam(id = "k", default = 0, values = c(0, 3:20)),
     makeIntegerParam(id = "k.max", lower = 3L, upper = 20L, default = 10L),
@@ -40,9 +40,10 @@ run_slice <- function(
   B = 100,
   k.opt.method = "firstmax"
 ) {
-  requireNamespace("igraph")
   requireNamespace("SLICE")
+  requireNamespace("igraph")
 
+  # if k is 0, set to NULL
   if (k == 0) k = NULL
 
   # if cell_grouping is not given, fill it with 1's
@@ -61,7 +62,7 @@ run_slice <- function(
     cellidentity = cellidentity
   )
 
-  # Should we provide a better km?
+  # TODO: Should we provide a better km?
   # According to the documentation, km should be:
   # A symmetric matrix encoding the functional similarity of genes;
   # the row names and column names must be official NCBI gene symbols.
@@ -101,7 +102,7 @@ run_slice <- function(
     k.max = k.max,
     B = B,
     k.opt.method = k.opt.method,
-    do.plot = F
+    do.plot = FALSE
   )
 
   # extract the stable state to which each cell belongs
@@ -119,7 +120,7 @@ run_slice <- function(
     rename(length = weight) %>%
     mutate(directed = TRUE)
 
-  # now extract the pseudotimes
+  # extract the pseudotimes
   # this is not directly available for us,
   # we will use the method's functions to constuct small trajectories
   # between every stable state (SLICE uses principal curves)
@@ -130,7 +131,6 @@ run_slice <- function(
     fromid <- match(from, milestone_ids)
     toid <- match(to, milestone_ids)
 
-    # has to use pc here, because the other method does not return all cells
     sc_tmp <- SLICE::getTrajectories(
       sc,
       method = "pc",
@@ -159,6 +159,7 @@ run_slice <- function(
     select(-state) %>%
     ungroup()
 
+  # return output
   wrap_ti_prediction(
     ti_type = "tree",
     id = "SLICE",
@@ -176,35 +177,29 @@ plot_slice <- function(prediction) {
   sc <- prediction$sc
   list2env(sc@model, environment())
 
-  # Copied from the code of SLICE itself
-  # This code is painful to watch
-  ss.cells.df <- cells.df
-
-  g <- ggplot() + ggtitle("Inferred Lineage Model") + labs(x="PC1", y="PC2")
-  g <- g + geom_point(data=subset(cells.df, slice.realcell==1 & slice.stablestate != "NA" ), aes(x=x, y=y, col=slice.state, size=entropy))
-  g <- g + geom_point(data=cells.df[which(cells.df$slice.realcell==0), ], aes(x=x, y=y, size=entropy), col="black")
-  g <- g + geom_point(data=subset(cells.df, slice.realcell==1 & slice.stablestate == "NA" ), aes(x=x, y=y, col=slice.state, size=entropy))
-
-  edge.df <- as.data.frame(igraph::get.edgelist(lineageModel))
-  edge.df$src.x <- edge.df$src.y <- edge.df$dst.x <- edge.df$dst.y <- 0
-  for (ei in 1:dim(edge.df)[1]) {
-    src.id <- which(rownames(ss.cells.df) == as.character(edge.df$V1[ei]))
-    dst.id <- which(rownames(ss.cells.df) == as.character(edge.df$V2[ei]))
-    edge.df$src.x[ei] <- ss.cells.df$x[src.id]
-    edge.df$src.y[ei] <- ss.cells.df$y[src.id]
-    edge.df$dst.x[ei] <- ss.cells.df$x[dst.id]
-    edge.df$dst.y[ei] <- ss.cells.df$y[dst.id]
-  }
-  g <- g + geom_segment(data=edge.df, aes(x=src.x, y=src.y, xend=dst.x, yend=dst.y), size=I(2), linetype="solid", col=I("black"), alpha=0.6, arrow=arrow(), na.rm=TRUE)
-
-  g <- g +
-    theme(strip.background = element_rect(colour = 'white', fill = 'white')) +
-    theme(panel.border = element_blank(), axis.line = element_line()) +
-    theme(panel.grid.minor.x = element_blank(), panel.grid.minor.y = element_blank()) +
-    theme(panel.grid.major.x = element_blank(), panel.grid.major.y = element_blank()) +
-    theme(panel.background = element_rect(fill='white')) +
-    theme(legend.key = element_blank()) +
-    theme(axis.line.x = element_line(size=0.5), axis.line.y=element_line(size=0.5))
-
-  g
+  # Adapted from SLICE code
+  edge.df <- as.data.frame(igraph::get.edgelist(lineageModel)) %>%
+    mutate(
+      ix = match(V1, rownames(cells.df)),
+      iy = match(V2, rownames(cells.df)),
+      src.x = cells.df$x[ix],
+      src.y = cells.df$y[ix],
+      dst.x = cells.df$x[iy],
+      dst.y = cells.df$y[iy]
+    )
+  ggplot() +
+    ggtitle("Inferred Lineage Model") +
+    labs(x="PC1", y="PC2") +
+    geom_point(data=subset(cells.df, slice.realcell==1 & slice.stablestate != "NA" ), aes(x=x, y=y, col=slice.state, size=entropy)) +
+    geom_point(data=cells.df[which(cells.df$slice.realcell==0), ], aes(x=x, y=y, size=entropy), col="black") +
+    geom_point(data=subset(cells.df, slice.realcell==1 & slice.stablestate == "NA" ), aes(x=x, y=y, col=slice.state, size=entropy)) +
+    geom_segment(data=edge.df, aes(x=src.x, y=src.y, xend=dst.x, yend=dst.y), size=I(2), linetype="solid", col=I("black"), alpha=0.6, arrow=grid::arrow(), na.rm=TRUE) +
+    theme(
+      strip.background = element_rect(colour = 'white', fill = 'white'),
+      panel.border = element_blank(), axis.line = element_line(),
+      panel.grid.minor.x = element_blank(), panel.grid.minor.y = element_blank(),
+      panel.grid.major.x = element_blank(), panel.grid.major.y = element_blank(),
+      panel.background = element_rect(fill='white'),
+      legend.key = element_blank(),
+      axis.line.x = element_line(size=0.5), axis.line.y=element_line(size=0.5))
 }

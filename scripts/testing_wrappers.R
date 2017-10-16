@@ -125,3 +125,16 @@ low_gene_threshold = 1
 low_gene_fraction_max = 0.7
 min_split = 15
 min_percentage_split = 0.25
+
+# SLICE
+cell_grouping = NULL
+lm.method = "clustering"
+model.type = "tree"
+ss.method = "all"
+ss.threshold = 0.25
+community.method = "louvain"
+cluster.method = "kmeans"
+k = 0
+k.max = 10
+B = 100
+k.opt.method = "firstmax"
