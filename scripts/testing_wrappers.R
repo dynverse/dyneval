@@ -73,3 +73,11 @@ method = "kmeans"
 numcluster = 11
 diversity_cut = .6
 size_cut = .05
+
+# ouija
+iter = 20
+response_type = "switch"
+inference_type = "hmc"
+normalise_expression = TRUE
+
+
