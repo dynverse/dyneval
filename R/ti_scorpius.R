@@ -7,43 +7,46 @@ description_scorpius <- function() create_description(
   package_required = c("SCORPIUS"),
   par_set = makeParamSet(
     makeDiscreteParam(id = "distance_method", default = "spearman", values = c("spearman", "pearson", "kendall")),
-    makeIntegerParam(id = "num_dimensions", lower = 2L, default = 3L, upper = 20L),
-    makeIntegerParam(id = "num_clusters", lower = 2L, default = 4L, upper = 20L, special.vals = list(NULL)),
+    makeIntegerParam(id = "ndim", lower = 2L, default = 3L, upper = 20L),
+    makeIntegerParam(id = "k", lower = 0L, default = 4L, upper = 20L),
     makeNumericParam(id = "thresh", lower = -5, upper = 5, default = -3, trafo = function(x) 10^x),
     makeIntegerParam(id = "maxit", lower = 0L, upper = 50L, default = 10L),
     makeNumericParam(id = "stretch", lower = 0, upper = 5, default = 0),
     makeDiscreteParam(id = "smoother", default = "smooth.spline", values = c("smooth.spline", "lowess", "periodic.lowess"))
-
   ),
-  properties = c("tibble", "dimred", "dimred_traj", "pseudotime"),
+  properties = c(),
   run_fun = run_scorpius,
   plot_fun = plot_scorpius
 )
 
 run_scorpius <- function(counts,
-                         num_dimensions = 3, num_clusters = 4, distance_method = "spearman",
-                         thresh = .001, maxit = 10, stretch = 0, smoother = "smooth.spline") {
+                         ndim = 3,
+                         k = 4,
+                         distance_method = "spearman",
+                         thresh = .001,
+                         maxit = 10,
+                         stretch = 0,
+                         smoother = "smooth.spline") {
   requireNamespace("SCORPIUS")
+
+  # if k is too low, turn off clustering
+  if (k < 2) {
+    k <- NULL
+  }
 
   # transform counts
   expr <- log2(as.matrix(counts)+1)
 
   # calculate distances between cells
-  dist <- SCORPIUS::correlation_distance(
-    expr,
-    method = distance_method
-  )
+  dist <- SCORPIUS::correlation_distance(expr, method = distance_method)
 
   # perform dimensionality reduction
-  space <- SCORPIUS::reduce_dimensionality(
-    dist,
-    ndim = num_dimensions
-  )
+  space <- SCORPIUS::reduce_dimensionality(dist, ndim = ndim)
 
   # infer a trajectory through the data
   traj <- SCORPIUS::infer_trajectory(
     space,
-    k = num_clusters,
+    k = k,
     thresh = thresh,
     maxit = maxit,
     stretch = stretch,
@@ -55,23 +58,19 @@ run_scorpius <- function(counts,
     id = "SCORPIUS",
     cell_ids = rownames(counts),
     pseudotimes = traj$time,
-    dimred_samples = space,
-    dimred_traj = traj$path
+    space = space,
+    traj = traj
   )
 }
 
 #' @importFrom viridis scale_colour_viridis
-plot_scorpius <- function(ti_predictions) {
-  sample_df <- data.frame(
-    ti_predictions$dimred_samples,
-    pseudotime = ti_predictions$pseudotimes
-  )
-  traj_df <- data.frame(
-    ti_predictions$dimred_traj
-  )
-  ggplot() +
-    geom_point(aes(Comp1, Comp2, colour = pseudotime), sample_df) +
-    geom_path(aes(Comp1, Comp2), traj_df) +
-    coord_equal() +
-    viridis::scale_colour_viridis()
+plot_scorpius <- function(prediction) {
+  requireNamespace("SCORPIUS")
+  SCORPIUS::draw_trajectory_plot(
+    prediction$space,
+    prediction$traj$time,
+    prediction$traj$path
+  ) +
+    viridis::scale_colour_viridis() +
+    theme(legend.position = "none")
 }
