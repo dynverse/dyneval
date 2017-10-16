@@ -16,6 +16,7 @@ description_phenopath <- function() create_description(
   plot_fun = plot_phenopath
 )
 
+#' @importFrom stats prcomp
 run_phenopath <- function(counts,
                           thin = 40,
                           z_init = 1,
@@ -36,7 +37,7 @@ run_phenopath <- function(counts,
     model_mu = model_mu,
     scale_y = scale_y
   )
-  pseudotimes <- phenopath::trajectory(fit) %>% dynutils::scale_minmax()
+  pseudotimes <- phenopath::trajectory(fit)
 
   # run pca for visualisation purposes
   space <- stats::prcomp(expr)$x[,1:2] %>%
@@ -45,29 +46,11 @@ run_phenopath <- function(counts,
     as_data_frame() %>%
     mutate(pseudotime = pseudotimes)
 
-  # wrap output
-  milestone_ids <- c("milestone_A", "milestone_B")
-  milestone_network <- data_frame(
-    from = milestone_ids[[1]],
-    to = milestone_ids[[2]],
-    length = 1,
-    directed = FALSE
-  )
-  progressions <- data_frame(
-    cell_id = rownames(counts),
-    from = milestone_ids[[1]],
-    to = milestone_ids[[2]],
-    percentage = pseudotimes
-  )
-
   # return output
-  wrap_ti_prediction(
-    ti_type = "linear",
+  wrap_linear_ti_prediction(
     id = "phenopath",
     cell_ids = rownames(counts),
-    milestone_ids = milestone_ids,
-    milestone_network = milestone_network,
-    progressions = progressions,
+    pseudotimes = pseudotimes,
     space = space
   )
 }

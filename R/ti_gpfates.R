@@ -77,7 +77,6 @@ run_gpfates <- function(
   )
 }
 
-#' @importFrom viridis scale_color_viridis
 plot_gpfates <- function(prediction, type = c("dimred", "assignment")) {
   type <- match.arg(type)
   sample_df <- prediction$dimred_samples %>%

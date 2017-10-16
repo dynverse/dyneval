@@ -25,37 +25,46 @@ run_scorpius <- function(counts,
                          thresh = .001, maxit = 10, stretch = 0, smoother = "smooth.spline") {
   requireNamespace("SCORPIUS")
 
-  expression <- log2(as.matrix(counts)+1)
+  # transform counts
+  expr <- log2(as.matrix(counts)+1)
 
-  dist <- SCORPIUS::correlation_distance(expression, method = distance_method)
-  space <- SCORPIUS::reduce_dimensionality(dist, ndim = num_dimensions)
-  traj <- SCORPIUS::infer_trajectory(space, k = num_clusters, thresh = thresh, maxit = maxit, stretch = stretch, smoother = smoother)
-
-  milestone_ids <- c("milestone_A", "milestone_B")
-  milestone_network <- data_frame(from = milestone_ids[[1]], to = milestone_ids[[2]], length = 1, directed=TRUE)
-  milestone_percentages <- bind_rows(
-    data_frame(cell_id = rownames(expression), milestone_id = milestone_ids[[1]], percentage = 1 - traj$time),
-    data_frame(cell_id = rownames(expression), milestone_id = milestone_ids[[2]], percentage = traj$time)
+  # calculate distances between cells
+  dist <- SCORPIUS::correlation_distance(
+    expr,
+    method = distance_method
   )
 
-  wrap_ti_prediction(
-    ti_type = "linear",
+  # perform dimensionality reduction
+  space <- SCORPIUS::reduce_dimensionality(
+    dist,
+    ndim = num_dimensions
+  )
+
+  # infer a trajectory through the data
+  traj <- SCORPIUS::infer_trajectory(
+    space,
+    k = num_clusters,
+    thresh = thresh,
+    maxit = maxit,
+    stretch = stretch,
+    smoother = smoother
+  )
+
+  # return output
+  wrap_linear_ti_prediction(
     id = "SCORPIUS",
     cell_ids = rownames(counts),
-    milestone_ids = milestone_ids,
-    milestone_network = milestone_network,
-    milestone_percentages = milestone_percentages,
+    pseudotimes = traj$time,
     dimred_samples = space,
-    dimred_traj = traj$path,
-    pseudotime = traj$time
+    dimred_traj = traj$path
   )
 }
 
-#' @importFrom viridis scale_color_viridis
+#' @importFrom viridis scale_colour_viridis
 plot_scorpius <- function(ti_predictions) {
   sample_df <- data.frame(
     ti_predictions$dimred_samples,
-    pseudotime = ti_predictions$pseudotime
+    pseudotime = ti_predictions$pseudotimes
   )
   traj_df <- data.frame(
     ti_predictions$dimred_traj
@@ -64,5 +73,5 @@ plot_scorpius <- function(ti_predictions) {
     geom_point(aes(Comp1, Comp2, colour = pseudotime), sample_df) +
     geom_path(aes(Comp1, Comp2), traj_df) +
     coord_equal() +
-    scale_color_viridis()
+    viridis::scale_colour_viridis()
 }
