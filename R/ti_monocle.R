@@ -1,165 +1,137 @@
 #' Description for monocle DDRTree
 #' @export
-description_monocle_ddrtree <- function() abstract_monocle_description("DDRTree")
+description_monocle2_ddrtree <- function() abstract_monocle_description("DDRTree")
 
-#' Description for monocle PQTree
+#' Description for monocle ICA
 #' @export
-description_monocle_pqtree <- function() abstract_monocle_description("ICA")
+description_monocle1_ica <- function() abstract_monocle_description("ICA")
+
+# These reduction methods are not implemented yet.
+#
+# #' Description for monocle SimplePPT
+# #' @export
+# description_monocle2_simpleppt <- function() abstract_monocle_description("SimplePPT")
+#
+# #' Description for monocle L1-graph
+# #' @export
+# description_monocle2_l1graph <- function() abstract_monocle_description("L1-graph")
+#
+# #' Description for monocle SGL-tree
+# #' @export
+# description_monocle2_sgltree <- function() abstract_monocle_description("SGL-tree")
 
 abstract_monocle_description <- function(reduction_method) {
-  if(reduction_method == "DDRTree") {
-    par_set <- makeParamSet(
-      makeDiscreteParam(id = "reduction_method", values = "DDRTree", default = "DDRTree"),
-      makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
+  par_set <- switch(
+    reduction_method,
+    DDRTree = makeParamSet(
+      makeDiscreteParam(id = "reduction_method", values = reduction_method, default = reduction_method),
+      makeIntegerParam(id = "max_components", lower = 2L, default = 2L, upper = 20L),
       makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
-      makeIntegerParam(id = "maxIter", lower = 1L, default = 20L, upper = 100L),
-      makeNumericParam(id = "sigma", lower = 0, default = .001, upper = 100),
-      makeLogicalParam(id = "lambda_null", default = TRUE),
-      makeNumericParam(id = "lambda", lower = 0, default = 5, upper = 100),
-      makeLogicalParam(id = "ncenter_null", default = TRUE),
-      makeIntegerParam(id = "ncenter", lower = 3L, default = 5L, upper = 20L),
-      makeNumericParam(id = "param.gamma", lower = 0, default = 20, upper = 1e5),
-      makeNumericParam(id = "tol", lower = 0, default = .001, upper = 10),
       makeLogicalParam(id = "auto_param_selection", default = TRUE)
-    )
-  } else if(reduction_method == "ICA"){
-    par_set <- makeParamSet(
-      makeDiscreteParam(id = "reduction_method", values = "ICA", default = "ICA"),
-      makeIntegerParam(id = "num_dimensions", lower = 2L, default = 2L, upper = 20L),
+    ),
+    ICA = makeParamSet(
+      makeDiscreteParam(id = "reduction_method", values = reduction_method, default = reduction_method),
+      makeIntegerParam(id = "max_components", lower = 2L, default = 2L, upper = 20L),
       makeDiscreteParam(id = "norm_method", default = "vstExprs", values = c("vstExprs", "log", "none")),
-      makeNumericParam(id = "lambda", lower = 0, default = 5, upper = 100),
-      makeLogicalParam(id = "ncenter_null", default = TRUE),
-      makeNumericParam(id = "tol", lower = 0, default = .001, upper = 10),
-      makeLogicalParam(id = "auto_param_selection", default = TRUE)
+      makeIntegerParam(id = "num_paths", lower = 1L, default = 1L, upper = 20L)
     )
-  }
+  )
 
-  run_fun <- run_monocle
-  formals(run_fun)$reduction_method <- reduction_method
-
+  short_name <- c(
+    "DDRTree" = "mnclDDR",
+    "ICA" = "mnclICA",
+    "tSNE" = "mncltSNE",
+    "SimplePPT" = "mnclSPPT",
+    "L1-graph" = "mnclL1gr",
+    "SGL-tree" = "mnclSGLT"
+  )
   create_description(
-    name = glue::glue("monocle with {ifelse(reduction_method == 'DDRTree', 'DDRTree', 'ICA and PQTree')}"),
-    short_name = ifelse(reduction_method == "DDRTree", "monocDDR", "monocPQ"),
-    package_loaded = c("monocle", "igraph", "reshape2"),
-    package_required = c(),
+    name = glue::glue("monocle with {reduction_method}"),
+    short_name = short_name[reduction_method],
+    package_loaded = c("monocle"),
+    package_required = c("BiocGenerics", "igraph", "Biobase"),
     par_set = par_set,
     properties = c(),
-    run_fun = run_fun,
+    run_fun = run_monocle,
     plot_fun = plot_monocle
   )
 }
 
-#' @importFrom igraph degree all_shortest_paths distances
-#' @importFrom reshape2 melt
 run_monocle <- function(counts,
                         reduction_method,
                         start_cell_id = NULL,
-                        num_dimensions = 2,
+                        max_components = 2,
                         norm_method = "vstExprs",
-                        maxIter = 20,
-                        sigma = 0.001,
-                        lambda_null = TRUE,
-                        lambda = NULL,
-                        ncenter_null = TRUE,
-                        ncenter = NULL,
-                        param.gamma = 20,
-                        tol = 0.001,
-                        auto_param_selection = TRUE) {
+                        auto_param_selection = TRUE,
+                        num_paths = NULL) {
   requireNamespace("monocle")
+  requireNamespace("BiocGenerics")
+  requireNamespace("igraph")
+  requireNamespace("Biobase")
 
-  if (lambda_null) lambda <- NULL
-  if (ncenter_null) ncenter <- NULL
+  # TODO: implement num_paths prior for monocle 1
+
+  # just in case
   if (is.factor(norm_method)) norm_method <- as.character(norm_method)
 
   # load in the new dataset
-  expr <- counts
-  #expr <- log2(as.matrix(counts)+1)
-  featureData <- new("AnnotatedDataFrame", data.frame(row.names = colnames(expr), gene_short_name = colnames(expr)))
-  cds_1 <- monocle::newCellDataSet(t(expr), featureData = featureData)
+  pd <- Biobase::AnnotatedDataFrame(data.frame(row.names = rownames(counts)))
+  fd <- Biobase::AnnotatedDataFrame(data.frame(row.names = colnames(counts), gene_short_name = colnames(counts)))
+  cds <- monocle::newCellDataSet(t(counts), pd, fd)
 
-  # estimate sparameters
-  cds_1 <- monocle::estimateSizeFactors(cds_1)
-  cds_1 <- monocle::estimateDispersions(cds_1, cores = 1)
+  # estimate size factors and dispersions
+  cds <- BiocGenerics::estimateSizeFactors(cds)
+  cds <- BiocGenerics::estimateDispersions(cds)
 
-  # reduce dimension
-  if(reduction_method == "DDRTree") {
-    cds_2 <- monocle::reduceDimension(cds_1,
-                             reduction_method = reduction_method,
-                             max_components = num_dimensions, norm_method = norm_method,
-                             maxIter = maxIter, sigma = sigma, lambda = lambda, ncenter = ncenter,
-                             param.gamma = param.gamma, tol = tol, auto_param_selection = auto_param_selection, cores = 1)
-  } else if (reduction_method == "ICA") {
-    cds_2 <- monocle::reduceDimension(cds_1,
-                             reduction_method = reduction_method,
-                             max_components = num_dimensions, norm_method = norm_method,
-                             tol = tol, auto_param_selection = auto_param_selection)
-  }
-
+  # reduce the dimensionality
+  cds <- monocle::reduceDimension(
+    cds,
+    max_components = max_components,
+    reduction_method = reduction_method,
+    norm_method = norm_method,
+    auto_param_selection = auto_param_selection
+  )
 
   # order the cells
-  cds_3 <- monocle::orderCells(cds_2, reverse = FALSE)
+  cds <- monocle::orderCells(cds, num_paths = num_paths)
 
-  orderingData <- cds_3@auxOrderingData[[reduction_method]] # location of ordering data depends on reduction method
-  # retrieve the graph and the root cell, also depends on reduction method (-_-)
-  if (reduction_method == "DDRTree") {
-    gr <- orderingData$pr_graph_cell_proj_tree
-  } else if (reduction_method == "ICA") {
-    gr <- orderingData$cell_ordering_tree
-  }
-
-  if(is.null(start_cell_id)) {
-    root <- orderingData$root_cell
-  } else {
-    root <- start_cell_id
-  }
-
-  # find the branching cells and the terminal cells using the degree
-  deg <- igraph::degree(gr, mode = c("all"))
-  milestone_ids <- names(deg)[deg != 2]
-  branching <- names(deg)[deg > 2]
-  terminal <- names(deg)[deg == 1]
-
-  asp <- igraph::all_shortest_paths(gr, from = root, to = milestone_ids, mode = c("all"))
-  asp2 <- lapply(asp$res, function(path) {
-    last_bit <- tail(which(path$name %in% milestone_ids), 2)
-    print(last_bit)
-    if (length(last_bit) == 1) {
-      path[last_bit]
-    } else {
-      path[last_bit[[1]]:last_bit[[2]]]
+  # extract the igraph and which cells are on the trajectory
+  gr <-
+    if (reduction_method == "DDRTree") {
+      monocle::minSpanningTree(cds)
+    } else if (reduction_method == "ICA") {
+      cds@auxOrderingData$ICA$cell_ordering_tree
     }
-  })
-  asp2 <- asp2[sapply(asp2, length) > 1]
-  dist_m <- igraph::distances(gr, v = milestone_ids, to = milestone_ids)
+  to_keep <- setNames(rep(TRUE, nrow(counts)), rownames(counts))
 
-  milestone_network <- bind_rows(lapply(asp2, function(p) {
-    from_ <- head(p, 1)$name
-    to_ <- tail(p, 1)$name
-    data_frame(from = paste0("milestone_", from_), to = paste0("milestone_", to_), length = dist_m[[from_, to_]])
-  })) %>% mutate(length = length / max(length), directed=TRUE)
+  # convert to milestone representation
+  edges <- igraph::as_data_frame(gr, "edges")
 
-  milestone_percentages <- bind_rows(lapply(asp2, function(path) {
-    dists <- t(igraph::distances(gr, v = path[c(1, length(path))], to = path))
-    pct <- 1 - t(apply(dists, 1, function(x) x / sum(x)))
-    pct %>%
-      reshape2::melt(varnames = c("cell_id", "milestone_id"), value.name = "percentage") %>%
-      mutate(cell_id = as.character(cell_id), milestone_id = paste0("milestone_", as.character(milestone_id)))
-  })) %>% as_tibble() %>% filter(percentage > 0) %>% distinct(cell_id, milestone_id, percentage)
-  milestone_ids <- paste0("milestone_", milestone_ids)
+  if ("weight" %in% edges) {
+    edges <- edges %>% rename(length = weight)
+  } else {
+    edges <- edges %>% mutate(length = 1)
+  }
+
+  out <- dynutils::simplify_sample_graph(
+    edges =  edges %>% mutate(directed = FALSE),
+    to_keep = to_keep,
+    is_directed = FALSE
+  )
 
   # wrap output
   wrap_ti_prediction(
     ti_type = "tree",
-    id = ifelse(reduction_method == "DDRTree", "monocDDR", "monocPQ"),
+    id = paste0("monocle_", reduction_method),
     cell_ids = rownames(counts),
-    milestone_ids = milestone_ids,
-    milestone_network = milestone_network,
-    milestone_percentages = milestone_percentages,
-    cds = cds_3
+    milestone_ids = out$milestone_ids,
+    milestone_network = out$milestone_network,
+    progressions = out$progressions,
+    cds = cds
   )
 }
 
-plot_monocle <- function(ti_predictions) {
+plot_monocle <- function(prediction) {
   requireNamespace("monocle")
-  monocle::plot_cell_trajectory(ti_predictions$cds)
+  monocle::plot_cell_trajectory(prediction$cds)
 }

@@ -47,10 +47,13 @@ test_that("Testing create_description with dummy method", {
     short_name = "dum1",
     package_loaded = c("dynverse"),
     package_required = c("tidyverse"),
-    par_set = ParamHelpers::makeParamSet(),
+    par_set = ParamHelpers::makeParamSet(
+      ParamHelpers::makeDiscreteParam(id = "param", default = "banana", values = c("apple", "banana", "cherry"))
+    ),
     properties = c("space", "trajectory"),
-    run_fun = function(counts, param = "fjioiw") "pie",
-    plot_fun = function(out) "cake"
+    run_fun = function(counts, param = "fjioiw") param,
+    plot_fun = function(out) "cake",
+    override_runfun_params = TRUE
   )
   expect_equal( dummy$name, "dummy 1" )
   expect_equal( dummy$short_name, "dum1" )
@@ -59,9 +62,26 @@ test_that("Testing create_description with dummy method", {
   expect_is( dummy$par_set, "ParamSet" )
   expect_equal( dummy$properties, c("space", "trajectory") )
   expect_is( dummy$run_fun, "function" )
-  expect_equal( dummy$run_fun(NULL), "pie" )
+  # take into account parameter overwriting by parmamset
+  expect_equal( dummy$run_fun(NULL), "banana" )
   expect_is( dummy$plot_fun, "function" )
   expect_equal( dummy$plot_fun(NULL), "cake" )
+
+  dummy <- dyneval:::create_description(
+    name = "dummy 1",
+    short_name = "dum1",
+    package_loaded = c("dynverse"),
+    package_required = c("tidyverse"),
+    par_set = ParamHelpers::makeParamSet(
+      ParamHelpers::makeDiscreteParam(id = "param", default = "banana", values = c("apple", "banana", "cherry"))
+    ),
+    properties = c("space", "trajectory"),
+    run_fun = function(counts, param = "fjioiw") param,
+    plot_fun = function(out) "cake",
+    override_runfun_params = FALSE
+  )
+  # take into account parameter overwriting by parmamset
+  expect_equal( dummy$run_fun(NULL), "fjioiw" )
 })
 
 
