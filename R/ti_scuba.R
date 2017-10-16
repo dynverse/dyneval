@@ -28,6 +28,7 @@ run_scuba <- function(counts,
                       min_percentage_split = 0.25) {
   requireNamespace("SCUBA")
 
+  # run scuba
   out <- SCUBA::SCUBA(
     counts = counts,
     rigorous_gap_stats = rigorous_gap_stats,
@@ -38,10 +39,12 @@ run_scuba <- function(counts,
     min_percentage_split = min_percentage_split
   )
 
+  # get milestones
   unique_labs <- sort(unique(out$labels))
-
   milestone_fun <- function(x) paste0("milestone_", x)
+  milestone_ids <- milestone_fun(unique_labs)
 
+  # construct network
   milestone_network <- out$new_tree %>%
     select(from = `Parent cluster`, to = `Cluster ID`) %>%
     filter(to %in% unique_labs) %>%
@@ -52,13 +55,11 @@ run_scuba <- function(counts,
       directed = TRUE
     )
 
+  # put cells on edges
   both_directions <- bind_rows(
     milestone_network %>% select(from, to) %>% mutate(label = from, percentage = 0),
     milestone_network %>% select(from, to) %>% mutate(label = to, percentage = 1)
   )
-
-  milestone_ids <- milestone_fun(unique_labs)
-
   progressions <- data_frame(
     cell_id = rownames(counts),
     label = milestone_fun(out$labels)
@@ -70,6 +71,7 @@ run_scuba <- function(counts,
     ungroup() %>%
     select(-label)
 
+  # return output
   wrap_ti_prediction(
     ti_type = "tree",
     id = "SCUBA",
@@ -86,25 +88,27 @@ run_scuba <- function(counts,
 plot_scuba <- function(prediction) {
   requireNamespace("igraph")
 
+  #retrieve data
   cids <- prediction$cell_ids
   mids <- prediction$milestone_ids
   mnet <- prediction$milestone_network
   progs <- prediction$progressions
 
+  # set colours
   mid_col <- setNames(seq_along(mids), mids)
 
+  # perform dimred on network
   gr <- igraph::graph_from_data_frame(mnet, vertices = mids)
   lay <- igraph::layout_as_tree(gr, root = "milestone_0") %>%
     dynutils::scale_uniform()
   rownames(lay) <- mids
   colnames(lay) <- c("x", "y")
 
+  # get clusters of cells
   labs <- progs %>% mutate(label = ifelse(percentage == 0, from, to)) %>% .$label
 
-  mil_df <- data.frame(
-    id = mids,
-    lay
-  )
+  # make plot of clusters
+  mil_df <- data.frame(id = mids, lay)
   edge_df <- data.frame(
     mnet,
     from = lay[mnet$from,],
@@ -118,8 +122,8 @@ plot_scuba <- function(prediction) {
   )
 
   ggplot() +
-    geom_segment(aes(x = from.y, xend = to.y, y = from.x, yend = to.x), edge_df, arrow = grid::arrow()) +
     geom_jitter(aes(y, x, colour = lab), cel_df, width = .03, height = .03) +
+    geom_segment(aes(x = from.y, xend = to.y, y = from.x, yend = to.x), edge_df, arrow = grid::arrow()) +
     ylim(-.5, .5) +
     scale_colour_manual(values = mid_col) +
     cowplot::theme_cowplot() +
