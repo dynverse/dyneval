@@ -18,36 +18,48 @@ description_slicer <- function() create_description(
 )
 
 run_slicer <- function(counts,
-                      start_cell_id,
-                      end_cell_ids = NULL,
-                      kmin = 10,
-                      m = 2,
-                      min_branch_len = 5,
-                      min_representative_percentage = 0.8,
-                      max_same_milestone_distance = 0.1) {
+                       start_cell_id,
+                       end_cell_ids = NULL,
+                       kmin = 10,
+                       m = 2,
+                       min_branch_len = 5,
+                       min_representative_percentage = 0.8,
+                       max_same_milestone_distance = 0.1) {
   requireNamespace("SLICER")
   requireNamespace("lle")
   requireNamespace("igraph")
 
-  expression <- log2(counts + 1)
-  genes <- SLICER::select_genes(expression)
-  expression_filtered <- expression[, genes]
+  # log transform expresison
+  expr <- log2(counts + 1)
 
-  k <- SLICER::select_k(expression_filtered, kmin=kmin)
-  traj_lle <- lle::lle(expression_filtered, m=m, k)$Y
-  traj_graph <- SLICER::conn_knn_graph(traj_lle, k=k)
+  # use 'neighbourhood variance' to identify genes that vary smoothly
+  genes <- SLICER::select_genes(expr)
+  expr_filt <- expr[, genes]
 
+  # determine k for knn
+  k <- SLICER::select_k(expr_filt, kmin = kmin)
+
+  # perform local linear embedding
+  traj_lle <- lle::lle(expr_filt, m = m, k = k)$Y
+  traj_graph <- SLICER::conn_knn_graph(traj_lle, k = k)
+
+  # find extreme cells
   if (is.null(end_cell_ids)) {
     ends <- SLICER::find_extreme_cells(traj_graph, traj_lle)
   } else {
     ends <- match(c(start_cell_id, end_cell_ids), rownames(counts))
   }
 
+  # order cells
   start <- which(rownames(expression_filtered) == start_cell_id)
   cells_ordered <- SLICER::cell_order(traj_graph, start)
-  branches <- SLICER::assign_branches(traj_graph, start, min_branch_len=min_branch_len) %>% factor %>% set_names(rownames(expression_filtered))
 
-  # TODO: clean up code, add comments
+  # assign cells to branches
+  branches <- SLICER::assign_branches(traj_graph, start, min_branch_len = min_branch_len) %>%
+    factor %>%
+    setNames(rownames(expr))
+
+  # TODO: WIP
 
   # from SLICER we get the branch assignment, and the overall ordering of the cells from the start point
   progressions <- tibble(
