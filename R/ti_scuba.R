@@ -7,90 +7,122 @@ description_scuba <- function() create_description(
   package_required = c("jsonlite", "readr", "SCUBA"),
   par_set = makeParamSet(
     makeLogicalParam(id = "rigorous_gap_stats", default = TRUE),
-    makeIntegerParam(id = "N_dim", lower=2L, upper=3L, default=2L), # limit to 3, limitation of sklearn tsne
+    makeIntegerParam(id = "N_dim", lower = 2L, upper = 3L, default = 2L), # limit to 3, limitation of sklearn tsne
     makeNumericParam(id = "low_gene_threshold", lower = 0, upper = 5, default = 1),
     makeNumericParam(id = "low_gene_fraction_max", lower = 0, upper = 1, default = 0.7),
-    makeIntegerParam(id = "min_split", lower=1L, upper=100L, default=15L),
-    makeNumericParam(id = "min_percentage_split", lower=0, upper=1, default=0.25)
+    makeIntegerParam(id = "min_split", lower=1L, upper = 100L, default = 15L),
+    makeNumericParam(id = "min_percentage_split", lower = 0, upper = 1, default = 0.25)
   ),
   properties = c(),
   run_fun = run_scuba,
   plot_fun = plot_scuba
 )
 
-#' @importFrom utils write.table
+
 run_scuba <- function(counts,
-                      rigorous_gap_stats=TRUE,
-                      N_dim=2,
-                      low_gene_threshold=1,
-                      low_gene_fraction_max=0.7,
-                      min_split=15,
-                      min_percentage_split=0.25) {
+                      rigorous_gap_stats = TRUE,
+                      N_dim = 2,
+                      low_gene_threshold = 1,
+                      low_gene_fraction_max = 0.7,
+                      min_split = 15,
+                      min_percentage_split = 0.25) {
+  requireNamespace("SCUBA")
 
-  requireNamespace("jsonlite")
-  temp_folder <- tempfile()
-  dir.create(temp_folder, recursive = TRUE)
-
-  counts %>%
-    #{log2(. + 1)} %>%
-    t %>%
-    as.data.frame() %>%
-    write.table(paste0(temp_folder, "/counts.tsv"), sep="\t", col.names=NA)
-
-  system2(
-    "/bin/bash",
-    args = c(
-      "-c",
-      shQuote(glue::glue(
-        "cd {find.package('SCUBA')}/venv",
-        "source bin/activate",
-        "python3 {find.package('SCUBA')}/wrapper.py {temp_folder} 0 {c(0, 1)[as.numeric(rigorous_gap_stats)+1]} {N_dim} {low_gene_threshold} {low_gene_fraction_max} {min_split} {min_percentage_split}",
-        .sep = ";"))
-    )
+  out <- SCUBA::SCUBA(
+    counts = counts,
+    rigorous_gap_stats = rigorous_gap_stats,
+    N_dim = N_dim,
+    low_gene_threshold = low_gene_threshold,
+    low_gene_fraction_max = low_gene_fraction_max,
+    min_split = min_split,
+    min_percentage_split = min_percentage_split
   )
 
-  output <- jsonlite::read_json(paste0(temp_folder, "/output.json"))
-  labels <- as.character(unlist(output$labels))
+  unique_labs <- sort(unique(out$labels))
 
-  milestone_network <- output$new_tree %>%
-    map(unlist) %>%
-    .[-1] %>%
-    map(as.numeric) %>%
-    do.call(rbind, .) %>%
-    .[, c(1, 3)] %>%
-    as.data.frame() %>%
-    magrittr::set_colnames(c("from", "to")) %>%
+  milestone_fun <- function(x) paste0("milestone_", x)
+
+  milestone_network <- out$new_tree %>%
+    select(from = `Parent cluster`, to = `Cluster ID`) %>%
+    filter(to %in% unique_labs) %>%
     mutate(
-      length=1,
-      from=as.character(from),
-      to=as.character(to),
-      directed=TRUE
+      from = milestone_fun(from),
+      to = milestone_fun(to),
+      length = 1,
+      directed = TRUE
     )
 
-  milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
-
-  milestone_percentages <- data_frame(
-    cell_id = rownames(counts),
-    milestone_id = labels,
-    percentage = 1
+  both_directions <- bind_rows(
+    milestone_network %>% select(from, to) %>% mutate(label = from, percentage = 0),
+    milestone_network %>% select(from, to) %>% mutate(label = to, percentage = 1)
   )
 
-  # remove temporary output
-  unlink(temp_folder, recursive = TRUE)
+  milestone_ids <- milestone_fun(unique_labs)
+
+  progressions <- data_frame(
+    cell_id = rownames(counts),
+    label = milestone_fun(out$labels)
+  ) %>%
+    left_join(both_directions, by = "label") %>%
+    group_by(cell_id) %>%
+    arrange(desc(percentage)) %>%
+    slice(1) %>%
+    ungroup() %>%
+    select(-label)
 
   wrap_ti_prediction(
-    ti_type = "linear",
+    ti_type = "tree",
     id = "SCUBA",
     cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
-    milestone_percentages = milestone_percentages
-    # ... add more output
+    progressions = progressions,
+    out = out
   )
 }
 
-plot_scuba <- function(ti_predictions) {
-  g <- ti_predictions$milestone_network %>% igraph::graph_from_data_frame()
-  l <- igraph::layout_as_tree(g)
-  igraph::plot.igraph(g, layout=l)
+#' @importFrom grid arrow
+#' @importFrom cowplot theme_cowplot
+plot_scuba <- function(prediction) {
+  requireNamespace("igraph")
+
+  cids <- prediction$cell_ids
+  mids <- prediction$milestone_ids
+  mnet <- prediction$milestone_network
+  progs <- prediction$progressions
+
+  mid_col <- setNames(seq_along(mids), mids)
+
+  gr <- igraph::graph_from_data_frame(mnet, vertices = mids)
+  lay <- igraph::layout_as_tree(gr, root = "milestone_0") %>%
+    dynutils::scale_uniform()
+  rownames(lay) <- mids
+  colnames(lay) <- c("x", "y")
+
+  labs <- progs %>% mutate(label = ifelse(percentage == 0, from, to)) %>% .$label
+
+  mil_df <- data.frame(
+    id = mids,
+    lay
+  )
+  edge_df <- data.frame(
+    mnet,
+    from = lay[mnet$from,],
+    to = lay[mnet$to,]
+  )
+  cel_df <- data.frame(
+    row.names = NULL,
+    id = cids,
+    lab = labs,
+    lay[labs,]
+  )
+
+  ggplot() +
+    geom_segment(aes(x = from.y, xend = to.y, y = from.x, yend = to.x), edge_df, arrow = grid::arrow()) +
+    geom_jitter(aes(y, x, colour = lab), cel_df, width = .03, height = .03) +
+    ylim(-.5, .5) +
+    scale_colour_manual(values = mid_col) +
+    cowplot::theme_cowplot() +
+    theme(legend.position = "none") +
+    labs(x = "Comp1", y = "Comp2")
 }
