@@ -46,13 +46,12 @@ benchmark_suite_submit <- function(
   testthat::expect_equal(nrow(tasks), length(task_fold))
   testthat::expect_is(methods, "tbl")
 
-  ## MBO settings
+  ## set settings for MBO parameter optimisation
   control_train <- mlrMBO::makeMBOControl(
     n.objectives = length(metrics),
     propose.points = num_cores,
     impute.y.fun = impute_y_fun(length(metrics))) %>%
     mlrMBO::setMBOControlTermination(iters = num_iterations)
-
   if (length(metrics) == 1) {
     control_train <- control_train %>%
       mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritCB())
@@ -63,6 +62,9 @@ benchmark_suite_submit <- function(
   control_test <- control_train
   control_test$iters <- 1
   control_test$propose.points <- 1
+
+  ## create learner for predicting performance of new params
+  mlr::configureMlr(show.learner.output = FALSE)
   learner <- mlr::makeLearner(
     "regr.randomForest",
     se.method = "jackknife",
@@ -70,7 +72,8 @@ benchmark_suite_submit <- function(
     keep.inbag = TRUE
   )
 
-  ## Grid settings
+  ## create a grid for each of the folds, groups, and repeats.
+  ## one task will be created per row in this grid
   grid <- expand.grid(
     fold_i = sort(unique(task_fold)),
     group_sel = sort(unique(task_group)),
@@ -78,7 +81,7 @@ benchmark_suite_submit <- function(
     stringsAsFactors = FALSE
   )
 
-  ## Run MBO
+  ## run MBO for each method separatelly
   for (methodi in seq_len(nrow(methods))) {
     method <- dynutils::extract_row_to_list(methods, methodi)
 
@@ -89,6 +92,7 @@ benchmark_suite_submit <- function(
 
     dir.create(method_folder, recursive = TRUE, showWarnings = FALSE)
 
+    ## If no output or qsub handle exists yet
     if (!file.exists(output_file) && !file.exists(qsubhandle_file)) {
       cat("Submitting ", method$name, "\n", sep="")
 
@@ -101,7 +105,7 @@ benchmark_suite_submit <- function(
         ParamHelpers::generateDesign(n = num_init_params, par.set = method$par_set)
       )
 
-      # cluster params
+      # set parameters for the cluster
       qsub_config <- PRISM::override_qsub_config(
         wait = FALSE,
         num_cores = num_cores,
@@ -113,60 +117,73 @@ benchmark_suite_submit <- function(
         max_wall_time = max_wall_time,
         execute_before = "export R_MAX_NUM_DLLS=300"
       )
+
+      # if the cluster data needs to be saved to dyneval output folder
       if (save_r2g_to_outdir) {
         qsub_config$local_tmp_path <- paste0(method_folder, "/r2gridengine")
         dir.create(qsub_config$local_tmp_path, recursive = T, showWarnings = F)
       }
+
+      # which packages to load on the cluster
       qsub_packages <- c("dplyr", "purrr", "dyneval", "mlrMBO", "parallelMap")
+
+      # which data objects will need to be transferred to the cluster
       qsub_environment <-  c(
         "method", "obj_fun", "design",
         "tasks", "task_group", "task_fold",
         "num_cores", "metrics",
         "control_train", "control_test", "grid")
 
+      # the function to run on the cluster
+      qsub_x <- seq_len(nrow(grid))
+
+      qsub_fun <- function(grid_i) {
+        fold_i <- grid[grid_i,]$fold_i
+        group_sel <- grid[grid_i,]$group_sel
+        repeat_i <- grid[grid_i,]$repeat_i
+
+        ## start parameter optimisation
+        # TODO: If the models should be outputted, change the output_model
+        # and process the output
+
+        parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
+        tune_train <- mlrMBO::mbo(
+          obj_fun,
+          learner = learner,
+          design = design,
+          control = control_train,
+          show.info = TRUE,
+          more.args = list(
+            tasks = tasks[task_group == group_sel & task_fold != fold_i,],
+            output_model = FALSE #"models/"
+          )
+        )
+        tune_test <- mlrMBO::mbo(
+          obj_fun,
+          learner = learner,
+          design = tune_train$opt.path$env$path %>% select(-starts_with("y_"), -one_of("y")),
+          control = control_test,
+          show.info = TRUE,
+          more.args = list(
+            tasks = tasks[task_group == group_sel & task_fold == fold_i,],
+            output_model = FALSE #"models/"
+          )
+        )
+        parallelMap::parallelStop()
+
+        list(design = design, tune_train = tune_train, tune_test = tune_test)
+      }
+
       # submit to the cluster
       qsub_handle <- PRISM::qsub_lapply(
-        X = seq_len(nrow(grid)),
+        X = qsub_x,
         qsub_environment = qsub_environment,
         qsub_packages = qsub_packages,
         qsub_config = qsub_config,
-        FUN = function(grid_i) {
-          fold_i <- grid[grid_i,]$fold_i
-          group_sel <- grid[grid_i,]$group_sel
-          repeat_i <- grid[grid_i,]$repeat_i
+        FUN = qsub_fun
+      )
 
-          ## start parameter optimisation
-          # TODO: If the models should be outputted, change the output_model
-          # and process the output
-
-          parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
-          tune_train <- mlrMBO::mbo(
-            obj_fun,
-            learner = learner,
-            design = design,
-            control = control_train,
-            show.info = TRUE,
-            more.args = list(
-              tasks = tasks[task_group == group_sel & task_fold != fold_i,],
-              output_model = FALSE #"models/"
-            )
-          )
-          tune_test <- mlrMBO::mbo(
-            obj_fun,
-            learner = learner,
-            design = tune_train$opt.path$env$path %>% select(-starts_with("y_"), -one_of("y")),
-            control = control_test,
-            show.info = TRUE,
-            more.args = list(
-              tasks = tasks[task_group == group_sel & task_fold == fold_i,],
-              output_model = FALSE #"models/"
-            )
-          )
-          parallelMap::parallelStop()
-
-          list(design = design, tune_train = tune_train, tune_test = tune_test)
-        })
-
+      # save data and handle to RDS file
       out <- lst(
         method, obj_fun, design, tasks, task_group,
         task_fold, num_cores, metrics,
