@@ -117,3 +117,11 @@ t_max = 2
 sigma_squared_min = .1
 thresh = .01
 verbose = TRUE
+
+# SCUBA
+rigorous_gap_stats = TRUE
+N_dim = 2
+low_gene_threshold = 1
+low_gene_fraction_max = 0.7
+min_split = 15
+min_percentage_split = 0.25
