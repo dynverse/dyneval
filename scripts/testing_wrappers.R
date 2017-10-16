@@ -95,3 +95,12 @@ smoothing_beta = 3
 pseudotime_mean = 0.5
 pseudotime_var = 1
 initialise_from = "random"
+
+# SCORPIUS
+ndim = 3
+k = 4
+distance_method = "spearman"
+thresh = .001
+maxit = 10
+stretch = 0
+smoother = "smooth.spline"
