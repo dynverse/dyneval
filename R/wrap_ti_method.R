@@ -115,11 +115,11 @@ execute_method <- function(
 
       # Disable seed setting
       orig_setseed <- base::set.seed
-      override_setseed(function(i) {})
+      dynutils::override_setseed(function(i) {})
 
       # Run method on each task
       outputs <- lapply(seq_len(nrow(tasks)), function(i) {
-        task <- extract_row_to_list(tasks, i)
+        task <- dynutils::extract_row_to_list(tasks, i)
 
         summary <- data.frame(row.names = 1)
 
@@ -169,7 +169,7 @@ execute_method <- function(
         list(model = model, summary = summary)
       })
 
-      override_setseed(orig_setseed)
+      dynutils::override_setseed(orig_setseed)
 
       outputs
     }
