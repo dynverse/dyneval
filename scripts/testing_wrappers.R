@@ -158,7 +158,6 @@ min_representative_percentage = 0.8
 max_same_milestone_distance = 0.1
 
 # slingshot
-
 start_cell_id = NULL
 end_cell_ids = NULL
 ndim = 3
@@ -173,7 +172,27 @@ stretch=2
 smoother = "smooth.spline"
 shrink.method = "cosine"
 
-
+# stemid
+clustnr = 30
+bootnr = 50
+metric = "pearson"
+num_cluster_method = "sat"
+SE.method = "Tibs2001SEmax"
+SE.factor = .25
+B.gap = 50
+cln = 0
+FUNcluster = "kmedoids"
+dimred_method = "tsne"
+outminc = 5
+outlg = 2
+probthr = 1e-3
+thr_lower = -40
+thr_upper = -1
+outdistquant = .95
+nmode = FALSE
+pdishuf = 2000
+pthr = .01
+pethr = .01
 
 
 
