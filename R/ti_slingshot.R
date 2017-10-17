@@ -22,7 +22,9 @@ description_slingshot <- function() create_description(
   run_fun = run_slingshot,
   plot_fun = plot_slingshot
 )
+
 #' @importFrom stats prcomp kmeans
+#' @importFrom pdist pdist
 run_slingshot <- function(
   counts,
   start_cell_id = NULL,
