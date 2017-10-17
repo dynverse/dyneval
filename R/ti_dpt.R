@@ -35,8 +35,10 @@ run_dpt <- function(counts,
   # create n_local vector
   n_local <- seq(n_local_lower, n_local_upper, by = 1)
 
+  # transform counts
   expr <- log2(counts+1)
 
+  # run diffusion maps
   dm <- destiny::DiffusionMap(
     expr,
     sigma = sigma,
@@ -46,26 +48,26 @@ run_dpt <- function(counts,
     n_local = n_local
   )
 
+  # run DPT
   dpt_params <- lst(dm, w_width)
-
   if (!is.null(start_cell_id)) {
     dpt_params$tips <- which(rownames(counts) %in% start_cell_id)
   }
-
   dpt <- do.call(destiny::DPT, dpt_params)
 
+  # find DPT tips
   tips <- destiny::tips(dpt)
   milestone_ids <- paste0("DPT", tips)
 
+  # transform to percentages
   milestone_percentages <- map_df(milestone_ids, function(mid) {
-    d <- dpt[[mid]]
-    dsc <- dynutils::scale_minmax(d)
-    data_frame(cell_id = rownames(expr), milestone_id = mid, percentage = 1 - dsc)
+    data_frame(cell_id = rownames(expr), milestone_id = mid, percentage = 1 - dynutils::scale_minmax(dpt[[mid]]))
   }) %>%
     group_by(cell_id) %>%
     mutate(percentage = percentage / sum(percentage)) %>%
     ungroup()
 
+  # generate milestone network
   milestone_network <- crossing(from = milestone_ids, to = milestone_ids) %>%
     filter(from < to) %>%
     rowwise() %>%
@@ -75,6 +77,16 @@ run_dpt <- function(counts,
     ) %>%
     ungroup()
 
+  # extract dimred for visualisation
+  space <- dpt@dm@eigenvectors[,1:3] %>%
+    as.data.frame %>%
+    mutate(
+      is_tip = dpt@tips[,1],
+      branch = dpt@branch[,1],
+      col_lab = ifelse(is_tip, "Tip", ifelse(is.na(branch), "Unassigned", paste0("Branch ", branch)))
+    )
+
+  # return output
   wrap_ti_prediction(
     ti_type = "triangle",
     id = "DPT",
@@ -82,12 +94,27 @@ run_dpt <- function(counts,
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
     milestone_percentages = milestone_percentages,
-    dpt = dpt
+    space = space
   )
 }
 
+#' @importFrom cowplot theme_cowplot
 plot_dpt <- function(prediction) {
-  requireNamespace("destiny")
-  destiny::plot.DPT(prediction$dpt)
+  # based on destiny::plot.DPT(prediction$dpt, col_by = "branch")
+
+  palette <- c(
+    "#8DD3C7", "#FFED6F", "#BEBADA", "#FB8072", "#80B1D3", "#FDB462", "#B3DE69", "#BC80BD", "#FCCDE5", "gray85", "#CCEBC5", "#FFFFB3"
+  )
+  ann_cols <- c(
+    setNames(palette, paste0("Branch ", seq_along(palette))),
+    Unassigned = "lightgray",
+    Tip = "red"
+  )
+
+  ggplot(prediction$space) +
+    geom_point(aes(DC1, DC2, colour = col_lab), shape = 1, size = 2) +
+    cowplot::theme_cowplot() +
+    scale_colour_manual(values = ann_cols) +
+    labs(colour = "Colour")
 }
 
