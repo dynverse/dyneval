@@ -15,15 +15,14 @@ description_slingshot <- function() create_description(
     makeIntegerParam(id = "maxit", lower = 0L, upper = 50L, default = 10L),
     makeNumericParam(id = "stretch", lower = 0, upper = 5, default = 2),
     makeDiscreteParam(id = "smoother", default = "smooth.spline", values = c("smooth.spline", "loess", "periodic.lowess")),
-    makeDiscreteParam(id = "shrink.method", default = "cosine", values = c("cosine", "tricube", "density")),
-    makeDiscreteParam(id = "dimred_name", values = names(list_dimred_methods()), default="pca")
+    makeDiscreteParam(id = "shrink.method", default = "cosine", values = c("cosine", "tricube", "density"))
 
   ),
   properties = c(),
   run_fun = run_slingshot,
   plot_fun = plot_slingshot
 )
-
+#' @importFrom stats prcomp kmeans
 run_slingshot <- function(
   counts,
   start_cell_id = NULL,
@@ -31,18 +30,18 @@ run_slingshot <- function(
   ndim = 3,
   nclus = 5,
   dimred_name = "pca",
-  shrink=1,
-  reweight=TRUE,
-  drop.multi=TRUE,
-  thresh=0.001,
-  maxit=15,
-  stretch=2,
+  shrink = 1,
+  reweight = TRUE,
+  drop.multi = TRUE,
+  thresh = 0.001,
+  maxit = 15,
+  stretch = 2,
   smoother = "smooth.spline",
   shrink.method = "cosine"
 ) {
   requireNamespace("slingshot")
 
-  # normalization & preprocessing --------------------
+  # normalization & preprocessing
   # from the vignette of slingshot
   FQnorm <- function(counts){
     rk <- apply(counts,2,rank,ties.method='min')
@@ -53,15 +52,15 @@ run_slingshot <- function(
     return(norm)
   }
 
-  expression <- FQnorm(t(counts))
+  expr <- FQnorm(t(counts))
 
   # dimensionality reduction
-  space <- dimred(counts, method = dimred_name, ndim = ndim)
+  space <- stats::prcomp(t(log1p(expr)), scale. = FALSE)$x[,seq_len(ndim)]
 
   # clustering
-  labels <- kmeans(space, centers = nclus)$cluster
+  labels <- stats::kmeans(space, centers = nclus)$cluster
 
-  # actual slingshot algorithm ----------------
+  # process prior data
   if(!is.null(start_cell_id)) {
     start.clus <- labels[[start_cell_id]]
   } else {
@@ -73,119 +72,170 @@ run_slingshot <- function(
     end.clus <- NULL
   }
 
-
+  # run slingshot
   sds <- slingshot::slingshot(
-    space,
-    labels,
-    start.clus=start.clus,
-    end.clus=end.clus,
-    shrink=shrink,
-    reweight=reweight,
-    drop.multi=drop.multi,
-    thresh=thresh,
-    maxit=maxit,
-    stretch=stretch,
+    reducedDim = space,
+    clusterLabels = labels,
+    start.clus = start.clus,
+    end.clus = end.clus,
+    shrink = shrink,
+    reweight = reweight,
+    drop.multi = drop.multi,
+    thresh = thresh,
+    maxit = maxit,
+    stretch = stretch,
     smoother = smoother,
     shrink.method = shrink.method
   )
-  pt <- slingshot::pseudotime(sds)
 
-  #pt %>% {.[is.na(.)] = 0;.} %>% pheatmap::pheatmap(scale="none", cluster_cols=FALSE)
-  #plot(sds)
+  # adapted from plot-SlingshotDataSet
+  # plot(space)
+  # lines(sds, type = "c")
+  # lines(sds, type = "l")
+  # lines(sds, type = "b")
 
-  # postprocessing ---------------------------
+  # extract information on clusters
+  lineages <- slingshot::lineages(sds)
+  lineage_ctrl <- slingshot::lineageControl(sds)
+  connectivity <- slingshot::connectivity(sds)
+  clusters <- rownames(connectivity)
+  clusterLabels <- slingshot::clusterLabels(sds)
 
-  # goal is to divide the different curves in bundles, defined by the combination of lineages
-  # we do this recursively and build up the network between the lineage combinations
-  sds@lineages
-  special_clusters <- sds@connectivity %>% apply(1, sum) %>% keep(~. != 2) %>% names
+  # calculate cluster centers
+  centers <- t(sapply(clusters, function(cli){
+    colMeans(space[clusterLabels == cli,])
+  }))
 
-  bundles <- map(sds@lineages, function(x) {
-    prevstart <- 1
-    bundles <- list()
-    for(i in seq_along(x)[-1]) {
-      if(x[[i]] %in% special_clusters) {
-        bundles <- c(bundles, list(x[prevstart:i]))
-        prevstart <- i +1
-      }
-    }
-    bundles
-  })
+  # collect information on cells
+  space_df <- sds@reducedDim %>%
+    as.data.frame %>%
+    rownames_to_column("cell_id") %>%
+    mutate(label = clusterLabels)
 
-  combinedbundles <- list()
-  bundleid <- 1
-  for(subbundles_id in seq_along(bundles)) {
-    subbundles <- bundles[[subbundles_id]]
-    prevbundle <- 0
-    for (bundle in subbundles) {
-      already_found <- map_lgl(combinedbundles, ~setequal(.$states, bundle))
-      if(any(already_found)) {
-        prevbundle <- combinedbundles[[which(already_found)[[1]]]]$id
+  # collect information on clusters
+  centers_df <- centers %>%
+    as.data.frame %>%
+    rownames_to_column("clus_id")
 
-        combinedbundles[[which(already_found)[[1]]]]$lineages %<>% c(names(bundles)[[subbundles_id]])
-        print(prevbundle)
-      } else {
-        combinedbundles <- c(combinedbundles, list(list(states = bundle, id = bundleid, prevbundle = prevbundle, lineages = names(bundles)[[subbundles_id]])))
+  # collect information on edges
+  edge_df <- lineages %>%
+    map_df(~ data_frame(from = .[-length(.)], to = .[-1])) %>%
+    unique() %>%
+    mutate(
+      length = lineage_ctrl$dist[cbind(from, to)],
+      directed = TRUE # TODO: should be true
+    ) %>%
+    left_join(centers_df %>% rename(from = clus_id) %>% rename_if(is.numeric, function(x) paste0("from.", x)), by = "from") %>%
+    left_join(centers_df %>% rename(to = clus_id) %>% rename_if(is.numeric, function(x) paste0("to.", x)), by = "to")
 
-        prevbundle <- bundleid
-
-        bundleid <- bundleid + 1
-      }
-    }
-  }
-  combinedbundles <- combinedbundles %>% list_as_tibble()
-
-  # to which set of lineages does each cell belong, this does not work because sometimes strange combinations are chosen here outside of the known bundle
-  combinations_cell <- apply(pt, 1, function(x) names(sds@lineages)[which(!is.na(x))])
-  # we therefore work at state (clustering) level
-  states_cell <- sds@clusterLabels
-
-  # map the known possible combinations of trajectories (each corresponding to a "bundle" of trajectories) to the combinations of the cells
-  tos <- states_cell %>% map_int(function(state) {
-    #as.integer(combinedbundles$id[map_lgl(combinedbundles$lineages, setequal, combination)][[1]])
-    as.integer(combinedbundles$id[map_lgl(combinedbundles$states, ~state %in% .)][[1]])
-  })
-
-  # now create the milestone net and progressions
-  milestone_network <- combinedbundles %>%
-    rename(from=prevbundle, to=id) %>%
-    select(from, to) %>%
-    mutate(from=paste0("M", from), to=paste0("M", to), directed=TRUE)
-
-  milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
-
-  progressions <- tibble(
-    time = pt %>% apply(1, min, na.rm=TRUE),
-    to = paste0("M", tos),
-    cell_id = rownames(pt)
-  ) %>%
-    group_by(to) %>%
-    mutate(percentage = dynutils::scale_minmax(time)) %>%
-    left_join(milestone_network, by="to") %>%
+  # construct segments
+  num_segment <- 100
+  segment_df <- edge_df %>%
+    rowwise() %>%
+    do(data.frame(
+      from = .$from,
+      to = .$to,
+      percentage = seq(0, 1, length.out = num_segment),
+      sapply(colnames(space), function(x) {
+        seq(.[[paste0("from.", x)]], .[[paste0("to.", x)]], length.out = num_segment)
+      }),
+      stringsAsFactors = FALSE
+    )) %>%
     ungroup()
 
-  # add length using progressions
-  milestone_network <- left_join(
-    milestone_network,
-    progressions %>% group_by(from, to) %>% summarise(length=max(time)-min(time)),
-    by=c("from", "to")
+  # calculate shortest segment piece for each cell
+  dist_cell_to_segment <- pdist::pdist(space, segment_df[,colnames(space)])
+  segment_ix <- apply(as.matrix(dist_cell_to_segment), 1, which.min)
+
+  # construct progressions
+  progressions <- data.frame(
+    cell_id = rownames(counts),
+    segment_df[segment_ix,] %>% select(from, to, percentage),
+    stringsAsFactors = TRUE
   )
 
-  task <-  wrap_ti_prediction(
-    ti_type = "slingshot",
+  # collect milestone network and ids
+  milestone_network <- edge_df %>%
+    select(from, to, length, directed)
+  milestone_ids <- clusters
+
+  # rename milestones
+  mil_ren_fun <- function(x) paste0("M", x)
+  progressions <- progressions %>% mutate_at(c("from", "to"), mil_ren_fun)
+  milestone_network <- milestone_network %>% mutate_at(c("from", "to"), mil_ren_fun)
+  milestone_ids <- mil_ren_fun(milestone_ids)
+
+  # collect curve data for visualisation purposes
+  curves <- slingshot::curves(sds)
+  curve_df <- names(curves) %>% map_df(function(id) {
+    curve <- curves[[id]]
+    data.frame(
+      curve = id,
+      curve$s,
+      tag = curve$tag,
+      lambda = curve$lambda,
+      dist = curve$dist,
+      w = curve$w,
+      stringsAsFactors = FALSE
+    )
+  })
+
+  # return output
+  wrap_ti_prediction(
+    ti_type = "dag?",
     id = "slingshot",
-    cell_ids = colnames(expression),
+    cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
-    milestone_network = milestone_network %>% select(from, to, length, directed),
-    progressions = progressions %>% select(cell_id, from, to, percentage),
-    dimred_samples = space,
-    dimred_clust = labels,
-    sds = sds
+    milestone_network = milestone_network,
+    progressions = progressions,
+    space = space_df,
+    centers = centers_df,
+    edge = edge_df,
+    curve = curve_df
   )
 }
 
 #' @importFrom graphics pairs
-plot_slingshot <- function(ti_predictions) {
-  graphics::pairs(ti_predictions$sds, horInd=2, verInd=1)
+#' @importFrom RColorBrewer brewer.pal
+#' @importFrom cowplot theme_cowplot
+plot_slingshot <- function(prediction, type = c("lineage", "curve", "both")) {
+  type <- match.arg(type)
+
+  # reconstruct palette
+  palt <- c(
+    RColorBrewer::brewer.pal(9, "Set1")[-c(1,3,6)],
+    RColorBrewer::brewer.pal(7, "Set2")[-2],
+    RColorBrewer::brewer.pal(6, "Dark2")[-5],
+    RColorBrewer::brewer.pal(8, "Set3")[-c(1,2)]
+  )
+
+  # apply to milestone ids
+  cols <- setNames(palt[seq_along(prediction$milestone_ids)], prediction$milestone_ids)
+
+  # create plots for curve if so requested
+  if (type %in% c("curve", "both")) {
+    gcurve <- geom_path(aes(PC1, PC2, group = curve), prediction$curve %>% arrange(curve, lambda))
+  } else {
+    gcurve <- NULL
+  }
+
+  # create plots for lineage if so requested
+  if (type %in% c("lineage", "both")) {
+    gcenter <- geom_point(aes(PC1, PC2), prediction$centers, size = 3)
+    gsegment <- geom_segment(aes(x = from.PC1, xend = to.PC1, y = from.PC2, yend = to.PC2), prediction$edge)
+  } else {
+    gcenter <- NULL
+    gsegment <- NULL
+  }
+
+  # return plot
+  ggplot() +
+    gcurve +
+    gsegment +
+    geom_point(aes(PC1, PC2, colour = paste0("M", label)), prediction$space) +
+    gcenter +
+    cowplot::theme_cowplot() +
+    scale_colour_manual(values = cols) +
+    labs(x = "PC1", y = "PC2", colour = "Milestone")
 }
 

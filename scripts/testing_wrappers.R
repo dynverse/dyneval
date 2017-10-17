@@ -184,11 +184,11 @@ shrink.method = "cosine"
 # trying all methods
 methods <- dyneval::get_descriptions(F)
 
-method <- description_celltree_gibbs()
+method <- description_slingshot()
 
 outs <- pbapply::pblapply(methods, function(method) {
   tryCatch({
-    score <- dyneval::execute_evaluation(dyntoy::toy_tasks[5,], method, parameters = list(), metrics = "auc_R_nx", timeout = 60)
+    score <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method, parameters = list(), metrics = "auc_R_nx", timeout = 120)
     summary <- attr(score,"extras")$.summary[[1]]
     prediction <- attr(score,"extras")$.models[[1]]
     attr(score,"extras") <- NULL
@@ -197,13 +197,13 @@ outs <- pbapply::pblapply(methods, function(method) {
     lst(method, score, summary, prediction, meth_plot, default_plot)
   }, error = function(e) NULL)
 })
-# df <- seq_along(outs) %>% map_df(function(i) {
-#   method <- methods[[i]]
-#   outm <- outs[[i]]
-#   data_frame(
-#     name = method$name,
-#     failed = length(outm) == 0 && is.null(outm),
-#     ggplot = "gg" %in% class(outm$meth_plot)
-#   )
-# })
-# df %>% as.data.frame
+df <- seq_along(outs) %>% map_df(function(i) {
+  method <- methods[[i]]
+  outm <- outs[[i]]
+  data_frame(
+    name = method$name,
+    failed = length(outm) == 0 && is.null(outm),
+    ggplot = "ggplot" %in% class(outm$meth_plot)
+  )
+})
+df %>% as.data.frame
