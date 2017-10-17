@@ -194,6 +194,12 @@ pdishuf = 2000
 pthr = .01
 pethr = .01
 
+# topslam
+n_components = 2
+n_neighbors = 10
+linear_dims = 0
+max_iters = 200
+dimreds = rep(TRUE, 5)
 
 
 
