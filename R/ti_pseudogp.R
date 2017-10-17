@@ -38,7 +38,7 @@ run_pseudogp <- function(counts,
   expr <- log2(counts + 1)
 
   # perform dimreds
-  spaces <- dyneval:::list_dimred_methods()[dimreds] %>%
+  spaces <- list_dimred_methods()[dimreds] %>%
     map(~.(expr, 2)) # only 2 dimensions per dimred are allowed
 
   # fit probabilistic pseudotime model
