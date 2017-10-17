@@ -78,8 +78,7 @@ run_scuba <- function(counts,
     cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
-    progressions = progressions,
-    out = out
+    progressions = progressions
   )
 }
 
