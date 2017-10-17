@@ -70,7 +70,7 @@ run_topslam <- function(counts,
   # remove temporary output
   unlink(temp_folder, recursive = TRUE)
 
-  prediction <- wrap_ti_prediction(
+  wrap_ti_prediction(
     ti_type = "linear",
     id = "topslam",
     cell_ids = rownames(counts),
