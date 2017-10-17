@@ -10,6 +10,7 @@ library(ggplot2)
 dataset <- dynutils::extract_row_to_list(dyntoy::toy_tasks, 5)
 counts <- dataset$counts
 # start_cell_id <- dataset$special_cells$start_cell_id
+# end_cell_ids <- dataset$special_cells$end_cell_ids
 # cell_grouping <- dataset$cell_grouping
 
 # dpt
