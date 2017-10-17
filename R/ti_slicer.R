@@ -94,7 +94,7 @@ run_slicer <- function(counts,
   out <- simplify_sample_graph(simp_edges, to_keep, is_directed = FALSE)
 
   # return output
-  prediction <- wrap_ti_prediction(
+  wrap_ti_prediction(
     ti_type = "multifurcating",
     id = "SLICER",
     cell_ids = rownames(expr_filt),

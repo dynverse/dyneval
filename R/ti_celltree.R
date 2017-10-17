@@ -113,6 +113,11 @@ run_celltree <- function(counts,
     setNames(rownames(counts))
   out <- dynutils::simplify_sample_graph(edges, to_keep, is_directed = FALSE)
 
+  # extract data for visualisations
+  tree <- cellTree:::.compute.tree.layout(mst_tree, ratio = 1)
+  vertices <- igraph::as_data_frame(tree, "vertices") %>% as_data_frame()
+  edges <- igraph::as_data_frame(tree, "edges") %>% as_data_frame()
+
   # wrap output
   wrap_ti_prediction(
     ti_type = "tree",
@@ -121,22 +126,18 @@ run_celltree <- function(counts,
     milestone_ids = out$milestone_ids,
     milestone_network = out$milestone_network,
     progressions = out$progressions,
-    mst_tree = mst_tree
+    vertices = vertices,
+    edges = edges
   )
 }
 
 #' @importFrom ggforce geom_arc_bar
 #' @importFrom cowplot theme_cowplot
+#' @importFrom grDevices rainbow
 plot_celltree <- function(prediction) {
-  requireNamespace("cellTree")
-  requireNamespace("igraph")
-
   # Based on cellTree::ct.plot.topics(prediction$mst_tree)
-  tree <- prediction$mst_tree
-  tree <- cellTree:::.compute.tree.layout(tree, ratio = 1)
-
-  # obtain vertex information
-  vertices <- igraph::as_data_frame(tree, "vertices") %>% as_data_frame()
+  vertices <- prediction$vertices
+  edges <- prediction$edges
 
   # calculate pie sizes
   pie_df <- map_df(seq_len(nrow(vertices)), function(i) {
@@ -153,7 +154,6 @@ plot_celltree <- function(prediction) {
   })
 
   # obtain edge positioning
-  edges <- igraph::as_data_frame(tree, "edges") %>% as_data_frame()
   edges_df <- data.frame(
     edges,
     from = vertices[edges$from,c("x","y")],
@@ -162,7 +162,7 @@ plot_celltree <- function(prediction) {
 
   # get color scheme
   num_topics <- length(vertices$pie[[1]])
-  ann_cols <- setNames(rainbow(num_topics), paste0("Topic ", seq_len(num_topics)))
+  ann_cols <- setNames(grDevices::rainbow(num_topics), paste0("Topic ", seq_len(num_topics)))
 
   # make pie graph plot
   ggplot() +

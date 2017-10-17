@@ -83,7 +83,7 @@ run_embeddr <- function(counts,
   wrap_linear_ti_prediction(
     id = "embeddr",
     cell_ids = rownames(counts),
-    pseudotimes = pseudotime,
+    pseudotimes = pseudotimes,
     dimred_samples = dimred_samples,
     dimred_traj = dimred_traj
   )
