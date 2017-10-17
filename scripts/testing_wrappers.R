@@ -184,8 +184,6 @@ shrink.method = "cosine"
 # trying all methods
 methods <- dyneval::get_descriptions(F)
 
-method <- description_slingshot()
-
 outs <- pbapply::pblapply(methods, function(method) {
   tryCatch({
     score <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method, parameters = list(), metrics = "auc_R_nx", timeout = 120)
