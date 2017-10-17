@@ -10,8 +10,8 @@ description_pseudogp <- function() create_description(
     makeNumericParam(id = "smoothing_beta", lower = 1, upper = 20, default = 3),
     makeNumericParam(id = "pseudotime_mean", lower = 0, upper = 1, default = 0.5),
     makeNumericParam(id = "pseudotime_var", lower = 0.01, upper = 1, default = 1),
-    makeIntegerParam(id = "chains", lower = 1L, upper = 20L, default = 1L),
-    makeNumericParam(id = "iter", lower = log(5), upper = log(100), default = log(1000), trafo = function(x) round(exp(x))), # default is 1000
+    makeIntegerParam(id = "chains", lower = 1L, default = 1L, upper = 20L),
+    makeNumericParam(id = "iter", lower = log(5), default = log(100), upper = log(1000), trafo = function(x) round(exp(x))), # default is 1000
     makeLogicalVectorParam(id = "dimreds", len = length(list_dimred_methods()), default = names(list_dimred_methods()) == "pca"),
     makeDiscreteParam(id = "initialise_from", values=c("random", "principal_curve", "pca"), default="random")
   ),
