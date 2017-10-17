@@ -96,7 +96,7 @@ run_scoup <- function(
 
   # return output
   wrap_ti_prediction(
-    ti_type = "multiforcating",
+    ti_type = "multifurcating",
     id = "SCOUP",
     cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
