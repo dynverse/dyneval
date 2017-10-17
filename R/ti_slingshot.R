@@ -3,8 +3,8 @@
 description_slingshot <- function() create_description(
   name = "slingshot",
   short_name = "slngsht",
-  package_loaded = c("slingshot"),
-  package_required = c(),
+  package_loaded = c(),
+  package_required = c("slingshot"),
   par_set = makeParamSet(
     makeIntegerParam(id = "ndim", lower = 2L, upper = 20L, default = 3L),
     makeIntegerParam(id = "nclus", lower = 2L, upper = 40L, default = 5L),
