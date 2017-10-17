@@ -13,6 +13,15 @@ counts <- dataset$counts
 # end_cell_ids <- dataset$special_cells$end_cell_ids
 # cell_grouping <- dataset$cell_grouping
 
+
+# celltree gibbs
+method <- "Gibbs"
+num_topics <- 4
+sd_filter <- .5
+tot_iter <- 200
+tolerance <- 10^-5
+width_scale_factor <- 1.2
+
 # dpt
 start_cell_id = NULL
 sigma = "local"
@@ -147,3 +156,54 @@ m = 2
 min_branch_len = 5
 min_representative_percentage = 0.8
 max_same_milestone_distance = 0.1
+
+# slingshot
+
+start_cell_id = NULL
+end_cell_ids = NULL
+ndim = 3
+nclus = 5
+dimred_name = "pca"
+shrink=1
+reweight=TRUE
+drop.multi=TRUE
+thresh=0.001
+maxit=15
+stretch=2
+smoother = "smooth.spline"
+shrink.method = "cosine"
+
+
+
+
+
+
+
+
+
+# trying all methods
+methods <- dyneval::get_descriptions(F)
+
+method <- description_celltree_gibbs()
+
+outs <- pbapply::pblapply(methods, function(method) {
+  tryCatch({
+    score <- dyneval::execute_evaluation(dyntoy::toy_tasks[5,], method, parameters = list(), metrics = "auc_R_nx", timeout = 60)
+    summary <- attr(score,"extras")$.summary[[1]]
+    prediction <- attr(score,"extras")$.models[[1]]
+    attr(score,"extras") <- NULL
+    meth_plot <- method$plot_fun(prediction)
+    default_plot <- plot_default(prediction)
+    lst(method, score, summary, prediction, meth_plot, default_plot)
+  }, error = function(e) NULL)
+})
+# df <- seq_along(outs) %>% map_df(function(i) {
+#   method <- methods[[i]]
+#   outm <- outs[[i]]
+#   data_frame(
+#     name = method$name,
+#     failed = length(outm) == 0 && is.null(outm),
+#     ggplot = "gg" %in% class(outm$meth_plot)
+#   )
+# })
+# df %>% as.data.frame
