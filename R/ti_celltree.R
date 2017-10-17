@@ -69,11 +69,11 @@ run_celltree <- function(counts,
 ) {
   requireNamespace("cellTree")
 
-  expression <- log2(counts+1)
+  expr <- log2(counts+1)
 
   # infer the LDA model
   lda_out <- cellTree::compute.lda(
-    t(expression) + min(expression) + 1,
+    t(expr) + min(expr) + 1,
     k.topics = num_topics,
     method = method,
     log.scale = FALSE,
@@ -102,9 +102,16 @@ run_celltree <- function(counts,
   mst_tree <- do.call(cellTree::compute.backbone.tree, backbone_params)
 
   # simplify sample graph to just its backbone
-  edges <- igraph::as_data_frame(mst_tree, "edges") %>% select(from, to, length = weight) %>% mutate(directed = FALSE)
-  is_trajectory <- igraph::V(mst_tree)$is.backbone %>% setNames(names(igraph::V(mst_tree)))
-  out <- dynutils::simplify_sample_graph(edges, is_trajectory, is_directed = FALSE)
+  edges <- igraph::as_data_frame(mst_tree, "edges") %>%
+    select(from, to, length = weight) %>%
+    mutate(
+      from = rownames(counts)[from],
+      to = rownames(counts)[to],
+      directed = FALSE
+    )
+  to_keep <- igraph::V(mst_tree)$is.backbone %>%
+    setNames(rownames(counts))
+  out <- dynutils::simplify_sample_graph(edges, to_keep, is_directed = FALSE)
 
   # wrap output
   wrap_ti_prediction(
@@ -118,8 +125,55 @@ run_celltree <- function(counts,
   )
 }
 
+#' @importFrom ggforce geom_arc_bar
+#' @importFrom cowplot theme_cowplot
 plot_celltree <- function(prediction) {
   requireNamespace("cellTree")
   requireNamespace("igraph")
-  igraph::plot.igraph(prediction$mst_tree)
+
+  # Based on cellTree::ct.plot.topics(prediction$mst_tree)
+  tree <- prediction$mst_tree
+  tree <- cellTree:::.compute.tree.layout(tree, ratio = 1)
+
+  # obtain vertex information
+  vertices <- igraph::as_data_frame(tree, "vertices") %>% as_data_frame()
+
+  # calculate pie sizes
+  pie_df <- map_df(seq_len(nrow(vertices)), function(i) {
+    pieval <- vertices$pie[[i]]
+    data.frame(
+      vertices[i,] %>% select(-pie),
+      topic = paste0("Topic ", seq_along(pieval)),
+      value = pieval
+    ) %>% mutate(
+      arc = value * 2 * pi / sum(value),
+      end = cumsum(arc),
+      start = end - arc
+    )
+  })
+
+  # obtain edge positioning
+  edges <- igraph::as_data_frame(tree, "edges") %>% as_data_frame()
+  edges_df <- data.frame(
+    edges,
+    from = vertices[edges$from,c("x","y")],
+    to = vertices[edges$to,c("x","y")]
+  )
+
+  # get color scheme
+  num_topics <- length(vertices$pie[[1]])
+  ann_cols <- setNames(rainbow(num_topics), paste0("Topic ", seq_len(num_topics)))
+
+  # make pie graph plot
+  ggplot() +
+    geom_segment(aes(x = from.x, xend = to.x, y = from.y, yend = to.y), edges_df) +
+    geom_arc_bar(aes(x0 = x, y0 = y, r0 = 0, r = size*2,
+                     start = start, end = end, fill = topic, group = cell.name), data = pie_df, colour = NA) +
+    cowplot::theme_cowplot() +
+    coord_equal() +
+    scale_fill_manual(values = ann_cols) +
+    scale_size_identity() +
+    scale_x_continuous(breaks = NULL) +
+    scale_y_continuous(breaks = NULL) +
+    labs(fill = "Topic", x = NULL, y = NULL)
 }
