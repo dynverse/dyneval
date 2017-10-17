@@ -3,8 +3,8 @@
 description_slice <- function() create_description(
   name = "SLICE",
   short_name = "SLICE",
-  package_loaded = c("SLICE"),
-  package_required = c("igraph"),
+  package_loaded = c(),
+  package_required = c("SLICE", "igraph"),
   par_set = makeParamSet(
     makeDiscreteParam(id = "lm.method", default = "clustering", values = c("clustering", "graph")),
     makeDiscreteParam(id = "model.type", default = "tree", values = c("tree", "graph")),
@@ -16,10 +16,6 @@ description_slice <- function() create_description(
     makeIntegerParam(id = "k.max", lower = 3L, upper = 20L, default = 10L),
     makeIntegerParam(id = "B", lower = 3L, upper = 500L, default = 100L),
     makeDiscreteParam(id = "k.opt.method", default = "firstmax", values = c("firstmax", "globalmax", "Tibs2001SEmax", "firstSEmax", "globalSEmax"))
-    # makeIntegerParam(id = "B.size", lower = 10L, upper = 10000L, default = 1000L),
-    # makeIntegerParam(id = "B.num", lower = 1L, upper = 100L, default = 1L),
-    # makeIntegerParam(id = "clustering.k", lower = 1L, upper = 100L, default = 1L),
-    # makeDiscreteParam(id = "calculation", default = "bootstrap", values = c("bootstrap", "deterministic"))
   ),
   properties = c(),
   run_fun = run_slice,
@@ -105,37 +101,25 @@ run_slice <- function(
     do.plot = FALSE
   )
 
-  # extract the stable state to which each cell belongs
-  states <- sc@model$cells.df %>%
-    rownames_to_column("cell_id") %>%
-    slice(match(rownames(counts), cell_id)) %>%
-    mutate(state = paste0("slice.ss.", slice.state)) %>%
-    select(cell_id, state)
-
-  # each stable state is a milestone
+  # extract the milestone ids
   lin_model <- sc@model$lineageModel
   milestone_ids <- names(igraph::V(lin_model))
+
+  # extract the milestone network
   milestone_network <- lin_model %>%
     igraph::as_data_frame() %>%
     rename(length = weight) %>%
     mutate(directed = TRUE)
 
   # extract the pseudotimes
-  # this is not directly available for us,
-  # we will use the method's functions to constuct small trajectories
-  # between every stable state (SLICE uses principal curves)
   pseudotimes <- map_df(seq_len(nrow(milestone_network)), function(i) {
     from <- milestone_network[i, 1]
     to <- milestone_network[i, 2]
-
-    fromid <- match(from, milestone_ids)
-    toid <- match(to, milestone_ids)
-
     sc_tmp <- SLICE::getTrajectories(
       sc,
       method = "pc",
-      start = fromid,
-      end = toid,
+      start = match(from, milestone_ids),
+      end = match(to, milestone_ids),
       do.plot = FALSE,
       do.trim = FALSE
     )
@@ -145,17 +129,18 @@ run_slice <- function(
       select(cell_id, from, to, percentage = ptime)
   })
 
-  # some cells can have strange percentages, late in one trajectory, early in the other,
-  # even if the state of the cell is neither within the from or to of an edge
-  # we therefore filter everything here:
-  #  - check whether the state of a cell is in the from or to
-  #  - get the earliest timepoint
-  progressions <- pseudotimes %>%
-    left_join(states, by = "cell_id") %>%
+  # check whether the state of a cell is in the network's
+  # from or to, and get the earliest timepoint
+  progressions <- sc@model$cells.df %>%
+    rownames_to_column("cell_id") %>%
+    slice(match(rownames(counts), cell_id)) %>%
+    mutate(state = paste0("slice.ss.", slice.state)) %>%
+    select(cell_id, state) %>%
+    right_join(pseudotimes, by = "cell_id") %>%
     filter((state == from) | (state == to)) %>%
     group_by(cell_id) %>%
     arrange(percentage) %>%
-    filter(row_number() == 1) %>%
+    slice(1) %>%
     select(-state) %>%
     ungroup()
 
@@ -171,6 +156,7 @@ run_slice <- function(
   )
 }
 
+#' @importFrom grid arrow
 plot_slice <- function(prediction) {
   requireNamespace("igraph")
 
@@ -178,6 +164,8 @@ plot_slice <- function(prediction) {
   list2env(sc@model, environment())
 
   # Adapted from SLICE code
+
+  # gather data
   edge.df <- as.data.frame(igraph::get.edgelist(lineageModel)) %>%
     mutate(
       ix = match(V1, rownames(cells.df)),
@@ -187,19 +175,29 @@ plot_slice <- function(prediction) {
       dst.x = cells.df$x[iy],
       dst.y = cells.df$y[iy]
     )
-  ggplot() +
-    ggtitle("Inferred Lineage Model") +
+  cells_stable <- cells.df %>% subset(slice.realcell==1 & slice.stablestate != "NA")
+  milestones <- cells.df %>% subset(slice.realcell == 0)
+  cells_unstable <- cells.df %>% subset(slice.realcell==1 & slice.stablestate == "NA")
+
+  # make plot
+  ggplot(mapping = aes(x, y, size = entropy)) +
     labs(x="PC1", y="PC2") +
-    geom_point(data=subset(cells.df, slice.realcell==1 & slice.stablestate != "NA" ), aes(x=x, y=y, col=slice.state, size=entropy)) +
-    geom_point(data=cells.df[which(cells.df$slice.realcell==0), ], aes(x=x, y=y, size=entropy), col="black") +
-    geom_point(data=subset(cells.df, slice.realcell==1 & slice.stablestate == "NA" ), aes(x=x, y=y, col=slice.state, size=entropy)) +
-    geom_segment(data=edge.df, aes(x=src.x, y=src.y, xend=dst.x, yend=dst.y), size=I(2), linetype="solid", col=I("black"), alpha=0.6, arrow=grid::arrow(), na.rm=TRUE) +
+    geom_point(aes(col=slice.state), cells_stable) +
+    geom_point(aes(), milestones, col="black") +
+    geom_point(aes(col=slice.state), cells_unstable) +
+    geom_segment(aes(x=src.x, y=src.y, xend=dst.x, yend=dst.y), edge.df,
+                 size=2, linetype="solid", col="black", alpha=0.6, arrow=grid::arrow(), na.rm=TRUE) +
     theme(
       strip.background = element_rect(colour = 'white', fill = 'white'),
-      panel.border = element_blank(), axis.line = element_line(),
-      panel.grid.minor.x = element_blank(), panel.grid.minor.y = element_blank(),
-      panel.grid.major.x = element_blank(), panel.grid.major.y = element_blank(),
-      panel.background = element_rect(fill='white'),
+      panel.border = element_blank(),
+      axis.line = element_line(),
+      panel.grid.minor.x = element_blank(),
+      panel.grid.minor.y = element_blank(),
+      panel.grid.major.x = element_blank(),
+      panel.grid.major.y = element_blank(),
+      panel.background = element_rect(fill = 'white'),
       legend.key = element_blank(),
-      axis.line.x = element_line(size=0.5), axis.line.y=element_line(size=0.5))
+      axis.line.x = element_line(size=0.5),
+      axis.line.y = element_line(size=0.5)
+    )
 }
