@@ -113,6 +113,7 @@ run_mpath <- function(counts,
 }
 
 #' @importFrom ggforce geom_arc_bar
+#' @importFrom cowplot theme_cowplot
 plot_mpath <- function(prediction) {
   requireNamespace("igraph")
 
@@ -134,7 +135,9 @@ plot_mpath <- function(prediction) {
 
   # collect info on cells
   cell_ids <- prediction$cell_ids
-  labels <- prediction$cell_grouping %>% slice(match(cell_ids, cell_id)) %>% .$group_id
+  labels <- prediction$cell_grouping %>%
+    slice(match(cell_ids, cell_id)) %>%
+    .$group_id
   clustering <- prediction$progressions %>%
     slice(match(cell_ids, cell_id)) %>%
     {with(., ifelse(percentage == 0, from, to))}
