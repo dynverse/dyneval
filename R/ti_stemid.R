@@ -33,6 +33,7 @@ description_stemid <- function() create_description(
   plot_fun = plot_stemid
 )
 
+#' @importFrom pdist pdist
 run_stemid <- function(
   counts,
   clustnr = 30,
@@ -61,7 +62,7 @@ run_stemid <- function(
   requireNamespace("reshape2")
 
   # initialize SCseq object with transcript counts
-  sc <- StemID::SCseq(data.frame(t(counts), check.names = FALSE))
+  sc <- StemID::SCseq(data.frame(t(log2(counts+1)), check.names = FALSE))
 
   # filtering of expression data
   sc <- StemID::filterdata(sc, mintotal = 1, minexpr = 0, minnumber = 0, maxexpr = Inf, downsample = TRUE, dsn = 1)
@@ -107,82 +108,105 @@ run_stemid <- function(
   # compute a spanning tree
   ltr <- StemID::compspantree(ltr)
 
-  dc <- ltr@trl$dc
-  milestone_ids <- rownames(dc)
+  # Based on StemID:::plotmapprojections(ltr)
   trl <- ltr@trl$trl
   cent <- ltr@trl$cent
+  dc <- ltr@trl$dc
 
-  # converting to milestone network
-  gr_df <- data_frame(from = seq_along(trl$kid)+1, to = trl$kid, weight = dc[cbind(from, to)])
-  gr <- igraph::graph_from_data_frame(gr_df, directed = FALSE, vertices = milestone_ids)
-  milestone_network <- igraph::distances(gr) %>%
-    {.[upper.tri(., diag=TRUE)] = NA; .} %>% # no bidirectionality
-    reshape2::melt(varnames = c("from", "to"), value.name = "length") %>%
-    filter(!is.na(length)) %>%
-    filter(from != to) %>%
-    mutate(from = as.character(from), to = as.character(to), directed=FALSE)
+  # collect information on cells
+  space <- ltr@ltcoord
+  space_df <- data.frame(
+    cell_id = rownames(counts),
+    space,
+    label = as.character(ltr@ldata$lp),
+    stringsAsFactors = FALSE
+  )
 
-  # calculating the cell-to-cluster distances manually
-  trproj_res <- ltr@trproj$res %>% as_data_frame() %>% rownames_to_column("id") %>% select(id, closest = o, furthest = l)
-  milestone_percentages <- bind_rows(lapply(seq_len(nrow(trproj_res)), function(i) {
-    id <- trproj_res$id[[i]]
-    closest <- trproj_res$closest[[i]]
-    furthest <- trproj_res$furthest[[i]]
+  # collect information on clusters
+  centers_df <- data.frame(
+    clus_id = as.character(ltr@ldata$m),
+    parent = as.character(c(NA, trl$kid)),
+    colour = ltr@sc@fcol,
+    ltr@ldata$cnl,
+    stringsAsFactors = FALSE
+  )
 
-    if (!is.na(furthest)) {
-      dist_closest <- 1 - cor(cent[,closest], ltr@sc@fdata[,id])
-      dist_furthest <- 1 - cor(cent[,furthest], ltr@sc@fdata[,id])
+  # collect information on edges
+  cent2 <- centers_df %>% select(-colour, -parent)
+  edge_df <- centers_df %>%
+    select(from = clus_id, to = parent) %>%
+    na.omit() %>%
+    unique() %>%
+    mutate(
+      length = dc[cbind(from, to)],
+      directed = FALSE
+    ) %>%
+    left_join(cent2 %>% rename(from = clus_id) %>% rename_if(is.numeric, function(x) paste0("from.", x)), by = "from") %>%
+    left_join(cent2 %>% rename(to = clus_id) %>% rename_if(is.numeric, function(x) paste0("to.", x)), by = "to")
 
-      data_frame(cell_id = id, milestone_id = milestone_ids[c(closest, furthest)], percentage = 1 - c(dist_closest, dist_furthest) / (dist_closest + dist_furthest))
-    } else {
-      data_frame(cell_id = id, milestone_id = milestone_ids[[closest]], percentage = 1)
-    }
-  }))
+  # construct segments
+  num_segment <- 100
+  segment_df <- edge_df %>%
+    rowwise() %>%
+    do(data.frame(
+      from = .$from,
+      to = .$to,
+      percentage = seq(0, 1, length.out = num_segment),
+      sapply(colnames(space), function(x) {
+        seq(.[[paste0("from.", x)]], .[[paste0("to.", x)]], length.out = num_segment)
+      }),
+      stringsAsFactors = FALSE
+    )) %>%
+    ungroup()
 
-  milestone_network$from <- paste0("Milestone", milestone_network$from)
-  milestone_network$to <- paste0("Milestone", milestone_network$to)
-  milestone_ids <- paste0("Milestone", milestone_ids)
-  milestone_percentages$milestone_id <- paste0("Milestone", milestone_percentages$milestone_id)
+  # calculate shortest segment piece for each cell
+  segment_ix <- sapply(seq_len(nrow(space)), function(i) {
+    x <- space[i,]
+    la <- space_df$label[[i]]
+    ix <- which(segment_df$from == la | segment_df$to == la)
+    dis <- pdist::pdist(x, segment_df[ix,colnames(space)])
+    wm <- which.min(as.matrix(dis)[1,])
+    ix[wm]
+  })
 
+  # construct progressions
+  progressions <- data.frame(
+    cell_id = rownames(counts),
+    segment_df[segment_ix,] %>% select(from, to, percentage),
+    stringsAsFactors = TRUE
+  )
+
+  # collect milestone network and ids
+  milestone_network <- edge_df %>%
+    select(from, to, length, directed)
+  milestone_ids <- clust_df$clus_id
+
+  # return output
   wrap_ti_prediction(
-    ti_type = "linear",
+    ti_type = "multifurcating",
     id = "StemID",
     cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
-    milestone_percentages = milestone_percentages,
-    dimred_samples = ltr@ltcoord,
-    objects = list(
-      trl = ltr@trl,
-      ltcoord = ltr@ltcoord,
-      cnl = ltr@ldata$cnl,
-      lp = ltr@ldata$lp,
-      fcol = ltr@sc@fcol
-    )
+    progressions = progressions,
+    space = space_df,
+    centers = centers_df,
+    edge = edge_df
   )
 }
 
-plot_stemid <- function(ti_predictions) {
-  trl <- ti_predictions$objects$trl$trl
-  ltcoord <- ti_predictions$objects$ltcoord
-  cnl <- ti_predictions$objects$cnl
-  lp <- ti_predictions$objects$lp
-  fcol <- ti_predictions$objects$fcol
-
-  u <- ltcoord[,1]
-  v <- ltcoord[,2]
-
-  lines <- data.frame(from = cnl[seq_along(trl$kid)+1,], to = cnl[trl$kid,])
-
+#' @importFrom cowplot theme_cowplot
+plot_stemid <- function(prediction) {
+  col_ann <- setNames(prediction$centers$colour, prediction$centers$clus_id)
   ggplot() +
-    geom_point(aes(u, v), col = "gray", size = 2) +
-    geom_text(aes(u, v, label = lp, colour = factor(lp))) +
-    geom_point(aes(V1, V2), cnl, shape = 1, size = 2) +
-    geom_segment(aes(x = from.V1, xend = to.V1, y = from.V2, yend = to.V2), lines) +
-    geom_text(aes(V1, V2, label = seq_len(nrow(cnl))), cnl, size = 10) +
-    labs(x = "Dim 1", y = "Dim 2") +
-    scale_colour_manual(values = fcol) +
-    theme(legend.position = "none")
+    geom_point(aes(V1, V2), prediction$space, size = 2, colour = "darkgray") +
+    geom_text(aes(V1, V2, label = label, colour = label), prediction$space) +
+    geom_text(aes(V1, V2, label = clus_id), prediction$centers, size = 8) +
+    geom_segment(aes(x = from.V1, xend = to.V1, y = from.V2, yend = to.V2), prediction$edge) +
+    scale_colour_manual(values = col_ann) +
+    cowplot::theme_cowplot() +
+    theme(legend.position = "none") +
+    labs(x = "Dim 1", y = "Dim 2")
 }
 
 
