@@ -167,8 +167,8 @@ plot_celltree <- function(prediction) {
   # make pie graph plot
   ggplot() +
     geom_segment(aes(x = from.x, xend = to.x, y = from.y, yend = to.y), edges_df) +
-    geom_arc_bar(aes(x0 = x, y0 = y, r0 = 0, r = size*2,
-                     start = start, end = end, fill = topic, group = cell.name), data = pie_df, colour = NA) +
+    ggforce::geom_arc_bar(aes(x0 = x, y0 = y, r0 = 0, r = size*2,
+                              start = start, end = end, fill = topic, group = cell.name), data = pie_df, colour = NA) +
     cowplot::theme_cowplot() +
     coord_equal() +
     scale_fill_manual(values = ann_cols) +
