@@ -8,8 +8,8 @@ description_scoup <- function() create_description(
   par_set = makeParamSet(
     makeIntegerParam(id = "ndim", lower = 2L, default = 2L, upper = 20L),
     makeIntegerParam(id = "nbranch", lower = 1L, default = 1L, upper = 20L),
-    makeNumericParam(id = "max_ite1", lower = log(2), default = log(1000), upper = log(5000), trafo = function(x) round(exp(x))),
-    makeNumericParam(id = "max_ite2", lower = log(2), default = log(10000), upper = log(50000), trafo = function(x) round(exp(x))),
+    makeNumericParam(id = "max_ite1", lower = log(2), default = log(100), upper = log(5000), trafo = function(x) round(exp(x))), # should be 1000
+    makeNumericParam(id = "max_ite2", lower = log(2), default = log(100), upper = log(50000), trafo = function(x) round(exp(x))), # should be 10000
     makeNumericParam(id = "alpha_min", lower = log(.001), default = log(.1), upper = log(10), trafo = exp),
     makeNumericParam(id = "alpha_max", lower = log(1), default = log(100), upper = log(10000), trafo = exp),
     makeNumericParam(id = "t_min", lower = log(.00001), default = log(.001), upper = log(1), trafo = exp),
