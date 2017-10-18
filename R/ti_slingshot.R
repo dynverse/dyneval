@@ -24,7 +24,6 @@ description_slingshot <- function() create_description(
 )
 
 #' @importFrom stats prcomp kmeans
-#' @importFrom pdist pdist
 run_slingshot <- function(
   counts,
   start_cell_id = NULL,
@@ -91,11 +90,6 @@ run_slingshot <- function(
   )
 
   # adapted from plot-SlingshotDataSet
-  # plot(space)
-  # lines(sds, type = "c")
-  # lines(sds, type = "l")
-  # lines(sds, type = "b")
-
   # extract information on clusters
   lineages <- slingshot::lineages(sds)
   lineage_ctrl <- slingshot::lineageControl(sds)
@@ -108,64 +102,25 @@ run_slingshot <- function(
     colMeans(space[clusterLabels == cli,])
   }))
 
-  # collect information on cells
-  space_df <- sds@reducedDim %>%
-    as.data.frame %>%
-    rownames_to_column("cell_id") %>%
-    mutate(label = clusterLabels)
-
-  # collect information on clusters
-  centers_df <- centers %>%
-    as.data.frame %>%
-    rownames_to_column("clus_id")
-
-  # collect information on edges
-  edge_df <- lineages %>%
+  # collect milestone network
+  cluster_network <- lineages %>%
     map_df(~ data_frame(from = .[-length(.)], to = .[-1])) %>%
     unique() %>%
     mutate(
       length = lineage_ctrl$dist[cbind(from, to)],
       directed = TRUE # TODO: should be true
-    ) %>%
-    left_join(centers_df %>% rename(from = clus_id) %>% rename_if(is.numeric, function(x) paste0("from.", x)), by = "from") %>%
-    left_join(centers_df %>% rename(to = clus_id) %>% rename_if(is.numeric, function(x) paste0("to.", x)), by = "to")
+    )
 
-  # construct segments
-  num_segment <- 100
-  segment_df <- edge_df %>%
-    rowwise() %>%
-    do(data.frame(
-      from = .$from,
-      to = .$to,
-      percentage = seq(0, 1, length.out = num_segment),
-      sapply(colnames(space), function(x) {
-        seq(.[[paste0("from.", x)]], .[[paste0("to.", x)]], length.out = num_segment)
-      }),
-      stringsAsFactors = FALSE
-    )) %>%
-    ungroup()
-
-  # calculate shortest segment piece for each cell
-  dist_cell_to_segment <- pdist::pdist(space, segment_df[,colnames(space)])
-  segment_ix <- apply(as.matrix(dist_cell_to_segment), 1, which.min)
-
-  # construct progressions
-  progressions <- data.frame(
-    cell_id = rownames(counts),
-    segment_df[segment_ix,] %>% select(from, to, percentage),
-    stringsAsFactors = TRUE
+  # project cells onto segments
+  out <- project_cells_to_segments(
+    cluster_ids = clusters,
+    cluster_network = cluster_network,
+    cluster_space = centers,
+    sample_space = sds@reducedDim,
+    sample_cluster = clusterLabels,
+    num_segments_per_edge = 100,
+    milestone_rename_fun = function(x) paste0("M", x)
   )
-
-  # collect milestone network and ids
-  milestone_network <- edge_df %>%
-    select(from, to, length, directed)
-  milestone_ids <- clusters
-
-  # rename milestones
-  mil_ren_fun <- function(x) paste0("M", x)
-  progressions <- progressions %>% mutate_at(c("from", "to"), mil_ren_fun)
-  milestone_network <- milestone_network %>% mutate_at(c("from", "to"), mil_ren_fun)
-  milestone_ids <- mil_ren_fun(milestone_ids)
 
   # collect curve data for visualisation purposes
   curves <- slingshot::curves(sds)
@@ -187,17 +142,16 @@ run_slingshot <- function(
     ti_type = "dag?",
     id = "slingshot",
     cell_ids = rownames(counts),
-    milestone_ids = milestone_ids,
-    milestone_network = milestone_network,
-    progressions = progressions,
-    space = space_df,
-    centers = centers_df,
-    edge = edge_df,
+    milestone_ids = out$milestone_ids,
+    milestone_network = out$milestone_network,
+    progressions = out$progressions,
+    space = out$space_df,
+    centers = out$centers_df,
+    edge = out$edge_df,
     curve = curve_df
   )
 }
 
-#' @importFrom graphics pairs
 #' @importFrom RColorBrewer brewer.pal
 #' @importFrom cowplot theme_cowplot
 plot_slingshot <- function(prediction, type = c("lineage", "curve", "both")) {
@@ -234,7 +188,7 @@ plot_slingshot <- function(prediction, type = c("lineage", "curve", "both")) {
   ggplot() +
     gcurve +
     gsegment +
-    geom_point(aes(PC1, PC2, colour = paste0("M", label)), prediction$space) +
+    geom_point(aes(PC1, PC2, colour = label), prediction$space) +
     gcenter +
     cowplot::theme_cowplot() +
     scale_colour_manual(values = cols) +

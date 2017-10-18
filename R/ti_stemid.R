@@ -4,7 +4,7 @@ description_stemid <- function() create_description(
   name = "StemID",
   short_name = "StemID",
   package_loaded = c(),
-  package_required = c("StemID", "igraph", "reshape2"),
+  package_required = c("StemID"),
   par_set = makeParamSet(
     makeIntegerParam(id = "clustnr", lower = 20L, default = 30L, upper = 100L),
     makeIntegerParam(id = "bootnr", lower = 20L, default = 50L, upper = 100L),
@@ -33,7 +33,6 @@ description_stemid <- function() create_description(
   plot_fun = plot_stemid
 )
 
-#' @importFrom pdist pdist
 run_stemid <- function(
   counts,
   clustnr = 30,
@@ -58,8 +57,6 @@ run_stemid <- function(
   pethr = .01
 ) {
   requireNamespace("StemID")
-  requireNamespace("igraph")
-  requireNamespace("reshape2")
 
   # initialize SCseq object with transcript counts
   sc <- StemID::SCseq(data.frame(t(log2(counts+1)), check.names = FALSE))

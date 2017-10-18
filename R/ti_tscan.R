@@ -3,8 +3,8 @@
 description_tscan <- function() create_description(
   name = "TSCAN",
   short_name = "TSCAN",
-  package_loaded = c("mclust", "igraph", "ggplot2"),
-  package_required = c("TSCAN"),
+  package_loaded = c(),
+  package_required = c("TSCAN", "igraph"),
   par_set = makeParamSet(
     makeNumericParam(id = "minexpr_percent", lower=0, upper=1, default=0),
     makeNumericParam(id = "minexpr_value", lower=0, upper=10, default=0),
