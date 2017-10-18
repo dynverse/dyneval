@@ -9,8 +9,8 @@ description_slingshot <- function() create_description(
     makeIntegerParam(id = "ndim", lower = 2L, upper = 20L, default = 3L),
     makeIntegerParam(id = "nclus", lower = 2L, upper = 40L, default = 5L),
     makeNumericParam(id = "shrink", lower = 0, upper = 1, default=1),
-    makeLogicalParam(id = "reweight", default=TRUE),
-    makeLogicalParam(id = "drop.multi", default=TRUE),
+    makeLogicalParam(id = "reweight", default = TRUE),
+    makeLogicalParam(id = "drop.multi", default = TRUE),
     makeNumericParam(id = "thresh", lower = -5, upper = 5, default = -3, trafo = function(x) 10^x),
     makeIntegerParam(id = "maxit", lower = 0L, upper = 50L, default = 10L),
     makeNumericParam(id = "stretch", lower = 0, upper = 5, default = 2),
@@ -97,7 +97,7 @@ run_slingshot <- function(
   clusterLabels <- slingshot::clusterLabels(sds)
 
   # calculate cluster centers
-  centers <- t(sapply(clusters, function(cli){
+  centers <- t(sapply(rownames(connectivity), function(cli){
     colMeans(space[clusterLabels == cli,])
   }))
 
