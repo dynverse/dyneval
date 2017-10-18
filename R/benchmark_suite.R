@@ -49,9 +49,13 @@ benchmark_suite_submit <- function(
   ## set settings for MBO parameter optimisation
   control_train <- mlrMBO::makeMBOControl(
     n.objectives = length(metrics),
-    propose.points = num_cores,
-    impute.y.fun = impute_y_fun(length(metrics))) %>%
-    mlrMBO::setMBOControlTermination(iters = num_iterations)
+    propose.points = num_cores
+  ) %>%
+    mlrMBO::setMBOControlTermination(
+      iters = num_iterations
+    )
+
+  # Set infill criterion
   if (length(metrics) == 1) {
     control_train <- control_train %>%
       mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritCB())
@@ -59,6 +63,8 @@ benchmark_suite_submit <- function(
     control_train <- control_train %>%
       mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritDIB())
   }
+
+  # construct control for test phase
   control_test <- control_train
   control_test$iters <- 1
   control_test$propose.points <- 1
