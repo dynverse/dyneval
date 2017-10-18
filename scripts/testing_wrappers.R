@@ -201,7 +201,13 @@ linear_dims = 0
 max_iters = 200
 dimreds = rep(TRUE, 5)
 
-
+# tscan
+minexpr_percent = 0
+minexpr_value = 0
+cvcutoff = 0
+clusternum_lower = 2
+clusternum_upper = 9
+modelNames = "VVV"
 
 
 
