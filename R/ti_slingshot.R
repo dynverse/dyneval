@@ -94,7 +94,6 @@ run_slingshot <- function(
   lineages <- slingshot::lineages(sds)
   lineage_ctrl <- slingshot::lineageControl(sds)
   connectivity <- slingshot::connectivity(sds)
-  clusters <- rownames(connectivity)
   clusterLabels <- slingshot::clusterLabels(sds)
 
   # calculate cluster centers
@@ -113,7 +112,6 @@ run_slingshot <- function(
 
   # project cells onto segments
   out <- project_cells_to_segments(
-    cluster_ids = clusters,
     cluster_network = cluster_network,
     cluster_space = centers,
     sample_space = sds@reducedDim,

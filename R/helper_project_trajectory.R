@@ -1,6 +1,5 @@
 #' @importFrom pdist pdist
 project_cells_to_segments <- function(
-  cluster_ids,
   cluster_network,
   cluster_space,
   sample_space,
@@ -50,7 +49,7 @@ project_cells_to_segments <- function(
 
   # construct progressions
   progressions <- data.frame(
-    cell_id = rownames(counts),
+    cell_id = rownames(sample_space),
     segment_df[segment_ix,] %>% select(from, to, percentage),
     stringsAsFactors = TRUE
   )
@@ -58,7 +57,7 @@ project_cells_to_segments <- function(
   # collect milestone network and ids
   milestone_network <- edge_df %>%
     select(from, to, length, directed)
-  milestone_ids <- cluster_ids
+  milestone_ids <- rownames(cluster_space)
 
   # rename milestones
   if (!is.null(milestone_rename_fun)) {

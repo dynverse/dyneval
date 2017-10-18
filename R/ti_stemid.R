@@ -115,7 +115,6 @@ run_stemid <- function(
 
   # project cells onto segments
   out <- project_cells_to_segments(
-    cluster_ids = as.character(ltr@ldata$m),
     cluster_network = cluster_network,
     cluster_space = ltr@ldata$cnl,
     sample_space = ltr@ltcoord,
