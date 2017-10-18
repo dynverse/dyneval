@@ -6,7 +6,7 @@ description_ouija <- function() create_description(
   package_required = c("ouija", "rstan"),
   package_loaded = c("coda"),
   par_set = makeParamSet(
-    makeNumericParam(id = "iter", lower = log(2), default = log(1000), upper = log(50000), trafo = function(x) round(exp(x))), # default 10000
+    makeNumericParam(id = "iter", lower = log(2), default = log(100), upper = log(50000), trafo = function(x) round(exp(x))), # default 10000
     makeDiscreteParam(id = "response_type", default = "switch", values = c("switch", "transient")),
     makeDiscreteParam(id = "inference_type", default = "hmc", values = c("hmc", "vb")),
     makeLogicalParam(id = "normalise_expression", default = TRUE)
