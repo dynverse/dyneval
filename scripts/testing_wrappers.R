@@ -209,6 +209,8 @@ clusternum_lower = 2
 clusternum_upper = 9
 modelNames = "VVV"
 
+# waterfall
+num_clusters = 10
 
 
 
