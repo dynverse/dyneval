@@ -63,13 +63,11 @@ run_tscan <- function(counts,
     mutate(directed = FALSE)
   sample_space <- cds_clus$pcareduceres
   cluster_space <- cds_clus$clucenter
-  cluster_ids <- as.character(seq_len(nrow(cluster_space)))
-  rownames(cluster_space) <- cluster_ids
+  rownames(cluster_space) <- as.character(seq_len(nrow(cluster_space)))
   colnames(cluster_space) <- colnames(sample_space)
 
   # project cells onto segments
   out <- project_cells_to_segments(
-    cluster_ids = cluster_ids,
     cluster_network = cluster_network,
     cluster_space = cluster_space,
     sample_space = sample_space,
