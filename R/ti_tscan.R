@@ -75,7 +75,7 @@ run_tscan <- function(counts,
     sample_space = sample_space,
     sample_cluster = cds_clus$clusterid,
     num_segments_per_edge = 100,
-    milestone_rename_fun = function(x) paste("M", x)
+    milestone_rename_fun = function(x) paste0("M", x)
   )
 
   # return output

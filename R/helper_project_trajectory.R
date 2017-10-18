@@ -39,11 +39,11 @@ project_cells_to_segments <- function(
     ungroup()
 
   # calculate shortest segment piece for each cell
-  segment_ix <- sapply(seq_len(nrow(space)), function(i) {
-    x <- space[i,]
+  segment_ix <- sapply(seq_len(nrow(sample_space)), function(i) {
+    x <- sample_space[i,]
     la <- space_df$label[[i]]
     ix <- which(segment_df$from == la | segment_df$to == la)
-    dis <- pdist::pdist(x, segment_df[ix,colnames(space)])
+    dis <- pdist::pdist(x, segment_df[ix,colnames(sample_space)])
     wm <- which.min(as.matrix(dis)[1,])
     ix[wm]
   })
