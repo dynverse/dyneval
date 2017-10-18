@@ -4,21 +4,15 @@
 \alias{execute_method_internal}
 \title{Internal method for executing a method}
 \usage{
-execute_method_internal(tasks, method, parameters, give_start_cell,
-  give_end_cells, give_cell_grouping)
+execute_method_internal(method, arglist, setseed_detection_file)
 }
 \arguments{
-\item{tasks}{The tasks on which to evaluate.}
+\item{method}{A TI method wrapper}
 
-\item{method}{The method to evaluate.}
+\item{arglist}{The arguments to apply to the method}
 
-\item{parameters}{The parameters to evaluate with.}
-
-\item{give_start_cell}{Whether a start cell should be provided even though a method doesn't require it.}
-
-\item{give_end_cells}{Whether end cells should be provided even though a method doesn't require it.}
-
-\item{give_cell_grouping}{Whether a cell grouping should be provided even though a method doesn't require it.}
+\item{setseed_detection_file}{A file to which will be written if a method
+uses the set.seed function.}
 }
 \description{
 If you're reading this, you're supposed to be using \code{execute_method} instead.
