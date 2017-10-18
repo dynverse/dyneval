@@ -5,7 +5,7 @@
 \title{Running an evaluation of a method on a set of tasks with a set of parameters}
 \usage{
 execute_evaluation(tasks, method, parameters, metrics, timeout,
-  output_model = TRUE)
+  output_model = TRUE, error_score = -1)
 }
 \arguments{
 \item{tasks}{The tasks on which to evaluate.}
@@ -21,6 +21,8 @@ see \code{\link{calculate_metrics}} for a list of which metrics are available.}
 
 \item{output_model}{Whether or not the model will be outputted.
 If this is a character string, it will save the model in the requested folder.}
+
+\item{error_score}{The aggregated score a method gets if it produces errors.}
 }
 \description{
 Running an evaluation of a method on a set of tasks with a set of parameters
