@@ -108,20 +108,15 @@ run_stemid <- function(
   # compute a spanning tree
   ltr <- StemID::compspantree(ltr)
 
-  # Based on StemID:::plotmapprojections(ltr)
-  trl <- ltr@trl$trl
-  cent <- ltr@trl$cent
-  dc <- ltr@trl$dc
-
-
-
+  # get network info
   cluster_network <- data_frame(
     from = as.character(ltr@ldata$m[-1]),
-    to = as.character(trl$kid),
-    length = dc[cbind(from, to)],
+    to = as.character(ltr@trl$trl$kid),
+    length = ltr@trl$dc[cbind(from, to)],
     directed = FALSE
   )
 
+  # project cells onto segments
   out <- project_cells_to_segments(
     cluster_ids = as.character(ltr@ldata$m),
     cluster_network = cluster_network,
@@ -132,6 +127,7 @@ run_stemid <- function(
     milestone_rename_fun = function(x) paste0("M", x)
   )
 
+  # get colours
   col_ann <- setNames(ltr@sc@fcol, out$milestone_ids)
 
   # return output
