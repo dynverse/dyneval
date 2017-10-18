@@ -23,7 +23,7 @@ description_stemid <- function() create_description(
     makeNumericParam(id = "thr_upper", lower = -100, default = -40, upper = -1),
     makeNumericParam(id = "outdistquant", lower = 0, default = .95, upper = 1),
     makeLogicalParam(id = "nmode", default = FALSE),
-    makeNumericParam(id = "pdishuf", lower = 2, default = log10(2000), upper = 3.5, trafo = function(x) ceiling(10)^x),
+    makeNumericParam(id = "pdishuf", lower = log(100), default = log(500), upper = log(10000), trafo = function(x) round(exp(x))), # orig 2000
     makeNumericParam(id = "pthr", lower = -4, default = -2, upper = 0, trafo = function(x) 10^x),
     makeNumericParam(id = "pethr", lower = -4, default = -2, upper = 0, trafo = function(x) 10^x),
     forbidden = quote(thr_lower > thr_upper)
@@ -127,7 +127,7 @@ run_stemid <- function(
   col_ann <- setNames(ltr@sc@fcol, out$milestone_ids)
 
   # return output
-  prediction <- wrap_ti_prediction(
+  wrap_ti_prediction(
     ti_type = "multifurcating",
     id = "StemID",
     cell_ids = rownames(counts),
