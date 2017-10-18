@@ -113,91 +113,44 @@ run_stemid <- function(
   cent <- ltr@trl$cent
   dc <- ltr@trl$dc
 
-  # collect information on cells
-  space <- ltr@ltcoord
-  space_df <- data.frame(
-    cell_id = rownames(counts),
-    space,
-    label = as.character(ltr@ldata$lp),
-    stringsAsFactors = FALSE
+
+
+  cluster_network <- data_frame(
+    from = as.character(ltr@ldata$m[-1]),
+    to = as.character(trl$kid),
+    length = dc[cbind(from, to)],
+    directed = FALSE
   )
 
-  # collect information on clusters
-  centers_df <- data.frame(
-    clus_id = as.character(ltr@ldata$m),
-    parent = as.character(c(NA, trl$kid)),
-    colour = ltr@sc@fcol,
-    ltr@ldata$cnl,
-    stringsAsFactors = FALSE
+  out <- project_cells_to_segments(
+    cluster_ids = as.character(ltr@ldata$m),
+    cluster_network = cluster_network,
+    cluster_space = ltr@ldata$cnl,
+    sample_space = ltr@ltcoord,
+    sample_cluster = as.character(ltr@ldata$lp),
+    num_segments_per_edge = 100,
+    milestone_rename_fun = function(x) paste0("M", x)
   )
 
-  # collect information on edges
-  cent2 <- centers_df %>% select(-colour, -parent)
-  edge_df <- centers_df %>%
-    select(from = clus_id, to = parent) %>%
-    na.omit() %>%
-    unique() %>%
-    mutate(
-      length = dc[cbind(from, to)],
-      directed = FALSE
-    ) %>%
-    left_join(cent2 %>% rename(from = clus_id) %>% rename_if(is.numeric, function(x) paste0("from.", x)), by = "from") %>%
-    left_join(cent2 %>% rename(to = clus_id) %>% rename_if(is.numeric, function(x) paste0("to.", x)), by = "to")
-
-  # construct segments
-  num_segment <- 100
-  segment_df <- edge_df %>%
-    rowwise() %>%
-    do(data.frame(
-      from = .$from,
-      to = .$to,
-      percentage = seq(0, 1, length.out = num_segment),
-      sapply(colnames(space), function(x) {
-        seq(.[[paste0("from.", x)]], .[[paste0("to.", x)]], length.out = num_segment)
-      }),
-      stringsAsFactors = FALSE
-    )) %>%
-    ungroup()
-
-  # calculate shortest segment piece for each cell
-  segment_ix <- sapply(seq_len(nrow(space)), function(i) {
-    x <- space[i,]
-    la <- space_df$label[[i]]
-    ix <- which(segment_df$from == la | segment_df$to == la)
-    dis <- pdist::pdist(x, segment_df[ix,colnames(space)])
-    wm <- which.min(as.matrix(dis)[1,])
-    ix[wm]
-  })
-
-  # construct progressions
-  progressions <- data.frame(
-    cell_id = rownames(counts),
-    segment_df[segment_ix,] %>% select(from, to, percentage),
-    stringsAsFactors = TRUE
-  )
-
-  # collect milestone network and ids
-  milestone_network <- edge_df %>%
-    select(from, to, length, directed)
-  milestone_ids <- clust_df$clus_id
+  col_ann <- setNames(ltr@sc@fcol, out$milestone_ids)
 
   # return output
-  wrap_ti_prediction(
+  prediction <- wrap_ti_prediction(
     ti_type = "multifurcating",
     id = "StemID",
     cell_ids = rownames(counts),
-    milestone_ids = milestone_ids,
-    milestone_network = milestone_network,
-    progressions = progressions,
-    space = space_df,
-    centers = centers_df,
-    edge = edge_df
+    milestone_ids = out$milestone_ids,
+    milestone_network = out$milestone_network,
+    progressions = out$progressions,
+    space = out$space_df,
+    centers = out$centers_df,
+    edge = out$edge_df,
+    col_ann = col_ann
   )
 }
 
 #' @importFrom cowplot theme_cowplot
 plot_stemid <- function(prediction) {
-  col_ann <- setNames(prediction$centers$colour, prediction$centers$clus_id)
   ggplot() +
     geom_point(aes(V1, V2), prediction$space, size = 2, colour = "darkgray") +
     geom_text(aes(V1, V2, label = label, colour = label), prediction$space) +
