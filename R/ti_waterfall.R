@@ -16,23 +16,23 @@ description_waterfall <- function() create_description(
 run_waterfall <- function(counts, num_clusters = 10) {
   requireNamespace("Waterfall")
 
-  # Run waterfall
+  # log transform
   expr <- log2(counts+1)
+
+  # run waterfall
   ps <- Waterfall::pseudotimeprog.foo(t(expr), k = num_clusters)
 
-  # create output
-  cell_ids <- rownames(counts)
+  # return output
   wrap_linear_ti_prediction(
     id = "Waterfall",
-    cell_ids = cell_ids,
+    cell_ids = rownames(counts),
     pseudotimes = ps$pseudotime,
     ps = ps
   )
 }
 
-plot_waterfall <- function(ti_predictions) {
+plot_waterfall <- function(prediction) {
   requireNamespace("Waterfall")
 
-  ps <- ti_predictions$ps
-  Waterfall::plot_waterfall(ps)
+  Waterfall::plot_waterfall(prediction$ps)
 }
