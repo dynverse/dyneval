@@ -4,8 +4,8 @@
 \alias{execute_evaluation}
 \title{Running an evaluation of a method on a set of tasks with a set of parameters}
 \usage{
-execute_evaluation(tasks, method, parameters, metrics, timeout,
-  output_model = TRUE, error_score = -1)
+execute_evaluation(tasks, method, parameters, metrics, timeout, debug = FALSE,
+  output_model = TRUE, error_score = 0)
 }
 \arguments{
 \item{tasks}{The tasks on which to evaluate.}
@@ -18,6 +18,10 @@ execute_evaluation(tasks, method, parameters, metrics, timeout,
 see \code{\link{calculate_metrics}} for a list of which metrics are available.}
 
 \item{timeout}{Kill execution after a given amount of time.}
+
+\item{debug}{Setting debug to \code{TRUE} will avoid running the method in a separate R session
+using \code{\link[dynutils]{wait_or_kill}} and run the method directly. Note that the timeout functionality
+will not work when \code{debug} is \code{TRUE}.}
 
 \item{output_model}{Whether or not the model will be outputted.
 If this is a character string, it will save the model in the requested folder.}

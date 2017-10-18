@@ -90,6 +90,8 @@ create_description <- function(
 #'   will not work when \code{debug} is \code{TRUE}.
 #'
 #' @importFrom utils capture.output
+#' @importFrom readr read_file
+#' @importFrom stringr str_length
 #' @export
 execute_method <- function(
   tasks,
@@ -101,54 +103,16 @@ execute_method <- function(
   timeout = Inf,
   debug = FALSE
 ) {
-  if (!debug) {
-    # dry run of the wait_or_kill method
-    dry_run <- wait_or_kill({1}, wait_time = 5, function(x) x, .1)
-
-    # Run the method on each of the tasks
-    dynutils::wait_or_kill(
-      wait_time = timeout,
-      cancel_output_fun = function(time) stop("Timeout after ", time, " seconds"),
-      check_interval = 1,
-      verbose = FALSE,
-      globals = c("tasks", "method", "parameters", "give_start_cell", "give_end_cells", "give_cell_grouping"),
-      packages = c("dyneval", "dynutils", method$package_loaded),
-      expr = {
-        execute_method_internal(tasks, method, parameters, give_start_cell, give_end_cells, give_cell_grouping)
-      }
-    )
-  } else {
-    execute_method_internal(tasks, method, parameters, give_start_cell, give_end_cells, give_cell_grouping)
-  }
-}
-
-#' Internal method for executing a method
-#'
-#' If you're reading this, you're supposed to be using \code{execute_method} instead.
-#'
-#' @inheritParams execute_method
-#' @export
-execute_method_internal <- function(tasks, method, parameters,
-                                    give_start_cell, give_end_cells, give_cell_grouping) {
-
-  # Load required namespaces
-  for (pack in method$package_required) {
-    suppressMessages(do.call(requireNamespace, list(pack)))
-  }
-
-  # Disable seed setting
-  orig_setseed <- base::set.seed
-  dynutils::override_setseed(function(i) {})
-
   # Run method on each task
-  outputs <- lapply(seq_len(nrow(tasks)), function(i) {
+  lapply(seq_len(nrow(tasks)), function(i) {
     task <- dynutils::extract_row_to_list(tasks, i)
 
-    # Add the counts to the parameters
+    # Add the counts to the list parameters
     arglist <- c(list(counts = task$counts), parameters)
 
     # Add prior information
     # Including the task is only used for perturbing the gold standard, not used by any real methods
+    # TODO: This should be uniformised to allow many different outputs
     param_names <- c("start_cell_id", "end_cell_id", "cell_grouping", "task")
     param_bools <- c(give_start_cell, give_end_cells, give_cell_grouping, FALSE)
 
@@ -168,39 +132,145 @@ execute_method_internal <- function(tasks, method, parameters,
       }
     }
 
-    # Run model on task with given parameters. Suppress output if need be.
+    # create a temporary directory to set as working directory,
+    # to avoid polluting the working directory if a method starts
+    # producing files :angry_face:
+    tmp_dir <- tempfile(pattern = method$short_name)
+    dir.create(tmp_dir)
+    old_wd <- getwd()
+    setwd(tmp_dir)
+
+    # disable seed setting
+    # a method shouldn't set seeds during regular execution,
+    # it should be left up to the user instead
+    orig_setseed <- base::set.seed
+    setseed_detection_file <- tempfile(pattern = "seedsetcheck")
+
+    # start the timer
     time0 <- Sys.time()
 
-    # set working directory to a temporary directory, to avoid polluting the working directory
-    # if a method starts writing output to the working directory
-    oldwd <- getwd()
-    setwd(tempdir())
+    # run the method and catch the error, if necessary
+    out <-
+      tryCatch({
+        if (debug) {
+          cat("Running ", method$name, " on ", task$name, " in debug mode!\n", sep = "")
 
-    tryCatch({
-      model <- do.call(method$run_fun, arglist)
-      error <- NULL
-    }, error = function(e) {
-      model <- NULL
-      error <- e
-    }, finally = {
-      # make sure working directory is always set to original even when errored
-      setwd(oldwd)
-    })
+          # Load packages into global environment
+          for (pack in method$package_loaded) {
+            suppressMessages(do.call(require, list(pack)))
+          }
 
+          # Execute method
+          model <- execute_method_internal(method, arglist, new_setseed)
+        } else {
+          # dry run of the wait_or_kill method
+          dry_run <- wait_or_kill({1}, wait_time = 5, function(x) x, .1)
+
+          # Run the method on each of the tasks
+          model <- dynutils::wait_or_kill(
+            wait_time = timeout,
+            cancel_output_fun = function(time) stop("Timeout after ", time, " seconds"),
+            check_interval = 1,
+            verbose = FALSE,
+            globals = c("method", "arglist", "tmp_dir", "old_wd", "setseed_detection_file"),
+            packages = c("dyneval", "dynutils", method$package_loaded),
+            expr = {
+              tryCatch({
+                # create a temporary directory to set as working directory,
+                # to avoid polluting the working directory if a method starts
+                # producing files :angry_face:
+                setwd(tmp_dir)
+
+                # run method
+                execute_method_internal(method, arglist, setseed_detection_file)
+              }, finally = {
+                # return to old_wd
+                # (in the likely event that this is a different thread)
+                setwd(old_wd)
+              })
+            }
+          )
+        }
+
+        list(model = model, error = NULL)
+      }, error = function(e) {
+        list(model = NULL, error = e)
+      })
+
+    # stop the timer
     time1 <- Sys.time()
 
+    # retrieve the model and error message
+    model <- out$model
+    error <- out$error
+
+    # check whether the method produced output files and
+    # wd to previous state
+    num_files_created <- length(list.files(tmp_dir, recursive = TRUE))
+    setwd(old_wd)
+
+    # Temporary fix: do not remove the whole tmp wd, as futures might still be in this wd.
+    # TODO: solve it
+    # unlink(tmp_dir, recursive = TRUE, force = TRUE)
+    for (x in list.dirs(tmp_dir, recursive = FALSE)) {
+      unlink(x, recursive = TRUE, force = TRUE)
+    }
+    file.remove(list.files(tmp_dir))
+
+    # read how many seeds were set and
+    # restore environment to previous state
+    num_setseed_calls <-
+      if (file.exists(setseed_detection_file)) {
+        stringr::str_length(readr::read_file(setseed_detection_file))
+      } else {
+        0
+      }
+    if (file.exists(setseed_detection_file)) {
+      file.remove(setseed_detection_file)
+    }
+    dynutils::override_setseed(orig_setseed)
+
+    # create a summary tibble
     summary <- tibble(
       method_name = method$name,
       method_short_name = method$short_name,
       task_id = task$id,
       time_method = as.numeric(difftime(time1, time0, units = "sec")),
-      error = list(error)
+      error = list(error),
+      num_files_created = num_files_created,
+      num_setseed_calls = num_setseed_calls
     )
 
+    # return output
     list(model = model, summary = summary)
   })
+}
 
-  dynutils::override_setseed(orig_setseed)
+#' Internal method for executing a method
+#'
+#' If you're reading this, you're supposed to be using \code{execute_method} instead.
+#'
+#' @param method A TI method wrapper
+#' @param arglist The arguments to apply to the method
+#' @param setseed_detection_file A file to which will be written if a method
+#'   uses the set.seed function.
+#'
+#' @export
+#' @importFrom readr write_file
+execute_method_internal <- function(method, arglist,setseed_detection_file) {
+  # disable seed setting
+  # a method shouldn't set seeds during regular execution,
+  # it should be left up to the user instead
+  new_setseed <- function(i) {
+    readr::write_file("1", setseed_detection_file, append = TRUE)
+  }
+  dynutils::override_setseed(new_setseed)
 
-  outputs
+  # Load required namespaces
+  for (pack in method$package_required) {
+    suppressMessages(do.call(requireNamespace, list(pack)))
+  }
+
+  # execute method and return model
+  do.call(method$run_fun, arglist)
 }

@@ -45,8 +45,8 @@ make_obj_fun <- function(method, metrics, timeout, noisy = FALSE) {
 #'
 #' @export
 #' @importFrom netdist gdd net_emd
-execute_evaluation <- function(tasks, method, parameters, metrics, timeout, output_model = TRUE, error_score = -1) {
-  method_outputs <- execute_method(tasks = tasks, method = method, parameters = parameters, timeout = timeout)
+execute_evaluation <- function(tasks, method, parameters, metrics, timeout, debug = FALSE, output_model = TRUE, error_score = 0) {
+  method_outputs <- execute_method(tasks = tasks, method = method, parameters = parameters, timeout = timeout, debug = debug)
 
   # Calculate scores
   eval_outputs <- lapply(seq_len(nrow(tasks)), function(i) {
@@ -86,11 +86,16 @@ execute_evaluation <- function(tasks, method, parameters, metrics, timeout, outp
 
   # Calculate the final score
   na_mean <- function(x) if (any(is.na(x))) error_score else x
-  score <- summary %>%
-    summarise_at(metrics, funs(na_mean)) %>%
-    as.matrix %>%
-    as.vector %>%
-    setNames(metrics)
+  score <-
+    if (all(metrics %in% colnames(summary))) {
+      summary %>%
+        summarise_at(metrics, funs(na_mean)) %>%
+        as.matrix %>%
+        as.vector %>%
+        setNames(metrics)
+    } else {
+      setNames(rep(error_score, length(metrics)), metrics)
+    }
 
   # Return extra information
   extras <- list(.summary = summary)
