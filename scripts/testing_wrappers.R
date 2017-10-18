@@ -231,10 +231,21 @@ epsilon = 1
 # trying all methods
 methods <- dyneval::get_descriptions(F)
 
+# toys
+tasks <- dyntoy::toy_tasks[5,]
+
+# real dataset
+tasks <- readRDS(paste0("../dynalysis/analysis/data/derived_data/dyngen/tasks_v4.rds")) %>%
+  filter(
+    platform_id == "fluidigm_c1",
+    takesetting_type == "snapshot")
+
+tasks <- tasks[5,]
+
 outs <- pbapply::pblapply(methods, function(method) {
   tryCatch({
-    score <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method, parameters = list(), metrics = "auc_R_nx", timeout = 120)
-    summary <- attr(score,"extras")$.summary[[1]]
+    score <- execute_evaluation(tasks, method, parameters = list(), metrics = "auc_R_nx", timeout = 120)
+    summary <- attr(score,"extras")$.summary
     prediction <- attr(score,"extras")$.models[[1]]
     attr(score,"extras") <- NULL
     meth_plot <- method$plot_fun(prediction)
@@ -242,6 +253,7 @@ outs <- pbapply::pblapply(methods, function(method) {
     lst(method, score, summary, prediction, meth_plot, default_plot)
   }, error = function(e) NULL)
 })
+setNames(outs) <- map_chr(methods, ~.$name)
 df <- seq_along(outs) %>% map_df(function(i) {
   method <- methods[[i]]
   outm <- outs[[i]]
@@ -252,3 +264,29 @@ df <- seq_along(outs) %>% map_df(function(i) {
   )
 })
 df %>% as.data.frame
+
+# i <- 22
+# method <- methods[[i]]
+#
+# outs[[i]] <- lst(method, score, summary, prediction, meth_plot, default_plot)
+
+outs[!df$failed] %>% map_df(~ .$score)
+
+pdf("~/test2.pdf", 20, 15)
+cowplot::plot_grid(plotlist = outs[df$ggplot] %>% map(~ .$meth_plot + ggtitle(paste0(.$method$name, " plot"))))
+dev.off()
+
+pdf("~/test.pdf", 10, 5)
+for (i in seq_along(outs)) {
+  if (df$ggplot[[i]]) {
+    ou <- outs[[i]]
+    ou_name <- ou$method$name
+    g <- cowplot::plot_grid(
+      ou$meth_plot + ggtitle(paste0(ou_name, " method plot")),
+      ou$default_plot + ggtitle(paste0(ou_name, " default plot")),
+      nrow = 1
+    )
+    print(g)
+  }
+}
+dev.off()
