@@ -92,10 +92,11 @@ run_embeddr <- function(counts,
 plot_embeddr <- function(prediction) {
   sample_df <- prediction$dimred_samples %>% mutate(time = prediction$pseudotimes)
   traj_df <- prediction$dimred_traj
-  ggplot() +
+  g <- ggplot() +
     geom_point(aes(component_1, component_2, fill = time), sample_df, pch = 21, alpha = .65, size = 3.5) +
     geom_path(aes(trajectory_1, trajectory_2), traj_df, size = 1.5, alpha = 0.8, linetype = 2) +
     scale_fill_distiller(palette = "YlOrRd") +
     scale_colour_distiller(palette = "YlOrRd") +
-    theme_dyneval()
+    theme(legend.position = "none")
+  process_dyneval_plot(g, prediction$id)
 }

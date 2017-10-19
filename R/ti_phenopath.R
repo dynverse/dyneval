@@ -58,8 +58,10 @@ run_phenopath <- function(counts,
 #' @importFrom viridis scale_colour_viridis
 #' @importFrom cowplot theme_cowplot
 plot_phenopath <- function(prediction) {
-  ggplot(prediction$space) +
+  g <- ggplot(prediction$space) +
     geom_point(aes(PC1, PC2, colour = pseudotime)) +
     viridis::scale_colour_viridis() +
-    cowplot::theme_cowplot()
+    labs(colour = "Pseudotime") +
+    theme(legend.position = c(.92, .12))
+  process_dyneval_plot(g, prediction$id)
 }

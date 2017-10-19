@@ -121,7 +121,7 @@ run_celltree <- function(counts,
   # wrap output
   wrap_ti_prediction(
     ti_type = "tree",
-    id = "cellTree",
+    id = paste0("cellTree with ", method),
     cell_ids = rownames(counts),
     milestone_ids = out$milestone_ids,
     milestone_network = out$milestone_network,
@@ -145,8 +145,10 @@ plot_celltree <- function(prediction) {
     data.frame(
       vertices[i,] %>% select(-pie),
       topic = paste0("Topic ", seq_along(pieval)),
-      value = pieval
+      stringsAsFactors = FALSE
     ) %>% mutate(
+      topic = factor(topic, levels = topic),
+      value = pieval,
       arc = value * 2 * pi / sum(value),
       end = cumsum(arc),
       start = end - arc
@@ -165,15 +167,14 @@ plot_celltree <- function(prediction) {
   ann_cols <- setNames(grDevices::rainbow(num_topics), paste0("Topic ", seq_len(num_topics)))
 
   # make pie graph plot
-  ggplot() +
+  g <- ggplot() +
     geom_segment(aes(x = from.x, xend = to.x, y = from.y, yend = to.y), edges_df) +
     ggforce::geom_arc_bar(aes(x0 = x, y0 = y, r0 = 0, r = size*2,
                               start = start, end = end, fill = topic, group = cell.name), data = pie_df, colour = NA) +
-    cowplot::theme_cowplot() +
-    coord_equal() +
     scale_fill_manual(values = ann_cols) +
     scale_size_identity() +
-    scale_x_continuous(breaks = NULL) +
-    scale_y_continuous(breaks = NULL) +
-    labs(fill = "Topic", x = NULL, y = NULL)
+    labs(fill = "Topic") +
+    theme(legend.position = c(0.9, 0.125)) +
+    guides(fill = guide_legend(ncol = ceiling(num_topics / 8)))
+  process_dyneval_plot(g, prediction$id)
 }

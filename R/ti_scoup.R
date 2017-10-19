@@ -7,7 +7,7 @@ description_scoup <- function() create_description(
   package_loaded = c(),
   par_set = makeParamSet(
     makeIntegerParam(id = "ndim", lower = 2L, default = 2L, upper = 20L),
-    makeIntegerParam(id = "nbranch", lower = 1L, default = 1L, upper = 20L),
+    makeIntegerParam(id = "nbranch", lower = 1L, default = 3L, upper = 20L),
     makeNumericParam(id = "max_ite1", lower = log(2), default = log(100), upper = log(5000), trafo = function(x) round(exp(x))), # should be 1000
     makeNumericParam(id = "max_ite2", lower = log(2), default = log(100), upper = log(50000), trafo = function(x) round(exp(x))), # should be 10000
     makeNumericParam(id = "alpha_min", lower = log(.001), default = log(.1), upper = log(10), trafo = exp),
@@ -29,7 +29,7 @@ run_scoup <- function(
   cell_grouping,
   start_cell_id,
   ndim = 3,
-  nbranch = 1,
+  nbranch = 3,
   max_ite1 = 100,
   max_ite2 = 100,
   alpha_min = .1,
@@ -71,17 +71,19 @@ run_scoup <- function(
   )
 
   # create progressions
-  progressions <- model$cpara %>%
+  milestone_percentages <- model$cpara %>%
+    as.data.frame() %>%
+    as_data_frame() %>%
     rownames_to_column("cell_id") %>%
-    mutate(time = dynutils::scale_minmax(time)) %>%
-    gather("to", "percentage", -cell_id, -time) %>%
-    group_by(cell_id) %>%
-    mutate(
-      percentage = percentage / sum(percentage) * time,
-      from = "M0"
-    ) %>%
+    mutate(time = max(time) - time) %>%
+    rename(M0 = time) %>%
+    gather(milestone_id, percentage, -cell_id) %>%
+    group_by(milestone_id) %>%
+    mutate(percentage = percentage / max(percentage)) %>%
     ungroup() %>%
-    select(cell_id, from, to, percentage)
+    group_by(cell_id) %>%
+    mutate(percentage = percentage / sum(percentage)) %>%
+    filter(percentage > 0 | milestone_id == "M0")
 
   # create milestone ids
   milestone_ids <- c("M0", paste0("M", seq_len(nbranch)))
@@ -95,13 +97,13 @@ run_scoup <- function(
   )
 
   # return output
-  wrap_ti_prediction(
+  prediction <- wrap_ti_prediction(
     ti_type = "multifurcating",
     id = "SCOUP",
     cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
     milestone_network = milestone_network,
-    progressions = progressions,
+    milestone_percentages = milestone_percentages,
     model = model
   )
 }
@@ -117,8 +119,7 @@ plot_scoup <- function(prediction, type = c("dimred", "percentages")) {
       celltypes <- prediction$milestone_percentages %>%
         group_by(cell_id) %>%
         arrange(desc(percentage)) %>%
-        slice(1) %>%
-        ungroup()
+        slice(1)
 
       # combine data
       space_df <- prediction$model$dimred %>%
@@ -127,11 +128,13 @@ plot_scoup <- function(prediction, type = c("dimred", "percentages")) {
         left_join(celltypes, by = "cell_id")
 
       # make plot
-      ggplot(space_df) +
+      g <- ggplot(space_df) +
         geom_point(aes(Comp1, Comp2, colour = milestone_id), shape = 1) +
-        cowplot::theme_cowplot() +
         scale_colour_manual(values = palette) +
-        labs(colour = "Milestone", x = "PC1", y = "PC2")
+        labs(colour = "Milestone") +
+        theme(legend.position = c(.92, .12))
+
+      process_dyneval_plot(g, id = prediction$id)
     },
     percentages = {
       df <- prediction$model$cpara %>%

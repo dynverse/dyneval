@@ -120,12 +120,10 @@ plot_scuba <- function(prediction) {
     lay[labs,]
   )
 
-  ggplot() +
+  g <- ggplot() +
     geom_jitter(aes(y, x, colour = lab), cel_df, width = .03, height = .03) +
     geom_segment(aes(x = from.y, xend = to.y, y = from.x, yend = to.x), edge_df, arrow = grid::arrow()) +
-    ylim(-.5, .5) +
     scale_colour_manual(values = mid_col) +
-    cowplot::theme_cowplot() +
-    theme(legend.position = "none") +
-    labs(x = "Comp1", y = "Comp2")
+    theme(legend.position = "none")
+  process_dyneval_plot(g, prediction$id)
 }

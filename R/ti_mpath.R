@@ -164,17 +164,15 @@ plot_mpath <- function(prediction) {
   ann_cols <- setNames(RColorBrewer::brewer.pal(length(ann_groups), "Set2"), ann_groups)
 
   # Make a line plot
-  ggplot() +
+  g <- ggplot() +
     geom_segment(aes(x = from.x, xend = to.x, y = from.y, yend = to.y), edges_df) +
     ggforce::geom_arc_bar(aes(x0 = X, y0 = Y, r0 = 0, r = .075,
                               start = start, end = end, fill = label, group = milestone_id), data = pie_df) +
     geom_text(aes(X, Y, label = milestone_id), lay_df) +
-    cowplot::theme_cowplot() +
     scale_fill_manual(values = ann_cols) +
-    coord_equal() +
-    labs(x = NULL, y = NULL, fill = NULL) +
-    scale_x_continuous(breaks = NULL) +
-    scale_y_continuous(breaks = NULL)
+    theme(legend.position = c(.92, .12))
+
+  process_dyneval_plot(g, prediction$id)
 }
 
 

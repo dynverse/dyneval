@@ -11,7 +11,7 @@ description_pseudogp <- function() create_description(
     makeNumericParam(id = "pseudotime_mean", lower = 0, upper = 1, default = 0.5),
     makeNumericParam(id = "pseudotime_var", lower = 0.01, upper = 1, default = 1),
     makeIntegerParam(id = "chains", lower = 1L, default = 1L, upper = 20L),
-    makeNumericParam(id = "iter", lower = log(5), default = log(50), upper = log(1000), trafo = function(x) round(exp(x))), # default is 1000
+    makeNumericParam(id = "iter", lower = log(100), default = log(100), upper = log(1000), trafo = function(x) round(exp(x))), # default is 1000
     makeLogicalVectorParam(id = "dimreds", len = length(list_dimred_methods()), default = names(list_dimred_methods()) == "pca"),
     makeDiscreteParam(id = "initialise_from", values=c("random", "principal_curve", "pca"), default="random")
   ),
@@ -81,6 +81,8 @@ run_pseudogp <- function(counts,
 plot_pseudogp <- function(prediction) {
   # code is adapted from pseudogp::posteriorCurvePlot
   requireNamespace("pseudogp")
+  requireNamespace("MCMCglmm")
+  requireNamespace("coda")
 
   spaces <- prediction$spaces
   chains <- prediction$chains
@@ -89,31 +91,59 @@ plot_pseudogp <- function(prediction) {
   sigma <- prediction$sigma
 
   Ns <- length(spaces)
+  cols <- ceiling(sqrt(Ns))
+  rows <- ceiling(Ns/cols)
 
-  plots <- lapply(seq_len(Ns), function(i) {
-    l <- lambda[, , (2 * i - 1):(2 * i), drop = FALSE]
-    s <- sigma[, , (2 * i - 1):(2 * i), drop = FALSE]
-    sp <- spaces[[i]]
-    plt <- pseudogp:::makeEnvelopePlot(
-      pst,
-      l,
-      s,
-      sp,
-      chains,
-      posterior_mean = TRUE,
-      ncurves = min(50, nrow(sp)),
-      nnt = 80,
-      point_colour = "darkred",
-      curve_colour = "black",
-      point_alpha = 1,
-      curve_alpha = .05,
-      use_cowplot = TRUE,
-      standardize_ranges = FALSE
+  offset_mult <- 1.1
+  space_ann <- data_frame(
+    i = seq_len(Ns),
+    offset_x = (((i-1) %% cols) + 1) * offset_mult,
+    offset_y = (floor((i - 1) / cols) + 1) * offset_mult,
+    name = names(spaces)
+  )
+
+  plot_outs <- lapply(seq_len(Ns), function(i) {
+    lams <- lambda[, , (2 * i - 1):(2 * i), drop = FALSE]
+    sigs <- sigma[, , (2 * i - 1):(2 * i), drop = FALSE]
+    x <- spaces[[i]]
+
+    plot_offset <- c(space_ann$offset_x[[i]], space_ann$offset_y[[i]])
+
+    xsc <- dynutils::scale_uniform(x) %>% sweep(2, plot_offset, "+")
+
+    xsc_df <- data.frame(space = names(spaces)[[i]], xsc, stringsAsFactors = FALSE)
+
+    ncurves <- min(50, nrow(x))
+    n_posterior_samples <- dim(pst)[1]
+    curve_samples <- sample(n_posterior_samples, ncurves)
+    pmcs <- map_df(seq_len(chains), function(chain) {
+      tmap <- MCMCglmm::posterior.mode(coda::mcmc(pst[, chain, ]))
+      lmap <- MCMCglmm::posterior.mode(coda::mcmc(lams[, chain, ]))
+      smap <- MCMCglmm::posterior.mode(coda::mcmc(sigs[, chain, ]))
+
+      pmc <- pseudogp:::posterior_mean_curve(x, tmap, lmap, smap, nnt = 80)
+      pmcsc <- apply_uniform_scale(pmc$mu, attr(xsc, "addend"), attr(xsc, "multiplier")) %>%
+        sweep(2, plot_offset, "+")
+
+      data.frame(space = names(spaces)[[i]], chain, pmcsc, t = pmc$t, stringsAsFactors = FALSE)
+    })
+
+    lst(
+      space = xsc_df,
+      curves = pmcs
     )
   })
-  cowplot::plot_grid(
-    plotlist = plots,
-    labels = names(spaces)
-  )
+
+  dimreds <- plot_outs %>% map_df(~ .$space)
+  curves <- plot_outs %>% map_df(~ .$curves) %>% arrange(space, chain, t)
+
+  calculated_alpha <- .5 * exp(1) * exp(-ncurves) + .5
+
+  g <- ggplot() +
+    geom_point(aes(Comp1, Comp2), alpha = .5, size = 3, colour = "white", fill = "darkred", shape = 21, dimreds) +
+    geom_path(aes(X1, X2, group = paste0(space, "_", chain)), curves, size = 1.5, alpha = calculated_alpha) +
+    geom_text(aes(offset_x, offset_y+.45, label = name), space_ann, size = 8)
+
+  process_dyneval_plot(g, prediction$id)
 }
 
