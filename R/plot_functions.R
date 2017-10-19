@@ -1,17 +1,31 @@
 #' Default theme for TI plots
 #' @export
-theme_dyneval <- function() {
-  theme(
-    panel.background = element_blank(),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    axis.line = element_line(colour = "black"),
-    panel.border = element_rect(colour = "black", fill=NA),
-    legend.position = "none",
-    axis.ticks = element_blank(),
-    axis.text = element_blank(),
-    axis.title = element_blank()
-  )
+process_dyneval_plot <- function(g, id) {
+  ranges <- ggplot_build(g)$layout$panel_ranges[[1]]
+  yrange <- ranges$y.range
+  xrange <- ranges$x.range
+
+  xdiff <- diff(xrange)
+  ydiff <- diff(yrange)
+  maxdiff <- max(xdiff, ydiff)
+  new_xrange <- mean(xrange) + c(-maxdiff/2, maxdiff/2)
+  new_yrange <- mean(yrange) + c(-maxdiff/2, maxdiff/2)
+
+  g +
+    theme(
+      panel.background = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      axis.line = element_line(colour = "black"),
+      panel.border = element_rect(colour = "black", fill=NA),
+      axis.ticks = element_blank(),
+      axis.text = element_blank(),
+      axis.title = element_blank(),
+      legend.key = element_blank()
+    ) +
+    ggtitle(id) +
+    coord_equal() +
+    expand_limits(x = new_xrange, y = new_yrange)
 }
 
 #' Plot a dimensionality reduced trajectory

@@ -7,11 +7,14 @@ library(magrittr)
 library(tibble)
 library(ggplot2)
 
+# expect to fail
 out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = description_celltree_maptpx(), parameters = list(), timeout = 4, metrics = "auc_R_nx")
 attr(out, "extras")$.summary
 
-out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = description_celltree_maptpx(), parameters = list(), timeout = 120, metrics = "auc_R_nx")
+# expect to run!
+out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = description_mpath(), parameters = list(), timeout = 120, metrics = "auc_R_nx", output_model = T)
 attr(out, "extras")$.summary
+prediction <- attr(out, "extras")$.model[[1]]
 
 dataset <- dynutils::extract_row_to_list(dyntoy::toy_tasks, 5)
 counts <- dataset$counts
