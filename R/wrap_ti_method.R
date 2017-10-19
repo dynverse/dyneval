@@ -282,10 +282,10 @@ execute_method_internal <- function(method, arglist,setseed_detection_file) {
   time1 <- Sys.time()
 
   # execute method and return model
-  out <- do.call(method$run_fun, arglist)
+  model <- do.call(method$run_fun, arglist)
 
   # measure third time point
   time2 <- Sys.time()
 
-  list(time1 = time1, time2 = time2, out = out)
+  list(time1 = time1, time2 = time2, model = model)
 }
