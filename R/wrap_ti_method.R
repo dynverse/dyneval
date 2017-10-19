@@ -59,6 +59,8 @@ create_description <- function(
       generateDesignOfDefaults(trafo = TRUE) %>%
       ParamHelpers::dfRowToList(par_set, 1)
 
+    # TODO: check params does not contain 'y' or 'y_1', 'y_2', ... etc
+
     if(!all(names(default_params) %in% formalArgs(run_fun))) {
       stop("Not all default params described in par_set are listed in the run_fun.")
     }
