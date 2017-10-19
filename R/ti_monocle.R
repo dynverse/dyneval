@@ -68,6 +68,7 @@ run_monocle <- function(counts,
   requireNamespace("BiocGenerics")
   requireNamespace("igraph")
   requireNamespace("Biobase")
+  requireNamespace("Matrix")
 
   # TODO: implement num_paths prior for monocle 1
 
