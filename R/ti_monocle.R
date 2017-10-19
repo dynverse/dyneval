@@ -133,5 +133,7 @@ run_monocle <- function(counts,
 
 plot_monocle <- function(prediction) {
   requireNamespace("monocle")
+  # TODO: replicate monocle plotting function so we don't need to save the
+  # whole cds output
   monocle::plot_cell_trajectory(prediction$cds)
 }
