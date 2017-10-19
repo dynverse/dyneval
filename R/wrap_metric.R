@@ -73,7 +73,8 @@ execute_evaluation <- function(tasks, method, parameters, metrics, timeout, debu
         metrics_output$summary
       )
     } else {
-      summary <- method_output$summary
+      summary <- method_output$summary %>%
+        mutate_at(metrics, function(x) error_score)
     }
 
     # Return the output
@@ -90,17 +91,11 @@ execute_evaluation <- function(tasks, method, parameters, metrics, timeout, debu
   })
 
   # Calculate the final score
-  na_mean <- function(x) if (any(is.na(x))) error_score else x
-  score <-
-    if (all(metrics %in% colnames(summary))) {
-      summary %>%
-        summarise_at(metrics, funs(na_mean)) %>%
-        as.matrix %>%
-        as.vector %>%
-        setNames(metrics)
-    } else {
-      setNames(rep(error_score, length(metrics)), metrics)
-    }
+  score <- summary %>%
+    summarise_at(metrics, funs(mean)) %>%
+    as.matrix %>%
+    as.vector %>%
+    setNames(metrics)
 
   # Return extra information
   extras <- list(.summary = summary)
