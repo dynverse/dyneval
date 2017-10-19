@@ -229,6 +229,9 @@ benchmark_suite_retrieve <- function(out_dir) {
         wait = FALSE
       )
 
+      # suppressing inevitable warnings:
+      # when the job is still partly running, calling qacct will generate a warning
+      # when the job is finished, calling qstat will generate a warning
       suppressWarnings({
         qacct_out <- PRISM::qacct(qsub_handle)
         qstat_out <- PRISM::qstat_j(qsub_handle)
