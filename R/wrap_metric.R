@@ -50,7 +50,7 @@ execute_evaluation <- function(tasks, method, parameters, metrics, timeout, debu
 
   # Calculate scores
   eval_outputs <- lapply(seq_len(nrow(tasks)), function(i) {
-    task <- extract_row_to_list(tasks, i)
+    task <- dynutils::extract_row_to_list(tasks, i)
 
     # Fetch method outputs
     method_output <- method_outputs[[i]]
@@ -81,8 +81,13 @@ execute_evaluation <- function(tasks, method, parameters, metrics, timeout, debu
   })
 
   # Combine the different outputs in three lists/data frames
-  models <- eval_outputs %>% map(~ .$model)
-  summary <- eval_outputs %>% map_df(~ .$summary)
+  # Note: suppresswarnings is used here to suppress the following:
+  #   Vectorizing 'glue' elements may not preserve their attributes
+  # TODO: Will get removed in the next major release of dplyr
+  suppressWarnings({
+    models <- eval_outputs %>% map(~ .$model)
+    summary <- eval_outputs %>% map_df(~ .$summary)
+  })
 
   # Calculate the final score
   na_mean <- function(x) if (any(is.na(x))) error_score else x
