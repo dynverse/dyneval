@@ -208,7 +208,7 @@ benchmark_suite_submit <- function(
 #' @export
 benchmark_suite_retrieve <- function(out_dir) {
   method_names <- list.dirs(out_dir, full.names = FALSE, recursive = FALSE) %>% discard(~ . == "")
-  bind_rows(lapply(method_names, function(method_name) {
+  map_df(method_names, function(method_name) {
     method_folder <- paste0(out_dir, method_name)
     output_file <- paste0(method_folder, "/output.rds")
     qsubhandle_file <- paste0(method_folder, "/qsubhandle.rds")
@@ -289,7 +289,7 @@ benchmark_suite_retrieve <- function(out_dir) {
     } else {
       stop("Could not find an output.rds or qsubhandle.rds file in out_dir = ", sQuote(out_dir))
     }
-  }))
+  })
 }
 
 benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
@@ -339,10 +339,19 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
 
   ## collect the scores per task individually
   eval_ind <- map_df(seq_len(nrow(eval_summ)), function(param_i) {
-    bind_rows(
-      train_out$opt.path$env$extra[[param_i]]$.summary %>% mutate(fold_type = "train"),
-      test_out$opt.path$env$extra[[param_i]]$.summary %>% mutate(fold_type = "test")
-    ) %>% mutate(grid_i, repeat_i, fold_i, group_sel, param_i, iteration_i = eval_summ$iteration_i[param_i])
+    train_summary <- train_out$opt.path$env$extra[[param_i]]$.summary
+    if (!is.null(train_summary)) {
+      train_summary <- train_summary %>% mutate(fold_type = "train")
+    }
+
+    test_summary <- test_out$opt.path$env$extra[[param_i]]$.summary
+    if (!is.null(test_summary)) {
+      test_summary <- test_summary %>% mutate(fold_type = "test")
+    }
+
+    bind_rows(train_summary, test_summary) %>%
+      mutate(grid_i, repeat_i, fold_i, group_sel, param_i,
+             iteration_i = eval_summ$iteration_i[param_i])
   })
 
   ## group them together per task_group
