@@ -178,10 +178,18 @@ test_that("Testing timeout of execute_method", {
   num_datasets <- nrow(toy_tasks)
 
   # should take about 20 seconds, but will timeout after 10
-  expect_error(execute_method(toy_tasks, timeouter, parameters = list(sleep_time = 10 / num_datasets), timeout = 5))
+  out <- execute_method(toy_tasks, timeouter, parameters = list(sleep_time = 10), timeout = 1)
+  models <- out %>% map_df(~ .$model)
+  summaries <- out %>% map_df(~.$summary)
+  expect_equal(nrow(models), 0)
+  expect_equal(nrow(summaries), 6)
+  for (i in seq_len(nrow(summaries))) {
+    expect_false(is.null(summaries$error[[i]]))
+    expect_is(summaries$error[[i]], "error")
+  }
 
   # this should finish correctly
-  method_outs <- execute_method(toy_tasks, timeouter, parameters = list(sleep_time = 2 / num_datasets), timeout = 10)
+  method_outs <- execute_method(toy_tasks, timeouter, parameters = list(sleep_time = 1), timeout = 10)
 
   for (i in seq_along(method_outs)) {
     method_out <- method_outs[[i]]
@@ -194,5 +202,6 @@ test_that("Testing timeout of execute_method", {
     dev.off()
 
     expect_equal( nrow(method_out$summary), 1 )
+    expect_true( is.null(method_out$summary$error[[1]]) )
   }
 })
