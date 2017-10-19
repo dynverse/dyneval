@@ -16,7 +16,7 @@
 #' @param num_repeats The number of times to repeat the mlr process, for each group and each fold.
 #' @param save_r2g_to_outdir Save the r2gridengine output to \code{out_dir} instead of the default \code{local_tmp_path}.
 #'
-#' @importFrom testthat expect_equal
+#' @importFrom testthat expect_equal expect_is
 #' @importFrom PRISM qsub_lapply override_qsub_config
 #' @importFrom mlrMBO makeMBOControl setMBOControlTermination setMBOControlInfill makeMBOInfillCritDIB makeMBOInfillCritCB
 #' @importFrom mlr makeLearner configureMlr
@@ -30,7 +30,7 @@ benchmark_suite_submit <- function(
   task_group,
   task_fold,
   out_dir,
-  timeout = 60 * nrow(tasks),
+  timeout = 120,
   methods = get_descriptions(as_tibble = TRUE),
   metrics = c("auc_R_nx", "robbie_network_score"),
   num_cores = 4,
