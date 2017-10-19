@@ -66,8 +66,9 @@ benchmark_suite_submit <- function(
   }
 
   # construct control for test phase
-  control_test <- control_train
-  control_test$iters <- 1
+  control_test <- control_train %>% mlrMBO::setMBOControlTermination(
+    iters = 1
+  )
   control_test$propose.points <- 1
 
   ## create learner for predicting performance of new params
