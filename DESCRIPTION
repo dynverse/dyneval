@@ -63,6 +63,7 @@ Suggests:
   GPfates,
   lle,
   MASS,
+  Matrix,
   Mpath,
   mfa,
   monocle,
