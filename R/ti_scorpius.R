@@ -64,13 +64,43 @@ run_scorpius <- function(counts,
 }
 
 #' @importFrom viridis scale_colour_viridis
+#' @importFrom reshape2 melt
 plot_scorpius <- function(prediction) {
   requireNamespace("SCORPIUS")
-  SCORPIUS::draw_trajectory_plot(
-    prediction$space,
-    prediction$traj$time,
-    prediction$traj$path
-  ) +
+  requireNamespace("MASS")
+
+  space <- prediction$space[,1:2]
+  ranges <- apply(space, 2, range)
+  maxrange <- apply(ranges, 2, diff) %>% max
+
+  limits <- ranges %>% sweep(1, c(-.5, .5) * maxrange, "+")
+
+  space_df <- space %>%
+    as.data.frame() %>%
+    set_colnames(paste0("Comp", seq_len(ncol(.)))) %>%
+    rownames_to_column("cell_id") %>%
+    mutate(time = prediction$pseudotimes)
+
+  kde_out <- MASS::kde2d(space[, 1], space[, 2], lims = as.vector(limits))
+  z_melt <- reshape2::melt(kde_out$z)
+  kde_df <- data.frame(
+    Comp1 = kde_out$x[z_melt$Var1],
+    Comp2 = kde_out$y[z_melt$Var2],
+    density = z_melt$value
+  )
+
+  traj_df <- prediction$traj$path[,1:2] %>%
+    as.data.frame() %>%
+    set_colnames(paste0("Comp", seq_len(ncol(.))))
+
+  g <- ggplot() +
+    geom_path(aes(Comp1, Comp2), alpha = 0, data.frame(ranges %>% sweep(1, c(-.2, .2) * maxrange, "+"))) +
+    stat_contour(aes(Comp1, Comp2, z = density), geom = "polygon", kde_df, alpha = 0.02, breaks = seq(.2, 1, by = .1)) +
+    geom_point(aes(Comp1, Comp2, colour = time), space_df) +
+    geom_path(aes(Comp1, Comp2), traj_df) +
     viridis::scale_colour_viridis() +
-    theme(legend.position = "none")
+    labs(colour = "Pseudotime") +
+    theme(legend.position = c(.92, .12))
+
+  process_dyneval_plot(g, prediction$id, expand = FALSE)
 }

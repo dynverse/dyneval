@@ -4,7 +4,14 @@
 \alias{process_dyneval_plot}
 \title{Default theme for TI plots}
 \usage{
-process_dyneval_plot(g, id)
+process_dyneval_plot(g, id, expand = TRUE)
+}
+\arguments{
+\item{g}{A ggplot to modify}
+
+\item{id}{The title}
+
+\item{expand}{Whether or not to leave space at the borders}
 }
 \description{
 Default theme for TI plots
