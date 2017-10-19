@@ -107,6 +107,10 @@ execute_method <- function(
 ) {
   # Run method on each task
   lapply(seq_len(nrow(tasks)), function(i) {
+    # start the timer
+    time0 <- Sys.time()
+
+    # get the task
     task <- dynutils::extract_row_to_list(tasks, i)
 
     # Add the counts to the list parameters
@@ -148,9 +152,6 @@ execute_method <- function(
     orig_setseed <- base::set.seed
     setseed_detection_file <- tempfile(pattern = "seedsetcheck")
 
-    # start the timer
-    time0 <- Sys.time()
-
     # run the method and catch the error, if necessary
     out <-
       tryCatch({
@@ -163,7 +164,7 @@ execute_method <- function(
           }
 
           # Execute method
-          model <- execute_method_internal(method, arglist, new_setseed)
+          model <- execute_method_internal(method, arglist, setseed_detection_file)
         } else {
           # dry run of the wait_or_kill method
           dry_run <- wait_or_kill({1}, wait_time = 5, function(x) x, .1)
@@ -194,17 +195,16 @@ execute_method <- function(
           )
         }
 
-        list(model = model, error = NULL)
+        c(model, list(error = NULL))
       }, error = function(e) {
-        list(model = NULL, error = e)
+        list(model = NULL, time1 = time0, time2 = Sys.time(), error = e)
       })
-
-    # stop the timer
-    time1 <- Sys.time()
 
     # retrieve the model and error message
     model <- out$model
     error <- out$error
+    time1 <- out$time1
+    time2 <- out$time2
 
     # check whether the method produced output files and
     # wd to previous state
@@ -232,12 +232,17 @@ execute_method <- function(
     }
     dynutils::override_setseed(orig_setseed)
 
+    # stop the timer
+    time3 <- Sys.time()
+
     # create a summary tibble
     summary <- tibble(
       method_name = method$name,
       method_short_name = method$short_name,
       task_id = task$id,
-      time_method = as.numeric(difftime(time1, time0, units = "sec")),
+      time_setup = as.numeric(difftime(time1, time0, units = "sec")),
+      time_method = as.numeric(difftime(time2, time1, units = "sec")),
+      time_cleanup = as.numeric(difftime(time3, time2, units = "sec")),
       error = list(error),
       num_files_created = num_files_created,
       num_setseed_calls = num_setseed_calls
@@ -273,6 +278,14 @@ execute_method_internal <- function(method, arglist,setseed_detection_file) {
     suppressMessages(do.call(requireNamespace, list(pack)))
   }
 
+  # measure second time point
+  time1 <- Sys.time()
+
   # execute method and return model
-  do.call(method$run_fun, arglist)
+  out <- do.call(method$run_fun, arglist)
+
+  # measure third time point
+  time2 <- Sys.time()
+
+  list(time1 = time1, time2 = time2, out = out)
 }
