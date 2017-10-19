@@ -88,7 +88,9 @@ plot_mfa <- function(prediction) {
     prediction$pca_out,
     prediction$ms
   )
-  ggplot() +
+  g <- ggplot() +
     geom_point(aes(PC1, PC2, colour = branch), df) +
-    cowplot::theme_cowplot()
+    labs(colour = "Branch") +
+    theme(legend.position = c(.92, .1))
+  process_dyneval_plot(g, prediction$id)
 }

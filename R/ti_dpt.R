@@ -102,19 +102,18 @@ run_dpt <- function(counts,
 plot_dpt <- function(prediction) {
   # based on destiny::plot.DPT(prediction$dpt, col_by = "branch")
 
-  palette <- c(
-    "#8DD3C7", "#FFED6F", "#BEBADA", "#FB8072", "#80B1D3", "#FDB462", "#B3DE69", "#BC80BD", "#FCCDE5", "gray85", "#CCEBC5", "#FFFFB3"
-  )
+  palette <- c("#8DD3C7", "#FFED6F", "#BEBADA", "#FB8072", "#80B1D3", "#FDB462", "#B3DE69", "#BC80BD", "#FCCDE5", "gray85", "#CCEBC5", "#FFFFB3")
   ann_cols <- c(
     setNames(palette, paste0("Branch ", seq_along(palette))),
     Unassigned = "lightgray",
     Tip = "red"
   )
 
-  ggplot(prediction$space) +
-    geom_point(aes(DC1, DC2, colour = col_lab), shape = 1, size = 2) +
-    cowplot::theme_cowplot() +
+  g <- ggplot(prediction$space) +
+    geom_point(aes(DC1, DC2, colour = col_lab), size = 2) +
     scale_colour_manual(values = ann_cols) +
-    labs(colour = "Colour")
+    labs(colour = "Branch") +
+    theme(legend.position = c(0.9, 0.1))
+  process_dyneval_plot(g, prediction$id)
 }
 
