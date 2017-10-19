@@ -243,10 +243,15 @@ benchmark_suite_retrieve <- function(out_dir) {
         output_succeeded <- TRUE
         outputs <- lapply(output, function(x) {
           if(length(x) == 1 && is.na(x)) {
-            list(which_errored = TRUE, error = attr(x, "qsub_error"))
+            list(
+              which_errored = TRUE,
+              qsub_error = attr(x, "qsub_error")
+            )
           } else {
-            x$which_errored <- FALSE
-            x$error <- NA
+            # check to see whether all jobs failed
+            all_errored <- output %>% map_lgl(~ !all(!is.null(.$eval_ind$error)))
+            x$which_errored <- all_errored
+            x$qsub_error <- ifelse(all_errored, "all parameter settings errored", "")
             x
           }
         }) %>% list_as_tibble()
@@ -262,17 +267,18 @@ benchmark_suite_retrieve <- function(out_dir) {
         output_succeeded <- FALSE
         outputs <- tibble(
           which_errored = rep(TRUE, num_tasks),
-          error = rep(error_message, num_tasks)
+          qsub_error = rep(error_message, num_tasks)
         )
       }
 
       out_rds <- outputs %>% mutate(
         task_id = seq_len(n()),
         method_name,
-        qacct = lapply(seq_len(n()), function(i) extract_row_to_list(qacct_out, i)),
-        qstat = lapply(seq_len(n()), function(i) qstat_out),
-        qsub_handle = lapply(seq_len(n()), function(i) qsub_handle)
-      ) %>% select(method_name, task_id, which_errored, error, everything())
+        qacct = map(seq_len(n()), ~ extract_row_to_list(qacct_out, .)),
+        qstat = map(seq_len(n()), ~ qstat_out),
+        qsub_handle = map(seq_len(n()), ~ qsub_handle)
+      ) %>%
+        select(method_name, task_id, which_errored, qsub_error, everything())
 
       if (output_succeeded) {
         saveRDS(out_rds, output_file)
@@ -299,71 +305,59 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
   train_out <- out_rds$tune_train
   test_out <- out_rds$tune_test
 
+  ## construct the global summary, 2 rows per parameter
   eval_summ_gath <- bind_rows(
-    data.frame(type = "train", train_out$opt.path$env$path, stringsAsFactors = F) %>%
-      mutate(
-      grid_i, repeat_i, fold_i, group_sel,
-      param_i = seq_len(n()),
-      time = train_out$opt.path$env$exec.time
+    bind_cols(
+      data_frame(type = "train", grid_i, repeat_i, fold_i, group_sel,
+                 time_total = train_out$opt.path$env$exec.time,
+                 param_i = seq_along(time_total)),
+      train_out$opt.path$env$path
     ),
-    data.frame(type = "test", test_out$opt.path$env$path, stringsAsFactors = F) %>%
-      mutate(
-      grid_i, repeat_i, fold_i, group_sel,
-      param_i = seq_len(n()),
-      time = test_out$opt.path$env$exec.time
-    )
-  ) %>% filter(param_i <= nrow(train_out$opt.path$env$path)) %>%
-    as_data_frame()
+    bind_cols(
+      data_frame(type = "test", grid_i, repeat_i, fold_i, group_sel,
+                 time_total = test_out$opt.path$env$exec.time,
+                 param_i = seq_along(time_total)),
+      test_out$opt.path$env$path
+    ) %>% filter(param_i <= nrow(train_out$opt.path$env$path))
+  )
 
+  ## if there was only 1 metric, rename the output variable
   if ("y" %in% colnames(eval_summ_gath)) {
     eval_summ_gath <- eval_summ_gath %>% rename(y_1 = y)
   }
 
-  if (!all(eval_summ_gath$y_1 == -1)) {
-    eval_summ <- eval_summ_gath %>%
-      gather(eval_metric, score, starts_with("y_"), starts_with("time")) %>%
-      mutate(comb = paste0(type, "_", eval_metric)) %>%
-      select(-type, -eval_metric) %>%
-      spread(comb, score) %>%
-      mutate(iteration_i = train_out$opt.path$env$dob[param_i]) %>%
-      arrange(param_i)
+  ## get the global summary, 1 row per parameter
+  eval_summ <- eval_summ_gath %>%
+    gather(eval_metric, score, starts_with("y_"), starts_with("time")) %>%
+    # gather(eval_metric, score, one_of(data$metrics), starts_with("time")) %>%
+    mutate(comb = paste0(type, "_", eval_metric)) %>%
+    select(-type, -eval_metric) %>%
+    spread(comb, score) %>%
+    mutate(iteration_i = train_out$opt.path$env$dob[param_i]) %>%
+    arrange(param_i)
 
-    ## collect the scores per dataset individually
-    eval_ind <- bind_rows(lapply(seq_len(nrow(eval_summ)), function(param_i) {
-      iteration_i <- eval_summ$iteration_i[[param_i]]
-      bind_rows(
-        if (eval_summ$train_y_1[[param_i]] >= 0) { # did this execution finish correctly?
-          train_out$opt.path$env$extra[[param_i]]$.summary %>%
-            mutate(grid_i, repeat_i, fold_i, group_sel, param_i, iteration_i, fold_type = "train")
-        } else {
-          NULL
-        },
-        if (eval_summ$test_y_1[[param_i]] >= 0) { # did this execution finish correctly?
-          test_out$opt.path$env$extra[[param_i]]$.summary %>%
-            mutate(grid_i, repeat_i, fold_i, group_sel, param_i, iteration_i, fold_type = "test")
-        } else {
-          NULL
-        }
-      )
-    })) %>% as_data_frame
+  ## collect the scores per task individually
+  eval_ind <- map_df(seq_len(nrow(eval_summ)), function(param_i) {
+    bind_rows(
+      train_out$opt.path$env$extra[[param_i]]$.summary %>% mutate(fold_type = "train"),
+      test_out$opt.path$env$extra[[param_i]]$.summary %>% mutate(fold_type = "test")
+    ) %>% mutate(grid_i, repeat_i, fold_i, group_sel, param_i, iteration_i = eval_summ$iteration_i[param_i])
+  })
 
-    ## group them together per task_group
-    eval_grp <- eval_ind %>%
-      left_join(tasks %>% mutate(task_fold, task_group) %>% select(task_id = id, ti_type, task_fold, task_group), by = "task_id") %>%
-      group_by(
-        ti_type, task_group, grid_i, repeat_i, fold_i,
-        group_sel, iteration_i, param_i, fold_type,
-        method_name, method_short_name
-      ) %>%
-      select(-task_id, -task_fold) %>%
-      summarise_all(mean) %>% ungroup()
+  ## group them together per task_group
+  eval_grp <- tasks %>%
+    mutate(task_fold, task_group) %>%
+    select(task_id = id, ti_type, task_fold, task_group) %>%
+    right_join(eval_ind, by = "task_id") %>%
+    group_by(
+      ti_type, task_group, grid_i, repeat_i, fold_i,
+      group_sel, iteration_i, param_i, fold_type,
+      method_name, method_short_name
+    ) %>%
+    mutate(has_errored = sapply(error, is.null)) %>%
+    select(-task_id, -task_fold, -error) %>%
+    summarise_all(mean) %>%
+    ungroup()
 
-    lst(eval_summ, eval_summ_gath, eval_ind, eval_grp)
-  } else {
-    x <- NA
-    attr(x, "qsub_error") <- "All parameters produced errors, resulting in a default error score"
-    x
-  }
-
-
+  lst(eval_summ, eval_summ_gath, eval_ind, eval_grp)
 }
