@@ -12,7 +12,7 @@ out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = description_ce
 attr(out, "extras")$.summary
 
 # expect to run!
-out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = description_mpath(), parameters = list(), timeout = 120, metrics = "auc_R_nx", output_model = T)
+out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = description_scuba(), parameters = list(), timeout = 240, metrics = "auc_R_nx", output_model = T)
 attr(out, "extras")$.summary
 prediction <- attr(out, "extras")$.model[[1]]
 

@@ -1,6 +1,11 @@
 #' Default theme for TI plots
+#'
+#' @param g A ggplot to modify
+#' @param id The title
+#' @param expand Whether or not to leave space at the borders
+#'
 #' @export
-process_dyneval_plot <- function(g, id) {
+process_dyneval_plot <- function(g, id, expand = TRUE) {
   ranges <- ggplot_build(g)$layout$panel_ranges[[1]]
   yrange <- ranges$y.range
   xrange <- ranges$x.range
@@ -10,6 +15,8 @@ process_dyneval_plot <- function(g, id) {
   maxdiff <- max(xdiff, ydiff)
   new_xrange <- mean(xrange) + c(-maxdiff/2, maxdiff/2)
   new_yrange <- mean(yrange) + c(-maxdiff/2, maxdiff/2)
+  new_xrange2 <- mean(xrange) + c(-maxdiff, maxdiff)
+  new_yrange2 <- mean(yrange) + c(-maxdiff, maxdiff)
 
   g +
     theme(
@@ -24,7 +31,8 @@ process_dyneval_plot <- function(g, id) {
       legend.key = element_blank()
     ) +
     ggtitle(id) +
-    coord_equal() +
+    coord_equal(expand = expand, xlim = new_xrange, ylim = new_yrange) +
+    xlim(new_xrange2[[1]], new_xrange2[[2]]) + ylim(new_yrange2[[1]], new_yrange2[[2]]) +
     expand_limits(x = new_xrange, y = new_yrange)
 }
 
