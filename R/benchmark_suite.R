@@ -49,7 +49,8 @@ benchmark_suite_submit <- function(
   ## set settings for MBO parameter optimisation
   control_train <- mlrMBO::makeMBOControl(
     n.objectives = length(metrics),
-    propose.points = num_cores
+    propose.points = num_cores,
+    y.name = metrics
   ) %>%
     mlrMBO::setMBOControlTermination(
       iters = num_iterations
@@ -321,15 +322,15 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
     ) %>% filter(param_i <= nrow(train_out$opt.path$env$path))
   )
 
-  ## if there was only 1 metric, rename the output variable
-  if ("y" %in% colnames(eval_summ_gath)) {
-    eval_summ_gath <- eval_summ_gath %>% rename(y_1 = y)
-  }
+  # ## if there was only 1 metric, rename the output variable
+  # if ("y" %in% colnames(eval_summ_gath)) {
+  #   eval_summ_gath <- eval_summ_gath %>% rename(y_1 = y)
+  # }
 
   ## get the global summary, 1 row per parameter
   eval_summ <- eval_summ_gath %>%
-    gather(eval_metric, score, starts_with("y_"), starts_with("time")) %>%
-    # gather(eval_metric, score, one_of(data$metrics), starts_with("time")) %>%
+    # gather(eval_metric, score, starts_with("y_"), starts_with("time")) %>%
+    gather(eval_metric, score, one_of(data$metrics), starts_with("time")) %>%
     mutate(comb = paste0(type, "_", eval_metric)) %>%
     select(-type, -eval_metric) %>%
     spread(comb, score) %>%
