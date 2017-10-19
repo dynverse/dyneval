@@ -106,18 +106,19 @@ run_monocle <- function(counts,
 
   # convert to milestone representation
   edges <- igraph::as_data_frame(gr, "edges")
-
   if ("weight" %in% edges) {
     edges <- edges %>% rename(length = weight)
   } else {
     edges <- edges %>% mutate(length = 1)
   }
-
   out <- dynutils::simplify_sample_graph(
     edges =  edges %>% mutate(directed = FALSE),
     to_keep = to_keep,
     is_directed = FALSE
   )
+
+  # retrieve data for visualisation
+  plot_data <- postprocess_monocle_cds(cds)
 
   # wrap output
   wrap_ti_prediction(
@@ -127,13 +128,80 @@ run_monocle <- function(counts,
     milestone_ids = out$milestone_ids,
     milestone_network = out$milestone_network,
     progressions = out$progressions,
-    cds = cds
+    plot_data = plot_data,
+    reduction_method = reduction_method
   )
 }
 
 plot_monocle <- function(prediction) {
   requireNamespace("monocle")
-  # TODO: replicate monocle plotting function so we don't need to save the
-  # whole cds output
-  monocle::plot_cell_trajectory(prediction$cds)
+  # Based on monocle::plot_cell_trajectory(cds)
+  reduction_method <- prediction$reduction_method
+  plot_data <- prediction$plot_data
+
+  g <- ggplot() +
+    geom_segment(aes_string(x="source_prin_graph_dim_1", y="source_prin_graph_dim_2", xend="target_prin_graph_dim_1", yend="target_prin_graph_dim_2"), size=0.75, linetype="solid", na.rm=TRUE, plot_data$edge_df) +
+    geom_point(aes_string(x="data_dim_1", y="data_dim_2", color = "State"), plot_data$data_df, size=1.5, na.rm = TRUE) +
+    theme(legend.position = c(.9, .15))
+
+  if (prediction$reduction_method == "DDRTree") {
+    branch_point_df <- plot_data$branch_point_df
+
+    g <- g +
+      geom_point(aes_string(x="prin_graph_dim_1", y="prin_graph_dim_2"),
+                 size=5, na.rm=TRUE, branch_point_df) +
+      geom_text(aes_string(x="prin_graph_dim_1", y="prin_graph_dim_2", label="branch_point_idx"),
+                size=4, color="white", na.rm=TRUE, branch_point_df)
+  }
+
+  process_dyneval_plot(g, prediction$id)
+}
+
+postprocess_monocle_cds <- function(cds) {
+  requireNamespace("igraph")
+  requireNamespace("monocle")
+  requireNamespace("Biobase")
+
+  # adapted from monocle::plot_cell_trajectory(cds)
+  lib_info_with_pseudo <- Biobase::pData(cds)
+  sample_state <- Biobase::pData(cds)$State
+
+  if (cds@dim_reduce_type == "ICA"){
+    reduced_dim_coords <- monocle::reducedDimS(cds)
+  } else if (cds@dim_reduce_type %in% c("simplePPT", "DDRTree") ){
+    reduced_dim_coords <- monocle::reducedDimK(cds)
+  }
+  ica_space_df <- Matrix::t(reduced_dim_coords) %>%
+    as.data.frame() %>%
+    select_(prin_graph_dim_1 = 1, prin_graph_dim_2 = 2) %>%
+    mutate(sample_name = rownames(.), sample_state = rownames(.))
+
+  edge_df <- cds %>%
+    monocle::minSpanningTree() %>%
+    igraph::as_data_frame() %>%
+    select_(source = "from", target = "to") %>%
+    left_join(ica_space_df %>% select_(source="sample_name", source_prin_graph_dim_1="prin_graph_dim_1", source_prin_graph_dim_2="prin_graph_dim_2"), by = "source") %>%
+    left_join(ica_space_df %>% select_(target="sample_name", target_prin_graph_dim_1="prin_graph_dim_1", target_prin_graph_dim_2="prin_graph_dim_2"), by = "target")
+
+  data_df <- t(monocle::reducedDimS(cds)) %>%
+    as.data.frame() %>%
+    select_(data_dim_1 = 1, data_dim_2 = 2) %>%
+    rownames_to_column("sample_name") %>%
+    mutate(sample_state) %>%
+    left_join(lib_info_with_pseudo %>% rownames_to_column("sample_name"), by = "sample_name")
+
+  out <- lst(
+    ica_space_df,
+    data_df,
+    edge_df
+  )
+
+  if (cds@dim_reduce_type == 'DDRTree'){
+    mst_branch_nodes <- cds@auxOrderingData[[cds@dim_reduce_type]]$branch_points
+    out$branch_point_df <- ica_space_df %>%
+      slice(match(mst_branch_nodes, sample_name)) %>%
+      mutate(branch_point_idx = seq_len(n()))
+  }
+
+  out
 }
