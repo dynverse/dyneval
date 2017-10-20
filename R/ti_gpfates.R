@@ -98,8 +98,8 @@ plot_gpfates <- function(prediction, type = c("dimred", "assignment")) {
       g <- ggplot() +
         geom_point(aes(Comp1, Comp2, colour = trend), plot_df) +
         scale_color_brewer(palette = "Set2") +
-        labs(x = "Latent variable 1", y = "Latent variable 2", colour = "Fitted trend") +
-        theme(legend.position = "none")
+        labs(colour = "Fitted trend") +
+        theme(legend.position = c(.92, .12))
 
       process_dyneval_plot(g, prediction$id)
 

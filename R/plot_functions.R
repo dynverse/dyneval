@@ -49,8 +49,7 @@ process_dyneval_plot <- function(g, id, expand = TRUE) {
 plot_default <- function(object, insert_phantom_edges = TRUE) {
   dimred_object <- check_or_perform_dimred(object, insert_phantom_edges)
 
-  # TODO: remove breaks without removing axis lines
-  with(dimred_object, {
+  g <- with(dimred_object, {
     segment_aes <- aes(x = from.Comp1, xend = to.Comp1, y = from.Comp2, yend = to.Comp2)
     ggplot() +
       geom_segment(segment_aes, size = 10, colour = "#444444",
@@ -61,13 +60,10 @@ plot_default <- function(object, insert_phantom_edges = TRUE) {
       geom_point(aes(Comp1, Comp2, colour = colour, fill = colour), space_milestones, size = 5, shape = 4, stroke = 2) +
       geom_text(aes(Comp1, Comp2, label = milestone_id), space_milestones, nudge_y = .05) +
       scale_colour_identity() +
-      scale_fill_identity() +
-      scale_x_continuous(limits = c(-.55, .55)) +
-      scale_y_continuous(limits = c(-.55, .55)) +
-      coord_equal() +
-      labs(x = "Component 1", y = "Component 2") +
-      cowplot::theme_cowplot()
+      scale_fill_identity()
   })
+
+  process_dyneval_plot(g, object$id)
 }
 
 #' Plot a dimensionality reduced trajectory
@@ -87,19 +83,16 @@ plot_combined <- function(original_object, new_object, insert_phantom_edges = TR
   combined_dimred <- new_dimred
   combined_dimred$space_samples$colour <- original_dimred$space_samples$colour
 
-  with(combined_dimred, {
+  g <- with(combined_dimred, {
     ggplot() +
       geom_segment(aes(x = from.Comp1, xend = to.Comp1, y = from.Comp2, yend = to.Comp2), space_lines,
                    size = 10, colour = "#444444", arrow = arrow(length = unit(.5, "cm"), type="closed")) +
       geom_point(aes(Comp1, Comp2, colour = colour), space_samples, size = 3, alpha = .5) +
       scale_colour_identity() +
-      scale_fill_identity() +
-      scale_x_continuous(limits = c(-.55, .55)) +
-      scale_y_continuous(limits = c(-.55, .55)) +
-      coord_equal() +
-      labs(x = "Component 1", y = "Component 2") +
-      cowplot::theme_cowplot()
+      scale_fill_identity()
   })
+
+  process_dyneval_plot(g, paste0(original_object$id, " vs. ", new_object$id))
 }
 
 

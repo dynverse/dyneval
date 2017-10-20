@@ -10,10 +10,10 @@ description_pseudogp <- function() create_description(
     makeNumericParam(id = "smoothing_beta", lower = 1, upper = 20, default = 3),
     makeNumericParam(id = "pseudotime_mean", lower = 0, upper = 1, default = 0.5),
     makeNumericParam(id = "pseudotime_var", lower = 0.01, upper = 1, default = 1),
-    makeIntegerParam(id = "chains", lower = 1L, default = 1L, upper = 20L),
+    makeIntegerParam(id = "chains", lower = 1L, default = 3L, upper = 20L),
     makeNumericParam(id = "iter", lower = log(100), default = log(100), upper = log(1000), trafo = function(x) round(exp(x))), # default is 1000
-    makeLogicalVectorParam(id = "dimreds", len = length(list_dimred_methods()), default = names(list_dimred_methods()) == "pca"),
-    makeDiscreteParam(id = "initialise_from", values=c("random", "principal_curve", "pca"), default="random")
+    makeLogicalVectorParam(id = "dimreds", len = length(list_dimred_methods()), default = names(list_dimred_methods()) %in% c("pca", "mds")),
+    makeDiscreteParam(id = "initialise_from", values = c("random", "principal_curve", "pca"), default = "random")
   ),
   properties = c(),
   run_fun = run_pseudogp,
@@ -125,7 +125,7 @@ plot_pseudogp <- function(prediction) {
       pmcsc <- apply_uniform_scale(pmc$mu, attr(xsc, "addend"), attr(xsc, "multiplier")) %>%
         sweep(2, plot_offset, "+")
 
-      data.frame(space = names(spaces)[[i]], chain, pmcsc, t = pmc$t, stringsAsFactors = FALSE)
+      data.frame(space = names(spaces)[[i]], chain, pmcsc, t = pmc$t, alpha = .5 * exp(1) * exp(-ncurves) + .5, stringsAsFactors = FALSE)
     })
 
     lst(
@@ -137,12 +137,13 @@ plot_pseudogp <- function(prediction) {
   dimreds <- plot_outs %>% map_df(~ .$space)
   curves <- plot_outs %>% map_df(~ .$curves) %>% arrange(space, chain, t)
 
-  calculated_alpha <- .5 * exp(1) * exp(-ncurves) + .5
+  # calculated_alpha <- .5 * exp(1) * exp(-ncurves) + .5
 
   g <- ggplot() +
     geom_point(aes(Comp1, Comp2), alpha = .5, size = 3, colour = "white", fill = "darkred", shape = 21, dimreds) +
-    geom_path(aes(X1, X2, group = paste0(space, "_", chain)), curves, size = 1.5, alpha = calculated_alpha) +
-    geom_text(aes(offset_x, offset_y+.45, label = name), space_ann, size = 8)
+    geom_path(aes(X1, X2, group = paste0(space, "_", chain), alpha = alpha), curves, size = 1.5) +
+    geom_text(aes(offset_x, offset_y+.45, label = name), space_ann, size = 8) +
+    scale_alpha_identity()
 
   process_dyneval_plot(g, prediction$id)
 }

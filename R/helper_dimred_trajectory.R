@@ -109,6 +109,7 @@ dimred_trajectory <- function(traj_object, insert_phantom_edges = TRUE) {
 
   # return all output
   l <- lst(
+    id = traj_object$id,
     space_milestones = space_milestones,
     space_lines = space_lines,
     space_samples = space_samples

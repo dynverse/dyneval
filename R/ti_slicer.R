@@ -138,7 +138,8 @@ plot_slicer <- function(prediction) {
     geom_segment(aes_segm, edge_df %>% filter(!edge_kept), colour = "gray", size = .35) +
     geom_segment(aes_segm, edge_df %>% filter(edge_kept), size = .5) +
     geom_point(aes(Comp1, Comp2, colour = dist), cell_df) +
-    scale_colour_gradientn(colours = plotclr)
+    scale_colour_gradientn(colours = plotclr) +
+    theme(legend.position = c(.92, .12))
 
   process_dyneval_plot(g, prediction$id)
 }
