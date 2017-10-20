@@ -17,9 +17,7 @@ Imports:
   coRanking,
   cowplot,
   dplyr, 
-  dyngen,
   dynutils,
-  dyntoy,
   GA,
   GEDEVO,
   ggforce,
@@ -58,6 +56,7 @@ Suggests:
   coda,
   destiny,
   diffusionMap,
+  dyntoy,
   embeddr,
   fastICA,
   GPfates,
@@ -117,6 +116,5 @@ Remotes:
   rcannood/dynutils,
   rcannood/PRISM,
   rcannood/SCORPIUS,
-  Zouter/dyngen,
   Zouter/dyntoy
 
