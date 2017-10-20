@@ -110,7 +110,6 @@ run_slicer <- function(counts,
 }
 
 #' @importFrom grDevices colorRampPalette
-#' @importFrom cowplot theme_cowplot
 plot_slicer <- function(prediction) {
   requireNamespace("SLICER")
   requireNamespace("igraph")

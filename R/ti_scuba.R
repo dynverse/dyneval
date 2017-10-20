@@ -83,7 +83,6 @@ run_scuba <- function(counts,
 }
 
 #' @importFrom grid arrow
-#' @importFrom cowplot theme_cowplot
 plot_scuba <- function(prediction) {
   requireNamespace("igraph")
 

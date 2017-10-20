@@ -54,16 +54,16 @@ run_topslam <- function(counts,
 }
 
 #' @importFrom viridis scale_colour_viridis
-#' @importFrom cowplot theme_cowplot
 plot_topslam <- function(prediction) {
-  ggplot() +
-    geom_raster(aes(x, y, fill = energy), prediction$wad) +
-    geom_contour(aes(x, y, z = energy, weight = energy), prediction$wad, binwidth = 0.05, color = "black", alpha = 0.4) +
-    geom_point(aes(Comp1, Comp2, color=time), prediction$model) +
+  ranges <- prediction$model %>% select(starts_with("Comp")) %>% apply(2, range)
+
+  g <- ggplot() +
+    # geom_raster(aes(x, y, fill = energy), prediction$wad) +
+    # geom_contour(aes(x, y, z = energy, weight = energy), prediction$wad, binwidth = 0.05, color = "black", alpha = 0.4) +
+    geom_point(aes(Comp1, Comp2, color = time), prediction$model) +
     scale_fill_gradientn(colors=c("white", "gray20")) +
     viridis::scale_colour_viridis(option = "plasma") +
-    cowplot::theme_cowplot() +
-    scale_x_continuous(breaks = NULL) +
-    scale_y_continuous(breaks = NULL) +
-    labs(x = NULL, y = NULL, colour = "Pseudotime", fill = "Energy")
+    labs(colour = "Pseudotime", fill = "Energy") +
+    theme(legend.position = c(.92, .12))
+  process_dyneval_plot(g, prediction$id)
 }
