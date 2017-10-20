@@ -32,7 +32,14 @@ run_waterfall <- function(counts, num_clusters = 10) {
 }
 
 plot_waterfall <- function(prediction) {
-  requireNamespace("Waterfall")
-
-  Waterfall::plot_waterfall(prediction$ps)
+  # adapted from Waterfall::plot_waterfall(prediction$ps)
+  flow <- attr(prediction$ps, "flow")
+  g <- ggplot() +
+    geom_point(aes(pseudotime, pseudotime.y, colour = pseudotime), prediction$ps, size = 5) +
+    geom_point(aes(PC1, PC2), flow, size = 2, colour = "red") +
+    geom_path(aes(PC1, PC2), flow, size = 2, colour = "red") +
+    scale_colour_distiller(palette = "RdBu") +
+    labs(colour = "Pseudotime") +
+    theme(legend.position = c(.92, .12))
+  process_dyneval_plot(g, prediction$id)
 }

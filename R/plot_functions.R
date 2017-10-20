@@ -20,6 +20,7 @@ process_dyneval_plot <- function(g, id, expand = TRUE) {
 
   g +
     theme(
+      plot.title = element_text(size = 20, face = "bold", hjust = .5),
       panel.background = element_blank(),
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank(),

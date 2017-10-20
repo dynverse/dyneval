@@ -156,7 +156,7 @@ execute_method <- function(
     out <-
       tryCatch({
         if (debug) {
-          cat("Running ", method$name, " on ", task$name, " in debug mode!\n", sep = "")
+          cat("Running ", method$name, " on ", task$id, " in debug mode!\n", sep = "")
 
           # Load packages into global environment
           for (pack in method$package_loaded) {

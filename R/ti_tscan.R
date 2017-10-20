@@ -90,12 +90,11 @@ run_tscan <- function(counts,
   )
 }
 
-#' @importFrom cowplot theme_cowplot
 plot_tscan <- function(prediction) {
-  ggplot() +
+  g <- ggplot() +
     geom_point(aes(PC1, PC2, colour = label, shape = label), prediction$space) +
     geom_text(aes(PC1, PC2, label = clus_id), prediction$centers, size = 6) +
-    geom_segment(aes(x = from.PC1, xend = to.PC1, y = from.PC2, yend = to.PC2), prediction$edges) +
-    cowplot::theme_cowplot()
+    geom_segment(aes(x = from.PC1, xend = to.PC1, y = from.PC2, yend = to.PC2), prediction$edges)
+  process_dyneval_plot(g, prediction$id)
 }
 

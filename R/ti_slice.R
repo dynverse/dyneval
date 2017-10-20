@@ -144,29 +144,10 @@ run_slice <- function(
     select(-state) %>%
     ungroup()
 
-  # return output
-  wrap_ti_prediction(
-    ti_type = "tree",
-    id = "SLICE",
-    cell_ids = rownames(counts),
-    milestone_ids = milestone_ids,
-    milestone_network = milestone_network,
-    progressions = progressions,
-    sc = sc
-  )
-}
-
-#' @importFrom grid arrow
-plot_slice <- function(prediction) {
-  requireNamespace("igraph")
-
-  sc <- prediction$sc
-  list2env(sc@model, environment())
-
-  # Adapted from SLICE code
-
-  # gather data
-  edge.df <- as.data.frame(igraph::get.edgelist(lineageModel)) %>%
+  # collect data for visualisation
+  cells.df <- sc@model$cells.df
+  edge.df <- igraph::get.edgelist(lin_model) %>%
+    as.data.frame() %>%
     mutate(
       ix = match(V1, rownames(cells.df)),
       iy = match(V2, rownames(cells.df)),
@@ -175,29 +156,43 @@ plot_slice <- function(prediction) {
       dst.x = cells.df$x[iy],
       dst.y = cells.df$y[iy]
     )
-  cells_stable <- cells.df %>% subset(slice.realcell==1 & slice.stablestate != "NA")
+
+
+  # return output
+  wrap_ti_prediction(
+    ti_type = "tree",
+    id = "SLICE",
+    cell_ids = rownames(counts),
+    milestone_ids = milestone_ids,
+    milestone_network = milestone_network,
+    progressions = progressions,
+    cells.df = cells.df,
+    edge.df = edge.df
+  )
+}
+
+#' @importFrom grid arrow
+plot_slice <- function(prediction) {
+  requireNamespace("igraph")
+
+  # Adapted from SLICE code
+  cells.df <- prediction$cells.df
+  edge.df <- prediction$edge.df
+
+  # split up the "cells"
   milestones <- cells.df %>% subset(slice.realcell == 0)
+  cells_stable <- cells.df %>% subset(slice.realcell==1 & slice.stablestate != "NA")
   cells_unstable <- cells.df %>% subset(slice.realcell==1 & slice.stablestate == "NA")
 
   # make plot
-  ggplot(mapping = aes(x, y, size = entropy)) +
-    labs(x="PC1", y="PC2") +
-    geom_point(aes(col=slice.state), cells_stable) +
-    geom_point(aes(), milestones, col="black") +
-    geom_point(aes(col=slice.state), cells_unstable) +
-    geom_segment(aes(x=src.x, y=src.y, xend=dst.x, yend=dst.y), edge.df,
-                 size=2, linetype="solid", col="black", alpha=0.6, arrow=grid::arrow(), na.rm=TRUE) +
-    theme(
-      strip.background = element_rect(colour = 'white', fill = 'white'),
-      panel.border = element_blank(),
-      axis.line = element_line(),
-      panel.grid.minor.x = element_blank(),
-      panel.grid.minor.y = element_blank(),
-      panel.grid.major.x = element_blank(),
-      panel.grid.major.y = element_blank(),
-      panel.background = element_rect(fill = 'white'),
-      legend.key = element_blank(),
-      axis.line.x = element_line(size=0.5),
-      axis.line.y = element_line(size=0.5)
-    )
+  g <- ggplot(mapping = aes(x, y, size = entropy)) +
+    geom_point(aes(col = slice.state), cells_stable) +
+    geom_point(aes(col = slice.state), cells_unstable) +
+    geom_segment(aes(x = src.x, y = src.y, xend = dst.x, yend = dst.y), edge.df,
+                 size = 2, linetype = "solid", col = "black",
+                 alpha = 0.6, arrow = grid::arrow(), na.rm = TRUE) +
+    geom_point(data = milestones, col = "black") +
+    theme(legend.position = c(.92, .2)) +
+    labs(colour = "Group", size = "Entropy")
+  process_dyneval_plot(g, prediction$id)
 }

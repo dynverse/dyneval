@@ -12,9 +12,11 @@ out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = description_ce
 attr(out, "extras")$.summary
 
 # expect to run!
-out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = description_scuba(), parameters = list(), timeout = 240, metrics = "auc_R_nx", output_model = T)
+method <- description_wishbone()
+out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = method, parameters = list(), timeout = 240, metrics = "auc_R_nx", output_model = T)
 attr(out, "extras")$.summary
 prediction <- attr(out, "extras")$.model[[1]]
+method$plot_fun(prediction)
 
 dataset <- dynutils::extract_row_to_list(dyntoy::toy_tasks, 5)
 counts <- dataset$counts

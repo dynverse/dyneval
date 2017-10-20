@@ -58,7 +58,7 @@ run_topslam <- function(counts,
 plot_topslam <- function(prediction) {
   ggplot() +
     geom_raster(aes(x, y, fill = energy), prediction$wad) +
-    geom_contour(aes(x, y, z=energy, weight=energy), prediction$wad, binwidth = 0.05, color = "black", alpha = 0.4) +
+    geom_contour(aes(x, y, z = energy, weight = energy), prediction$wad, binwidth = 0.05, color = "black", alpha = 0.4) +
     geom_point(aes(Comp1, Comp2, color=time), prediction$model) +
     scale_fill_gradientn(colors=c("white", "gray20")) +
     viridis::scale_colour_viridis(option = "plasma") +

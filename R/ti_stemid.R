@@ -6,7 +6,7 @@ description_stemid <- function() create_description(
   package_loaded = c(),
   package_required = c("StemID"),
   par_set = makeParamSet(
-    makeIntegerParam(id = "clustnr", lower = 20L, default = 30L, upper = 100L),
+    makeIntegerParam(id = "clustnr", lower = 10L, default = 30L, upper = 100L),
     makeIntegerParam(id = "bootnr", lower = 20L, default = 50L, upper = 100L),
     makeDiscreteParam(id = "metric", default = "pearson", values = c("pearson", "spearman", "kendall", "euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski")),
     makeDiscreteParam(id = "num_cluster_method", default = "sat", values = c("sat", "gap", "manual")),
@@ -141,17 +141,15 @@ run_stemid <- function(
   )
 }
 
-#' @importFrom cowplot theme_cowplot
 plot_stemid <- function(prediction) {
-  ggplot() +
-    geom_point(aes(V1, V2), prediction$space, size = 2, colour = "darkgray") +
-    geom_text(aes(V1, V2, label = label, colour = label), prediction$space) +
+  g <- ggplot() +
+    geom_point(aes(V1, V2), prediction$space, size = 2, colour = "darkgray", na.rm = TRUE) +
+    geom_text(aes(V1, V2, label = label, colour = label), prediction$space, na.rm = TRUE) +
     geom_text(aes(V1, V2, label = clus_id), prediction$centers, size = 8) +
     geom_segment(aes(x = from.V1, xend = to.V1, y = from.V2, yend = to.V2), prediction$edge) +
     scale_colour_manual(values = prediction$col_ann) +
-    cowplot::theme_cowplot() +
-    theme(legend.position = "none") +
-    labs(x = "Dim 1", y = "Dim 2")
+    theme(legend.position = "none")
+  process_dyneval_plot(g, prediction$id)
 }
 
 
