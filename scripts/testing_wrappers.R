@@ -245,17 +245,21 @@ methods <- dyneval::get_descriptions(F)
 # toys
 tasks <- dyntoy::toy_tasks[5,]
 
-# real dataset
-tasks <- readRDS(paste0("../dynalysis/analysis/data/derived_data/dyngen/tasks_v4.rds")) %>%
-  filter(
-    platform_id == "fluidigm_c1",
-    takesetting_type == "snapshot")
+task <- tasks %>% extract_row_to_list(1)
+class(task) <- "dynutils::ti_data_wrapper"
+task_plot <- plot_default(task)
 
-tasks <- tasks[5,]
+# # synthetic dataset
+# tasks <- readRDS(paste0("../dynalysis/analysis/data/derived_data/dyngen/tasks_v4.rds")) %>%
+#   filter(
+#     platform_id == "fluidigm_c1",
+#     takesetting_type == "snapshot")
+#
+# tasks <- tasks[5,]
 
 outs <- pbapply::pblapply(methods, function(method) {
   tryCatch({
-    score <- execute_evaluation(tasks, method, parameters = list(), metrics = "auc_R_nx", timeout = 120)
+    score <- execute_evaluation(tasks, method, parameters = list(), metrics = "auc_R_nx", timeout = 300)
     summary <- attr(score,"extras")$.summary
     prediction <- attr(score,"extras")$.models[[1]]
     attr(score,"extras") <- NULL
@@ -264,7 +268,7 @@ outs <- pbapply::pblapply(methods, function(method) {
     lst(method, score, summary, prediction, meth_plot, default_plot)
   }, error = function(e) NULL)
 })
-setNames(outs) <- map_chr(methods, ~.$name)
+names(outs) <- map_chr(methods, ~.$name)
 df <- seq_along(outs) %>% map_df(function(i) {
   method <- methods[[i]]
   outm <- outs[[i]]
@@ -276,18 +280,30 @@ df <- seq_along(outs) %>% map_df(function(i) {
 })
 df %>% as.data.frame
 
-# i <- 22
+# rerun something
+# i <- 13
 # method <- methods[[i]]
-#
+# score <- execute_evaluation(tasks, method, parameters = list(), metrics = "auc_R_nx", timeout = 300)
+# summary <- attr(score,"extras")$.summary
+# prediction <- attr(score,"extras")$.models[[1]]
+# attr(score,"extras") <- NULL
+# meth_plot <- method$plot_fun(prediction)
+# default_plot <- plot_default(prediction)
 # outs[[i]] <- lst(method, score, summary, prediction, meth_plot, default_plot)
+# rerun stop
 
-outs[!df$failed] %>% map_df(~ .$score)
+outs[!df$failed] %>% map_dbl(~ .$score) %>% sort(decreasing = T)
 
-pdf("~/test2.pdf", 20, 15)
-cowplot::plot_grid(plotlist = outs[df$ggplot] %>% map(~ .$meth_plot + ggtitle(paste0(.$method$name, " plot"))))
+plotlist <- c(list(task_plot), outs[df$ggplot] %>% map(~ .$meth_plot))
+num_plots <- length(plotlist)
+ncol <- ceiling(sqrt(num_plots))
+nrow <- ceiling(num_plots / ncol)
+
+pdf("~/test2.pdf", ncol*8, nrow*8.4)
+cowplot::plot_grid(plotlist = plotlist, ncol = ncol, align = "hv")
 dev.off()
 
-pdf("~/test.pdf", 10, 5)
+pdf("~/test.pdf", 16, 8.4)
 for (i in seq_along(outs)) {
   if (df$ggplot[[i]]) {
     ou <- outs[[i]]
