@@ -19,6 +19,7 @@ description_mpath <- function() create_description(
 
 #' @importFrom utils write.table
 #' @importFrom stats na.omit
+#' @importFrom reshape melt
 run_mpath <- function(counts,
                       cell_grouping,
                       distMethod = "euclidean",

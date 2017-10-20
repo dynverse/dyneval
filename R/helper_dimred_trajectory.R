@@ -124,6 +124,7 @@ is_ti_dimred_wrapper <- function(object) {
 
 # this is solely used to create spacing between nodes in dimred_trajectory, but
 # should be fixed to work well with undirected graphs
+#' @importFrom reshape melt
 add_phantom_edges <- function(milestone_ids, milestone_network) {
   is_directed <- any(milestone_network$directed)
 
