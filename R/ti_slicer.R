@@ -115,29 +115,31 @@ plot_slicer <- function(prediction) {
   requireNamespace("SLICER")
   requireNamespace("igraph")
 
-  dimred_samples <- prediction$dimred_samples
-  traj_graph <- prediction$traj_graph
-  start <- prediction$start
-  to_keep <- prediction$to_keep
-
   # based on SLICER::graph_process_distance(traj_graph, dimred_samples[,c("Comp1", "Comp2")], start)
 
-  geodesic_dists <- SLICER::process_distance(traj_graph, start)[1,] %>% dynutils::scale_minmax()
+  # calculate the geodesic distances between samples
+  dimred_samples <- prediction$dimred_samples
+  geodesic_dists <- SLICER::process_distance(prediction$traj_graph, prediction$start)[1,] %>% dynutils::scale_minmax()
+
+  # get colour scale
   plotclr <- grDevices::colorRampPalette(c("black", "red", "yellow"), space="rgb")(50)
 
+  # construct cell df
   cell_df <- dimred_samples %>% mutate(dist = geodesic_dists)
-  edge_df <- traj_graph %>%
+
+  # construct edge_df
+  edge_df <- prediction$traj_graph %>%
     igraph::as_data_frame("edges") %>%
     do(with(., data.frame(row.names = NULL, from = dimred_samples[from,], to = dimred_samples[to,], stringsAsFactors = F))) %>%
-    mutate(edge_kept = to_keep[from.cell_id] & to_keep[to.cell_id])
+    mutate(edge_kept = prediction$to_keep[from.cell_id] & prediction$to_keep[to.cell_id])
 
-  ggplot() +
-    geom_segment(aes(x = from.Comp1, xend = to.Comp1, y = from.Comp2, yend = to.Comp2),
-                 edge_df %>% filter(!edge_kept), colour = "gray", size = .35) +
-    geom_segment(aes(x = from.Comp1, xend = to.Comp1, y = from.Comp2, yend = to.Comp2), edge_df %>% filter(edge_kept), size = .5) +
+  # make plot
+  aes_segm <- aes(x = from.Comp1, xend = to.Comp1, y = from.Comp2, yend = to.Comp2)
+  g <- ggplot() +
+    geom_segment(aes_segm, edge_df %>% filter(!edge_kept), colour = "gray", size = .35) +
+    geom_segment(aes_segm, edge_df %>% filter(edge_kept), size = .5) +
     geom_point(aes(Comp1, Comp2, colour = dist), cell_df) +
-    scale_colour_gradientn(colours = plotclr) +
-    cowplot::theme_cowplot() +
-    labs(x = "Manifold Dim 1", y = "Manifold Dim 2") +
-    theme(legend.position = "none")
+    scale_colour_gradientn(colours = plotclr)
+
+  process_dyneval_plot(g, prediction$id)
 }

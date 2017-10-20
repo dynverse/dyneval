@@ -97,9 +97,10 @@ run_wishbone <- function(
 #' @importFrom cowplot theme_cowplot
 #' @importFrom viridis scale_colour_viridis
 plot_wishbone <- function(prediction) {
-  ggplot() +
-    geom_point(aes(Comp1, Comp2, color = time), prediction$model) +
-    cowplot::theme_cowplot() +
+  g <- ggplot() +
+    geom_point(aes(Comp1, Comp2, color = time), prediction$model %>% mutate_at(c("Comp1", "Comp2"), dynutils::scale_minmax)) +
     viridis::scale_colour_viridis() +
-    labs(colour = "Trajectory")
+    labs(colour = "Trajectory") +
+    theme(legend.position = c(.92, .12))
+  process_dyneval_plot(g, prediction$id)
 }

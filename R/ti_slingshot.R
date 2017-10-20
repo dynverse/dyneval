@@ -183,13 +183,14 @@ plot_slingshot <- function(prediction, type = c("lineage", "curve", "both")) {
   }
 
   # return plot
-  ggplot() +
+  g <- ggplot() +
     gcurve +
     gsegment +
     geom_point(aes(PC1, PC2, colour = label), prediction$space) +
     gcenter +
-    cowplot::theme_cowplot() +
     scale_colour_manual(values = cols) +
-    labs(x = "PC1", y = "PC2", colour = "Milestone")
+    labs(colour = "Milestone") +
+    theme(legend.position = c(.92, .12))
+  process_dyneval_plot(g, prediction$id)
 }
 
