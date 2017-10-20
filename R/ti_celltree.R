@@ -54,7 +54,6 @@ abstract_celltree_description <- function(method) {
 }
 
 #' @importFrom igraph degree distances get.vertex.attribute induced_subgraph
-#' @importFrom reshape2 melt
 run_celltree <- function(counts,
                          start_cell_id = NULL,
                          cell_grouping = NULL,

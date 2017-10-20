@@ -315,6 +315,7 @@ complete_matrix <- function(mat, dim, fill=0) {
   mat <- cbind(mat, matrix(rep(0, nrow(mat) * (dim - ncol(mat))), nrow=nrow(mat)))
 }
 
+#' @importFrom reshape2 acast
 get_adjacency <- function(net, nodes=unique(c(net$from, net$to))) {
   newnet <- net %>%
     mutate(from=factor(from, levels=nodes), to=factor(to, levels=nodes)) %>%
