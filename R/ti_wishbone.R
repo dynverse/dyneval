@@ -94,7 +94,6 @@ run_wishbone <- function(
   )
 }
 
-#' @importFrom cowplot theme_cowplot
 #' @importFrom viridis scale_colour_viridis
 plot_wishbone <- function(prediction) {
   g <- ggplot() +

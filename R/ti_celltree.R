@@ -132,7 +132,6 @@ run_celltree <- function(counts,
 }
 
 #' @importFrom ggforce geom_arc_bar
-#' @importFrom cowplot theme_cowplot
 #' @importFrom grDevices rainbow
 plot_celltree <- function(prediction) {
   # Based on cellTree::ct.plot.topics(prediction$mst_tree)

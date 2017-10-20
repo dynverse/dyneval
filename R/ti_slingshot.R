@@ -151,7 +151,6 @@ run_slingshot <- function(
 }
 
 #' @importFrom RColorBrewer brewer.pal
-#' @importFrom cowplot theme_cowplot
 plot_slingshot <- function(prediction, type = c("lineage", "curve", "both")) {
   type <- match.arg(type)
 

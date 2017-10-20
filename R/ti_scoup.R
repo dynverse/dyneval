@@ -108,46 +108,27 @@ run_scoup <- function(
   )
 }
 
-#' @importFrom cowplot theme_cowplot
-plot_scoup <- function(prediction, type = c("dimred", "percentages")) {
-  type <- match.arg(type)
+plot_scoup <- function(prediction, type = "dimred") {
   palette <- setNames(seq_along(prediction$milestone_ids), prediction$milestone_ids)
-  switch(
-    type,
-    dimred = {
-      # find most likely milestone of each cell
-      celltypes <- prediction$milestone_percentages %>%
-        group_by(cell_id) %>%
-        arrange(desc(percentage)) %>%
-        slice(1)
 
-      # combine data
-      space_df <- prediction$model$dimred %>%
-        as.data.frame %>%
-        rownames_to_column(var = "cell_id") %>%
-        left_join(celltypes, by = "cell_id")
+  # find most likely milestone of each cell
+  celltypes <- prediction$milestone_percentages %>%
+    group_by(cell_id) %>%
+    arrange(desc(percentage)) %>%
+    slice(1)
 
-      # make plot
-      g <- ggplot(space_df) +
-        geom_point(aes(Comp1, Comp2, colour = milestone_id), shape = 1) +
-        scale_colour_manual(values = palette) +
-        labs(colour = "Milestone") +
-        theme(legend.position = c(.92, .12))
+  # combine data
+  space_df <- prediction$model$dimred %>%
+    as.data.frame %>%
+    rownames_to_column(var = "cell_id") %>%
+    left_join(celltypes, by = "cell_id")
 
-      process_dyneval_plot(g, id = prediction$id)
-    },
-    percentages = {
-      df <- prediction$model$cpara %>%
-        rownames_to_column("cell_id") %>%
-        gather("endstate", "percentage", -cell_id, -time)
-      ggplot(df) +
-        geom_point(aes(time, percentage, color = endstate)) +
-        facet_grid(endstate ~ .) +
-        scale_y_continuous(breaks = c(0, 1)) +
-        scale_colour_manual(values = palette) +
-        labs(x = "Pseudotime", y = "Probability", colour = "Lineage") +
-        cowplot::theme_cowplot() +
-        theme(legend.position = "none")
-    }
-  )
+  # make plot
+  g <- ggplot(space_df) +
+    geom_point(aes(Comp1, Comp2, colour = milestone_id), shape = 1) +
+    scale_colour_manual(values = palette) +
+    labs(colour = "Milestone") +
+    theme(legend.position = c(.92, .12))
+
+  process_dyneval_plot(g, id = prediction$id)
 }

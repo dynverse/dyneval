@@ -98,7 +98,6 @@ run_dpt <- function(counts,
   )
 }
 
-#' @importFrom cowplot theme_cowplot
 plot_dpt <- function(prediction) {
   # based on destiny::plot.DPT(prediction$dpt, col_by = "branch")
 

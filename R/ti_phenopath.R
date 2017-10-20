@@ -56,7 +56,6 @@ run_phenopath <- function(counts,
 }
 
 #' @importFrom viridis scale_colour_viridis
-#' @importFrom cowplot theme_cowplot
 plot_phenopath <- function(prediction) {
   g <- ggplot(prediction$space) +
     geom_point(aes(PC1, PC2, colour = pseudotime)) +

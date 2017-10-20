@@ -113,7 +113,6 @@ run_mpath <- function(counts,
 }
 
 #' @importFrom ggforce geom_arc_bar
-#' @importFrom cowplot theme_cowplot
 plot_mpath <- function(prediction) {
   requireNamespace("igraph")
 

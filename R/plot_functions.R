@@ -43,6 +43,7 @@ process_dyneval_plot <- function(g, id, expand = TRUE) {
 #' @param insert_phantom_edges attempt to plot bifurcating edges correctly automatically
 #'
 #' @importFrom grid arrow
+#' @importFrom cowplot theme_cowplot
 #'
 #' @export
 plot_default <- function(object, insert_phantom_edges = TRUE) {
@@ -76,6 +77,7 @@ plot_default <- function(object, insert_phantom_edges = TRUE) {
 #' @param insert_phantom_edges attempt to plot bifurcating edges correctly automatically
 #'
 #' @importFrom grid arrow
+#' @importFrom cowplot theme_cowplot
 #'
 #' @export
 plot_combined <- function(original_object, new_object, insert_phantom_edges = TRUE) {
