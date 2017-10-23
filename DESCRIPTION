@@ -34,6 +34,7 @@ Imports:
   netdist,
   parallelMap,
   ParamHelpers,
+  pbapply,
   pdist,
   pheatmap,
   PRISM,

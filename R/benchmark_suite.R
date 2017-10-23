@@ -24,6 +24,7 @@
 #' @importFrom ParamHelpers generateDesignOfDefaults generateDesign
 #' @importFrom parallelMap parallelStartMulticore parallelStop
 #' @importFrom randomForest randomForest
+#' @importFrom pbapply pblapply
 #'
 #' @export
 benchmark_suite_submit <- function(
