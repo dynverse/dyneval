@@ -108,7 +108,7 @@ benchmark_suite_submit <- function(
       cat("Submitting ", method$name, "\n", sep="")
 
       # create an objective function
-      obj_fun <- make_obj_fun(method = method, metrics = metrics, timeout = timeout)
+      obj_fun <- make_obj_fun(method = method, metrics = metrics)
 
       # generate initial parameters
       design <- bind_rows(
@@ -137,6 +137,7 @@ benchmark_suite_submit <- function(
           show.info = TRUE,
           more.args = list(
             tasks = tasks[task_group == group_sel & task_fold != fold_i,],
+            timeout = timeout,
             output_model = FALSE #"models/"
           )
         )
@@ -148,6 +149,7 @@ benchmark_suite_submit <- function(
           show.info = TRUE,
           more.args = list(
             tasks = tasks[task_group == group_sel & task_fold == fold_i,],
+            timeout = timeout,
             output_model = FALSE #"models/"
           )
         )
@@ -185,7 +187,7 @@ benchmark_suite_submit <- function(
           "tasks", "task_group", "task_fold",
           "num_cores", "metrics",
           "control_train", "control_test", "grid",
-          "learner")
+          "learner", "timeout")
 
         # submit to the cluster
         qsub_handle <- PRISM::qsub_lapply(

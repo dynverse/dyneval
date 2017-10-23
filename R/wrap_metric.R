@@ -5,7 +5,7 @@
 #'
 #' @importFrom smoof makeSingleObjectiveFunction makeMultiObjectiveFunction
 #' @export
-make_obj_fun <- function(method, metrics, timeout, noisy = FALSE) {
+make_obj_fun <- function(method, metrics, noisy = FALSE) {
   # Use different makefunction if there are multiple metrics versus one
   if (length(metrics) > 1) {
     make_fun <- function(...) makeMultiObjectiveFunction(..., n.objectives = length(metrics))
@@ -21,7 +21,7 @@ make_obj_fun <- function(method, metrics, timeout, noisy = FALSE) {
     noisy = noisy,
     has.simple.signature = FALSE,
     par.set = method$par_set,
-    fn = function(x, tasks, output_model) {
+    fn = function(x, tasks, output_model, timeout) {
       execute_evaluation(
         tasks = tasks,
         method = method,
