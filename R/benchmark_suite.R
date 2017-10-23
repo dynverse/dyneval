@@ -267,7 +267,7 @@ benchmark_suite_retrieve <- function(out_dir) {
             )
           } else {
             # check to see whether all jobs failed
-            all_errored <- x$eval_ind$error %>% map_lgl(~ !all(!is.null(.)))
+            all_errored <- all(x$eval_ind$error %>%  map_lgl(~ !is.null(.)))
             x$which_errored <- list(all_errored)
             x$qsub_error <- list(ifelse(all_errored, "all parameter settings errored", ""))
             x
