@@ -281,8 +281,8 @@ benchmark_suite_retrieve <- function(out_dir) {
         cat("Output not found. ", error_message, ".\n", sep = "")
         output_succeeded <- FALSE
         outputs <- tibble(
-          which_errored = rep(TRUE, num_tasks),
-          qsub_error = rep(error_message, num_tasks)
+          which_errored = list(rep(TRUE, num_tasks)),
+          qsub_error = list(rep(error_message, num_tasks))
         )
       }
 
