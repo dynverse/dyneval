@@ -85,7 +85,7 @@ create_description <- function(
 #' @param give_end_cells Whether end cells should be provided even though a method doesn't require it.
 #' @param give_cell_grouping Whether a cell grouping should be provided even though a method doesn't require it.
 #' @param timeout Kill execution after a given amount of time.
-#' @param debug Setting debug to \code{TRUE} will avoid running the method in a separate R session
+#' @param debug_timeout Setting debug to \code{TRUE} will avoid running the method in a separate R session
 #'   using \code{\link[dynutils]{eval_with_timeout}} and run the method directly. Note that the timeout functionality
 #'   will not work when \code{debug} is \code{TRUE}.
 #'
@@ -101,7 +101,7 @@ execute_method <- function(
   give_end_cells = FALSE,
   give_cell_grouping = FALSE,
   timeout = Inf,
-  debug = FALSE
+  debug_timeout = FALSE
 ) {
   # Run method on each task
   lapply(seq_len(nrow(tasks)), function(i) {
@@ -153,7 +153,7 @@ execute_method <- function(
     # run the method and catch the error, if necessary
     out <-
       tryCatch({
-        if (debug) {
+        if (debug_timeout) {
           cat("Running ", method$name, " on ", task$id, " in debug mode!\n", sep = "")
 
           # Execute method
