@@ -59,8 +59,6 @@ create_description <- function(
       generateDesignOfDefaults(trafo = TRUE) %>%
       ParamHelpers::dfRowToList(par_set, 1)
 
-    # TODO: check params does not contain 'y' or 'y_1', 'y_2', ... etc
-
     if(!all(names(default_params) %in% formalArgs(run_fun))) {
       stop("Not all default params described in par_set are listed in the run_fun.")
     }
@@ -88,7 +86,7 @@ create_description <- function(
 #' @param give_cell_grouping Whether a cell grouping should be provided even though a method doesn't require it.
 #' @param timeout Kill execution after a given amount of time.
 #' @param debug Setting debug to \code{TRUE} will avoid running the method in a separate R session
-#'   using \code{\link[dynutils]{wait_or_kill}} and run the method directly. Note that the timeout functionality
+#'   using \code{\link[dynutils]{eval_with_timeout}} and run the method directly. Note that the timeout functionality
 #'   will not work when \code{debug} is \code{TRUE}.
 #'
 #' @importFrom utils capture.output
@@ -158,25 +156,12 @@ execute_method <- function(
         if (debug) {
           cat("Running ", method$name, " on ", task$id, " in debug mode!\n", sep = "")
 
-          # Load packages into global environment
-          for (pack in method$package_loaded) {
-            suppressMessages(do.call(require, list(pack)))
-          }
-
           # Execute method
           model <- execute_method_internal(method, arglist, setseed_detection_file)
         } else {
-          # dry run of the wait_or_kill method
-          dry_run <- wait_or_kill({1}, wait_time = 5, function(x) x, .1)
-
           # Run the method on each of the tasks
-          model <- dynutils::wait_or_kill(
-            wait_time = timeout,
-            cancel_output_fun = function(time) stop("Timeout after ", time, " seconds"),
-            check_interval = 1,
-            verbose = FALSE,
-            globals = c("method", "arglist", "tmp_dir", "old_wd", "setseed_detection_file"),
-            packages = c("dyneval", "dynutils", method$package_loaded),
+          model <- dynutils::eval_with_timeout(
+            timeout = timeout,
             expr = {
               tryCatch({
                 # create a temporary directory to set as working directory,
@@ -273,7 +258,10 @@ execute_method_internal <- function(method, arglist,setseed_detection_file) {
   }
   dynutils::override_setseed(new_setseed)
 
-  # Load required namespaces
+  # Load required packages and namespaces
+  for (pack in method$package_loaded) {
+    suppressMessages(do.call(require, list(pack)))
+  }
   for (pack in method$package_required) {
     suppressMessages(do.call(requireNamespace, list(pack)))
   }

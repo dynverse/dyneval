@@ -24,7 +24,7 @@ execute_method(tasks, method, parameters, give_start_cell = FALSE,
 \item{timeout}{Kill execution after a given amount of time.}
 
 \item{debug}{Setting debug to \code{TRUE} will avoid running the method in a separate R session
-using \code{\link[dynutils]{wait_or_kill}} and run the method directly. Note that the timeout functionality
+using \code{\link[dynutils]{eval_with_timeout}} and run the method directly. Note that the timeout functionality
 will not work when \code{debug} is \code{TRUE}.}
 }
 \description{
