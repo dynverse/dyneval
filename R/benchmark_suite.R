@@ -15,6 +15,7 @@
 #' @param num_init_params The number of initial parameters to evaluate.
 #' @param num_repeats The number of times to repeat the mlr process, for each group and each fold.
 #' @param save_r2g_to_outdir Save the r2gridengine output to \code{out_dir} instead of the default \code{local_tmp_path}.
+#' @param do_it_local Whether or not to run the benchmark suite locally (not recommended)
 #'
 #' @importFrom testthat expect_equal expect_is
 #' @importFrom PRISM qsub_lapply override_qsub_config
@@ -39,7 +40,8 @@ benchmark_suite_submit <- function(
   num_iterations = 20,
   num_init_params = 100,
   num_repeats = 1,
-  save_r2g_to_outdir = FALSE
+  save_r2g_to_outdir = FALSE,
+  do_it_local = FALSE
 ) {
   testthat::expect_is(tasks, "tbl")
   testthat::expect_equal(nrow(tasks), length(task_group))
@@ -90,7 +92,7 @@ benchmark_suite_submit <- function(
   )
 
   ## run MBO for each method separatelly
-  for (methodi in seq_len(nrow(methods))) {
+  lapply (seq_len(nrow(methods)), function(methodi) {
     method <- dynutils::extract_row_to_list(methods, methodi)
 
     # determine where to store certain outputs
@@ -101,7 +103,7 @@ benchmark_suite_submit <- function(
     dir.create(method_folder, recursive = TRUE, showWarnings = FALSE)
 
     ## If no output or qsub handle exists yet
-    if (!file.exists(output_file) && !file.exists(qsubhandle_file)) {
+    if ((!file.exists(output_file) && !file.exists(qsubhandle_file)) || do_it_local) {
       cat("Submitting ", method$name, "\n", sep="")
 
       # create an objective function
@@ -112,35 +114,6 @@ benchmark_suite_submit <- function(
         ParamHelpers::generateDesignOfDefaults(method$par_set),
         ParamHelpers::generateDesign(n = num_init_params, par.set = method$par_set)
       )
-
-      # set parameters for the cluster
-      qsub_config <- PRISM::override_qsub_config(
-        wait = FALSE,
-        num_cores = num_cores,
-        memory = memory,
-        name = paste0("D_", method$short_name),
-        remove_tmp_folder = FALSE,
-        stop_on_error = FALSE,
-        verbose = FALSE,
-        max_wall_time = max_wall_time,
-        execute_before = "export R_MAX_NUM_DLLS=300"
-      )
-
-      # if the cluster data needs to be saved to dyneval output folder
-      if (save_r2g_to_outdir) {
-        qsub_config$local_tmp_path <- paste0(method_folder, "/r2gridengine")
-        dir.create(qsub_config$local_tmp_path, recursive = T, showWarnings = F)
-      }
-
-      # which packages to load on the cluster
-      qsub_packages <- c("dplyr", "purrr", "dyneval", "mlrMBO", "parallelMap")
-
-      # which data objects will need to be transferred to the cluster
-      qsub_environment <-  c(
-        "method", "obj_fun", "design",
-        "tasks", "task_group", "task_fold",
-        "num_cores", "metrics",
-        "control_train", "control_test", "grid")
 
       # the function to run on the cluster
       qsub_x <- seq_len(nrow(grid))
@@ -182,23 +155,63 @@ benchmark_suite_submit <- function(
         list(design = design, tune_train = tune_train, tune_test = tune_test)
       }
 
-      # submit to the cluster
-      qsub_handle <- PRISM::qsub_lapply(
-        X = qsub_x,
-        qsub_environment = qsub_environment,
-        qsub_packages = qsub_packages,
-        qsub_config = qsub_config,
-        FUN = qsub_fun
-      )
+      if (!do_it_local) {
+        # set parameters for the cluster
+        qsub_config <- PRISM::override_qsub_config(
+          wait = FALSE,
+          num_cores = num_cores,
+          memory = memory,
+          name = paste0("D_", method$short_name),
+          remove_tmp_folder = FALSE,
+          stop_on_error = FALSE,
+          verbose = FALSE,
+          max_wall_time = max_wall_time,
+          execute_before = "export R_MAX_NUM_DLLS=300"
+        )
 
-      # save data and handle to RDS file
-      out <- lst(
-        method, obj_fun, design, tasks, task_group,
-        task_fold, num_cores, metrics,
-        control_train, control_test, grid, qsub_handle)
-      saveRDS(out, qsubhandle_file)
+        # if the cluster data needs to be saved to dyneval output folder
+        if (save_r2g_to_outdir) {
+          qsub_config$local_tmp_path <- paste0(method_folder, "/r2gridengine")
+          dir.create(qsub_config$local_tmp_path, recursive = T, showWarnings = F)
+        }
+
+        # which packages to load on the cluster
+        qsub_packages <- c("dplyr", "purrr", "dyneval", "mlrMBO", "parallelMap")
+
+        # which data objects will need to be transferred to the cluster
+        qsub_environment <-  c(
+          "method", "obj_fun", "design",
+          "tasks", "task_group", "task_fold",
+          "num_cores", "metrics",
+          "control_train", "control_test", "grid",
+          "learner")
+
+        # submit to the cluster
+        qsub_handle <- PRISM::qsub_lapply(
+          X = qsub_x,
+          qsub_environment = qsub_environment,
+          qsub_packages = qsub_packages,
+          qsub_config = qsub_config,
+          FUN = qsub_fun
+        )
+
+        # save data and handle to RDS file
+        out <- lst(
+          method, obj_fun, design, tasks, task_group,
+          task_fold, num_cores, metrics,
+          control_train, control_test, grid, qsub_handle)
+        saveRDS(out, qsubhandle_file)
+      } else {
+        # run locally
+        out <- pbapply::pblapply(
+          X = qsub_x,
+          cl = num_cores,
+          FUN = qsub_fun
+        )
+        out
+      }
     }
-  }
+  })
 }
 
 #' Downloading and processing the results of the benchmark jobs
@@ -246,14 +259,14 @@ benchmark_suite_retrieve <- function(out_dir) {
         outputs <- lapply(output, function(x) {
           if(length(x) == 1 && is.na(x)) {
             list(
-              which_errored = TRUE,
-              qsub_error = attr(x, "qsub_error")
+              which_errored = list(TRUE),
+              qsub_error = list(attr(x, "qsub_error"))
             )
           } else {
             # check to see whether all jobs failed
-            all_errored <- output %>% map_lgl(~ !all(!is.null(.$eval_ind$error)))
-            x$which_errored <- all_errored
-            x$qsub_error <- ifelse(all_errored, "all parameter settings errored", "")
+            all_errored <- x$eval_ind$error %>% map_lgl(~ !all(!is.null(.)))
+            x$which_errored <- list(all_errored)
+            x$qsub_error <- list(ifelse(all_errored, "all parameter settings errored", ""))
             x
           }
         }) %>% list_as_tibble()
