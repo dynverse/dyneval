@@ -4,15 +4,13 @@
 \alias{make_obj_fun}
 \title{Used for wrapping an evaluation function around a TI method}
 \usage{
-make_obj_fun(method, metrics, timeout, noisy = FALSE)
+make_obj_fun(method, metrics, noisy = FALSE)
 }
 \arguments{
 \item{method}{The method to evaluate.}
 
 \item{metrics}{which metrics to use;
 see \code{\link{calculate_metrics}} for a list of which metrics are available.}
-
-\item{timeout}{Kill execution after a given amount of time.}
 
 \item{noisy}{whether or not the metric is noisy or not}
 }
