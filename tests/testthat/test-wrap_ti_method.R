@@ -122,7 +122,7 @@ test_that("Testing execute_method with dummy method", {
     }
   )
 
-  method_outs <- execute_method(toy_tasks, dummy, parameters = list(aggr_fun = "median"))
+  method_outs <- execute_method(toy_tasks, dummy, parameters = list(aggr_fun = "median"), timeout = 1e6)
 
   for (i in seq_along(method_outs)) {
     method_out <- method_outs[[i]]
