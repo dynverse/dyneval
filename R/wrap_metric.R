@@ -45,8 +45,8 @@ make_obj_fun <- function(method, metrics, timeout, noisy = FALSE) {
 #'
 #' @export
 #' @importFrom netdist gdd net_emd
-execute_evaluation <- function(tasks, method, parameters, metrics, timeout, debug = FALSE, output_model = TRUE, error_score = 0) {
-  method_outputs <- execute_method(tasks = tasks, method = method, parameters = parameters, timeout = timeout, debug = debug)
+execute_evaluation <- function(tasks, method, parameters, metrics, timeout, debug_timeout = FALSE, output_model = TRUE, error_score = 0) {
+  method_outputs <- execute_method(tasks = tasks, method = method, parameters = parameters, timeout = timeout, debug_timeout = debug_timeout)
 
   # Calculate scores
   eval_outputs <- lapply(seq_len(nrow(tasks)), function(i) {
