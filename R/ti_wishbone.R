@@ -22,7 +22,7 @@ description_wishbone <- function() create_description(
 
 run_wishbone <- function(
   counts,
-  start_cell,
+  start_cells,
   knn = 10,
   n_diffusion_components = 2,
   n_pca_components = 15,
@@ -33,6 +33,10 @@ run_wishbone <- function(
   epsilon = 1
 ) {
   requireNamespace("Wishbone")
+
+  if (!is.null(start_cells)) {
+    start_cell <- sample(start_cells, 1)
+  }
 
   if (is.null(start_cell)) stop(sQuote("start_cell"), " is not allowed to be NULL")
 

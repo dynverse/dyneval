@@ -4,8 +4,7 @@
 \alias{execute_method}
 \title{Run a method on a set of tasks with a set of parameters}
 \usage{
-execute_method(tasks, method, parameters, give_start_cell = FALSE,
-  give_end_cells = FALSE, give_grouping_assignment = FALSE, timeout = Inf,
+execute_method(tasks, method, parameters, give_priors = NULL, timeout = Inf,
   debug_timeout = FALSE)
 }
 \arguments{
@@ -15,11 +14,8 @@ execute_method(tasks, method, parameters, give_start_cell = FALSE,
 
 \item{parameters}{The parameters to evaluate with.}
 
-\item{give_start_cell}{Whether a start cell should be provided even though a method doesn't require it.}
-
-\item{give_end_cells}{Whether end cells should be provided even though a method doesn't require it.}
-
-\item{give_grouping_assignment}{Whether a cell grouping should be provided even though a method doesn't require it.}
+\item{give_priors}{All the priors a method is allowed to receive. Must be a subset of: \code{"start_milestones"},
+\code{"start_cells"}, \code{"end_milestones"}, \code{"end_cells"}, \code{"grouping_assignment"} and \code{"grouping_network"}}
 
 \item{timeout}{Kill execution after a given amount of time.}
 

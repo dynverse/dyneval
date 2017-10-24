@@ -59,7 +59,6 @@ abstract_monocle_description <- function(reduction_method) {
 
 run_monocle <- function(counts,
                         reduction_method,
-                        start_cell = NULL,
                         max_components = 2,
                         norm_method = "vstExprs",
                         auto_param_selection = TRUE,
