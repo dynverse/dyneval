@@ -26,8 +26,8 @@ description_scoup <- function() create_description(
 #' @importFrom stats var
 run_scoup <- function(
   counts,
-  cell_grouping,
-  start_cell_id,
+  grouping_assignment,
+  start_cell,
   ndim = 3,
   nbranch = 3,
   max_ite1 = 100,
@@ -43,11 +43,11 @@ run_scoup <- function(
   requireNamespace("SCOUP")
 
   # figure out indices of starting population
-  # from the cell_grouping and the start_cell_id
-  start_ix <- cell_grouping %>%
-    filter(cell_id == start_cell_id) %>%
+  # from the grouping_assignment and the start_cell
+  start_ix <- grouping_assignment %>%
+    filter(cell_id == start_cell) %>%
     select(group_id) %>%
-    left_join(cell_grouping, by = "group_id") %>%
+    left_join(grouping_assignment, by = "group_id") %>%
     .$cell_id
 
   # log transform counts

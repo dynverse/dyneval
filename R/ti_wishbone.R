@@ -22,7 +22,7 @@ description_wishbone <- function() create_description(
 
 run_wishbone <- function(
   counts,
-  start_cell_id,
+  start_cell,
   knn = 10,
   n_diffusion_components = 2,
   n_pca_components = 15,
@@ -34,12 +34,12 @@ run_wishbone <- function(
 ) {
   requireNamespace("Wishbone")
 
-  if (is.null(start_cell_id)) stop(sQuote("start_cell_id"), " is not allowed to be NULL")
+  if (is.null(start_cell)) stop(sQuote("start_cell"), " is not allowed to be NULL")
 
   # execute wishbone
   out <- Wishbone::Wishbone(
     counts = counts,
-    start_cell_id = start_cell_id,
+    start_cell = start_cell,
     knn = knn,
     n_diffusion_components = n_diffusion_components,
     n_pca_components = n_pca_components,

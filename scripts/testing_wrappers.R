@@ -20,9 +20,9 @@ method$plot_fun(prediction)
 
 dataset <- dynutils::extract_row_to_list(dyntoy::toy_tasks, 5)
 counts <- dataset$counts
-# start_cell_id <- dataset$special_cells$start_cell_id
-# end_cell_ids <- dataset$special_cells$end_cell_ids
-# cell_grouping <- dataset$cell_grouping
+# start_cell <- sample(dataset$prior_information$start_cells, 1)
+# end_cells <- dataset$prior_information$end_cells
+# grouping_assignment <- dataset$prior_information$grouping_assignment
 
 
 # celltree gibbs
@@ -34,7 +34,7 @@ tolerance <- 10^-5
 width_scale_factor <- 1.2
 
 # dpt
-start_cell_id = NULL
+start_cell = NULL
 sigma = "local"
 distance = "euclidean"
 n_eigs = 20
@@ -148,7 +148,7 @@ min_split = 15
 min_percentage_split = 0.25
 
 # SLICE
-cell_grouping = NULL
+grouping_assignment = NULL
 lm.method = "clustering"
 model.type = "tree"
 ss.method = "all"
@@ -161,7 +161,7 @@ B = 100
 k.opt.method = "firstmax"
 
 # SLICER
-end_cell_ids = NULL
+end_cells = NULL
 kmin = 10
 m = 2
 min_branch_len = 5
@@ -169,8 +169,8 @@ min_representative_percentage = 0.8
 max_same_milestone_distance = 0.1
 
 # slingshot
-start_cell_id = NULL
-end_cell_ids = NULL
+start_cell = NULL
+end_cells = NULL
 ndim = 3
 nclus = 5
 dimred_name = "pca"
