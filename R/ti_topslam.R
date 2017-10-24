@@ -19,7 +19,7 @@ description_topslam <- function() create_description(
 
 #' @importFrom dplyr bind_cols
 run_topslam <- function(counts,
-                        start_cell,
+                        start_cells,
                         n_components = 2,
                         n_neighbors = 10,
                         linear_dims = 0,
@@ -27,6 +27,10 @@ run_topslam <- function(counts,
                         dimreds = rep(TRUE, 5)
                       ) {
   dimreds_vec <- c("t-SNE", "PCA", "Spectral", "Isomap", "ICA")[dimreds]
+
+  if (!is.null(start_cells)) {
+    start_cell <- sample(start_cells, 1)
+  }
 
   # run topslam
   out <- topslam::topslam(

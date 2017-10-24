@@ -26,7 +26,7 @@ description_slingshot <- function() create_description(
 #' @importFrom stats prcomp kmeans
 run_slingshot <- function(
   counts,
-  start_cell = NULL,
+  start_cells = NULL,
   end_cells = NULL,
   ndim = 3,
   nclus = 5,
@@ -41,6 +41,10 @@ run_slingshot <- function(
   shrink.method = "cosine"
 ) {
   requireNamespace("slingshot")
+
+  if (!is.null(start_cells)) {
+    start_cell <- sample(start_cells, 1)
+  }
 
   # normalization & preprocessing
   # from the vignette of slingshot

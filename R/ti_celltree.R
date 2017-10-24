@@ -55,7 +55,7 @@ abstract_celltree_description <- function(method) {
 
 #' @importFrom igraph degree distances get.vertex.attribute induced_subgraph
 run_celltree <- function(counts,
-                         start_cell = NULL,
+                         start_cells = NULL,
                          grouping_assignment = NULL,
                          method = "maptpx",
                          num_topics_lower = 2,
@@ -67,6 +67,10 @@ run_celltree <- function(counts,
                          width_scale_factor = 1.5
 ) {
   requireNamespace("cellTree")
+
+  if (!is.null(start_cells)) {
+    start_cell <- sample(start_cells, 1)
+  }
 
   expr <- log2(counts+1)
 

@@ -27,7 +27,7 @@ description_scoup <- function() create_description(
 run_scoup <- function(
   counts,
   grouping_assignment,
-  start_cell,
+  start_cells,
   ndim = 3,
   nbranch = 3,
   max_ite1 = 100,
@@ -42,10 +42,11 @@ run_scoup <- function(
 ) {
   requireNamespace("SCOUP")
 
+  start_cell <- sample(start_cells, 1)
   # figure out indices of starting population
   # from the grouping_assignment and the start_cell
   start_ix <- grouping_assignment %>%
-    filter(cell_id == start_cell) %>%
+    filter(cell_id %in% start_cell) %>%
     select(group_id) %>%
     left_join(grouping_assignment, by = "group_id") %>%
     .$cell_id

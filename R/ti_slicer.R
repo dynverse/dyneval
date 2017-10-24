@@ -18,7 +18,7 @@ description_slicer <- function() create_description(
 )
 
 run_slicer <- function(counts,
-                       start_cell,
+                       start_cells,
                        end_cells = NULL,
                        kmin = 10,
                        m = 2,
@@ -29,6 +29,8 @@ run_slicer <- function(counts,
   requireNamespace("SLICER")
   requireNamespace("lle")
   requireNamespace("igraph")
+
+  start_cell <- sample(start_cells, 1)
 
   # log transform expresison
   expr <- log2(counts + 1)

@@ -178,7 +178,7 @@ test_that("Testing timeout of execute_method", {
   num_datasets <- nrow(toy_tasks)
 
   # should take about 20 seconds, but will timeout after 10
-  out <- execute_method(toy_tasks, timeouter, parameters = list(sleep_time = 10), timeout = 1)
+  out <- execute_method(toy_tasks[,1:6], timeouter, parameters = list(sleep_time = 10), timeout = 1)
   models <- out %>% map_df(~ .$model)
   summaries <- out %>% map_df(~.$summary)
   expect_equal(nrow(models), 0)

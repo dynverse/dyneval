@@ -81,9 +81,8 @@ create_description <- function(
 #' @param tasks The tasks on which to evaluate.
 #' @param method The method to evaluate.
 #' @param parameters The parameters to evaluate with.
-#' @param give_start_cell Whether a start cell should be provided even though a method doesn't require it.
-#' @param give_end_cells Whether end cells should be provided even though a method doesn't require it.
-#' @param give_grouping_assignment Whether a cell grouping should be provided even though a method doesn't require it.
+#' @param give_priors All the priors a method is allowed to receive. Must be a subset of: \code{"start_milestones"},
+#'  \code{"start_cells"}, \code{"end_milestones"}, \code{"end_cells"}, \code{"grouping_assignment"} and \code{"grouping_network"}
 #' @param timeout Kill execution after a given amount of time.
 #' @param debug_timeout Setting debug to \code{TRUE} will avoid running the method in a separate R session
 #'   using \code{\link[dynutils]{eval_with_timeout}} and run the method directly. Note that the timeout functionality
@@ -97,9 +96,7 @@ execute_method <- function(
   tasks,
   method,
   parameters,
-  give_start_cell = FALSE,
-  give_end_cells = FALSE,
-  give_grouping_assignment = FALSE,
+  give_priors = NULL,
   timeout = Inf,
   debug_timeout = FALSE
 ) {
@@ -117,24 +114,12 @@ execute_method <- function(
     # Add prior information
     # Including the task is only used for perturbing the gold standard, not used by any real methods
     # TODO: This should be uniformised to allow many different outputs
-    param_names <- c("start_cell", "start_cells", "end_cells", "grouping_assignment", "task")
-    param_bools <- c(give_start_cell, give_end_cells, give_grouping_assignment, FALSE)
-
-    for (i in seq_along(param_names)) {
-      param_name <- param_names[[i]]
-      param_bool <- param_bools[[i]]
-
-      if (param_name %in% formalArgs(method$run_fun) | param_bool) {
-        arglist[[param_name]] <-
-          if (param_name == "task") {
-            task
-          } else if (param_name == "start_cell") {
-            sample(task$prior_information$start_cells, 1) # sample one random start cell
-          } else {
-            task$prior_information[[param_name]]
-          }
-      }
+    include_task <- any(give_priors == "task")
+    if (include_task) {
+      arglist$task <- task
     }
+    give_priors <- give_priors[give_priors != "task"]
+    arglist[give_priors] <- task$prior_information[give_priors]
 
     # create a temporary directory to set as working directory,
     # to avoid polluting the working directory if a method starts

@@ -22,7 +22,7 @@ description_dpt <- function() create_description(
 
 #' @importFrom reshape2 melt
 run_dpt <- function(counts,
-                    start_cell = NULL,
+                    start_cells = NULL,
                     sigma = "local",
                     distance = "euclidean",
                     n_eigs = 20,
@@ -31,6 +31,10 @@ run_dpt <- function(counts,
                     n_local_upper = 7,
                     w_width = .1) {
   requireNamespace("destiny")
+
+  if (!is.null(start_cells)) {
+    start_cell <- sample(start_cells, 1)
+  }
 
   # create n_local vector
   n_local <- seq(n_local_lower, n_local_upper, by = 1)
