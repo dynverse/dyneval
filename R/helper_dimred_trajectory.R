@@ -109,6 +109,7 @@ dimred_trajectory <- function(traj_object, insert_phantom_edges = TRUE) {
 
   # return all output
   l <- lst(
+    id = traj_object$id,
     space_milestones = space_milestones,
     space_lines = space_lines,
     space_samples = space_samples
@@ -123,6 +124,7 @@ is_ti_dimred_wrapper <- function(object) {
 
 # this is solely used to create spacing between nodes in dimred_trajectory, but
 # should be fixed to work well with undirected graphs
+#' @importFrom reshape2 melt
 add_phantom_edges <- function(milestone_ids, milestone_network) {
   is_directed <- any(milestone_network$directed)
 

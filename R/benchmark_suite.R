@@ -15,14 +15,16 @@
 #' @param num_init_params The number of initial parameters to evaluate.
 #' @param num_repeats The number of times to repeat the mlr process, for each group and each fold.
 #' @param save_r2g_to_outdir Save the r2gridengine output to \code{out_dir} instead of the default \code{local_tmp_path}.
+#' @param do_it_local Whether or not to run the benchmark suite locally (not recommended)
 #'
-#' @importFrom testthat expect_equal
+#' @importFrom testthat expect_equal expect_is
 #' @importFrom PRISM qsub_lapply override_qsub_config
 #' @importFrom mlrMBO makeMBOControl setMBOControlTermination setMBOControlInfill makeMBOInfillCritDIB makeMBOInfillCritCB
 #' @importFrom mlr makeLearner configureMlr
 #' @importFrom ParamHelpers generateDesignOfDefaults generateDesign
 #' @importFrom parallelMap parallelStartMulticore parallelStop
 #' @importFrom randomForest randomForest
+#' @importFrom pbapply pblapply
 #'
 #' @export
 benchmark_suite_submit <- function(
@@ -30,7 +32,7 @@ benchmark_suite_submit <- function(
   task_group,
   task_fold,
   out_dir,
-  timeout = 60 * nrow(tasks),
+  timeout = 120,
   methods = get_descriptions(as_tibble = TRUE),
   metrics = c("auc_R_nx", "robbie_network_score"),
   num_cores = 4,
@@ -39,7 +41,8 @@ benchmark_suite_submit <- function(
   num_iterations = 20,
   num_init_params = 100,
   num_repeats = 1,
-  save_r2g_to_outdir = FALSE
+  save_r2g_to_outdir = FALSE,
+  do_it_local = FALSE
 ) {
   testthat::expect_is(tasks, "tbl")
   testthat::expect_equal(nrow(tasks), length(task_group))
@@ -50,8 +53,13 @@ benchmark_suite_submit <- function(
   control_train <- mlrMBO::makeMBOControl(
     n.objectives = length(metrics),
     propose.points = num_cores,
-    impute.y.fun = impute_y_fun(length(metrics))) %>%
-    mlrMBO::setMBOControlTermination(iters = num_iterations)
+    y.name = metrics
+  ) %>%
+    mlrMBO::setMBOControlTermination(
+      iters = num_iterations
+    )
+
+  # Set infill criterion
   if (length(metrics) == 1) {
     control_train <- control_train %>%
       mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritCB())
@@ -59,8 +67,11 @@ benchmark_suite_submit <- function(
     control_train <- control_train %>%
       mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritDIB())
   }
-  control_test <- control_train
-  control_test$iters <- 1
+
+  # construct control for test phase
+  control_test <- control_train %>% mlrMBO::setMBOControlTermination(
+    iters = 1
+  )
   control_test$propose.points <- 1
 
   ## create learner for predicting performance of new params
@@ -82,7 +93,7 @@ benchmark_suite_submit <- function(
   )
 
   ## run MBO for each method separatelly
-  for (methodi in seq_len(nrow(methods))) {
+  lapply (seq_len(nrow(methods)), function(methodi) {
     method <- dynutils::extract_row_to_list(methods, methodi)
 
     # determine where to store certain outputs
@@ -93,46 +104,17 @@ benchmark_suite_submit <- function(
     dir.create(method_folder, recursive = TRUE, showWarnings = FALSE)
 
     ## If no output or qsub handle exists yet
-    if (!file.exists(output_file) && !file.exists(qsubhandle_file)) {
+    if ((!file.exists(output_file) && !file.exists(qsubhandle_file)) || do_it_local) {
       cat("Submitting ", method$name, "\n", sep="")
 
       # create an objective function
-      obj_fun <- make_obj_fun(method = method, metrics = metrics, timeout = timeout)
+      obj_fun <- make_obj_fun(method = method, metrics = metrics)
 
       # generate initial parameters
       design <- bind_rows(
         ParamHelpers::generateDesignOfDefaults(method$par_set),
         ParamHelpers::generateDesign(n = num_init_params, par.set = method$par_set)
       )
-
-      # set parameters for the cluster
-      qsub_config <- PRISM::override_qsub_config(
-        wait = FALSE,
-        num_cores = num_cores,
-        memory = memory,
-        name = paste0("D_", method$short_name),
-        remove_tmp_folder = FALSE,
-        stop_on_error = FALSE,
-        verbose = FALSE,
-        max_wall_time = max_wall_time,
-        execute_before = "export R_MAX_NUM_DLLS=300"
-      )
-
-      # if the cluster data needs to be saved to dyneval output folder
-      if (save_r2g_to_outdir) {
-        qsub_config$local_tmp_path <- paste0(method_folder, "/r2gridengine")
-        dir.create(qsub_config$local_tmp_path, recursive = T, showWarnings = F)
-      }
-
-      # which packages to load on the cluster
-      qsub_packages <- c("dplyr", "purrr", "dyneval", "mlrMBO", "parallelMap")
-
-      # which data objects will need to be transferred to the cluster
-      qsub_environment <-  c(
-        "method", "obj_fun", "design",
-        "tasks", "task_group", "task_fold",
-        "num_cores", "metrics",
-        "control_train", "control_test", "grid")
 
       # the function to run on the cluster
       qsub_x <- seq_len(nrow(grid))
@@ -155,17 +137,19 @@ benchmark_suite_submit <- function(
           show.info = TRUE,
           more.args = list(
             tasks = tasks[task_group == group_sel & task_fold != fold_i,],
+            timeout = timeout,
             output_model = FALSE #"models/"
           )
         )
         tune_test <- mlrMBO::mbo(
           obj_fun,
           learner = learner,
-          design = tune_train$opt.path$env$path %>% select(-starts_with("y_"), -one_of("y")),
+          design = tune_train$opt.path$env$path %>% select(-one_of(metrics)),
           control = control_test,
           show.info = TRUE,
           more.args = list(
             tasks = tasks[task_group == group_sel & task_fold == fold_i,],
+            timeout = timeout,
             output_model = FALSE #"models/"
           )
         )
@@ -174,23 +158,63 @@ benchmark_suite_submit <- function(
         list(design = design, tune_train = tune_train, tune_test = tune_test)
       }
 
-      # submit to the cluster
-      qsub_handle <- PRISM::qsub_lapply(
-        X = qsub_x,
-        qsub_environment = qsub_environment,
-        qsub_packages = qsub_packages,
-        qsub_config = qsub_config,
-        FUN = qsub_fun
-      )
+      if (!do_it_local) {
+        # set parameters for the cluster
+        qsub_config <- PRISM::override_qsub_config(
+          wait = FALSE,
+          num_cores = num_cores,
+          memory = memory,
+          name = paste0("D_", method$short_name),
+          remove_tmp_folder = FALSE,
+          stop_on_error = FALSE,
+          verbose = FALSE,
+          max_wall_time = max_wall_time,
+          execute_before = "export R_MAX_NUM_DLLS=300"
+        )
 
-      # save data and handle to RDS file
-      out <- lst(
-        method, obj_fun, design, tasks, task_group,
-        task_fold, num_cores, metrics,
-        control_train, control_test, grid, qsub_handle)
-      saveRDS(out, qsubhandle_file)
+        # if the cluster data needs to be saved to dyneval output folder
+        if (save_r2g_to_outdir) {
+          qsub_config$local_tmp_path <- paste0(method_folder, "/r2gridengine")
+          dir.create(qsub_config$local_tmp_path, recursive = T, showWarnings = F)
+        }
+
+        # which packages to load on the cluster
+        qsub_packages <- c("dplyr", "purrr", "dyneval", "mlrMBO", "parallelMap")
+
+        # which data objects will need to be transferred to the cluster
+        qsub_environment <-  c(
+          "method", "obj_fun", "design",
+          "tasks", "task_group", "task_fold",
+          "num_cores", "metrics",
+          "control_train", "control_test", "grid",
+          "learner", "timeout")
+
+        # submit to the cluster
+        qsub_handle <- PRISM::qsub_lapply(
+          X = qsub_x,
+          qsub_environment = qsub_environment,
+          qsub_packages = qsub_packages,
+          qsub_config = qsub_config,
+          FUN = qsub_fun
+        )
+
+        # save data and handle to RDS file
+        out <- lst(
+          method, obj_fun, design, tasks, task_group,
+          task_fold, num_cores, metrics,
+          control_train, control_test, grid, qsub_handle)
+        saveRDS(out, qsubhandle_file)
+      } else {
+        # run locally
+        out <- pbapply::pblapply(
+          X = qsub_x,
+          cl = num_cores,
+          FUN = qsub_fun
+        )
+        out
+      }
     }
-  }
+  })
 }
 
 #' Downloading and processing the results of the benchmark jobs
@@ -201,7 +225,7 @@ benchmark_suite_submit <- function(
 #' @export
 benchmark_suite_retrieve <- function(out_dir) {
   method_names <- list.dirs(out_dir, full.names = FALSE, recursive = FALSE) %>% discard(~ . == "")
-  bind_rows(lapply(method_names, function(method_name) {
+  map_df(method_names, function(method_name) {
     method_folder <- paste0(out_dir, method_name)
     output_file <- paste0(method_folder, "/output.rds")
     qsubhandle_file <- paste0(method_folder, "/qsubhandle.rds")
@@ -223,6 +247,9 @@ benchmark_suite_retrieve <- function(out_dir) {
         wait = FALSE
       )
 
+      # suppressing inevitable warnings:
+      # when the job is still partly running, calling qacct will generate a warning
+      # when the job is finished, calling qstat will generate a warning
       suppressWarnings({
         qacct_out <- PRISM::qacct(qsub_handle)
         qstat_out <- PRISM::qstat_j(qsub_handle)
@@ -234,10 +261,15 @@ benchmark_suite_retrieve <- function(out_dir) {
         output_succeeded <- TRUE
         outputs <- lapply(output, function(x) {
           if(length(x) == 1 && is.na(x)) {
-            list(which_errored = TRUE, error = attr(x, "qsub_error"))
+            list(
+              which_errored = list(TRUE),
+              qsub_error = list(attr(x, "qsub_error"))
+            )
           } else {
-            x$which_errored <- FALSE
-            x$error <- NA
+            # check to see whether all jobs failed
+            all_errored <- all(x$eval_ind$error %>%  map_lgl(~ !is.null(.)))
+            x$which_errored <- list(all_errored)
+            x$qsub_error <- list(ifelse(all_errored, "all parameter settings errored", ""))
             x
           }
         }) %>% list_as_tibble()
@@ -252,18 +284,19 @@ benchmark_suite_retrieve <- function(out_dir) {
         cat("Output not found. ", error_message, ".\n", sep = "")
         output_succeeded <- FALSE
         outputs <- tibble(
-          which_errored = rep(TRUE, num_tasks),
-          error = rep(error_message, num_tasks)
+          which_errored = list(rep(TRUE, num_tasks)),
+          qsub_error = list(rep(error_message, num_tasks))
         )
       }
 
       out_rds <- outputs %>% mutate(
         task_id = seq_len(n()),
         method_name,
-        qacct = lapply(seq_len(n()), function(i) extract_row_to_list(qacct_out, i)),
-        qstat = lapply(seq_len(n()), function(i) qstat_out),
-        qsub_handle = lapply(seq_len(n()), function(i) qsub_handle)
-      ) %>% select(method_name, task_id, which_errored, error, everything())
+        qacct = map(seq_len(n()), ~ extract_row_to_list(qacct_out, .)),
+        qstat = map(seq_len(n()), ~ qstat_out),
+        qsub_handle = map(seq_len(n()), ~ qsub_handle)
+      ) %>%
+        select(method_name, task_id, which_errored, qsub_error, everything())
 
       if (output_succeeded) {
         saveRDS(out_rds, output_file)
@@ -273,7 +306,7 @@ benchmark_suite_retrieve <- function(out_dir) {
     } else {
       stop("Could not find an output.rds or qsubhandle.rds file in out_dir = ", sQuote(out_dir))
     }
-  }))
+  })
 }
 
 benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
@@ -290,71 +323,62 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
   train_out <- out_rds$tune_train
   test_out <- out_rds$tune_test
 
+  ## construct the global summary, 2 rows per parameter
   eval_summ_gath <- bind_rows(
-    data.frame(type = "train", train_out$opt.path$env$path, stringsAsFactors = F) %>%
-      mutate(
-      grid_i, repeat_i, fold_i, group_sel,
-      param_i = seq_len(n()),
-      time = train_out$opt.path$env$exec.time
+    bind_cols(
+      data_frame(type = "train", grid_i, repeat_i, fold_i, group_sel,
+                 time_total = train_out$opt.path$env$exec.time,
+                 param_i = seq_along(time_total)),
+      train_out$opt.path$env$path
     ),
-    data.frame(type = "test", test_out$opt.path$env$path, stringsAsFactors = F) %>%
-      mutate(
-      grid_i, repeat_i, fold_i, group_sel,
-      param_i = seq_len(n()),
-      time = test_out$opt.path$env$exec.time
-    )
-  ) %>% filter(param_i <= nrow(train_out$opt.path$env$path)) %>%
-    as_data_frame()
+    bind_cols(
+      data_frame(type = "test", grid_i, repeat_i, fold_i, group_sel,
+                 time_total = test_out$opt.path$env$exec.time,
+                 param_i = seq_along(time_total)),
+      test_out$opt.path$env$path
+    ) %>% filter(param_i <= nrow(train_out$opt.path$env$path))
+  )
 
-  if ("y" %in% colnames(eval_summ_gath)) {
-    eval_summ_gath <- eval_summ_gath %>% rename(y_1 = y)
-  }
+  ## get the global summary, 1 row per parameter
+  eval_summ <- eval_summ_gath %>%
+    gather(eval_metric, score, one_of(data$metrics), starts_with("time")) %>%
+    mutate(comb = paste0(type, "_", eval_metric)) %>%
+    select(-type, -eval_metric) %>%
+    spread(comb, score) %>%
+    mutate(iteration_i = train_out$opt.path$env$dob[param_i]) %>%
+    arrange(param_i)
 
-  if (!all(eval_summ_gath$y_1 == -1)) {
-    eval_summ <- eval_summ_gath %>%
-      gather(eval_metric, score, starts_with("y_"), starts_with("time")) %>%
-      mutate(comb = paste0(type, "_", eval_metric)) %>%
-      select(-type, -eval_metric) %>%
-      spread(comb, score) %>%
-      mutate(iteration_i = train_out$opt.path$env$dob[param_i]) %>%
-      arrange(param_i)
+  ## collect the scores per task individually
+  eval_ind <- map_df(seq_len(nrow(eval_summ)), function(param_i) {
+    train_summary <- train_out$opt.path$env$extra[[param_i]]$.summary
+    if (!is.null(train_summary)) {
+      train_summary <- train_summary %>% mutate(fold_type = "train")
+    }
 
-    ## collect the scores per dataset individually
-    eval_ind <- bind_rows(lapply(seq_len(nrow(eval_summ)), function(param_i) {
-      iteration_i <- eval_summ$iteration_i[[param_i]]
-      bind_rows(
-        if (eval_summ$train_y_1[[param_i]] >= 0) { # did this execution finish correctly?
-          train_out$opt.path$env$extra[[param_i]]$.summary %>%
-            mutate(grid_i, repeat_i, fold_i, group_sel, param_i, iteration_i, fold_type = "train")
-        } else {
-          NULL
-        },
-        if (eval_summ$test_y_1[[param_i]] >= 0) { # did this execution finish correctly?
-          test_out$opt.path$env$extra[[param_i]]$.summary %>%
-            mutate(grid_i, repeat_i, fold_i, group_sel, param_i, iteration_i, fold_type = "test")
-        } else {
-          NULL
-        }
-      )
-    })) %>% as_data_frame
+    test_summary <- test_out$opt.path$env$extra[[param_i]]$.summary
+    if (!is.null(test_summary)) {
+      test_summary <- test_summary %>% mutate(fold_type = "test")
+    }
 
-    ## group them together per task_group
-    eval_grp <- eval_ind %>%
-      left_join(tasks %>% mutate(task_fold, task_group) %>% select(task_id = id, ti_type, task_fold, task_group), by = "task_id") %>%
-      group_by(
-        ti_type, task_group, grid_i, repeat_i, fold_i,
-        group_sel, iteration_i, param_i, fold_type,
-        method_name, method_short_name
-      ) %>%
-      select(-task_id, -task_fold) %>%
-      summarise_all(mean) %>% ungroup()
+    bind_rows(train_summary, test_summary) %>%
+      mutate(grid_i, repeat_i, fold_i, group_sel, param_i,
+             iteration_i = eval_summ$iteration_i[param_i])
+  })
 
-    lst(eval_summ, eval_summ_gath, eval_ind, eval_grp)
-  } else {
-    x <- NA
-    attr(x, "qsub_error") <- "All parameters produced errors, resulting in a default error score"
-    x
-  }
+  ## group them together per task_group
+  eval_grp <- tasks %>%
+    mutate(task_fold, task_group) %>%
+    select(task_id = id, ti_type, task_fold, task_group) %>%
+    right_join(eval_ind, by = "task_id") %>%
+    group_by(
+      ti_type, task_group, grid_i, repeat_i, fold_i,
+      group_sel, iteration_i, param_i, fold_type,
+      method_name, method_short_name
+    ) %>%
+    mutate(has_errored = sapply(error, is.null)) %>%
+    select(-task_id, -task_fold, -error) %>%
+    summarise_all(mean) %>%
+    ungroup()
 
-
+  lst(eval_summ, eval_summ_gath, eval_ind, eval_grp)
 }

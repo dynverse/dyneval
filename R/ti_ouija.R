@@ -6,7 +6,7 @@ description_ouija <- function() create_description(
   package_required = c("ouija", "rstan"),
   package_loaded = c("coda"),
   par_set = makeParamSet(
-    makeNumericParam(id = "iter", lower = log(2), default = log(10000), upper = log(50000), trafo = function(x) round(exp(x))),
+    makeNumericParam(id = "iter", lower = log(2), default = log(100), upper = log(50000), trafo = function(x) round(exp(x))), # default 10000
     makeDiscreteParam(id = "response_type", default = "switch", values = c("switch", "transient")),
     makeDiscreteParam(id = "inference_type", default = "hmc", values = c("hmc", "vb")),
     makeLogicalParam(id = "normalise_expression", default = TRUE)
@@ -75,37 +75,11 @@ run_ouija <- function(
   )
 }
 
-#' @importFrom cowplot theme_cowplot
-#' @importFrom viridis viridis_pal scale_colour_viridis
-plot_ouija <- function(prediction, type = c("dimred", "switch_times")) {
-  type <- match.arg(type)
-
-  switch(
-    type,
-    dimred = {
-      ggplot(prediction$space) +
-        geom_point(aes(PC1, PC2, colour = pseudotime)) +
-        viridis::scale_colour_viridis() +
-        cowplot::theme_cowplot()
-    },
-    switch_times = {
-      requireNamespace("ouija")
-
-      t0_df <- prediction$t0_df
-
-      # adapted from ouija::plot_switch_times(prediction$oui)
-      # to avoid saving the whole oui file
-      vpal <- viridis::viridis_pal()(8)
-
-      ggplot(t0_df, aes(x = Gene, y = t0_mean, fill = kmean)) +
-        geom_errorbar(aes(ymin = lower, ymax = upper), color = "grey60", width = 0.5, alpha = 0.5) +
-        coord_flip() +
-        geom_point(color = "grey50", shape = 21, size = 3) +
-        ylab("Switch point") +
-        scale_fill_gradient2(name = "Regulation", low = vpal[1], high = vpal[5]) +
-        scale_color_gradient2(name = "Regulation", low = vpal[1], high = vpal[5]) +
-        theme(legend.position = "top") +
-        cowplot::theme_cowplot()
-    }
-  )
+plot_ouija <- function(prediction) {
+  g <- ggplot(prediction$space) +
+    geom_point(aes(PC1, PC2, colour = pseudotime)) +
+    viridis::scale_colour_viridis() +
+    labs(colour = "Pseudotime") +
+    theme(legend.position = c(.92, .12))
+  process_dyneval_plot(g, prediction$id)
 }

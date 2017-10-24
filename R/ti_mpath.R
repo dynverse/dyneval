@@ -19,6 +19,7 @@ description_mpath <- function() create_description(
 
 #' @importFrom utils write.table
 #' @importFrom stats na.omit
+#' @importFrom reshape2 melt
 run_mpath <- function(counts,
                       cell_grouping,
                       distMethod = "euclidean",
@@ -92,7 +93,7 @@ run_mpath <- function(counts,
       landmark_cluster %>%
       left_join(connections, by = "landmark_cluster") %>%
       select(cell_id = cell, from, to, percentage) %>%
-      stats::na.omit %>%
+      stats::na.omit() %>%
       group_by(cell_id) %>%
       arrange(desc(percentage)) %>%
       slice(1) %>%
@@ -112,73 +113,17 @@ run_mpath <- function(counts,
   )
 }
 
+#' @importFrom ggforce geom_arc_bar
 plot_mpath <- function(prediction) {
   requireNamespace("igraph")
 
-  # milestone net as igraph
+  # milestone net as igraph in order to perform dimred
+  edges <- prediction$milestone_network %>% filter(to != "FILTERED_CELLS")
   gr <- igraph::graph_from_data_frame(
-    prediction$milestone_network %>% filter(to != "FILTERED_CELLS"),
+    edges,
     directed = FALSE,
     vertices = prediction$milestone_ids
   )
-
-  # collect info on cells
-  cell_ids <- prediction$cell_ids
-  labels <- prediction$cell_grouping %>% slice(match(cell_ids, cell_id)) %>% .$group_id
-  clustering <- prediction$progressions %>%
-    slice(match(cell_ids, cell_id)) %>%
-    {with(., ifelse(percentage == 0, from, to))}
-
-  # make plot
-  make_piegraph_plot(gr, clustering, labels)
-}
-
-#' @importFrom cowplot theme_nothing
-make_pie_plot <- function(x_count, annotation_colours, add_label = FALSE) {
-  count_df <- data_frame(
-    celltype = factor(names(x_count), levels = names(x_count)),
-    count = x_count,
-    percent = x_count / sum(x_count),
-    right = cumsum(percent),
-    left = right - percent
-  )
-  g <- ggplot() +
-    geom_rect(aes(xmin = 0, xmax = 1, ymin = 0, ymax = 1), fill = "white") +
-    geom_rect(aes(xmin = left, xmax = right, ymin = 0, ymax = 1, fill = celltype), count_df) +
-    geom_hline(yintercept = c(0, 1)) +
-    scale_fill_manual(values = annotation_colours) +
-    xlim(0, 1) +
-    cowplot::theme_nothing() +
-    coord_polar()
-  if (add_label) {
-    g +
-      geom_text(aes((left + right)/2, 1.5, label = celltype, colour = celltype), count_df) +
-      ylim(0, 2) +
-      scale_colour_manual(values = annotation_colours)
-  } else {
-    g + ylim(0, 1)
-  }
-}
-
-#' @importFrom cowplot theme_nothing
-make_legend_plot <- function(annotation_colours) {
-  count <- setNames(rep(1, length(annotation_colours)), names(annotation_colours))
-  make_pie_plot(
-    count,
-    annotation_colours,
-    add_label = TRUE
-  ) + labs(title = "Legend")
-}
-
-# EBimage importFrom is because ggimage requires EBimage bioc dependency
-#' @importFrom RColorBrewer brewer.pal
-#' @importFrom cowplot theme_nothing plot_grid
-#' @importFrom ggimage geom_subview
-#' @importFrom EBImage fillHull 
-make_piegraph_plot <- function(gr, clustering, labels) {
-  requireNamespace("igraph")
-
-  # Perform dimred for graph
   lay <- gr %>%
     igraph::layout_with_kk() %>%
     dynutils::scale_quantile(0)
@@ -186,58 +131,48 @@ make_piegraph_plot <- function(gr, clustering, labels) {
     igraph::V(gr)$name,
     c("X", "Y")
   )
-  lay_df <- lay %>% as.data.frame %>% rownames_to_column()
+  lay_df <- lay %>% as.data.frame %>% rownames_to_column("milestone_id")
 
-  # Retrieve the edges
-  mst_df <- igraph::as_data_frame(gr)
-  colnames(mst_df) <- c("i", "j", "dist")
+  # collect info on cells
+  cell_ids <- prediction$cell_ids
+  labels <- prediction$cell_grouping %>%
+    slice(match(cell_ids, cell_id)) %>%
+    .$group_id
+  clustering <- prediction$progressions %>%
+    slice(match(cell_ids, cell_id)) %>%
+    {with(., ifelse(percentage == 0, from, to))}
 
-  # Make a histogram of the labels versus the clusters
-  categories <- if (is.factor(labels)) levels(labels) else sort(unique(labels))
-  clusters <- names(igraph::V(gr))
-  node_counts <-
-    sapply(categories, function(ca) {
-      sapply(clusters, function(cl) {
-        sum(labels == ca & clustering == cl)
-      })
-    })
-  num_labels <- rowSums(node_counts)
+  # generate pie df with positioning
+  pie_df <- data_frame(cell_id = cell_ids, label = labels, milestone_id = clustering) %>%
+    group_by(milestone_id, label) %>%
+    summarise(n = n()) %>%
+    mutate(
+      value = n / sum(n) * 2 * pi,
+      end = cumsum(value),
+      start = end - value
+    ) %>%
+    ungroup() %>%
+    left_join(lay_df, by = "milestone_id")
+
+  # generate edge df with positioning
+  edges_df <- edges %>%
+    left_join(lay_df %>% select(from = milestone_id, from.x = X, from.y = Y), by = "from") %>%
+    left_join(lay_df %>% select(to = milestone_id, to.x = X, to.y = Y), by = "to")
 
   # Determine a colour scheme
-  annotation_colours <- setNames(RColorBrewer::brewer.pal(ncol(node_counts), "Set2"), colnames(node_counts))
-
-  # Attach positions to edges
-  mst_df_with_pos <- data.frame(
-    mst_df,
-    i = lay[mst_df[,1],,drop=F],
-    j = lay[mst_df[,2],,drop=F]
-  )
+  ann_groups <- unique(labels) %>% sort
+  ann_cols <- setNames(RColorBrewer::brewer.pal(length(ann_groups), "Set2"), ann_groups)
 
   # Make a line plot
-  max_size <- .075
-  p <- ggplot(data.frame(lay), aes(X, Y)) +
-    geom_segment(aes(x = i.X, xend = j.X, y = i.Y, yend = j.Y), data.frame(mst_df_with_pos)) +
-    cowplot::theme_nothing() +
-    coord_equal()
+  g <- ggplot() +
+    geom_segment(aes(x = from.x, xend = to.x, y = from.y, yend = to.y), edges_df) +
+    ggforce::geom_arc_bar(aes(x0 = X, y0 = Y, r0 = 0, r = .075,
+                              start = start, end = end, fill = label, group = milestone_id), data = pie_df) +
+    geom_text(aes(X, Y, label = milestone_id), lay_df) +
+    scale_fill_manual(values = ann_cols) +
+    theme(legend.position = c(.92, .12))
 
-  # Make pie plots for each of the nodes
-  subplots <- lapply(seq_len(nrow(node_counts)), function(i) {
-    x <- lay[i,"X"]
-    y <- lay[i,"Y"]
-    x_count <- node_counts[i,]
-    subplot <- make_pie_plot(x_count, annotation_colours)
-    area <- num_labels[[i]] / max(num_labels) * pi/4*max_size^2
-    width <- sqrt(area) * 4 / pi
-    ggimage::geom_subview(subplot, x, y, width, width)
-  })
-
-  # Make a legend plot
-  legends <- make_legend_plot(annotation_colours)
-
-  # Combine all plots
-  Reduce("+", c(list(p), subplots)) +
-    ggimage::geom_subview(legends, .15, .15, .2, .2) +
-    geom_text(aes(X, Y, label = rowname), lay_df)
+  process_dyneval_plot(g, prediction$id)
 }
 
 
