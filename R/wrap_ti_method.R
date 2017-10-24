@@ -111,15 +111,23 @@ execute_method <- function(
     # Add the counts to the list parameters
     arglist <- c(list(counts = task$counts), parameters)
 
-    # Add prior information
-    # Including the task is only used for perturbing the gold standard, not used by any real methods
-    # TODO: This should be uniformised to allow many different outputs
-    include_task <- any(give_priors == "task")
-    if (include_task) {
-      arglist$task <- task
-    }
-    give_priors <- give_priors[give_priors != "task"]
-    arglist[give_priors] <- task$prior_information[give_priors]
+    # determine which prior information is strictly required by the method
+    required_priors <- formals(method$run_fun) %>%
+      as.list %>%
+      map_chr(class) %>%
+      keep(~.=="name") %>%
+      names %>%
+      keep(~.!="counts")
+
+    # collect all prior information
+    prior_information <- task$prior_information
+    prior_information$task <- task
+
+    # determine which priors to give and give it
+    prior_names <- union(give_priors, required_priors)
+    prior_type <- ifelse(prior_names %in% required_priors, "required", "optional")
+    arglist[prior_names] <- prior_information[prior_names]
+    prior_df <- data_frame(prior_type, prior_names)
 
     # create a temporary directory to set as working directory,
     # to avoid polluting the working directory if a method starts
@@ -215,7 +223,8 @@ execute_method <- function(
       time_cleanup = as.numeric(difftime(time3, time2, units = "sec")),
       error = list(error),
       num_files_created = num_files_created,
-      num_setseed_calls = num_setseed_calls
+      num_setseed_calls = num_setseed_calls,
+      prior_df = list(prior_df)
     )
 
     # return output
