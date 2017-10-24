@@ -420,7 +420,11 @@ score_map_lies <- function(map, map_grid, net1, net2, nodes1, nodes2) {
   map_cost * adj_diff * edge_diff
 }
 
-calculatie_lies_network_score <- function(
+#' Compute the lies network score (any resemblances to real-life persons is purely coincidental)
+#'
+#' @param net1 the first network to compare
+#' @param net2 the second network to compare
+calculate_lies_network_score <- function(
   net1,
   net2
 ) {
