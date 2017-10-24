@@ -4,8 +4,8 @@
 \alias{execute_method}
 \title{Run a method on a set of tasks with a set of parameters}
 \usage{
-execute_method(tasks, method, parameters, give_priors = NULL, timeout = Inf,
-  debug_timeout = FALSE)
+execute_method(tasks, method, parameters, give_priors = NULL, timeout = 3600
+  * 24 * 365.25 * 10, debug_timeout = FALSE)
 }
 \arguments{
 \item{tasks}{The tasks on which to evaluate.}

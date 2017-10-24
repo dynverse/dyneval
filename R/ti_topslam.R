@@ -28,9 +28,12 @@ run_topslam <- function(counts,
                       ) {
   dimreds_vec <- c("t-SNE", "PCA", "Spectral", "Isomap", "ICA")[dimreds]
 
-  if (!is.null(start_cells)) {
-    start_cell <- sample(start_cells, 1)
-  }
+  start_cell <-
+    if (!is.null(start_cells)) {
+      sample(start_cells, 1)
+    } else {
+      NULL
+    }
 
   # run topslam
   out <- topslam::topslam(
