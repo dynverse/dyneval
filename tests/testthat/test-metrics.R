@@ -14,7 +14,7 @@ test_that(paste0("Check hele network score"), {
   net1 <- tibble(from=c(1), to=c(1), directed=TRUE, length=1)
   net2 <- tibble(from=c(1), to=c(2), directed=TRUE, length=1)
 
-  expect_less_than(dyneval:::calculate_lies_network_score(net1, net2), 1)
+  expect_lt(dyneval:::calculate_lies_network_score(net1, net2), 1)
 })
 # data("toy_tasks", package="dyntoy")
 #
