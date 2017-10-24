@@ -480,10 +480,6 @@ calculate_lies_network_score <- function(
     perm <- results@solution
     initial <- apply(perm, 1, permutation2map) %>% t
 
-    map <- initial[1, ]
-    score_map_lies(map, map_grid, net1, net2, nodes1, nodes2)
-    microbenchmark::microbenchmark({score_map_lies(map, map_grid, net1, net2, nodes1, nodes2)})
-
     results <- GA::ga("binary", score_map_lies, map_grid, net1, net2, nodes1, nodes2, nBits = map_size, maxiter=50, monitor=FALSE, popSize=50, run=5, suggestions=initial, maxFitness=1)
     score <- results@fitnessValue
   }
