@@ -97,7 +97,7 @@ execute_method <- function(
   method,
   parameters,
   give_priors = NULL,
-  timeout = Inf,
+  timeout = 3600 * 24 * 365.25 * 10,
   debug_timeout = FALSE
 ) {
   # Run method on each task

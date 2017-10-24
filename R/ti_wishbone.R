@@ -34,11 +34,7 @@ run_wishbone <- function(
 ) {
   requireNamespace("Wishbone")
 
-  if (!is.null(start_cells)) {
-    start_cell <- sample(start_cells, 1)
-  }
-
-  if (is.null(start_cell)) stop(sQuote("start_cell"), " is not allowed to be NULL")
+  start_cell <- sample(start_cells, 1)
 
   # execute wishbone
   out <- Wishbone::Wishbone(

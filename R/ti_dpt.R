@@ -32,9 +32,12 @@ run_dpt <- function(counts,
                     w_width = .1) {
   requireNamespace("destiny")
 
-  if (!is.null(start_cells)) {
-    start_cell <- sample(start_cells, 1)
-  }
+  start_cell <-
+    if (!is.null(start_cells)) {
+      sample(start_cells, 1)
+    } else {
+      NULL
+    }
 
   # create n_local vector
   n_local <- seq(n_local_lower, n_local_upper, by = 1)

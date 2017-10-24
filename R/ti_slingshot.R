@@ -42,9 +42,12 @@ run_slingshot <- function(
 ) {
   requireNamespace("slingshot")
 
-  if (!is.null(start_cells)) {
-    start_cell <- sample(start_cells, 1)
-  }
+  start_cell <-
+    if (!is.null(start_cells)) {
+      sample(start_cells, 1)
+    } else {
+      NULL
+    }
 
   # normalization & preprocessing
   # from the vignette of slingshot
