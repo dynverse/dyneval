@@ -5,7 +5,7 @@
 \title{Run a method on a set of tasks with a set of parameters}
 \usage{
 execute_method(tasks, method, parameters, give_start_cell = FALSE,
-  give_end_cells = FALSE, give_cell_grouping = FALSE, timeout = Inf,
+  give_end_cells = FALSE, give_grouping_assignment = FALSE, timeout = Inf,
   debug_timeout = FALSE)
 }
 \arguments{
@@ -19,7 +19,7 @@ execute_method(tasks, method, parameters, give_start_cell = FALSE,
 
 \item{give_end_cells}{Whether end cells should be provided even though a method doesn't require it.}
 
-\item{give_cell_grouping}{Whether a cell grouping should be provided even though a method doesn't require it.}
+\item{give_grouping_assignment}{Whether a cell grouping should be provided even though a method doesn't require it.}
 
 \item{timeout}{Kill execution after a given amount of time.}
 

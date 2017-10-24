@@ -83,7 +83,7 @@ create_description <- function(
 #' @param parameters The parameters to evaluate with.
 #' @param give_start_cell Whether a start cell should be provided even though a method doesn't require it.
 #' @param give_end_cells Whether end cells should be provided even though a method doesn't require it.
-#' @param give_cell_grouping Whether a cell grouping should be provided even though a method doesn't require it.
+#' @param give_grouping_assignment Whether a cell grouping should be provided even though a method doesn't require it.
 #' @param timeout Kill execution after a given amount of time.
 #' @param debug_timeout Setting debug to \code{TRUE} will avoid running the method in a separate R session
 #'   using \code{\link[dynutils]{eval_with_timeout}} and run the method directly. Note that the timeout functionality
@@ -99,7 +99,7 @@ execute_method <- function(
   parameters,
   give_start_cell = FALSE,
   give_end_cells = FALSE,
-  give_cell_grouping = FALSE,
+  give_grouping_assignment = FALSE,
   timeout = Inf,
   debug_timeout = FALSE
 ) {
@@ -117,8 +117,8 @@ execute_method <- function(
     # Add prior information
     # Including the task is only used for perturbing the gold standard, not used by any real methods
     # TODO: This should be uniformised to allow many different outputs
-    param_names <- c("start_cell_id", "end_cell_id", "cell_grouping", "task")
-    param_bools <- c(give_start_cell, give_end_cells, give_cell_grouping, FALSE)
+    param_names <- c("start_cell", "start_cells", "end_cells", "grouping_assignment", "task")
+    param_bools <- c(give_start_cell, give_end_cells, give_grouping_assignment, FALSE)
 
     for (i in seq_along(param_names)) {
       param_name <- param_names[[i]]
@@ -128,10 +128,10 @@ execute_method <- function(
         arglist[[param_name]] <-
           if (param_name == "task") {
             task
-          } else if (param_name == "cell_grouping") {
-            task$cell_grouping
+          } else if (param_name == "start_cell") {
+            sample(task$prior_information$start_cells, 1) # sample one random start cell
           } else {
-            task$special_cells[[param_name]]
+            task$prior_information[[param_name]]
           }
       }
     }

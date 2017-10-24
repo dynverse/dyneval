@@ -18,8 +18,8 @@ description_slicer <- function() create_description(
 )
 
 run_slicer <- function(counts,
-                       start_cell_id,
-                       end_cell_ids = NULL,
+                       start_cell,
+                       end_cells = NULL,
                        kmin = 10,
                        m = 2,
                        min_branch_len = 5,
@@ -59,14 +59,14 @@ run_slicer <- function(counts,
   traj_graph <- SLICER::conn_knn_graph(traj_lle, k = k)
 
   # find extreme cells
-  if (is.null(end_cell_ids)) {
+  if (is.null(end_cells)) {
     ends <- SLICER::find_extreme_cells(traj_graph, traj_lle, do_plot = FALSE)
   } else {
-    ends <- match(c(start_cell_id, end_cell_ids), rownames(counts))
+    ends <- match(c(start_cell, end_cells), rownames(counts))
   }
 
   # order cells
-  start <- which(rownames(expr_filt) == start_cell_id)
+  start <- which(rownames(expr_filt) == start_cell)
   cells_ordered <- SLICER::cell_order(traj_graph, start)
 
   # get shortest paths to start and all other nodes
