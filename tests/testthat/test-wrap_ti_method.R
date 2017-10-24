@@ -139,7 +139,7 @@ test_that("Testing execute_method with dummy method", {
 })
 
 test_that("Testing timeout of execute_method", {
-  data("toy_tasks", package="dyntoy")
+
 
   timeouter <- dyneval:::create_description(
     name = "timeouter",
@@ -175,14 +175,17 @@ test_that("Testing timeout of execute_method", {
     }
   )
 
+  data("toy_tasks", package="dyntoy")
+  toy_tasks <- toy_tasks[1:6,]
+
   num_datasets <- nrow(toy_tasks)
 
   # should take about 20 seconds, but will timeout after 10
-  out <- execute_method(toy_tasks[,1:6], timeouter, parameters = list(sleep_time = 10), timeout = 1)
+  out <- execute_method(toy_tasks, timeouter, parameters = list(sleep_time = 10), timeout = 1)
   models <- out %>% map_df(~ .$model)
   summaries <- out %>% map_df(~.$summary)
   expect_equal(nrow(models), 0)
-  expect_equal(nrow(summaries), 6)
+  expect_equal(nrow(summaries), num_datasets)
   for (i in seq_len(nrow(summaries))) {
     expect_false(is.null(summaries$error[[i]]))
     expect_is(summaries$error[[i]], "error")
