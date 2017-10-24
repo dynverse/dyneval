@@ -4,16 +4,16 @@ description_wishbone <- function() create_description(
   name = "Wishbone",
   short_name = "Wishbone",
   package_loaded = c(),
-  package_required = c("jsonlite", "Wishbone"),
+  package_required = c("Wishbone"),
   par_set = makeParamSet(
-    makeIntegerParam(id = "knn", lower=2L, upper=100L, default=10L),
-    makeIntegerParam(id = "n_diffusion_components", lower=2L, upper=20L, default=10L),
-    makeIntegerParam(id = "n_pca_components", lower=2L, upper=30L, default=15L),
+    makeIntegerParam(id = "knn", lower = 2L, default = 10L, upper = 100L),
+    makeIntegerParam(id = "n_diffusion_components", lower = 2L, default = 2L, upper = 20L),
+    makeIntegerParam(id = "n_pca_components", lower = 2L, default = 15L, upper = 30L),
     makeLogicalParam(id = "branch", default = TRUE),
-    makeIntegerParam(id = "k", lower=2L, upper=100L, default=15L),
-    makeIntegerParam(id = "num_waypoints", lower=2L, upper=500L, default=250L),
+    makeIntegerParam(id = "k", lower = 2L, default = 15L, upper = 100L),
+    makeIntegerParam(id = "num_waypoints", lower = 2L, default = 50L, upper = 500L),
     makeLogicalParam(id = "normalize", default = TRUE),
-    makeNumericParam(id = "epsilon", lower=0.1, upper=10, default=1)
+    makeNumericParam(id = "epsilon", lower = 0.1, default = 1, upper = 10)
   ),
   properties = c(),
   run_fun = run_wishbone,
@@ -26,24 +26,24 @@ run_wishbone <- function(
   knn = 10,
   n_diffusion_components = 2,
   n_pca_components = 15,
-  markers="~",
-  branch=TRUE,
-  k=15,
-  num_waypoints=50,
-  normalize=TRUE,
-  epsilon=1
+  branch = TRUE,
+  k = 15,
+  num_waypoints = 50,
+  normalize = TRUE,
+  epsilon = 1
 ) {
-  if(is.null(start_cell_id)) stop("Give start cell id")
-
   requireNamespace("Wishbone")
 
-  wb_out <- Wishbone::Wishbone(
+  if (is.null(start_cell_id)) stop(sQuote("start_cell_id"), " is not allowed to be NULL")
+
+  # execute wishbone
+  out <- Wishbone::Wishbone(
     counts = counts,
     start_cell_id = start_cell_id,
     knn = knn,
     n_diffusion_components = n_diffusion_components,
     n_pca_components = n_pca_components,
-    markers = markers,
+    markers = "~",
     branch = branch,
     k = k,
     num_waypoints = num_waypoints,
@@ -51,44 +51,55 @@ run_wishbone <- function(
     epsilon = epsilon
   )
 
-  branch_assignment <- wb_out$branch_assignment
-  trajectory <- wb_out$trajectory
-  space <- wb_out$space
+  # retrieve model
+  model <- out$branch_assignment %>%
+    left_join(out$trajectory, by = "cell_id") %>%
+    left_join(out$space, by = "cell_id")
 
-  model <- left_join(branch_assignment, trajectory, by="cell_id")
-
-  if (branch) {
-    milestone_network <- tibble(from=c("M1", "M2", "M2"), to=c("M2", "M3", "M4"), branch=c(1, 2, 3))
+  # create mapping between branch and from-to columns
+  fromto <- if (branch) {
+    data_frame(from = c("M1", "M2", "M2"), to = c("M2", "M3", "M4"), branch = c(1, 2, 3))
   } else {
-    milestone_network <- tibble(from=c("M1"), to=c("M2"), branch=c(1))
+    data_frame(from = "M1", to = "M2", branch = c(1, 2, 3))
   }
-  milestone_network <- milestone_network %>% mutate(directed=TRUE)
 
-  progressions <- left_join(model, milestone_network, by="branch")
+  # create network
+  milestone_network <- model %>%
+    group_by(branch) %>%
+    summarise(length = diff(range(time))) %>%
+    left_join(fromto, by = "branch") %>%
+    mutate(directed = TRUE) %>%
+    select(from, to, length, directed)
 
-  # get lengths of milestone network
-  milestone_network <- progressions %>% group_by(branch) %>% summarise(length=max(time) - min(time)) %>% left_join(milestone_network, by="branch")
-
-  # now scale the times between 0 and 1 => percentages
-  progressions <- progressions %>%
+  # create progressions
+  progressions <- model %>%
+    left_join(fromto, by = "branch") %>%
     group_by(branch) %>%
     mutate(percentage = dynutils::scale_minmax(time)) %>%
-    ungroup()
+    ungroup() %>%
+    select(cell_id, from, to, percentage)
 
-  milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
+  # get the milestone names
+  milestone_ids <- sort(unique(c(milestone_network$from, milestone_network$to)))
 
+  # return output
   wrap_ti_prediction(
-    ti_type = "linear",
+    ti_type = ifelse(branch, "branching", "linear"),
     id = "Wishbone",
     cell_ids = rownames(counts),
     milestone_ids = milestone_ids,
-    milestone_network = milestone_network %>% select(from, to, length, directed),
-    progressions = progressions %>% select(cell_id, from, to, percentage),
-    space = space,
-    model=model
+    milestone_network = milestone_network ,
+    progressions = progressions,
+    model = model
   )
 }
 
-plot_wishbone <- function(ti_predictions) {
-  ggplot(left_join(ti_predictions$model, ti_predictions$space, by="cell_id")) + geom_point(aes(Comp0, Comp1, color=branch))
+#' @importFrom viridis scale_colour_viridis
+plot_wishbone <- function(prediction) {
+  g <- ggplot() +
+    geom_point(aes(Comp1, Comp2, color = time), prediction$model %>% mutate_at(c("Comp1", "Comp2"), dynutils::scale_minmax)) +
+    viridis::scale_colour_viridis() +
+    labs(colour = "Trajectory") +
+    theme(legend.position = c(.92, .12))
+  process_dyneval_plot(g, prediction$id)
 }

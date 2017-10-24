@@ -14,7 +14,7 @@ get_descriptions <- function(as_tibble = TRUE) {
   if (as_tibble) {
     list_as_tibble(descriptions)
   } else {
-    descriptions
+    descriptions %>% setNames(descriptions %>% map_chr(~.$short_name))
   }
 }
 
@@ -56,7 +56,7 @@ create_description <- function(
 ) {
   if (override_runfun_params) {
     default_params <- par_set %>%
-      generateDesignOfDefaults(trafo = T) %>%
+      generateDesignOfDefaults(trafo = TRUE) %>%
       ParamHelpers::dfRowToList(par_set, 1)
 
     if(!all(names(default_params) %in% formalArgs(run_fun))) {
@@ -85,8 +85,13 @@ create_description <- function(
 #' @param give_end_cells Whether end cells should be provided even though a method doesn't require it.
 #' @param give_cell_grouping Whether a cell grouping should be provided even though a method doesn't require it.
 #' @param timeout Kill execution after a given amount of time.
+#' @param debug_timeout Setting debug to \code{TRUE} will avoid running the method in a separate R session
+#'   using \code{\link[dynutils]{eval_with_timeout}} and run the method directly. Note that the timeout functionality
+#'   will not work when \code{debug} is \code{TRUE}.
 #'
 #' @importFrom utils capture.output
+#' @importFrom readr read_file
+#' @importFrom stringr str_length
 #' @export
 execute_method <- function(
   tasks,
@@ -95,83 +100,180 @@ execute_method <- function(
   give_start_cell = FALSE,
   give_end_cells = FALSE,
   give_cell_grouping = FALSE,
-  timeout = Inf
+  timeout = Inf,
+  debug_timeout = FALSE
 ) {
-  # dry run of the wait_or_kill method
-  dry_run <- wait_or_kill({1}, wait_time = 5, function(x) x, .1)
-  # Run the method on each of the tasks
-  dynutils::wait_or_kill(
-    wait_time = timeout,
-    cancel_output_fun = function(time) stop("Timeout after ", time, " seconds"),
-    check_interval = 1,
-    verbose = FALSE,
-    globals = c("tasks", "method", "parameters", "give_start_cell", "give_end_cells", "give_cell_grouping"),
-    packages = c("dyneval", "dynutils", method$package_loaded),
-    expr = {
-      # Load required namespaces
-      for (pack in method$package_required) {
-        suppressMessages(do.call(requireNamespace, list(pack)))
-      }
+  # Run method on each task
+  lapply(seq_len(nrow(tasks)), function(i) {
+    # start the timer
+    time0 <- Sys.time()
 
-      # Disable seed setting
-      orig_setseed <- base::set.seed
-      override_setseed(function(i) {})
+    # get the task
+    task <- dynutils::extract_row_to_list(tasks, i)
 
-      # Run method on each task
-      outputs <- lapply(seq_len(nrow(tasks)), function(i) {
-        task <- extract_row_to_list(tasks, i)
+    # Add the counts to the list parameters
+    arglist <- c(list(counts = task$counts), parameters)
 
-        summary <- data.frame(row.names = 1)
+    # Add prior information
+    # Including the task is only used for perturbing the gold standard, not used by any real methods
+    # TODO: This should be uniformised to allow many different outputs
+    param_names <- c("start_cell_id", "end_cell_id", "cell_grouping", "task")
+    param_bools <- c(give_start_cell, give_end_cells, give_cell_grouping, FALSE)
 
-        # Add the counts to the parameters
-        arglist <- c(list(counts = task$counts), parameters)
+    for (i in seq_along(param_names)) {
+      param_name <- param_names[[i]]
+      param_bool <- param_bools[[i]]
 
-        # Add prior information
-        # Including the task is only used for perturbing the gold standard, not used by any real methods
-        param_names <- c("start_cell_id", "end_cell_id", "cell_grouping", "task")
-        param_bools <- c(give_start_cell, give_end_cells, give_cell_grouping, FALSE)
-
-        for (i in seq_along(param_names)) {
-          param_name <- param_names[[i]]
-          param_bool <- param_bools[[i]]
-
-          if (param_name %in% formalArgs(method$run_fun) | param_bool) {
-            arglist[[param_name]] <-
-              if (param_name == "task") {
-                task
-              } else if (param_name == "cell_grouping") {
-                task$cell_grouping
-              } else {
-                task$special_cells[[param_name]]
-              }
+      if (param_name %in% formalArgs(method$run_fun) | param_bool) {
+        arglist[[param_name]] <-
+          if (param_name == "task") {
+            task
+          } else if (param_name == "cell_grouping") {
+            task$cell_grouping
+          } else {
+            task$special_cells[[param_name]]
           }
+      }
+    }
+
+    # create a temporary directory to set as working directory,
+    # to avoid polluting the working directory if a method starts
+    # producing files :angry_face:
+    tmp_dir <- tempfile(pattern = method$short_name)
+    dir.create(tmp_dir)
+    old_wd <- getwd()
+    setwd(tmp_dir)
+
+    # disable seed setting
+    # a method shouldn't set seeds during regular execution,
+    # it should be left up to the user instead
+    orig_setseed <- base::set.seed
+    setseed_detection_file <- tempfile(pattern = "seedsetcheck")
+
+    # run the method and catch the error, if necessary
+    out <-
+      tryCatch({
+        if (debug_timeout) {
+          cat("Running ", method$name, " on ", task$id, " in debug mode!\n", sep = "")
+
+          # Execute method
+          model <- execute_method_internal(method, arglist, setseed_detection_file)
+        } else {
+          # Run the method on each of the tasks
+          model <- dynutils::eval_with_timeout(
+            timeout = timeout,
+            expr = {
+              tryCatch({
+                # create a temporary directory to set as working directory,
+                # to avoid polluting the working directory if a method starts
+                # producing files :angry_face:
+                setwd(tmp_dir)
+
+                # run method
+                execute_method_internal(method, arglist, setseed_detection_file)
+              }, finally = {
+                # return to old_wd
+                # (in the likely event that this is a different thread)
+                setwd(old_wd)
+              })
+            }
+          )
         }
 
-        # Run model on task with given parameters. Suppress output if need be.
-        time0 <- Sys.time()
-
-        # set working directory to a temporary directory, to avoid polluting the working directory
-        # if a method starts writing output to the working directory
-        oldwd <- getwd()
-        setwd(tempdir())
-
-        tryCatch({
-          model <- do.call(method$run_fun, arglist)
-        }, finally = {
-          # make sure working directory is always set to original even when errored
-          setwd(oldwd)
-        })
-        time1 <- Sys.time()
-        summary$time_method <- as.numeric(difftime(time1, time0, units = "sec"))
-
-        rownames(summary) <- NULL
-
-        list(model = model, summary = summary)
+        c(model, list(error = NULL))
+      }, error = function(e) {
+        list(model = NULL, time1 = time0, time2 = Sys.time(), error = e)
       })
 
-      override_setseed(orig_setseed)
+    # retrieve the model and error message
+    model <- out$model
+    error <- out$error
+    time1 <- out$time1
+    time2 <- out$time2
 
-      outputs
+    # check whether the method produced output files and
+    # wd to previous state
+    num_files_created <- length(list.files(tmp_dir, recursive = TRUE))
+    setwd(old_wd)
+
+    # Temporary fix: do not remove the whole tmp wd, as futures might still be in this wd.
+    # TODO: solve it
+    # unlink(tmp_dir, recursive = TRUE, force = TRUE)
+    for (x in list.dirs(tmp_dir, recursive = FALSE)) {
+      unlink(x, recursive = TRUE, force = TRUE)
     }
-  )
+    file.remove(list.files(tmp_dir))
+
+    # read how many seeds were set and
+    # restore environment to previous state
+    num_setseed_calls <-
+      if (file.exists(setseed_detection_file)) {
+        stringr::str_length(readr::read_file(setseed_detection_file))
+      } else {
+        0
+      }
+    if (file.exists(setseed_detection_file)) {
+      file.remove(setseed_detection_file)
+    }
+    dynutils::override_setseed(orig_setseed)
+
+    # stop the timer
+    time3 <- Sys.time()
+
+    # create a summary tibble
+    summary <- tibble(
+      method_name = method$name,
+      method_short_name = method$short_name,
+      task_id = task$id,
+      time_setup = as.numeric(difftime(time1, time0, units = "sec")),
+      time_method = as.numeric(difftime(time2, time1, units = "sec")),
+      time_cleanup = as.numeric(difftime(time3, time2, units = "sec")),
+      error = list(error),
+      num_files_created = num_files_created,
+      num_setseed_calls = num_setseed_calls
+    )
+
+    # return output
+    list(model = model, summary = summary)
+  })
+}
+
+#' Internal method for executing a method
+#'
+#' If you're reading this, you're supposed to be using \code{execute_method} instead.
+#'
+#' @param method A TI method wrapper
+#' @param arglist The arguments to apply to the method
+#' @param setseed_detection_file A file to which will be written if a method
+#'   uses the set.seed function.
+#'
+#' @export
+#' @importFrom readr write_file
+execute_method_internal <- function(method, arglist,setseed_detection_file) {
+  # disable seed setting
+  # a method shouldn't set seeds during regular execution,
+  # it should be left up to the user instead
+  new_setseed <- function(i) {
+    readr::write_file("1", setseed_detection_file, append = TRUE)
+  }
+  dynutils::override_setseed(new_setseed)
+
+  # Load required packages and namespaces
+  for (pack in method$package_loaded) {
+    suppressMessages(do.call(require, list(pack)))
+  }
+  for (pack in method$package_required) {
+    suppressMessages(do.call(requireNamespace, list(pack)))
+  }
+
+  # measure second time point
+  time1 <- Sys.time()
+
+  # execute method and return model
+  model <- do.call(method$run_fun, arglist)
+
+  # measure third time point
+  time2 <- Sys.time()
+
+  list(time1 = time1, time2 = time2, model = model)
 }

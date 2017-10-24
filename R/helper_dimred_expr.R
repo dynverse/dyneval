@@ -22,7 +22,7 @@ dimred <- function(x, method, ...) {
 
 process_dimred <- function(space, rn) {
   space <- as.matrix(space)
-  dimnames(space) <- list(rn, paste0("Comp", 1:ncol(space)))
+  dimnames(space) <- list(rn, paste0("Comp", seq_len(ncol(space))))
   space
 }
 

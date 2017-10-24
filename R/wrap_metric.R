@@ -5,7 +5,7 @@
 #'
 #' @importFrom smoof makeSingleObjectiveFunction makeMultiObjectiveFunction
 #' @export
-make_obj_fun <- function(method, metrics, timeout, noisy = FALSE) {
+make_obj_fun <- function(method, metrics, noisy = FALSE) {
   # Use different makefunction if there are multiple metrics versus one
   if (length(metrics) > 1) {
     make_fun <- function(...) makeMultiObjectiveFunction(..., n.objectives = length(metrics))
@@ -21,7 +21,7 @@ make_obj_fun <- function(method, metrics, timeout, noisy = FALSE) {
     noisy = noisy,
     has.simple.signature = FALSE,
     par.set = method$par_set,
-    fn = function(x, tasks, output_model) {
+    fn = function(x, tasks, output_model, timeout) {
       execute_evaluation(
         tasks = tasks,
         method = method,
@@ -34,21 +34,6 @@ make_obj_fun <- function(method, metrics, timeout, noisy = FALSE) {
   )
 }
 
-#' For returning a poor score when a method errors
-#'
-#' @param num_objectives the number of objectives used
-#' @param error_score the score to return upon erroring
-#'
-#' @export
-impute_y_fun <- function(num_objectives, error_score = -1) {
-  function(x, y, opt.path, ...) {
-    val <- rep(error_score, num_objectives)
-    attr(val, "extras") <- list(.summary = NA)
-    val
-  }
-}
-
-
 #' Running an evaluation of a method on a set of tasks with a set of parameters
 #'
 #' @inheritParams execute_method
@@ -56,58 +41,74 @@ impute_y_fun <- function(num_objectives, error_score = -1) {
 #'   see \code{\link{calculate_metrics}} for a list of which metrics are available.
 #' @param output_model Whether or not the model will be outputted.
 #'   If this is a character string, it will save the model in the requested folder.
+#' @param error_score The aggregated score a method gets if it produces errors.
 #'
 #' @export
 #' @importFrom netdist gdd net_emd
-execute_evaluation <- function(tasks, method, parameters, metrics, timeout, output_model = TRUE) {
-  method_outputs <- execute_method(tasks = tasks, method = method, parameters = parameters, timeout = timeout)
+execute_evaluation <- function(tasks, method, parameters, metrics, timeout, debug_timeout = FALSE, output_model = TRUE, error_score = 0) {
+  method_outputs <- execute_method(tasks = tasks, method = method, parameters = parameters, timeout = timeout, debug_timeout = debug_timeout)
 
   # Calculate scores
-  outs <- lapply(seq_len(nrow(tasks)), function(i) {
-    task <- extract_row_to_list(tasks, i)
+  eval_outputs <- lapply(seq_len(nrow(tasks)), function(i) {
+    task <- dynutils::extract_row_to_list(tasks, i)
 
     # Fetch method outputs
     method_output <- method_outputs[[i]]
     model <- method_output$model
 
-    # Calculate geodesic distances
-    time0 <- Sys.time()
-    model$geodesic_dist <- dynutils::compute_emlike_dist(model)
-    time1 <- Sys.time()
-    time_geodesic <- as.numeric(difftime(time1, time0, units = "sec"))
+    if (!is.null(model)) {
+      # Calculate geodesic distances
+      time0 <- Sys.time()
+      model$geodesic_dist <- dynutils::compute_emlike_dist(model)
+      time1 <- Sys.time()
+      time_geodesic <- as.numeric(difftime(time1, time0, units = "sec"))
 
-    # Calculate metrics
-    metrics_output <- calculate_metrics(task, model, metrics)
+      # Calculate metrics
+      metrics_output <- calculate_metrics(task, model, metrics)
 
-    # Create summary statistics
-    summary <- data.frame(
-      method_name = method$name,
-      method_short_name = method$short_name,
-      task_id = task$id,
-      method_output$summary,
-      time_geodesic = time_geodesic,
-      metrics_output$summary,
-      stringsAsFactors = FALSE,
-      check.names = FALSE
-    )
+      # Create summary statistics
+      summary <- bind_cols(
+        method_output$summary,
+        data_frame(time_geodesic),
+        metrics_output$summary
+      )
+    } else {
+      summary <- method_output$summary %>%
+        mutate_at(metrics, function(x) error_score)
+    }
 
     # Return the output
     lst(model, summary)
   })
 
   # Combine the different outputs in three lists/data frames
-  models <- outs %>% purrr::map(~ .$model)
-  summary <- outs %>% purrr::map_df(~ .$summary)
+  # Note: suppresswarnings is used here to suppress the following:
+  #   Vectorizing 'glue' elements may not preserve their attributes
+  # TODO: Will get removed in the next major release of dplyr
+  suppressWarnings({
+    models <- eval_outputs %>% map(~ .$model)
+    summary <- eval_outputs %>% map_df(~ .$summary)
+  })
 
   # Calculate the final score
-  score <- summary %>% summarise_at(metrics, funs(mean)) %>% as.matrix %>% as.vector %>% setNames(metrics)
+  score <- summary %>%
+    summarise_at(metrics, funs(mean)) %>%
+    as.matrix %>%
+    as.vector %>%
+    setNames(metrics)
 
   # Return extra information
   extras <- list(.summary = summary)
 
+  # If output_model is a boolean, it decides on whether
+  # to add the model to the extras output
   if (is.logical(output_model) && output_model) {
     extras$.models <- models
-  } else if (is.character(output_model)) {
+  }
+
+  # If output_model is a character, write the model
+  # to the given destination
+  if (is.character(output_model)) {
     if (!dir.exists(output_model)) {
       dir.create(output_model)
     }
@@ -120,7 +121,9 @@ execute_evaluation <- function(tasks, method, parameters, metrics, timeout, outp
     extras$.models_file <- filename
   }
 
+  # attach extras to score
   attr(score, "extras") <- extras
+
   # Return output
   score
 }
@@ -144,32 +147,32 @@ execute_evaluation <- function(tasks, method, parameters, metrics, timeout, outp
 #'
 #' @export
 calculate_metrics <- function(task, model, metrics) {
-  summary <- data.frame(row.names = 1)
+  summary_list <- list()
 
   # Compute coranking metrics
   if (any(c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global") %in% metrics)) {
     time0 <- Sys.time()
     coranking <- compute_coranking(task$geodesic_dist, model$geodesic_dist)
-    summary <- bind_cols(summary, coranking$summary)
+    summary_list <- c(summary_list, coranking$summary)
     time1 <- Sys.time()
-    summary$time_coranking <- as.numeric(difftime(time1, time0, units = "sec"))
+    summary_list$time_coranking <- as.numeric(difftime(time1, time0, units = "sec"))
   }
 
   # Compute the correlation of the geodesic distances
   if ("correlation" %in% metrics) {
     time0 <- Sys.time()
-    summary$correlation <- cor(task$geodesic_dist %>% as.vector, model$geodesic_dist %>% as.vector, method="spearman")
+    summary_list$correlation <- cor(task$geodesic_dist %>% as.vector, model$geodesic_dist %>% as.vector, method="spearman")
     time1 <- Sys.time()
-    summary$time_correlation <- as.numeric(difftime(time1, time0, units = "sec"))
+    summary_list$time_correlation <- as.numeric(difftime(time1, time0, units = "sec"))
   }
 
   # Compute the mantel test
   if ("mantel_pval" %in% metrics) {
     time0 <- Sys.time()
     mantel <- vegan::mantel(task$geodesic_dist, model$geodesic_dist, permutations = 100)
-    summary$mantel_pval <- -log10(mantel$signif)
+    summary_list$mantel_pval <- -log10(mantel$signif)
     time1 <- Sys.time()
-    summary$time_mantel <- as.numeric(difftime(time1, time0, units = "sec"))
+    summary_list$time_mantel <- as.numeric(difftime(time1, time0, units = "sec"))
   }
 
   net1 <- dynutils::simplify_milestone_network(model$milestone_network)
@@ -179,20 +182,20 @@ calculate_metrics <- function(task, model, metrics) {
   if ("isomorphic" %in% metrics) {
     time0 <- Sys.time()
 
-    summary$isomorphic <- (is_isomorphic_to(
+    summary_list$isomorphic <- (is_isomorphic_to(
       graph_from_data_frame(net1),
       graph_from_data_frame(net2)
     ))+0
     time1 <- Sys.time()
-    summary$time_isomorphic <- as.numeric(difftime(time1, time0, units = "sec"))
+    summary_list$time_isomorphic <- as.numeric(difftime(time1, time0, units = "sec"))
   }
 
   # Compute the milestone network GED
   if ("ged" %in% metrics) {
     time0 <- Sys.time()
-    summary$ged <- calculate_ged(net1, net2)
+    summary_list$ged <- calculate_ged(net1, net2)
     time1 <- Sys.time()
-    summary$time_ged <- as.numeric(difftime(time1, time0, units = "sec"))
+    summary_list$time_ged <- as.numeric(difftime(time1, time0, units = "sec"))
   }
 
   # Compute Netdist EMD (see scripts/wouter/network_scores_tests.R)
@@ -200,22 +203,21 @@ calculate_metrics <- function(task, model, metrics) {
     time0 <- Sys.time()
     gdd1 <- netdist::gdd(net1 %>% igraph::graph_from_data_frame())
     gdd2 <- netdist::gdd(net2 %>% igraph::graph_from_data_frame())
-    summary$net_emd <- netdist::net_emd(gdd1, gdd2)
+    summary_list$net_emd <- netdist::net_emd(gdd1, gdd2)
     time1 <- Sys.time()
-    summary$time_net_emd <- 1-as.numeric(difftime(time1, time0, units = "sec"))
+    summary_list$time_net_emd <- 1-as.numeric(difftime(time1, time0, units = "sec"))
   }
 
   if ("robbie_network_score" %in% metrics) {
     time0 <- Sys.time()
-    summary$robbie_network_score <- calculate_robbie_network_score(net1, net2)
+    summary_list$robbie_network_score <- calculate_robbie_network_score(net1, net2)
     time1 <- Sys.time()
-    summary$time_robbie_network_score <- 1-as.numeric(difftime(time1, time0, units = "sec"))
+    summary_list$time_robbie_network_score <- 1-as.numeric(difftime(time1, time0, units = "sec"))
   }
 
+  summary <- as_tibble(summary_list)
 
-  rownames(summary) <- NULL
-
-  lst(coranking, summary)
+  list(coranking = coranking, summary = summary)
 }
 
 #' Compute the coranking matrix and
@@ -260,7 +262,7 @@ compute_coranking <- function(gold_dist, pred_dist) {
   Q_global <- mean(LCMC[-ix])
   Q_local <- mean(LCMC[ix])
 
-  summary <- data_frame(mean_R_nx, auc_R_nx, Q_global, Q_local)
+  summary <- lst(mean_R_nx, auc_R_nx, Q_global, Q_local)
 
   lst(
     Q,
@@ -313,6 +315,7 @@ complete_matrix <- function(mat, dim, fill=0) {
   mat <- cbind(mat, matrix(rep(0, nrow(mat) * (dim - ncol(mat))), nrow=nrow(mat)))
 }
 
+#' @importFrom reshape2 acast
 get_adjacency <- function(net, nodes=unique(c(net$from, net$to))) {
   if(nrow(net) == 0) { # special case for circular
     newnet <- matrix(rep(0, length(nodes)))

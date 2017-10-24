@@ -5,7 +5,8 @@
 \title{Run a method on a set of tasks with a set of parameters}
 \usage{
 execute_method(tasks, method, parameters, give_start_cell = FALSE,
-  give_end_cells = FALSE, give_cell_grouping = FALSE, timeout = Inf)
+  give_end_cells = FALSE, give_cell_grouping = FALSE, timeout = Inf,
+  debug_timeout = FALSE)
 }
 \arguments{
 \item{tasks}{The tasks on which to evaluate.}
@@ -21,6 +22,10 @@ execute_method(tasks, method, parameters, give_start_cell = FALSE,
 \item{give_cell_grouping}{Whether a cell grouping should be provided even though a method doesn't require it.}
 
 \item{timeout}{Kill execution after a given amount of time.}
+
+\item{debug_timeout}{Setting debug to \code{TRUE} will avoid running the method in a separate R session
+using \code{\link[dynutils]{eval_with_timeout}} and run the method directly. Note that the timeout functionality
+will not work when \code{debug} is \code{TRUE}.}
 }
 \description{
 Run a method on a set of tasks with a set of parameters

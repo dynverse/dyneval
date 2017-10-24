@@ -3,3 +3,8 @@
 # dyneval
 
 Evaluation of single-cell trajectory inference algorithms, using both synthetic data (from the dyngen packages) and real data.
+
+Fedora:
+```
+install.packages("udunits2", configure.args =  c(udunits2 = '--with-udunits2-include=/usr/include/udunits2'))
+```

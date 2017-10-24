@@ -95,12 +95,13 @@ plot_gpfates <- function(prediction, type = c("dimred", "assignment")) {
         left_join(max_trend, by = "cell_id") %>%
         mutate(trend = gsub("M", "Trend ", milestone_id))
 
-      ggplot() +
+      g <- ggplot() +
         geom_point(aes(Comp1, Comp2, colour = trend), plot_df) +
-        coord_equal() +
-        cowplot::theme_cowplot() +
         scale_color_brewer(palette = "Set2") +
-        labs(x = "Latent variable 1", y = "Latent variable 2", colour = "Fitted trend")
+        labs(colour = "Fitted trend") +
+        theme(legend.position = c(.92, .12))
+
+      process_dyneval_plot(g, prediction$id)
 
       # TODO: Extract OGMP for plotting purposes. See dyneval #21
     },
@@ -109,12 +110,13 @@ plot_gpfates <- function(prediction, type = c("dimred", "assignment")) {
         left_join(prediction$progressions, by = "cell_id") %>%
         mutate(trend = gsub("M", "Trend ", to))
 
-      ggplot() +
+      g <- ggplot() +
         geom_point(aes(time, percentage, colour = trend), progression_df) +
         facet_wrap(~trend, ncol = 1) +
         labs(x = "Pseudotime", y = "Trend assignment probability") +
-        cowplot::theme_cowplot() +
         theme(legend.position = "none")
+
+      process_dyneval_plot(g, prediction$id)
     }
   )
 }

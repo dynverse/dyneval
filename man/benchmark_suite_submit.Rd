@@ -4,11 +4,11 @@
 \alias{benchmark_suite_submit}
 \title{A benchmark suite with which to run all the methods on the different tasks}
 \usage{
-benchmark_suite_submit(tasks, task_group, task_fold, out_dir, timeout = 60 *
-  nrow(tasks), methods = get_descriptions(as_tibble = TRUE),
-  metrics = c("auc_R_nx", "robbie_network_score"), num_cores = 4,
-  memory = "20G", max_wall_time = NULL, num_iterations = 20,
-  num_init_params = 100, num_repeats = 1, save_r2g_to_outdir = FALSE)
+benchmark_suite_submit(tasks, task_group, task_fold, out_dir, timeout = 120,
+  methods = get_descriptions(as_tibble = TRUE), metrics = c("auc_R_nx",
+  "robbie_network_score"), num_cores = 4, memory = "20G",
+  max_wall_time = NULL, num_iterations = 20, num_init_params = 100,
+  num_repeats = 1, save_r2g_to_outdir = FALSE, do_it_local = FALSE)
 }
 \arguments{
 \item{tasks}{A tibble of tasks.}
@@ -39,6 +39,8 @@ see \code{\link{calculate_metrics}} for a list of which metrics are available.}
 \item{num_repeats}{The number of times to repeat the mlr process, for each group and each fold.}
 
 \item{save_r2g_to_outdir}{Save the r2gridengine output to \code{out_dir} instead of the default \code{local_tmp_path}.}
+
+\item{do_it_local}{Whether or not to run the benchmark suite locally (not recommended)}
 }
 \description{
 A benchmark suite with which to run all the methods on the different tasks

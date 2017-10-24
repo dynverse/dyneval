@@ -63,14 +63,35 @@ run_scorpius <- function(counts,
   )
 }
 
-#' @importFrom viridis scale_colour_viridis
+#' @importFrom RColorBrewer brewer.pal
+#' @importFrom magrittr set_colnames
 plot_scorpius <- function(prediction) {
   requireNamespace("SCORPIUS")
-  SCORPIUS::draw_trajectory_plot(
-    prediction$space,
-    prediction$traj$time,
-    prediction$traj$path
-  ) +
-    viridis::scale_colour_viridis() +
-    theme(legend.position = "none")
+  requireNamespace("MASS")
+
+  space <- prediction$space[,1:2]
+  ranges <- apply(space, 2, range)
+  maxrange <- apply(ranges, 2, diff) %>% max
+
+  limits <- ranges %>% sweep(1, c(-.5, .5) * maxrange, "+")
+
+  space_df <- space %>%
+    as.data.frame() %>%
+    set_colnames(paste0("Comp", seq_len(ncol(.)))) %>%
+    rownames_to_column("cell_id") %>%
+    mutate(time = prediction$pseudotimes)
+
+  traj_df <- prediction$traj$path[,1:2] %>%
+    as.data.frame() %>%
+    set_colnames(paste0("Comp", seq_len(ncol(.))))
+
+  g <- ggplot() +
+    geom_path(aes(Comp1, Comp2), alpha = 0, data.frame(ranges %>% sweep(1, c(-.2, .2) * maxrange, "+"))) +
+    geom_point(aes(Comp1, Comp2, colour = time), space_df) +
+    geom_path(aes(Comp1, Comp2), traj_df) +
+    scale_colour_gradientn(colours = RColorBrewer::brewer.pal(3, "Dark2")) +
+    labs(colour = "Pseudotime") +
+    theme(legend.position = c(.92, .12))
+
+  process_dyneval_plot(g, prediction$id, expand = FALSE)
 }

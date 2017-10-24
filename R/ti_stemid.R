@@ -4,9 +4,9 @@ description_stemid <- function() create_description(
   name = "StemID",
   short_name = "StemID",
   package_loaded = c(),
-  package_required = c("StemID", "igraph", "reshape2"),
+  package_required = c("StemID"),
   par_set = makeParamSet(
-    makeIntegerParam(id = "clustnr", lower = 20L, default = 30L, upper = 100L),
+    makeIntegerParam(id = "clustnr", lower = 10L, default = 30L, upper = 100L),
     makeIntegerParam(id = "bootnr", lower = 20L, default = 50L, upper = 100L),
     makeDiscreteParam(id = "metric", default = "pearson", values = c("pearson", "spearman", "kendall", "euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski")),
     makeDiscreteParam(id = "num_cluster_method", default = "sat", values = c("sat", "gap", "manual")),
@@ -23,7 +23,7 @@ description_stemid <- function() create_description(
     makeNumericParam(id = "thr_upper", lower = -100, default = -40, upper = -1),
     makeNumericParam(id = "outdistquant", lower = 0, default = .95, upper = 1),
     makeLogicalParam(id = "nmode", default = FALSE),
-    makeNumericParam(id = "pdishuf", lower = 2, default = log10(2000), upper = 3.5, trafo = function(x) ceiling(10)^x),
+    makeNumericParam(id = "pdishuf", lower = log(100), default = log(500), upper = log(10000), trafo = function(x) round(exp(x))), # orig 2000
     makeNumericParam(id = "pthr", lower = -4, default = -2, upper = 0, trafo = function(x) 10^x),
     makeNumericParam(id = "pethr", lower = -4, default = -2, upper = 0, trafo = function(x) 10^x),
     forbidden = quote(thr_lower > thr_upper)
@@ -57,11 +57,9 @@ run_stemid <- function(
   pethr = .01
 ) {
   requireNamespace("StemID")
-  requireNamespace("igraph")
-  requireNamespace("reshape2")
 
   # initialize SCseq object with transcript counts
-  sc <- StemID::SCseq(data.frame(t(counts), check.names = FALSE))
+  sc <- StemID::SCseq(data.frame(t(log2(counts+1)), check.names = FALSE))
 
   # filtering of expression data
   sc <- StemID::filterdata(sc, mintotal = 1, minexpr = 0, minnumber = 0, maxexpr = Inf, downsample = TRUE, dsn = 1)
@@ -107,82 +105,51 @@ run_stemid <- function(
   # compute a spanning tree
   ltr <- StemID::compspantree(ltr)
 
-  dc <- ltr@trl$dc
-  milestone_ids <- rownames(dc)
-  trl <- ltr@trl$trl
-  cent <- ltr@trl$cent
+  # get network info
+  cluster_network <- data_frame(
+    from = as.character(ltr@ldata$m[-1]),
+    to = as.character(ltr@trl$trl$kid),
+    length = ltr@trl$dc[cbind(from, to)],
+    directed = FALSE
+  )
 
-  # converting to milestone network
-  gr_df <- data_frame(from = seq_along(trl$kid)+1, to = trl$kid, weight = dc[cbind(from, to)])
-  gr <- igraph::graph_from_data_frame(gr_df, directed = FALSE, vertices = milestone_ids)
-  milestone_network <- igraph::distances(gr) %>%
-    {.[upper.tri(., diag=TRUE)] = NA; .} %>% # no bidirectionality
-    reshape2::melt(varnames = c("from", "to"), value.name = "length") %>%
-    filter(!is.na(length)) %>%
-    filter(from != to) %>%
-    mutate(from = as.character(from), to = as.character(to), directed=FALSE)
+  # project cells onto segments
+  out <- project_cells_to_segments(
+    cluster_network = cluster_network,
+    cluster_space = ltr@ldata$cnl,
+    sample_space = ltr@ltcoord,
+    sample_cluster = as.character(ltr@ldata$lp),
+    num_segments_per_edge = 100,
+    milestone_rename_fun = function(x) paste0("M", x)
+  )
 
-  # calculating the cell-to-cluster distances manually
-  trproj_res <- ltr@trproj$res %>% as_data_frame() %>% rownames_to_column("id") %>% select(id, closest = o, furthest = l)
-  milestone_percentages <- bind_rows(lapply(seq_len(nrow(trproj_res)), function(i) {
-    id <- trproj_res$id[[i]]
-    closest <- trproj_res$closest[[i]]
-    furthest <- trproj_res$furthest[[i]]
+  # get colours
+  col_ann <- setNames(ltr@sc@fcol, out$milestone_ids)
 
-    if (!is.na(furthest)) {
-      dist_closest <- 1 - cor(cent[,closest], ltr@sc@fdata[,id])
-      dist_furthest <- 1 - cor(cent[,furthest], ltr@sc@fdata[,id])
-
-      data_frame(cell_id = id, milestone_id = milestone_ids[c(closest, furthest)], percentage = 1 - c(dist_closest, dist_furthest) / (dist_closest + dist_furthest))
-    } else {
-      data_frame(cell_id = id, milestone_id = milestone_ids[[closest]], percentage = 1)
-    }
-  }))
-
-  milestone_network$from <- paste0("Milestone", milestone_network$from)
-  milestone_network$to <- paste0("Milestone", milestone_network$to)
-  milestone_ids <- paste0("Milestone", milestone_ids)
-  milestone_percentages$milestone_id <- paste0("Milestone", milestone_percentages$milestone_id)
-
+  # return output
   wrap_ti_prediction(
-    ti_type = "linear",
+    ti_type = "multifurcating",
     id = "StemID",
     cell_ids = rownames(counts),
-    milestone_ids = milestone_ids,
-    milestone_network = milestone_network,
-    milestone_percentages = milestone_percentages,
-    dimred_samples = ltr@ltcoord,
-    objects = list(
-      trl = ltr@trl,
-      ltcoord = ltr@ltcoord,
-      cnl = ltr@ldata$cnl,
-      lp = ltr@ldata$lp,
-      fcol = ltr@sc@fcol
-    )
+    milestone_ids = out$milestone_ids,
+    milestone_network = out$milestone_network,
+    progressions = out$progressions,
+    space = out$space_df,
+    centers = out$centers_df,
+    edge = out$edge_df,
+    col_ann = col_ann
   )
 }
 
-plot_stemid <- function(ti_predictions) {
-  trl <- ti_predictions$objects$trl$trl
-  ltcoord <- ti_predictions$objects$ltcoord
-  cnl <- ti_predictions$objects$cnl
-  lp <- ti_predictions$objects$lp
-  fcol <- ti_predictions$objects$fcol
-
-  u <- ltcoord[,1]
-  v <- ltcoord[,2]
-
-  lines <- data.frame(from = cnl[seq_along(trl$kid)+1,], to = cnl[trl$kid,])
-
-  ggplot() +
-    geom_point(aes(u, v), col = "gray", size = 2) +
-    geom_text(aes(u, v, label = lp, colour = factor(lp))) +
-    geom_point(aes(V1, V2), cnl, shape = 1, size = 2) +
-    geom_segment(aes(x = from.V1, xend = to.V1, y = from.V2, yend = to.V2), lines) +
-    geom_text(aes(V1, V2, label = seq_len(nrow(cnl))), cnl, size = 10) +
-    labs(x = "Dim 1", y = "Dim 2") +
-    scale_colour_manual(values = fcol) +
+plot_stemid <- function(prediction) {
+  g <- ggplot() +
+    geom_point(aes(V1, V2), prediction$space, size = 2, colour = "darkgray", na.rm = TRUE) +
+    geom_text(aes(V1, V2, label = label, colour = label), prediction$space, na.rm = TRUE) +
+    geom_text(aes(V1, V2, label = clus_id), prediction$centers, size = 8) +
+    geom_segment(aes(x = from.V1, xend = to.V1, y = from.V2, yend = to.V2), prediction$edge) +
+    scale_colour_manual(values = prediction$col_ann) +
     theme(legend.position = "none")
+  process_dyneval_plot(g, prediction$id)
 }
 
 

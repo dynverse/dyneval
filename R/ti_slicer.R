@@ -3,8 +3,8 @@
 description_slicer <- function() create_description(
   name = "SLICER",
   short_name = "SLICER",
-  package_loaded = c("SLICER"),
-  package_required = c("lle", "igraph"),
+  package_loaded = c(),
+  package_required = c("SLICER", "lle", "igraph"),
   par_set = makeParamSet(
     makeIntegerParam(id = "kmin", lower = 2L, upper = 20L, default = 10L),
     makeIntegerParam(id = "m", lower = 2L, upper = 20L, default = 2L),
@@ -18,114 +18,128 @@ description_slicer <- function() create_description(
 )
 
 run_slicer <- function(counts,
-                      start_cell_id,
-                      end_cell_ids = NULL,
-                      kmin = 10,
-                      m = 2,
-                      min_branch_len = 5,
-                      min_representative_percentage = 0.8,
-                      max_same_milestone_distance = 0.1) {
+                       start_cell_id,
+                       end_cell_ids = NULL,
+                       kmin = 10,
+                       m = 2,
+                       min_branch_len = 5,
+                       min_representative_percentage = 0.8,
+                       max_same_milestone_distance = 0.1,
+                       verbose = FALSE) {
   requireNamespace("SLICER")
   requireNamespace("lle")
   requireNamespace("igraph")
 
-  expression <- log2(counts + 1)
-  genes <- SLICER::select_genes(expression)
-  expression_filtered <- expression[, genes]
+  # log transform expresison
+  expr <- log2(counts + 1)
 
-  k <- SLICER::select_k(expression_filtered, kmin=kmin)
-  traj_lle <- lle::lle(expression_filtered, m=m, k)$Y
-  traj_graph <- SLICER::conn_knn_graph(traj_lle, k=k)
+  # use 'neighbourhood variance' to identify genes that vary smoothly
+  genes <- SLICER::select_genes(expr)
+  expr_filt <- expr[, genes]
 
+  # stop output if not verbose
+  if (!verbose) {
+    sink("/dev/null")
+  }
+
+  # determine k for knn
+  k <- SLICER::select_k(expr_filt, kmin = kmin)
+
+  # perform local linear embedding
+  traj_lle <- lle::lle(expr_filt, m = m, k = k)$Y
+  rownames(traj_lle) <- rownames(expr_filt)
+  colnames(traj_lle) <- paste0("Comp", seq_len(ncol(traj_lle)))
+
+  # resume output if not verbose
+  if (!verbose) {
+    sink()
+  }
+
+  # get LLE KNN graph
+  traj_graph <- SLICER::conn_knn_graph(traj_lle, k = k)
+
+  # find extreme cells
   if (is.null(end_cell_ids)) {
-    ends <- SLICER::find_extreme_cells(traj_graph, traj_lle)
+    ends <- SLICER::find_extreme_cells(traj_graph, traj_lle, do_plot = FALSE)
   } else {
     ends <- match(c(start_cell_id, end_cell_ids), rownames(counts))
   }
 
-  start <- which(rownames(expression_filtered) == start_cell_id)
+  # order cells
+  start <- which(rownames(expr_filt) == start_cell_id)
   cells_ordered <- SLICER::cell_order(traj_graph, start)
-  branches <- SLICER::assign_branches(traj_graph, start, min_branch_len=min_branch_len) %>% factor %>% set_names(rownames(expression_filtered))
 
-  # TODO: clean up code, add comments
+  # get shortest paths to start and all other nodes
+  shortest_paths <- igraph::shortest_paths(traj_graph, start)
+  edges <- lapply(shortest_paths$vpath, function(path) {
+    P <- rbind(path[-length(path)], path[-1]) %>% as.vector
+    igraph::E(traj_graph, P = P)
+  })
+  subgr <- igraph::subgraph.edges(traj_graph, eids = unique(unlist(edges)))
 
-  # from SLICER we get the branch assignment, and the overall ordering of the cells from the start point
-  progressions <- tibble(
-    branch_id = branches,
-    global_rank = match(rownames(expression), rownames(expression)[cells_ordered]),
-    cell_id = rownames(expression)
-  ) %>%
-    group_by(branch_id) %>%
+  # prepare sample graph simplification
+  simp_edges <- igraph::as_data_frame(subgr, "edges") %>%
+    select(from, to, length = weight) %>%
     mutate(
-      rank = rank(global_rank)-1,
-      percentage = rank/max(rank)
-    ) %>% ungroup()
-
-  # now extract the branch network
-  # first create a temporary milestone network
-  milestone_network <- progressions %>%
-    group_by(branch_id) %>%
-    summarise(length=n()) %>%
-    mutate(
-      from=paste0("M", seq_along(unique(progressions$branch_id))*2-1),
-      to=paste0("M", seq_along(unique(progressions$branch_id))*2),
-      directed=FALSE
+      from = rownames(expr_filt)[from],
+      to = rownames(expr_filt)[to],
+      directed = TRUE
     )
+  sh_p_to_ends <- igraph::shortest_paths(subgr, start, ends)
+  nodes_to_keep <- unique(sh_p_to_ends$vpath %>% unlist)
+  to_keep <- setNames(igraph::V(traj_graph) %in% nodes_to_keep, rownames(expr_filt))
 
-  milestone_ids <- unique(c(milestone_network$from, milestone_network$to))
+  # simplify graph by projecting cells to the closest point on a trajectory between
+  # the start node and one of the end nodes
+  out <- simplify_sample_graph(simp_edges, to_keep, is_directed = FALSE)
 
-  progressions <- progressions %>% left_join(milestone_network, by="branch_id")
-
-  milestone_percentages <- dynutils::convert_progressions_to_milestone_percentages(rownames(expression), milestone_ids, milestone_network, progressions)
-
-  representatives <- milestone_percentages %>% group_by(cell_id) %>% summarise(milestone_id=milestone_id[which.max(percentage)], percentage=max(percentage))
-
-  conn <- traj_graph %>%
-    igraph::as_data_frame() %>%
-    mutate(
-      from=rownames(counts)[from],
-      to=rownames(counts)[to]
-    ) %>%
-    left_join(representatives %>% rename(milestone_id_from=milestone_id), by=c("from"="cell_id")) %>%
-    left_join(representatives %>% rename(milestone_id_to=milestone_id), by=c("to"="cell_id"))
-
-  branch_milestone_combinations <- c(paste0(milestone_network$from, milestone_network$to),paste0(milestone_network$to, milestone_network$from)) # disallowed merges of milestones
-
-  weight_cutoff <- 0.5
-  close_representatives <- conn %>%
-    filter(milestone_id_from != milestone_id_to) %>%
-    arrange(-weight) %>%
-    filter(weight >= weight_cutoff) %>%
-    filter(!(paste0(milestone_id_from, milestone_id_to) %in% branch_milestone_combinations))
-
-  # group the representatives, according to close distance
-  gr <- igraph::graph_from_data_frame(close_representatives %>% select(from = milestone_id_from, to = milestone_id_to), directed = FALSE, vertices = milestone_ids)
-  milestone_groups <- igraph::components(gr)$membership
-
-  # now map old milestones to new milestones
-  milestone_mapper <- setNames(paste0("M", milestone_groups), names(milestone_groups))
-
-  milestone_ids <- unique(milestone_mapper)
-  milestone_percentages$milestone_id <- milestone_mapper[milestone_percentages$milestone_id]
-  progressions$from <- milestone_mapper[progressions$from]
-  progressions$to <- milestone_mapper[progressions$to]
-  milestone_network$from <- milestone_mapper[milestone_network$from]
-  milestone_network$to <- milestone_mapper[milestone_network$to]
-
-  # tada!
+  # return output
   wrap_ti_prediction(
-    ti_type = "linear",
+    ti_type = "multifurcating",
     id = "SLICER",
-    cell_ids = rownames(expression_filtered),
-    milestone_ids = milestone_ids,
-    milestone_network = milestone_network %>% select(from, to, length, directed),
-    milestone_percentages = milestone_percentages %>% select(cell_id, milestone_id, percentage),
-    dimred_samples = traj_lle,
-    dimred_clust = branches
+    cell_ids = rownames(expr_filt),
+    milestone_ids = out$milestone_ids,
+    milestone_network = out$milestone_network,
+    progressions = out$progressions,
+    dimred_samples = traj_lle %>% as.data.frame() %>% rownames_to_column("cell_id"),
+    traj_graph = subgr,
+    start = start,
+    ends = ends,
+    to_keep = to_keep
   )
 }
 
-plot_slicer <- function(ti_predictions) {
-  dat <- as.data.frame(ti_predictions$dimred_samples) %>% mutate(branch = ti_predictions$dimred_clust)
-  ggplot(dat) + geom_point(aes(V1, V2, color=branch))
+#' @importFrom grDevices colorRampPalette
+plot_slicer <- function(prediction) {
+  requireNamespace("SLICER")
+  requireNamespace("igraph")
+
+  # based on SLICER::graph_process_distance(traj_graph, dimred_samples[,c("Comp1", "Comp2")], start)
+
+  # calculate the geodesic distances between samples
+  dimred_samples <- prediction$dimred_samples
+  geodesic_dists <- SLICER::process_distance(prediction$traj_graph, prediction$start)[1,] %>% dynutils::scale_minmax()
+
+  # get colour scale
+  plotclr <- grDevices::colorRampPalette(c("black", "red", "yellow"), space="rgb")(50)
+
+  # construct cell df
+  cell_df <- dimred_samples %>% mutate(dist = geodesic_dists)
+
+  # construct edge_df
+  edge_df <- prediction$traj_graph %>%
+    igraph::as_data_frame("edges") %>%
+    do(with(., data.frame(row.names = NULL, from = dimred_samples[from,], to = dimred_samples[to,], stringsAsFactors = F))) %>%
+    mutate(edge_kept = prediction$to_keep[from.cell_id] & prediction$to_keep[to.cell_id])
+
+  # make plot
+  aes_segm <- aes(x = from.Comp1, xend = to.Comp1, y = from.Comp2, yend = to.Comp2)
+  g <- ggplot() +
+    geom_segment(aes_segm, edge_df %>% filter(!edge_kept), colour = "gray", size = .35) +
+    geom_segment(aes_segm, edge_df %>% filter(edge_kept), size = .5) +
+    geom_point(aes(Comp1, Comp2, colour = dist), cell_df) +
+    scale_colour_gradientn(colours = plotclr) +
+    theme(legend.position = c(.92, .12))
+
+  process_dyneval_plot(g, prediction$id)
 }

@@ -54,7 +54,6 @@ abstract_celltree_description <- function(method) {
 }
 
 #' @importFrom igraph degree distances get.vertex.attribute induced_subgraph
-#' @importFrom reshape2 melt
 run_celltree <- function(counts,
                          start_cell_id = NULL,
                          cell_grouping = NULL,
@@ -69,11 +68,11 @@ run_celltree <- function(counts,
 ) {
   requireNamespace("cellTree")
 
-  expression <- log2(counts+1)
+  expr <- log2(counts+1)
 
   # infer the LDA model
   lda_out <- cellTree::compute.lda(
-    t(expression) + min(expression) + 1,
+    t(expr) + min(expr) + 1,
     k.topics = num_topics,
     method = method,
     log.scale = FALSE,
@@ -102,24 +101,78 @@ run_celltree <- function(counts,
   mst_tree <- do.call(cellTree::compute.backbone.tree, backbone_params)
 
   # simplify sample graph to just its backbone
-  edges <- igraph::as_data_frame(mst_tree, "edges") %>% select(from, to, length = weight) %>% mutate(directed = FALSE)
-  is_trajectory <- igraph::V(mst_tree)$is.backbone %>% setNames(names(igraph::V(mst_tree)))
-  out <- dynutils::simplify_sample_graph(edges, is_trajectory, is_directed = FALSE)
+  edges <- igraph::as_data_frame(mst_tree, "edges") %>%
+    select(from, to, length = weight) %>%
+    mutate(
+      from = rownames(counts)[from],
+      to = rownames(counts)[to],
+      directed = FALSE
+    )
+  to_keep <- igraph::V(mst_tree)$is.backbone %>%
+    setNames(rownames(counts))
+  out <- dynutils::simplify_sample_graph(edges, to_keep, is_directed = FALSE)
+
+  # extract data for visualisations
+  tree <- cellTree:::.compute.tree.layout(mst_tree, ratio = 1)
+  vertices <- igraph::as_data_frame(tree, "vertices") %>% as_data_frame()
+  edges <- igraph::as_data_frame(tree, "edges") %>% as_data_frame()
 
   # wrap output
   wrap_ti_prediction(
     ti_type = "tree",
-    id = "cellTree",
+    id = paste0("cellTree with ", method),
     cell_ids = rownames(counts),
     milestone_ids = out$milestone_ids,
     milestone_network = out$milestone_network,
     progressions = out$progressions,
-    mst_tree = mst_tree
+    vertices = vertices,
+    edges = edges
   )
 }
 
+#' @importFrom ggforce geom_arc_bar
+#' @importFrom grDevices rainbow
 plot_celltree <- function(prediction) {
-  requireNamespace("cellTree")
-  requireNamespace("igraph")
-  igraph::plot.igraph(prediction$mst_tree)
+  # Based on cellTree::ct.plot.topics(prediction$mst_tree)
+  vertices <- prediction$vertices
+  edges <- prediction$edges
+
+  # calculate pie sizes
+  pie_df <- map_df(seq_len(nrow(vertices)), function(i) {
+    pieval <- vertices$pie[[i]]
+    data.frame(
+      vertices[i,] %>% select(-pie),
+      topic = paste0("Topic ", seq_along(pieval)),
+      stringsAsFactors = FALSE
+    ) %>% mutate(
+      topic = factor(topic, levels = topic),
+      value = pieval,
+      arc = value * 2 * pi / sum(value),
+      end = cumsum(arc),
+      start = end - arc
+    )
+  })
+
+  # obtain edge positioning
+  edges_df <- data.frame(
+    edges,
+    from = vertices[edges$from,c("x","y")],
+    to = vertices[edges$to,c("x","y")]
+  )
+
+  # get color scheme
+  num_topics <- length(vertices$pie[[1]])
+  ann_cols <- setNames(grDevices::rainbow(num_topics), paste0("Topic ", seq_len(num_topics)))
+
+  # make pie graph plot
+  g <- ggplot() +
+    geom_segment(aes(x = from.x, xend = to.x, y = from.y, yend = to.y), edges_df) +
+    ggforce::geom_arc_bar(aes(x0 = x, y0 = y, r0 = 0, r = size*2,
+                              start = start, end = end, fill = topic, group = cell.name), data = pie_df, colour = NA) +
+    scale_fill_manual(values = ann_cols) +
+    scale_size_identity() +
+    labs(fill = "Topic") +
+    theme(legend.position = c(0.9, 0.125)) +
+    guides(fill = guide_legend(ncol = ceiling(num_topics / 8)))
+  process_dyneval_plot(g, prediction$id)
 }

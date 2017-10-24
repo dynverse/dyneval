@@ -83,15 +83,20 @@ run_embeddr <- function(counts,
   wrap_linear_ti_prediction(
     id = "embeddr",
     cell_ids = rownames(counts),
-    pseudotimes = pseudotime,
+    pseudotimes = pseudotimes,
     dimred_samples = dimred_samples,
     dimred_traj = dimred_traj
   )
 }
 
-plot_embeddr <- function(predictions) {
-  ggplot() +
-    geom_point(aes(component_1, component_2), predictions$dimred_samples, alpha = .65, size = 3.5) +
-    geom_path(aes(trajectory_1, trajectory_2), predictions$dimred_traj, size = 1.5, alpha = 0.8, linetype = 2) +
-    cowplot::theme_cowplot()
+plot_embeddr <- function(prediction) {
+  sample_df <- prediction$dimred_samples %>% mutate(time = prediction$pseudotimes)
+  traj_df <- prediction$dimred_traj
+  g <- ggplot() +
+    geom_point(aes(component_1, component_2, fill = time), sample_df, pch = 21, alpha = .65, size = 3.5) +
+    geom_path(aes(trajectory_1, trajectory_2), traj_df, size = 1.5, alpha = 0.8, linetype = 2) +
+    scale_fill_distiller(palette = "YlOrRd") +
+    scale_colour_distiller(palette = "YlOrRd") +
+    theme(legend.position = "none")
+  process_dyneval_plot(g, prediction$id)
 }
