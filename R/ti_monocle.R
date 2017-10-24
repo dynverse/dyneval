@@ -97,7 +97,12 @@ run_monocle <- function(counts,
   cds <- monocle::orderCells(cds, num_paths = num_paths)
 
   # extract the igraph and which cells are on the trajectory
-  gr <- cds@auxOrderingData[[reduction_method]]$cell_ordering_tree
+  gr <-
+    if (reduction_method == "DDRTree") {
+      cds@auxOrderingData[[reduction_method]]$pr_graph_cell_proj_tree
+    } else if (reduction_method == "ICA") {
+      cds@auxOrderingData[[reduction_method]]$cell_ordering_tree
+    }
   to_keep <- setNames(rep(TRUE, nrow(counts)), rownames(counts))
 
   # convert to milestone representation
