@@ -31,7 +31,7 @@ for (i in seq_len(nrow(methods))) {
     design <- ParamHelpers::generateDesignOfDefaults(par_set)
 
     parset_params <- names(par_set$pars)
-    runfun_params <- setdiff(formalArgs(method$run_fun), c("counts", "start_cell_id", "stop_cell_ids", "cell_grouping", "task"))
+    runfun_params <- setdiff(formalArgs(method$run_fun), c("counts", "start_cells", "start_cell", "end_cells", "grouping_assignment", "task"))
 
     expect_equal( parset_params[parset_params %in% runfun_params], parset_params )
   })

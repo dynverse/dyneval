@@ -26,8 +26,8 @@ description_slingshot <- function() create_description(
 #' @importFrom stats prcomp kmeans
 run_slingshot <- function(
   counts,
-  start_cell_id = NULL,
-  end_cell_ids = NULL,
+  start_cell = NULL,
+  end_cells = NULL,
   ndim = 3,
   nclus = 5,
   dimred_name = "pca",
@@ -62,13 +62,13 @@ run_slingshot <- function(
   labels <- stats::kmeans(space, centers = nclus)$cluster
 
   # process prior data
-  if(!is.null(start_cell_id)) {
-    start.clus <- labels[[start_cell_id]]
+  if(!is.null(start_cell)) {
+    start.clus <- labels[[start_cell]]
   } else {
     start.clus <- NULL
   }
-  if(!is.null(end_cell_ids)) {
-    end.clus <- unique(labels[end_cell_ids])
+  if(!is.null(end_cells)) {
+    end.clus <- unique(labels[end_cells])
   } else {
     end.clus <- NULL
   }

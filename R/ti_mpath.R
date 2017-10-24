@@ -21,7 +21,7 @@ description_mpath <- function() create_description(
 #' @importFrom stats na.omit
 #' @importFrom reshape2 melt
 run_mpath <- function(counts,
-                      cell_grouping,
+                      grouping_assignment,
                       distMethod = "euclidean",
                       method = "kmeans",
                       numcluster = 11,
@@ -29,7 +29,7 @@ run_mpath <- function(counts,
                       size_cut = .05) {
   requireNamespace("igraph")
 
-  sample_info <- cell_grouping %>% rename(GroupID = group_id) %>% as.data.frame
+  sample_info <- grouping_assignment %>% rename(GroupID = group_id) %>% as.data.frame
 
   landmark_cluster <- Mpath::landmark_designation(
     rpkmFile = t(counts),
@@ -109,7 +109,7 @@ run_mpath <- function(counts,
     milestone_network = milestone_network,
     progressions = progressions,
     landmark_cluster = landmark_cluster,
-    cell_grouping = cell_grouping
+    grouping_assignment = grouping_assignment
   )
 }
 
@@ -135,7 +135,7 @@ plot_mpath <- function(prediction) {
 
   # collect info on cells
   cell_ids <- prediction$cell_ids
-  labels <- prediction$cell_grouping %>%
+  labels <- prediction$grouping_assignment %>%
     slice(match(cell_ids, cell_id)) %>%
     .$group_id
   clustering <- prediction$progressions %>%

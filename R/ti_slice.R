@@ -24,7 +24,7 @@ description_slice <- function() create_description(
 
 run_slice <- function(
   counts,
-  cell_grouping = NULL,
+  grouping_assignment = NULL,
   lm.method = "clustering",
   model.type = "tree",
   ss.method = "all",
@@ -42,9 +42,9 @@ run_slice <- function(
   # if k is 0, set to NULL
   if (k == 0) k = NULL
 
-  # if cell_grouping is not given, fill it with 1's
-  if(!is.null(cell_grouping)) {
-    cellidentity <- cell_grouping %>%
+  # if grouping_assignment is not given, fill it with 1's
+  if(!is.null(grouping_assignment)) {
+    cellidentity <- grouping_assignment %>%
       slice(match(rownames(counts), cell_id)) %>%
       pull(group_id) %>%
       factor()

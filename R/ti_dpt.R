@@ -22,7 +22,7 @@ description_dpt <- function() create_description(
 
 #' @importFrom reshape2 melt
 run_dpt <- function(counts,
-                    start_cell_id = NULL,
+                    start_cell = NULL,
                     sigma = "local",
                     distance = "euclidean",
                     n_eigs = 20,
@@ -50,8 +50,8 @@ run_dpt <- function(counts,
 
   # run DPT
   dpt_params <- lst(dm, w_width)
-  if (!is.null(start_cell_id)) {
-    dpt_params$tips <- which(rownames(counts) %in% start_cell_id)
+  if (!is.null(start_cell)) {
+    dpt_params$tips <- which(rownames(counts) %in% start_cell)
   }
   dpt <- do.call(destiny::DPT, dpt_params)
 

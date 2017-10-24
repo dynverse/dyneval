@@ -19,7 +19,7 @@ description_topslam <- function() create_description(
 
 #' @importFrom dplyr bind_cols
 run_topslam <- function(counts,
-                        start_cell_id,
+                        start_cell,
                         n_components = 2,
                         n_neighbors = 10,
                         linear_dims = 0,
@@ -31,7 +31,7 @@ run_topslam <- function(counts,
   # run topslam
   out <- topslam::topslam(
     counts = counts,
-    start_cell_id = start_cell_id,
+    start_cell = start_cell,
     n_components = n_components,
     n_neighbors = n_neighbors,
     linear_dims = linear_dims,

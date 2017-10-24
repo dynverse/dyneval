@@ -55,8 +55,8 @@ abstract_celltree_description <- function(method) {
 
 #' @importFrom igraph degree distances get.vertex.attribute induced_subgraph
 run_celltree <- function(counts,
-                         start_cell_id = NULL,
-                         cell_grouping = NULL,
+                         start_cell = NULL,
+                         grouping_assignment = NULL,
                          method = "maptpx",
                          num_topics_lower = 2,
                          num_topics_upper = 15,
@@ -81,7 +81,7 @@ run_celltree <- function(counts,
     tol = tolerance)
 
   # put the parameters for the backbones in a list,
-  # for adding optional cell_grouping and (if grouping is given) start group
+  # for adding optional grouping_assignment and (if grouping is given) start group
   backbone_params <- list(
     lda.results = lda_out,
     width.scale.factor = width_scale_factor,
@@ -90,10 +90,10 @@ run_celltree <- function(counts,
   )
 
   # if these parameters are available, add them to the list
-  if(!is.null(cell_grouping)) {
-    backbone_params$grouping <- cell_grouping %>% slice(match(cell_id, rownames(counts))) %>% pull(group_id)
-    if(!is.null(start_cell_id)) {
-      backbone_params$start.group.label <- cell_grouping %>% filter(cell_id == start_cell_id) %>% pull(group_id)
+  if(!is.null(grouping_assignment)) {
+    backbone_params$grouping <- grouping_assignment %>% slice(match(cell_id, rownames(counts))) %>% pull(group_id)
+    if(!is.null(start_cell)) {
+      backbone_params$start.group.label <- grouping_assignment %>% filter(cell_id == start_cell) %>% pull(group_id)
     }
   }
 
