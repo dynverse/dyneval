@@ -136,8 +136,8 @@ plot_monocle <- function(prediction) {
   plot_data <- prediction$plot_data
 
   g <- ggplot() +
-    geom_segment(aes_string(x="source_prin_graph_dim_1", y="source_prin_graph_dim_2", xend="target_prin_graph_dim_1", yend="target_prin_graph_dim_2"), size=0.75, linetype="solid", na.rm=TRUE, plot_data$edge_df) +
     geom_point(aes_string(x="data_dim_1", y="data_dim_2", color = "State"), plot_data$data_df, size=1.5, na.rm = TRUE) +
+    geom_segment(aes_string(x="source_prin_graph_dim_1", y="source_prin_graph_dim_2", xend="target_prin_graph_dim_1", yend="target_prin_graph_dim_2"), size=0.75, linetype="solid", na.rm=TRUE, plot_data$edge_df) +
     theme(legend.position = c(.9, .15))
 
   if (prediction$reduction_method == "DDRTree") {
