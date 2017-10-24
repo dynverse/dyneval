@@ -9,7 +9,7 @@ test_that("Retrieving dimred_methods", {
 
 data("toy_tasks", package="dyntoy")
 
-for (taski in seq_len(nrow(toy_tasks))) {
+for (taski in sample(seq_len(nrow(toy_tasks)), 3)) {
   task <- extract_row_to_list(toy_tasks, taski)
   expr <- log2(task$counts+1)
 
