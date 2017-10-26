@@ -7,16 +7,16 @@ library(magrittr)
 library(tibble)
 library(ggplot2)
 
-# expect to fail
-out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = description_celltree_maptpx(), parameters = list(), timeout = 4, metrics = "auc_R_nx")
-attr(out, "extras")$.summary
+# # expect to fail
+# out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = description_celltree_maptpx(), parameters = list(), timeout = 4, metrics = "auc_R_nx")
+# attr(out, "extras")$.summary
 
 # expect to run!
-method <- description_shuffle()
-out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = method, parameters = list(), timeout = 240, metrics = "auc_R_nx", output_model = T)
-attr(out, "extras")$.summary
-prediction <- attr(out, "extras")$.model[[1]]
-method$plot_fun(prediction)
+# method <- description_celltree_gibbs()
+# out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = method, parameters = list(), timeout = 240, metrics = "auc_R_nx", output_model = T)
+# attr(out, "extras")$.summary
+# prediction <- attr(out, "extras")$.model[[1]]
+# method$plot_fun(prediction)
 
 dataset <- dynutils::extract_row_to_list(dyntoy::toy_tasks, 5)
 counts <- dataset$counts
@@ -26,15 +26,21 @@ counts <- dataset$counts
 
 
 # celltree gibbs
-method <- "Gibbs"
-num_topics <- 4
-sd_filter <- .5
-tot_iter <- 200
-tolerance <- 10^-5
-width_scale_factor <- 1.2
+
+# celltree maptpx
+start_cells = NULL
+grouping_assignment = NULL
+method = "maptpx"
+num_topics_lower = 2
+num_topics_upper = 15
+num_topics = num_topics_lower:num_topics_upper
+sd_filter = .5
+tot_iter = 1e6
+tolerance = .05
+width_scale_factor = 1.5
 
 # dpt
-start_cell = NULL
+start_cells = NULL
 sigma = "local"
 distance = "euclidean"
 n_eigs = 20
