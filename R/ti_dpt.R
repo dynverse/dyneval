@@ -64,44 +64,46 @@ run_dpt <- function(counts,
 
   # find DPT tips
   tips <- destiny::tips(dpt)
-  milestone_ids <- paste0("DPT", tips)
+  tip_names <- rownames(counts)[tips]
 
-  # transform to percentages
-  milestone_percentages <- map_df(milestone_ids, function(mid) {
-    data_frame(cell_id = rownames(expr), milestone_id = mid, percentage = 1 - dynutils::scale_minmax(dpt[[mid]]))
-  }) %>%
-    group_by(cell_id) %>%
-    mutate(percentage = percentage / sum(percentage)) %>%
-    ungroup()
+  # retrieve dimred
+  space <- dpt@dm@eigenvectors %>% magrittr::set_rownames(rownames(expr)) %>% as.matrix
 
-  # generate milestone network
-  milestone_network <- crossing(from = milestone_ids, to = milestone_ids) %>%
-    filter(from < to) %>%
-    rowwise() %>%
-    mutate(
-      length = dpt[[from]][[setNames(tips, milestone_ids)[[to]]]],
-      directed = FALSE
-    ) %>%
-    ungroup()
+  # get cluster assignment
+  branch_assignment <- dpt@branch[,1] %>% ifelse(is.na(.), 0, .) %>% paste0("Branch", .)
+  branches <- sort(unique(branch_assignment))
 
-  # extract dimred for visualisation
-  space <- dpt@dm@eigenvectors[,1:3] %>%
-    as.data.frame %>%
-    mutate(
-      is_tip = dpt@tips[,1],
-      branch = dpt@branch[,1],
-      col_lab = ifelse(is_tip, "Tip", ifelse(is.na(branch), "Unassigned", paste0("Branch ", branch)))
-    )
+  # calculate cluster medians
+  space_milestones <- t(sapply(branches, function(br) colMeans(space[branch_assignment == br,,drop=F])))
+
+  # create star network
+  cluster_network <- data_frame(
+    from = "Branch0",
+    to = setdiff(branches, "Branch0"),
+    length = sqrt(rowMeans((space_milestones[from,] - space_milestones[to,])^2)),
+    directed = TRUE
+  )
+
+  # transform by projecting onto cluster medians
+  out <- project_cells_to_segments(
+    cluster_network = cluster_network,
+    cluster_space = space_milestones,
+    sample_space = space,
+    sample_cluster = branch_assignment
+  )
 
   # return output
   wrap_ti_prediction(
-    ti_type = "triangle",
+    ti_type = "trifurcation",
     id = "DPT",
     cell_ids = rownames(expr),
-    milestone_ids = milestone_ids,
-    milestone_network = milestone_network,
-    milestone_percentages = milestone_percentages,
-    space = space
+    milestone_ids = out$milestone_ids,
+    milestone_network = out$milestone_network,
+    progressions = out$progressions,
+    space = out$space_df,
+    centers = out$centers_df,
+    edge = out$edge_df,
+    tips = tip_names
   )
 }
 
@@ -110,13 +112,12 @@ plot_dpt <- function(prediction) {
 
   palette <- c("#8DD3C7", "#FFED6F", "#BEBADA", "#FB8072", "#80B1D3", "#FDB462", "#B3DE69", "#BC80BD", "#FCCDE5", "gray85", "#CCEBC5", "#FFFFB3")
   ann_cols <- c(
-    setNames(palette, paste0("Branch ", seq_along(palette))),
-    Unassigned = "lightgray",
+    setNames(c("lightgray", palette), paste0("Branch ", seq(0, length(palette)))),
     Tip = "red"
   )
 
   g <- ggplot(prediction$space) +
-    geom_point(aes(DC1, DC2, colour = col_lab), size = 2) +
+    geom_point(aes(DC1, DC2, colour = label), size = 2) +
     scale_colour_manual(values = ann_cols) +
     labs(colour = "Branch") +
     theme(legend.position = c(0.9, 0.1))
