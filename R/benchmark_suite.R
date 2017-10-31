@@ -275,7 +275,7 @@ benchmark_suite_retrieve <- function(out_dir) {
         }) %>% list_as_tibble()
       } else {
         error_message <-
-          if (nrow(qstat_out) > 0) {
+          if (is.null(qstat_out) || nrow(qstat_out) > 0) {
             "job is still running"
           } else {
             "qsub_retrieve of results failed -- no output was produced, but job is not running any more"
@@ -323,10 +323,27 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
   train_out <- out_rds$tune_train
   test_out <- out_rds$tune_test
 
+  best_ind <- train_out$best.ind
+  x_names <- names(train_out$x)
+  y_names <- train_out$opt.path$y.names
+  best <- list(
+    param_index = best_ind,
+    params = train_out$x,
+    y_names = y_names,
+    train_score = train_out$y,
+    test_score = test_out$opt.path$env$path[best_ind,y_names]
+  ) %>%
+    list() %>%
+    list_as_tibble() %>%
+    mutate(
+      grid_i, repeat_i, fold_i, group_sel
+    )
+
   ## construct the global summary, 2 rows per parameter
-  eval_summ_gath <- bind_rows(
+  path_summary <- bind_rows(
     bind_cols(
       data_frame(type = "train", grid_i, repeat_i, fold_i, group_sel,
+                 iteration_i = train_out$opt.path$env$dob,
                  time_total = train_out$opt.path$env$exec.time,
                  param_i = seq_along(time_total)),
       train_out$opt.path$env$path
@@ -336,20 +353,14 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
                  time_total = test_out$opt.path$env$exec.time,
                  param_i = seq_along(time_total)),
       test_out$opt.path$env$path
-    ) %>% filter(param_i <= nrow(train_out$opt.path$env$path))
+    ) %>% filter(param_i <= nrow(train_out$opt.path$env$path)) %>%
+      mutate(iteration_i = train_out$opt.path$env$dob)
   )
-
-  ## get the global summary, 1 row per parameter
-  eval_summ <- eval_summ_gath %>%
-    gather(eval_metric, score, one_of(data$metrics), starts_with("time")) %>%
-    mutate(comb = paste0(type, "_", eval_metric)) %>%
-    select(-type, -eval_metric) %>%
-    spread(comb, score) %>%
-    mutate(iteration_i = train_out$opt.path$env$dob[param_i]) %>%
-    arrange(param_i)
+  path_summary$params <- map(seq_len(nrow(path_summary)), ~extract_row_to_list(path_summary[,x_names], .))
+  path_summary <- path_summary %>% select(-one_of(x_names))
 
   ## collect the scores per task individually
-  eval_ind <- map_df(seq_len(nrow(eval_summ)), function(param_i) {
+  individual_scores <- map_df(seq_along(train_out$opt.path$env$dob), function(param_i) {
     train_summary <- train_out$opt.path$env$extra[[param_i]]$.summary
     if (!is.null(train_summary)) {
       train_summary <- train_summary %>% mutate(fold_type = "train")
@@ -362,23 +373,9 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
 
     bind_rows(train_summary, test_summary) %>%
       mutate(grid_i, repeat_i, fold_i, group_sel, param_i,
-             iteration_i = eval_summ$iteration_i[param_i])
+             iteration_i = train_out$opt.path$env$dob[param_i])
   })
 
-  ## group them together per task_group
-  eval_grp <- tasks %>%
-    mutate(task_fold, task_group) %>%
-    select(task_id = id, ti_type, task_fold, task_group) %>%
-    right_join(eval_ind, by = "task_id") %>%
-    group_by(
-      ti_type, task_group, grid_i, repeat_i, fold_i,
-      group_sel, iteration_i, param_i, fold_type,
-      method_name, method_short_name
-    ) %>%
-    mutate(has_errored = sapply(error, is.null)) %>%
-    select(-task_id, -task_fold, -error) %>%
-    summarise_all(mean) %>%
-    ungroup()
-
-  lst(eval_summ, eval_summ_gath, eval_ind, eval_grp)
+  lst(best, path_summary, individual_scores)
 }
+
