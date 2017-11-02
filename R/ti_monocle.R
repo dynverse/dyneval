@@ -46,7 +46,7 @@ abstract_monocle_description <- function(reduction_method) {
     "SGL-tree" = "mnclSGLT"
   )
   create_description(
-    name = glue::glue("monocle with {reduction_method}"),
+    name = pritt("monocle with {reduction_method}"),
     short_name = short_name[reduction_method],
     package_loaded = c("monocle"),
     package_required = c("BiocGenerics", "igraph", "Biobase"),

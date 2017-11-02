@@ -42,8 +42,8 @@ abstract_celltree_description <- function(method) {
   )
 
   create_description(
-    name = glue::glue("cellTree with {method}"),
-    short_name = glue::glue("CT{method}"),
+    name = pritt("cellTree with {method}"),
+    short_name = pritt("CT{method}"),
     package_loaded = c(),
     package_required = c("cellTree"),
     par_set = par_set,

@@ -82,13 +82,8 @@ execute_evaluation <- function(tasks, method, parameters, metrics, timeout, debu
   })
 
   # Combine the different outputs in three lists/data frames
-  # Note: suppresswarnings is used here to suppress the following:
-  #   Vectorizing 'glue' elements may not preserve their attributes
-  # TODO: Will get removed in the next major release of dplyr
-  suppressWarnings({
-    models <- eval_outputs %>% map(~ .$model)
-    summary <- eval_outputs %>% map_df(~ .$summary)
-  })
+  models <- eval_outputs %>% map(~ .$model)
+  summary <- eval_outputs %>% map_df(~ .$summary)
 
   # Calculate the final score
   score <- summary %>%
@@ -280,7 +275,6 @@ compute_coranking <- function(gold_dist, pred_dist) {
 #' @param net2 the second network to compare
 #'
 #' @importFrom readr read_file
-#' @importFrom glue glue
 #' @importFrom utils write.table
 #' @importFrom GEDEVO run_GEDEVO
 calculate_ged <- function(net1, net2) {
@@ -292,7 +286,7 @@ calculate_ged <- function(net1, net2) {
   write.table(net1, file.path(tempfolder, "net1.sif"), row.names = FALSE, col.names = FALSE)
   write.table(net2, file.path(tempfolder, "net2.sif"), row.names = FALSE, col.names = FALSE)
 
-  cmd <- glue::glue("gedevo --groups a b --sif {tempfolder}/net1.sif a --sif {tempfolder}/net2.sif b --no-prematch --no-workfiles --save {tempfolder}/out --maxiter 100 --maxsecs 1 --maxsame 100")
+  cmd <- pritt("gedevo --groups a b --sif {tempfolder}/net1.sif a --sif {tempfolder}/net2.sif b --no-prematch --no-workfiles --save {tempfolder}/out --maxiter 100 --maxsecs 1 --maxsame 100")
   GEDEVO::run_GEDEVO(cmd)
 
   score <- read_file(paste0(tempfolder, "/out.matching")) %>% gsub("^.*GED score:[ ]*([0-9\\.]*).*", "\\1", .) %>% as.numeric()
