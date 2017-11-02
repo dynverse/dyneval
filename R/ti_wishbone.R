@@ -34,12 +34,12 @@ run_wishbone <- function(
 ) {
   requireNamespace("Wishbone")
 
-  start_cell <- sample(start_cells, 1)
+  start_cell_id <- sample(start_cells, 1)
 
   # execute wishbone
   out <- Wishbone::Wishbone(
     counts = counts,
-    start_cell = start_cell,
+    start_cell_id = start_cell_id,
     knn = knn,
     n_diffusion_components = n_diffusion_components,
     n_pca_components = n_pca_components,
