@@ -144,25 +144,21 @@ execute_evaluation <- function(tasks, method, parameters, metrics, timeout, debu
 calculate_metrics <- function(task, model, metrics) {
   summary_list <- list()
 
-  # Compute coranking metrics
-  if (any(c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global") %in% metrics)) {
+  if (any(c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "mantel_pval") %in% metrics)) {
+    # compute coranking
     time0 <- Sys.time()
     coranking <- compute_coranking(task$geodesic_dist, model$geodesic_dist)
     summary_list <- c(summary_list, coranking$summary)
     time1 <- Sys.time()
     summary_list$time_coranking <- as.numeric(difftime(time1, time0, units = "sec"))
-  }
 
-  # Compute the correlation of the geodesic distances
-  if ("correlation" %in% metrics) {
+    # compute corrrelation
     time0 <- Sys.time()
     summary_list$correlation <- cor(task$geodesic_dist %>% as.vector, model$geodesic_dist %>% as.vector, method="spearman")
     time1 <- Sys.time()
     summary_list$time_correlation <- as.numeric(difftime(time1, time0, units = "sec"))
-  }
 
-  # Compute the mantel test
-  if ("mantel_pval" %in% metrics) {
+    # compute mantel pval
     time0 <- Sys.time()
     mantel <- vegan::mantel(task$geodesic_dist, model$geodesic_dist, permutations = 100)
     summary_list$mantel_pval <- -log10(mantel$signif)
