@@ -208,7 +208,6 @@ benchmark_suite_submit <- function(
         # run locally
         out <- pbapply::pblapply(
           X = qsub_x,
-          cl = num_cores,
           FUN = qsub_fun
         )
         out
