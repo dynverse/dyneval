@@ -22,7 +22,6 @@ Imports:
   GEDEVO,
   ggforce,
   ggplot2,
-  glue,
   grDevices,
   grid,
   igraph,
