@@ -6,7 +6,7 @@ Authors@R: c(
   person("Robrecht", "Cannoodt", email = "robrecht.cannoodt@gmail.com", role = c("aut", "cre")),
   person("Wouter", "Saelens", email = "wouter.saelens@ugent.be", role = c("aut")),
   person("Helena", "Todorov", email = "helena.todorov@ugent.be", role = c("aut")))
-Description: dyneval provides an evaluation pipeline including metrics, wrappers for TI methods and plotting functions.
+Description: dyneval provides an evaluation pipeline and the required metrics.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
@@ -17,6 +17,7 @@ Imports:
   coRanking,
   cowplot,
   dplyr, 
+  dynmethods,
   dynutils,
   GA,
   GEDEVO,
@@ -113,6 +114,7 @@ Remotes:
   kieranrcampbell/phenopath,
   kstreet13/slingshot,
   mlr-org/mlr,
+  rcannood/dynmethods,
   rcannood/dynutils,
   rcannood/PRISM,
   rcannood/SCORPIUS,

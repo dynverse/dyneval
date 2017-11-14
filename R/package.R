@@ -1,4 +1,4 @@
-#' Evaluating TI methods
+#' Evaluating trajectory inference methods
 #'
 #' @import dplyr
 #' @import tidyr
