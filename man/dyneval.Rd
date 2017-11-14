@@ -4,7 +4,7 @@
 \name{dyneval}
 \alias{dyneval}
 \alias{dyneval-package}
-\title{Evaluating TI methods}
+\title{Evaluating trajectory inference methods}
 \description{
-Evaluating TI methods
+Evaluating trajectory inference methods
 }
