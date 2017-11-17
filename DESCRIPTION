@@ -40,6 +40,7 @@ Imports:
   tidyr,
   vegan
 Suggests:
+  dyntoy,
   roxygen2
 Remotes:
   alan-turing-institute/network-comparison,
@@ -47,5 +48,6 @@ Remotes:
   mlr-org/mlr,
   rcannood/dynmethods,
   rcannood/dynutils,
-  rcannood/PRISM
+  rcannood/PRISM,
+  Zouter/dyntoy
 
