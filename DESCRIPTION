@@ -43,7 +43,7 @@ Suggests:
   roxygen2
 Remotes:
   alan-turing-institute/network-comparison,
-  berndbischl/ParamHelpers@dd54fe2719492dc0a03c6fe277d6ccaf255f6200,
+  berndbischl/ParamHelpers,
   mlr-org/mlr,
   rcannood/dynmethods,
   rcannood/dynutils,
