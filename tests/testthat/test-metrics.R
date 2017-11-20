@@ -1,6 +1,6 @@
 context("Score metrics")
 
-test_that(paste0("Check hele network score"), {
+test_that(paste0("Check lies network score"), {
   net1 <- tibble(from=c(1), to=c(1), directed=TRUE, length=1)
   net2 <- tibble(from=c(1), to=c(1), directed=TRUE, length=1)
 
