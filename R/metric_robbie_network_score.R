@@ -23,7 +23,6 @@ get_adjacency <- function(net, nodes=unique(c(net$from, net$to))) {
       reshape2::acast(from~to, value.var="length", fill=0, drop=FALSE, fun.aggregate=sum)
   }
   newnet + t(newnet)
-
 }
 
 #' Compute the robbie network score (any resemblances to real-life persons is purely coincidental)
@@ -41,7 +40,16 @@ calculate_robbie_network_score <- function(
   nodes2=unique(c(net2$from, net2$to)),
   normalize_weights=TRUE
 ) {
-  optimize_robbie_network_score(net1, net2, nodes1, nodes2, normalize_weights)@fitnessValue
+  if(length(nodes1) < length(nodes2)) {
+    nodes3 <- nodes2
+    net3 <- net2
+    nodes2 <- nodes1
+    net2 <- net1
+    nodes1 <- nodes3
+    net1 <- net3
+  }
+
+  optimize_robbie_network_score(net1, net2, nodes1, nodes2, normalize_weights)$best_score
 }
 
 optimize_robbie_network_score <- function(
@@ -65,7 +73,21 @@ optimize_robbie_network_score <- function(
     net_ref <- net_ref/sum(net_ref)
   }
 
-  results <- GA::ga("permutation", score_map, net=net, net_ref=net_ref, min=rep(1, length(nodes1)), max=rep(length(nodes1), length(nodes1)), maxiter=100, monitor=FALSE, popSize=500, maxFitness = 1)
 
-  results
+  if (nrow(net1) < 10) {
+    permutations <- function( x, prefix = c() )
+    {
+      if(length(x) == 0 ) return(prefix)
+      do.call(rbind, sapply(1:length(x), FUN = function(idx) permutations( x[-idx], c( prefix, x[idx])), simplify = FALSE))
+    }
+
+    permutations <- permutations(seq_along(nodes1))
+    scores <- permutations %>% apply(1, score_map, net=net, net_ref=net_ref)
+
+    list(best_permutation = permutations[which.max(scores)], best_score = max(scores))
+  } else {
+    results <- GA::ga("permutation", score_map, net=net, net_ref=net_ref, min=rep(1, length(nodes1)), max=rep(length(nodes1), length(nodes1)), maxiter=100, monitor=FALSE, popSize=500, maxFitness = 1)
+
+    list(best_permutation = results@solution, best_score = results@fitnessValue)
+  }
 }

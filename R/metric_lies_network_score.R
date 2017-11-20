@@ -1,4 +1,3 @@
-
 #' Compute the lies network score (any resemblances to real-life persons is purely coincidental)
 #'
 #' @param net1 the first network to compare
@@ -56,7 +55,7 @@ calculate_lies_network_score <- function(
       (1:nrow(map_grid)) %in% ((0:(length(nodes1)-1)) * length(nodes1) + perm)
     }
     results <- optimize_robbie_network_score(net1, net2)
-    perm <- results@solution
+    perm <- results$best_permutation
     initial <- apply(perm, 1, permutation2map) %>% t
 
     results <- GA::ga("binary", score_map_lies, map_grid, net1, net2, nodes1, nodes2, nBits = map_size, maxiter=50, monitor=FALSE, popSize=50, run=5, suggestions=initial, maxFitness=1)
@@ -85,3 +84,17 @@ score_map_lies <- function(map, map_grid, net1, net2, nodes1, nodes2) {
   map_cost * adj_diff * edge_diff
 }
 
+
+#' @importFrom reshape2 acast
+get_adjacency <- function(net, nodes=unique(c(net$from, net$to))) {
+  if(nrow(net) == 0) { # special case for circular
+    newnet <- matrix(rep(0, length(nodes)))
+    dimnames(newnet) <- list(nodes, nodes)
+  } else {
+    newnet <- net %>%
+      mutate(from=factor(from, levels=nodes), to=factor(to, levels=nodes)) %>%
+      reshape2::acast(from~to, value.var="length", fill=0, drop=FALSE, fun.aggregate=sum)
+  }
+  newnet + t(newnet)
+
+}
