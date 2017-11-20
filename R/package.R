@@ -1,11 +1,10 @@
-#' Evaluating TI methods
+#' Evaluating trajectory inference methods
 #'
 #' @import dplyr
 #' @import tidyr
 #' @import methods
 #' @import ParamHelpers
 #' @import tibble
-#' @import ggplot2
 #' @import dynutils
 #' @importFrom stats cor dist kmeans median prcomp quantile runif setNames step time
 #' @importFrom utils installed.packages head tail
