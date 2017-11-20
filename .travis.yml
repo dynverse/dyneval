@@ -16,4 +16,3 @@ addons:
 install:
  - R -e 'install.packages("devtools")'
  - R -e 'devtools::install(dependencies = TRUE, upgrade_dependencies = TRUE)'
- - R -e 'dyneval::check_dependencies()'

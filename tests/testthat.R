@@ -1,9 +1,11 @@
 library(testthat)
 library(dyneval)
+library(dynmethods)
+library(dyntoy)
 library(dynutils)
 library(dplyr)
-library(ggplot2)
 library(purrr)
+library(mlrMBO)
 
 Sys.setenv("R_TESTS" = "")
 

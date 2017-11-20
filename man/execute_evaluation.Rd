@@ -14,14 +14,23 @@ execute_evaluation(tasks, method, parameters, metrics, timeout,
 
 \item{parameters}{The parameters to evaluate with.}
 
-\item{metrics}{which metrics to use;
-see \code{\link{calculate_metrics}} for a list of which metrics are available.}
+\item{metrics}{which metrics to evaluate:
+\enumerate{
+  \item Coranking of geodesic distances: \code{"mean_R_nx"}, \code{"auc_R_nx"}, \code{"Q_local"}, \code{"Q_global"}
+  \item Spearman correlation of geodesic distances: \code{"correlation"}
+  \item Isomorphism of the two networks: \code{"isomorphic"}
+  \item GEDEVO Graph Edit Distance: \code{"ged"}
+  \item Earth Mover's Distance on orbit counts: \code{"net_emd"}
+  \item Genetic Algorithm for aligning small graphs: \code{"robbie_network_score"}
+  \item Mantel test p-value: \code{"mantel_pval"}
+}}
 
 \item{timeout}{Kill execution after a given amount of time.}
 
 \item{debug_timeout}{Setting debug to \code{TRUE} will avoid running the method in a separate R session
 using \code{\link[dynutils]{eval_with_timeout}} and run the method directly. Note that the timeout functionality
-will not work when \code{debug} is \code{TRUE}.}
+will not work when \code{debug} is \code{TRUE}.#' @param metrics which metrics to use;
+see \code{\link{calculate_metrics}} for a list of which metrics are available.}
 
 \item{output_model}{Whether or not the model will be outputted.
 If this is a character string, it will save the model in the requested folder.}
