@@ -45,6 +45,7 @@ Suggests:
 Remotes:
   alan-turing-institute/network-comparison,
   berndbischl/ParamHelpers,
+  dynverse/GEDEVO,
   mlr-org/mlr,
   rcannood/dynmethods,
   rcannood/dynutils,
