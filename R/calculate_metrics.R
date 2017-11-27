@@ -74,11 +74,18 @@ calculate_metrics <- function(task, model, metrics) {
     summary_list$time_net_emd <- 1-as.numeric(difftime(time1, time0, units = "sec"))
   }
 
-  if ("robbie_network_score" %in% metrics) {
+  if ("node_edit_score" %in% metrics) {
     time0 <- Sys.time()
-    summary_list$robbie_network_score <- calculate_robbie_network_score(net1, net2)
+    summary_list$node_edit_score <- calculate_node_edit_score(net1, net2)
     time1 <- Sys.time()
-    summary_list$time_robbie_network_score <- 1-as.numeric(difftime(time1, time0, units = "sec"))
+    summary_list$time_node_edit_score <- 1-as.numeric(difftime(time1, time0, units = "sec"))
+  }
+
+  if ("node_edge_edit_score" %in% metrics) {
+    time0 <- Sys.time()
+    summary_list$node_edge_edit_score <- calculate_node_edge_edit_score(net1, net2)
+    time1 <- Sys.time()
+    summary_list$time_node_edge_edit_score <- 1-as.numeric(difftime(time1, time0, units = "sec"))
   }
 
   summary <- as_tibble(summary_list)
