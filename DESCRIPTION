@@ -25,7 +25,6 @@ Imports:
   methods,
   mlr,
   mlrMBO,
-  netdist,
   parallelMap,
   ParamHelpers,
   pbapply,
