@@ -18,6 +18,7 @@ Imports:
   dplyr, 
   dynmethods,
   dynutils,
+  emoa,
   GA,
   GEDEVO,
   igraph,

@@ -25,6 +25,7 @@
 #' @importFrom parallelMap parallelStartMulticore parallelStop
 #' @importFrom randomForest randomForest
 #' @importFrom pbapply pblapply
+#' @importFrom emoa emoa_control
 #'
 #' @export
 benchmark_suite_submit <- function(
