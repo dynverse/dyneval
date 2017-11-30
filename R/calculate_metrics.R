@@ -64,16 +64,6 @@ calculate_metrics <- function(task, model, metrics) {
     summary_list$time_ged <- as.numeric(difftime(time1, time0, units = "sec"))
   }
 
-  # Compute Netdist EMD (see scripts/wouter/network_scores_tests.R)
-  if ("net_emd" %in% metrics) {
-    time0 <- Sys.time()
-    gdd1 <- netdist::gdd(net1 %>% igraph::graph_from_data_frame())
-    gdd2 <- netdist::gdd(net2 %>% igraph::graph_from_data_frame())
-    summary_list$net_emd <- netdist::net_emd(gdd1, gdd2)
-    time1 <- Sys.time()
-    summary_list$time_net_emd <- 1-as.numeric(difftime(time1, time0, units = "sec"))
-  }
-
   if ("node_edit_score" %in% metrics) {
     time0 <- Sys.time()
     summary_list$node_edit_score <- calculate_node_edit_score(net1, net2)
