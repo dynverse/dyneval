@@ -42,7 +42,6 @@ Suggests:
   dyntoy,
   roxygen2
 Remotes:
-  alan-turing-institute/network-comparison,
   berndbischl/ParamHelpers,
   dynverse/GEDEVO,
   mlr-org/mlr,

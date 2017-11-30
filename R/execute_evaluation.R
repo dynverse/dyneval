@@ -14,7 +14,6 @@
 #' @param error_score The aggregated score a method gets if it produces errors.
 #'
 #' @export
-#' @importFrom netdist gdd net_emd
 #' @importFrom dynmethods execute_method
 execute_evaluation <- function(tasks, method, parameters, metrics, timeout, debug_timeout = FALSE, output_model = TRUE, error_score = 0) {
   method_outputs <- dynmethods::execute_method(tasks = tasks, method = method, parameters = parameters, timeout = timeout, debug_timeout = debug_timeout)
