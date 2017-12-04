@@ -11,6 +11,8 @@
 #' @param num_cores The number of cores to allocate per mlr run.
 #' @param memory The memory to allocate per core.
 #' @param max_wall_time The maximum amount of time each fold is allowed to run.
+#' @param execute_before Shell commands to execute before running R
+#' @param r_module Which R module to use in gridegine
 #' @param num_iterations The number of iterations to run.
 #' @param num_init_params The number of initial parameters to evaluate.
 #' @param num_repeats The number of times to repeat the mlr process, for each group and each fold.

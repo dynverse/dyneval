@@ -7,8 +7,9 @@
 benchmark_suite_submit(tasks, task_group, task_fold, out_dir, timeout = 120,
   methods = get_descriptions(as_tibble = TRUE), metrics = c("auc_R_nx",
   "robbie_network_score"), num_cores = 4, memory = "20G",
-  max_wall_time = NULL, num_iterations = 20, num_init_params = 100,
-  num_repeats = 1, save_r2g_to_outdir = FALSE, do_it_local = FALSE)
+  max_wall_time = NULL, execute_before = NULL, r_module = "R",
+  num_iterations = 20, num_init_params = 100, num_repeats = 1,
+  save_r2g_to_outdir = FALSE, do_it_local = FALSE)
 }
 \arguments{
 \item{tasks}{A tibble of tasks.}
@@ -31,6 +32,10 @@ see \code{\link{calculate_metrics}} for a list of which metrics are available.}
 \item{memory}{The memory to allocate per core.}
 
 \item{max_wall_time}{The maximum amount of time each fold is allowed to run.}
+
+\item{execute_before}{Shell commands to execute before running R}
+
+\item{r_module}{Which R module to use in gridegine}
 
 \item{num_iterations}{The number of iterations to run.}
 
