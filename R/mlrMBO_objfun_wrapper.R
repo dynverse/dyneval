@@ -28,7 +28,8 @@ make_obj_fun <- function(method, metrics, noisy = FALSE) {
         parameters = x,
         metrics = metrics,
         timeout = timeout,
-        output_model = output_model
+        output_model = output_model,
+        error_score = 0
       )
     }
   )

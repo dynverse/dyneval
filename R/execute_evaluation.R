@@ -44,7 +44,7 @@ execute_evaluation <- function(tasks, method, parameters, metrics, timeout, debu
       )
     } else {
       summary <- method_output$summary %>%
-        mutate_at(metrics, function(x) error_score)
+        mutate_at(metrics, ~ error_score)
     }
 
     # Return the output
