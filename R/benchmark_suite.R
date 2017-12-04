@@ -39,6 +39,8 @@ benchmark_suite_submit <- function(
   num_cores = 4,
   memory = "20G",
   max_wall_time = NULL,
+  execute_before = NULL,
+  r_module = "R",
   num_iterations = 20,
   num_init_params = 100,
   num_repeats = 1,
@@ -170,7 +172,8 @@ benchmark_suite_submit <- function(
           stop_on_error = FALSE,
           verbose = FALSE,
           max_wall_time = max_wall_time,
-          execute_before = "export R_MAX_NUM_DLLS=300"
+          r_module = r_module,
+          execute_before = execute_before
         )
 
         # if the cluster data needs to be saved to dyneval output folder
@@ -355,9 +358,25 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
       test_out$opt.path$env$path
     ) %>% filter(param_i <= nrow(train_out$opt.path$env$path)) %>%
       mutate(iteration_i = train_out$opt.path$env$dob)
-  )
-  path_summary$params <- map(seq_len(nrow(path_summary)), ~extract_row_to_list(path_summary[,x_names], .))
-  path_summary <- path_summary %>% select(-one_of(x_names))
+  ) %>% as.tibble
+  par_set <- train_out$opt.path$par.set
+  # par_set <- data$method$par_set
+
+  for (parname in names(par_set$pars)) {
+    parlen <- par_set$pars[[parname]]$len
+    if (parlen > 1) {
+      parlist <-
+        path_summary %>%
+        select(starts_with(parname)) %>%
+        t %>%
+        as.data.frame %>%
+        as.list %>%
+        set_names(NULL)
+      path_summary <- path_summary %>%
+        select(-starts_with(parname)) %>%
+        mutate(!!parname := parlist)
+    }
+  }
 
   ## collect the scores per task individually
   individual_scores <- map_df(seq_along(train_out$opt.path$env$dob), function(param_i) {
