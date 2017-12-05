@@ -4,7 +4,7 @@
 #   tmpdir <- tempfile("benchmarksuitetest")
 #   dir.create(tmpdir)
 #
-#   tasks <- dyntoy::generate_toy_datasets(ti_types = "bifurcating", num_replicates = 2, num_cells = 30, num_genes = 31)
+#   tasks <- dyntoy::generate_toy_datasets(trajectory_types = "bifurcating", num_replicates = 2, num_cells = 30, num_genes = 31)
 #
 #   out <- benchmark_suite_submit(
 #     tasks = tasks,
@@ -31,7 +31,7 @@
 #   tmpdir <- tempfile("benchmarksuitetest")
 #   dir.create(tmpdir)
 #
-#   tasks <- dyntoy::generate_toy_datasets(ti_types = "bifurcating", num_replicates = 2, num_cells = 30, num_genes = 31)
+#   tasks <- dyntoy::generate_toy_datasets(trajectory_types = "bifurcating", num_replicates = 2, num_cells = 30, num_genes = 31)
 #
 #   out <- benchmark_suite_submit(
 #     tasks = tasks,
