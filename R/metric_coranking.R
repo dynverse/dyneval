@@ -7,8 +7,9 @@
 #' @importFrom coRanking coranking LCMC
 #' @importFrom tibble lst
 compute_coranking <- function(gold_dist, pred_dist) {
-  gold_dist <- gold_dist + runif(length(gold_dist), 0, 1e-30)
-  pred_dist <- pred_dist + runif(length(pred_dist), 0, 1e-30)
+  fix_ties <- runif(length(gold_dist), 0, 1e-30)
+  gold_dist <- gold_dist + fix_ties
+  pred_dist <- pred_dist + fix_ties
   gold_dist <- (gold_dist + t(gold_dist)) / 2
   pred_dist <- (pred_dist + t(pred_dist)) / 2
 
