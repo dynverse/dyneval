@@ -7,15 +7,20 @@
 #' @importFrom coRanking coranking LCMC
 #' @importFrom tibble lst
 compute_coranking <- function(gold_dist, pred_dist) {
+  # zero values outside the diagonal are not allowed
   fix_ties <- runif(length(gold_dist), 0, 1e-30)
   gold_dist <- gold_dist + fix_ties
   pred_dist <- pred_dist + fix_ties
+
+  # symmetrise
   gold_dist <- (gold_dist + t(gold_dist)) / 2
   pred_dist <- (pred_dist + t(pred_dist)) / 2
 
+  # set diagonal back to zero
   diag(gold_dist) <- 0
   diag(pred_dist) <- 0
 
+  # calculate coranking
   Q <- coRanking::coranking(gold_dist, pred_dist, input = "dist")
 
   nQ <- nrow(Q)
