@@ -41,41 +41,43 @@ calculate_metrics <- function(task, model, metrics) {
     summary_list$time_mantel <- as.numeric(difftime(time1, time0, units = "sec"))
   }
 
-  net1 <- dynutils::simplify_milestone_network(model$milestone_network)
-  net2 <- dynutils::simplify_milestone_network(task$milestone_network) %>% filter(to != "FILTERED_CELLS")
+  if (any(c("isomorphic", "ged", "node_edit_score", "node_edge_edit_score") %in% metrics)) {
+    net1 <- dynutils::simplify_milestone_network(model$milestone_network)
+    net2 <- dynutils::simplify_milestone_network(task$milestone_network %>% filter(to != "FILTERED_CELLS"))
 
-  # Compute the milestone network isomorphic
-  if ("isomorphic" %in% metrics) {
-    time0 <- Sys.time()
+    # Compute the milestone network isomorphic
+    if ("isomorphic" %in% metrics) {
+      time0 <- Sys.time()
 
-    summary_list$isomorphic <- (is_isomorphic_to(
-      graph_from_data_frame(net1),
-      graph_from_data_frame(net2)
-    ))+0
-    time1 <- Sys.time()
-    summary_list$time_isomorphic <- as.numeric(difftime(time1, time0, units = "sec"))
-  }
+      summary_list$isomorphic <- (is_isomorphic_to(
+        graph_from_data_frame(net1),
+        graph_from_data_frame(net2)
+      ))+0
+      time1 <- Sys.time()
+      summary_list$time_isomorphic <- as.numeric(difftime(time1, time0, units = "sec"))
+    }
 
-  # Compute the milestone network GED
-  if ("ged" %in% metrics) {
-    time0 <- Sys.time()
-    summary_list$ged <- calculate_ged(net1, net2)
-    time1 <- Sys.time()
-    summary_list$time_ged <- as.numeric(difftime(time1, time0, units = "sec"))
-  }
+    # Compute the milestone network GED
+    if ("ged" %in% metrics) {
+      time0 <- Sys.time()
+      summary_list$ged <- calculate_ged(net1, net2)
+      time1 <- Sys.time()
+      summary_list$time_ged <- as.numeric(difftime(time1, time0, units = "sec"))
+    }
 
-  if ("node_edit_score" %in% metrics) {
-    time0 <- Sys.time()
-    summary_list$node_edit_score <- calculate_node_edit_score(net1, net2)
-    time1 <- Sys.time()
-    summary_list$time_node_edit_score <- 1-as.numeric(difftime(time1, time0, units = "sec"))
-  }
+    if ("node_edit_score" %in% metrics) {
+      time0 <- Sys.time()
+      summary_list$node_edit_score <- calculate_node_edit_score(net1, net2)
+      time1 <- Sys.time()
+      summary_list$time_node_edit_score <- 1-as.numeric(difftime(time1, time0, units = "sec"))
+    }
 
-  if ("node_edge_edit_score" %in% metrics) {
-    time0 <- Sys.time()
-    summary_list$node_edge_edit_score <- calculate_node_edge_edit_score(net1, net2)
-    time1 <- Sys.time()
-    summary_list$time_node_edge_edit_score <- 1-as.numeric(difftime(time1, time0, units = "sec"))
+    if ("node_edge_edit_score" %in% metrics) {
+      time0 <- Sys.time()
+      summary_list$node_edge_edit_score <- calculate_node_edge_edit_score(net1, net2)
+      time1 <- Sys.time()
+      summary_list$time_node_edge_edit_score <- 1-as.numeric(difftime(time1, time0, units = "sec"))
+    }
   }
 
   summary <- as_tibble(summary_list)
