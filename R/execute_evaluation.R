@@ -12,14 +12,33 @@
 #' @param output_model Whether or not the model will be outputted.
 #'   If this is a character string, it will save the model in the requested folder.
 #' @param error_score The aggregated score a method gets if it produces errors.
+#' @param mc_cores The number of cores to use, allowing to parallellise the different tasks
 #'
 #' @export
 #' @importFrom dynmethods execute_method
-execute_evaluation <- function(tasks, method, parameters, metrics, timeout, debug_timeout = FALSE, output_model = TRUE, error_score = 0) {
-  method_outputs <- dynmethods::execute_method(tasks = tasks, method = method, parameters = parameters, timeout = timeout, debug_timeout = debug_timeout)
+#' @importFrom parallel mclapply
+execute_evaluation <- function(
+  tasks,
+  method,
+  parameters,
+  metrics,
+  timeout,
+  debug_timeout = FALSE,
+  output_model = TRUE,
+  error_score = 0,
+  mc_cores = 1
+) {
+  method_outputs <- dynmethods::execute_method(
+    tasks = tasks,
+    method = method,
+    parameters = parameters,
+    timeout = timeout,
+    debug_timeout = debug_timeout,
+    mc_cores = mc_cores
+  )
 
   # Calculate scores
-  eval_outputs <- lapply(seq_len(nrow(tasks)), function(i) {
+  eval_outputs <- parallel::mclapply(seq_len(nrow(tasks)), mc.cores = mc_cores, function(i) {
     task <- dynutils::extract_row_to_list(tasks, i)
 
     # Fetch method outputs
