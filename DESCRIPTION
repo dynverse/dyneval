@@ -18,6 +18,7 @@ Imports:
   dplyr, 
   dynmethods,
   dynutils,
+  emoa,
   GA,
   GEDEVO,
   igraph,
@@ -25,6 +26,7 @@ Imports:
   methods,
   mlr,
   mlrMBO,
+  parallel,
   parallelMap,
   ParamHelpers,
   pbapply,
@@ -42,7 +44,6 @@ Suggests:
   dyntoy,
   roxygen2
 Remotes:
-  alan-turing-institute/network-comparison,
   berndbischl/ParamHelpers,
   dynverse/GEDEVO,
   mlr-org/mlr,
