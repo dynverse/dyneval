@@ -17,6 +17,7 @@
 #' @export
 #' @importFrom dynmethods execute_method
 #' @importFrom parallel mclapply
+#' @importFrom testthat expect_false expect_true
 execute_evaluation <- function(
   tasks,
   method,
@@ -28,6 +29,9 @@ execute_evaluation <- function(
   error_score = 0,
   mc_cores = 1
 ) {
+  testthat::expect_true("geodesic_dist" %in% colnames(tasks))
+  testthat::expect_false(any(sapply(tasks$geodesic_dist, is.null)))
+
   method_outputs <- dynmethods::execute_method(
     tasks = tasks,
     method = method,
