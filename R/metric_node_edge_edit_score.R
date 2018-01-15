@@ -27,8 +27,8 @@ calculate_node_edge_edit_score <- function(
   net1$length <- net1$length / sum(net1$length)
   net2$length <- net2$length / sum(net2$length)
 
-  adj1 <- get_adjacency(net1)
-  adj2 <- get_adjacency(net2)
+  adj1 <- get_adjacency_lengths(net1)
+  adj2 <- get_adjacency_lengths(net2)
 
   nodes1 <- unique(c(net1$from, net1$to))
   nodes2 <- unique(c(net2$from, net2$to))
@@ -73,8 +73,8 @@ score_map_node_edge <- function(map, map_grid, net1, net2, nodes1, nodes2) {
   net1_mapped <- net1 %>% mutate(from=as.character(mapper[from]), to=as.character(mapper[to]))
   net2_mapped <- net2 %>% mutate(from=as.character(mapper[from]), to=as.character(mapper[to]))
 
-  adj1 <- get_adjacency(net1_mapped, unique(as.character(mapper)))
-  adj2 <- get_adjacency(net2_mapped, unique(as.character(mapper)))
+  adj1 <- get_adjacency_lengths(net1_mapped, unique(as.character(mapper)))
+  adj2 <- get_adjacency_lengths(net2_mapped, unique(as.character(mapper)))
 
   adj_diff <- 1-sum(abs(adj1 - adj2))/((sum(adj1) + sum(adj2)))
 
@@ -83,18 +83,4 @@ score_map_node_edge <- function(map, map_grid, net1, net2, nodes1, nodes2) {
   edge_diff <- 1-(nrow(net1_mapped) - nrow(net2_mapped))/(max(nrow(net1_mapped), nrow(net2_mapped)))
 
   map_cost * adj_diff * edge_diff
-}
-
-
-#' @importFrom reshape2 acast
-get_adjacency <- function(net, nodes=unique(c(net$from, net$to))) {
-  if(nrow(net) == 0) { # special case for circular
-    newnet <- matrix(rep(0, length(nodes)))
-    dimnames(newnet) <- list(nodes, nodes)
-  } else {
-    newnet <- net %>%
-      mutate(from=factor(from, levels=nodes), to=factor(to, levels=nodes)) %>%
-      reshape2::acast(from~to, value.var="length", fill=0, drop=FALSE, fun.aggregate=sum)
-  }
-  newnet + t(newnet)
 }

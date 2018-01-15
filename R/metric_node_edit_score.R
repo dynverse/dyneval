@@ -4,24 +4,6 @@ score_map_node <- function(permutation, net, net_ref) {
   1-sum(abs(net_mapped - net_ref))/(sum(net_mapped) + sum(net_ref))
 }
 
-complete_matrix <- function(mat, dim, fill=0) {
-  mat <- rbind(mat, matrix(rep(0, ncol(mat) * (dim - nrow(mat))), ncol=ncol(mat)))
-  mat <- cbind(mat, matrix(rep(0, nrow(mat) * (dim - ncol(mat))), nrow=nrow(mat)))
-}
-
-#' @importFrom reshape2 acast
-get_adjacency <- function(net, nodes=unique(c(net$from, net$to))) {
-  if(nrow(net) == 0) { # special case for circular
-    newnet <- matrix(rep(0, length(nodes)))
-    dimnames(newnet) <- list(nodes, nodes)
-  } else {
-    newnet <- net %>%
-      mutate(from=factor(from, levels=nodes), to=factor(to, levels=nodes)) %>%
-      reshape2::acast(from~to, value.var="length", fill=0, drop=FALSE, fun.aggregate=sum)
-  }
-  newnet + t(newnet)
-}
-
 #' Compute the node edit score
 #'
 #' @param net1 the first network to compare
@@ -56,8 +38,8 @@ optimize_node_edit_score <- function(
   nodes2=unique(c(net2$from, net2$to)),
   normalize_weights=TRUE
 ) {
-  net <- get_adjacency(net1, nodes1)
-  net_ref <- get_adjacency(net2, nodes2)
+  net <- get_adjacency_lengths(net1, nodes1)
+  net_ref <- get_adjacency_lengths(net2, nodes2)
   net_ref <- complete_matrix(net_ref, nrow(net))
 
   # normalize weights
