@@ -84,7 +84,6 @@ combn_nice  <- function(x, m) {
 #' @param net1 Network 1
 #' @param net2 Network 2
 #' @param return Whether to return only the `score` or the full output (`all`)
-#' @export
 score_edge_flips <- function(net1, net2, return=c("score", "all"), simplify=TRUE) {
   return <- match.arg(return, c("score", "all"))
 
