@@ -69,21 +69,21 @@ calculate_metrics <- function(task, model, metrics) {
       time0 <- Sys.time()
       summary_list$node_edit_score <- calculate_node_edit_score(net1, net2)
       time1 <- Sys.time()
-      summary_list$time_node_edit_score <- 1-as.numeric(difftime(time1, time0, units = "sec"))
+      summary_list$time_node_edit_score <- as.numeric(difftime(time1, time0, units = "sec"))
     }
 
     if ("node_edge_edit_score" %in% metrics) {
       time0 <- Sys.time()
       summary_list$node_edge_edit_score <- calculate_node_edge_edit_score(net1, net2)
       time1 <- Sys.time()
-      summary_list$time_node_edge_edit_score <- 1-as.numeric(difftime(time1, time0, units = "sec"))
+      summary_list$time_node_edge_edit_score <- as.numeric(difftime(time1, time0, units = "sec"))
     }
 
     if ("edge_flip" %in% metrics) {
       time0 <- Sys.time()
       summary_list$edge_flip <- calculate_edge_flip(net1, net2)
       time1 <- Sys.time()
-      summary_list$time_edge_flip <- 1-as.numeric(difftime(time1, time0, units = "sec"))
+      summary_list$time_edge_flip <- as.numeric(difftime(time1, time0, units = "sec"))
     }
   }
 
