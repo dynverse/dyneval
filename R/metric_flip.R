@@ -87,8 +87,8 @@ combn_nice  <- function(x, m) {
 #' @examples
 #' net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
 #' net2 <- dyntoy:::generate_toy_milestone_network("trifurcating")
-#' score_edge_flips(net1, net2)
-score_edge_flips <- function(net1, net2, return=c("score", "all"), simplify=TRUE) {
+#' calculate_edge_flip(net1, net2)
+calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=TRUE) {
   return <- match.arg(return, c("score", "all"))
 
   if (simplify) {
@@ -211,7 +211,7 @@ score_edge_flips <- function(net1, net2, return=c("score", "all"), simplify=TRUE
 #' @examples
 #' net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
 #' net2 <- dyntoy:::generate_toy_milestone_network("trifurcating")
-#' result <- score_edge_flips(net1, net2)
+#' result <- calculate_edge_flip(net1, net2)
 #' plot_edge_flips(result$newadj1, result$oldadj1)
 plot_edge_flips <- function(oldadj, newadj) {
   # names are used for generating the network, make sure they are present and unique
