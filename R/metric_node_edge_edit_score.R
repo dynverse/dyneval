@@ -97,5 +97,4 @@ get_adjacency <- function(net, nodes=unique(c(net$from, net$to))) {
       reshape2::acast(from~to, value.var="length", fill=0, drop=FALSE, fun.aggregate=sum)
   }
   newnet + t(newnet)
-
 }
