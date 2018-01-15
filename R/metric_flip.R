@@ -124,7 +124,7 @@ score_edge_flips <- function(net1, net2, return=c("score", "all"), simplify=TRUE
 
   while (!found & n_flips <= max_flips) {
     n_flips <- n_flips + 2
-    print(glue::glue("flips: {n_flips}"))
+    # print(glue::glue("flips: {n_flips}"))
 
     n_additions <- (n_flips + edge_difference)/2
     n_removes <- n_additions - edge_difference
@@ -186,7 +186,7 @@ score_edge_flips <- function(net1, net2, return=c("score", "all"), simplify=TRUE
 
             if(any(isomorphic)) {
               found <- TRUE
-              print("found!")
+              # print("found!")
               newadj1 <- first(adj1s[isomorphic])
             }
           }
