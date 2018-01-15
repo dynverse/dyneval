@@ -84,6 +84,10 @@ combn_nice  <- function(x, m) {
 #' @param net1 Network 1
 #' @param net2 Network 2
 #' @param return Whether to return only the `score` or the full output (`all`)
+#' @examples
+#' net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
+#' net2 <- dyntoy:::generate_toy_milestone_network("trifurcating")
+#' score_edge_flips(net1, net2)
 score_edge_flips <- function(net1, net2, return=c("score", "all"), simplify=TRUE) {
   return <- match.arg(return, c("score", "all"))
 
@@ -204,7 +208,11 @@ score_edge_flips <- function(net1, net2, return=c("score", "all"), simplify=TRUE
   }
 }
 
-
+#' @examples
+#' net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
+#' net2 <- dyntoy:::generate_toy_milestone_network("trifurcating")
+#' result <- score_edge_flips(net1, net2)
+#' plot_edge_flips(result$newadj1, result$oldadj1)
 plot_edge_flips <- function(oldadj, newadj) {
   # names are used for generating the network, make sure they are present and unique
   names <- seq_len(nrow(oldadj))
