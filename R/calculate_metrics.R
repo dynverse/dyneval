@@ -41,7 +41,7 @@ calculate_metrics <- function(task, model, metrics) {
     summary_list$time_mantel <- as.numeric(difftime(time1, time0, units = "sec"))
   }
 
-  if (any(c("isomorphic", "ged", "node_edit_score", "node_edge_edit_score", "edge_flip") %in% metrics)) {
+  if (any(c("isomorphic", "ged", "node_edit_score", "node_edge_edit_score") %in% metrics)) {
     net1 <- dynutils::simplify_milestone_network(model$milestone_network)
     net2 <- dynutils::simplify_milestone_network(task$milestone_network %>% filter(to != "FILTERED_CELLS"))
 
@@ -78,13 +78,16 @@ calculate_metrics <- function(task, model, metrics) {
       time1 <- Sys.time()
       summary_list$time_node_edge_edit_score <- as.numeric(difftime(time1, time0, units = "sec"))
     }
+  }
 
-    if ("edge_flip" %in% metrics) {
-      time0 <- Sys.time()
-      summary_list$edge_flip <- calculate_edge_flip(net1, net2)
-      time1 <- Sys.time()
-      summary_list$time_edge_flip <- as.numeric(difftime(time1, time0, units = "sec"))
-    }
+  if ("edge_flip" %in% metrics) {
+    net1 <- model$milestone_network
+    net2 <- task$milestone_network %>% filter(to != "FILTERED_CELLS")
+
+    time0 <- Sys.time()
+    summary_list$edge_flip <- calculate_edge_flip(net1, net2)
+    time1 <- Sys.time()
+    summary_list$time_edge_flip <- as.numeric(difftime(time1, time0, units = "sec"))
   }
 
   summary <- as_tibble(summary_list)

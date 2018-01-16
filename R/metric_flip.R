@@ -104,6 +104,7 @@ insert_two_nodes_into_selfloop <- function(df) {
 #' @param net1 Network 1
 #' @param net2 Network 2
 #' @param return Whether to return only the `score` or the full output (`all`)
+#'
 #' @examples
 #' net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
 #' net2 <- dyntoy:::generate_toy_milestone_network("trifurcating")
