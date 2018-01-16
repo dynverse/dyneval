@@ -208,6 +208,9 @@ calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=T
   }
 }
 
+#' Plotting edge flips
+#' @param oldadj Zouter needs to
+#' @param newadj fill in these fields
 #' @examples
 #' net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
 #' net2 <- dyntoy:::generate_toy_milestone_network("trifurcating")
