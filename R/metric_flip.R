@@ -79,6 +79,26 @@ combn_nice  <- function(x, m) {
   }
 }
 
+insert_two_nodes_into_selfloop <- function(df) {
+  ix <- df$from == df$to
+  new <- map_df(which(ix), function(i) {
+    n <- df$from[[i]]
+    l <- df$length[[i]]
+    d <- df$directed[[i]]
+    newn <- paste0(dynutils::random_time_string(), seq_len(2))
+    data_frame(
+      from = c(n, newn),
+      to = c(newn, n),
+      length = l/3,
+      directed = d
+    )
+  })
+  bind_rows(
+    df[!ix,],
+    new
+  )
+}
+
 #' Edge flip score
 #'
 #' @param net1 Network 1
@@ -104,14 +124,17 @@ calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=T
       dynutils::simplify_igraph_network() %>%
       igraph::as_data_frame() %>%
       rename(length = weight) %>%
-      mutate(directed = directed1)
+      mutate(directed = directed1) %>%
+      insert_two_nodes_into_selfloop()
     net2 <- net2 %>%
       rename(weight = length) %>%
       igraph::graph_from_data_frame(directed = directed2) %>%
       dynutils::simplify_igraph_network() %>%
       igraph::as_data_frame() %>%
       rename(length = weight) %>%
-      mutate(directed = directed2)
+      mutate(directed = directed2) %>%
+      insert_two_nodes_into_selfloop()
+
   }
 
   # calculate edge flip can't handle directed graphs
