@@ -4,8 +4,8 @@
 \alias{execute_evaluation}
 \title{Running an evaluation of a method on a set of tasks with a set of parameters}
 \usage{
-execute_evaluation(tasks, method, parameters, metrics, timeout,
-  debug_timeout = FALSE, output_model = TRUE, error_score = 0,
+execute_evaluation(tasks, method, parameters, metrics, extra_metrics = NULL,
+  timeout, debug_timeout = FALSE, output_model = TRUE, error_score = 0,
   mc_cores = 1)
 }
 \arguments{
@@ -25,6 +25,8 @@ execute_evaluation(tasks, method, parameters, metrics, timeout,
   \item Genetic Algorithm for aligning small graphs: \code{"robbie_network_score"}
   \item Mantel test p-value: \code{"mantel_pval"}
 }}
+
+\item{extra_metrics}{Extra metrics to calculate but not evaluate with.}
 
 \item{timeout}{Kill execution after a given amount of time.}
 

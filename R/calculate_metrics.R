@@ -41,7 +41,7 @@ calculate_metrics <- function(task, model, metrics) {
     summary_list$time_mantel <- as.numeric(difftime(time1, time0, units = "sec"))
   }
 
-  if (any(c("isomorphic", "ged", "node_edit_score", "node_edge_edit_score") %in% metrics)) {
+  if (any(c("isomorphic", "ged", "node_edit_score", "node_edge_edit_score", "edge_flip") %in% metrics)) {
     net1 <- dynutils::simplify_milestone_network(model$milestone_network)
     net2 <- dynutils::simplify_milestone_network(task$milestone_network %>% filter(to != "FILTERED_CELLS"))
 

@@ -4,7 +4,7 @@
 \alias{make_obj_fun}
 \title{Used for wrapping an evaluation function around a TI method}
 \usage{
-make_obj_fun(method, metrics, noisy = FALSE)
+make_obj_fun(method, metrics, extra_metrics, noisy = FALSE)
 }
 \arguments{
 \item{method}{The method to evaluate.}
@@ -19,6 +19,8 @@ make_obj_fun(method, metrics, noisy = FALSE)
   \item Genetic Algorithm for aligning small graphs: \code{"robbie_network_score"}
   \item Mantel test p-value: \code{"mantel_pval"}
 }}
+
+\item{extra_metrics}{Extra metrics to calculate but not evaluate with.}
 
 \item{noisy}{whether or not the metric is noisy or not}
 }

@@ -8,6 +8,7 @@
 #' @param methods A tibble of TI methods.
 #' @param metrics Which metrics to use;
 #'   see \code{\link{calculate_metrics}} for a list of which metrics are available.
+#' @param extra_metrics Extra metrics to calculate but not evaluate with.
 #' @param num_cores The number of cores to allocate per mlr run.
 #' @param memory The memory to allocate per core.
 #' @param max_wall_time The maximum amount of time each fold is allowed to run.
@@ -37,7 +38,8 @@ benchmark_suite_submit <- function(
   out_dir,
   timeout = 120,
   methods = get_descriptions(as_tibble = TRUE),
-  metrics = c("auc_R_nx", "robbie_network_score"),
+  metrics = "correlation",
+  extra_metrics = NULL,
   num_cores = 4,
   memory = "20G",
   max_wall_time = NULL,
@@ -113,7 +115,7 @@ benchmark_suite_submit <- function(
       cat("Submitting ", method$name, "\n", sep="")
 
       # create an objective function
-      obj_fun <- make_obj_fun(method = method, metrics = metrics)
+      obj_fun <- make_obj_fun(method = method, metrics = metrics, extra_metrics = extra_metrics)
 
       # generate initial parameters
       design <- bind_rows(
@@ -191,7 +193,7 @@ benchmark_suite_submit <- function(
         qsub_environment <-  c(
           "method", "obj_fun", "design",
           "tasks", "task_group", "task_fold",
-          "num_cores", "metrics",
+          "num_cores", "metrics", "extra_metrics",
           "control_train", "control_test", "grid",
           "learner", "timeout")
 
@@ -207,7 +209,7 @@ benchmark_suite_submit <- function(
         # save data and handle to RDS file
         out <- lst(
           method, obj_fun, design, tasks, task_group,
-          task_fold, num_cores, metrics,
+          task_fold, num_cores, metrics, extra_metrics,
           control_train, control_test, grid, qsub_handle)
         saveRDS(out, qsubhandle_file)
       } else {

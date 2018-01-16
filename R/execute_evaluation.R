@@ -4,6 +4,7 @@
 #' @param tasks The tasks on which to evaluate.
 #' @param method The method to evaluate.
 #' @param parameters The parameters to evaluate with.
+#' @param extra_metrics Extra metrics to calculate but not evaluate with.
 #' @param timeout Kill execution after a given amount of time.
 #' @param debug_timeout Setting debug to \code{TRUE} will avoid running the method in a separate R session
 #'   using \code{\link[dynutils]{eval_with_timeout}} and run the method directly. Note that the timeout functionality
@@ -23,6 +24,7 @@ execute_evaluation <- function(
   method,
   parameters,
   metrics,
+  extra_metrics = NULL,
   timeout,
   debug_timeout = FALSE,
   output_model = TRUE,
@@ -31,6 +33,8 @@ execute_evaluation <- function(
 ) {
   testthat::expect_true("geodesic_dist" %in% colnames(tasks))
   testthat::expect_false(any(sapply(tasks$geodesic_dist, is.null)))
+
+  calc_metrics <- unique(c(metrics, extra_metrics))
 
   method_outputs <- dynmethods::execute_method(
     tasks = tasks,
@@ -57,7 +61,7 @@ execute_evaluation <- function(
       time_geodesic <- as.numeric(difftime(time1, time0, units = "sec"))
 
       # Calculate metrics
-      metrics_output <- calculate_metrics(task, model, metrics)
+      metrics_output <- calculate_metrics(task, model, calc_metrics)
 
       # Create summary statistics
       summary <- bind_cols(
@@ -67,7 +71,16 @@ execute_evaluation <- function(
       )
     } else {
       summary <- method_output$summary %>%
-        mutate_at(metrics, ~ error_score)
+        mutate_at(calc_metrics, ~ error_score)
+    }
+
+    if ("rf_mse" %in% calc_metrics) {
+      time0 <- Sys.time()
+      rfmse <- compute_rfmse(task, prediction)
+      time1 <- Sys.time()
+      summary$time_rfmse <- as.numeric(difftime(time1, time0, units = "sec"))
+      summary$mmse <- rfmse$summary$mmse
+      summary$mrsq <- rfmse$summary$mrsq
     }
 
     # Return the output
