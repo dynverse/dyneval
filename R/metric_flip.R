@@ -110,6 +110,10 @@ calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=T
       mutate(directed = directed2)
   }
 
+  # calculate edge flip can't handle directed graphs
+  net1$directed <- FALSE
+  net2$directed <- FALSE
+
   adj1 <- get_adjacency(net1)
   adj2 <- get_adjacency(net2)
 
