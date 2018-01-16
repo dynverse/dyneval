@@ -99,6 +99,14 @@ insert_two_nodes_into_selfloop <- function(df) {
   )
 }
 
+change_single_edge_into_double <- function(df) {
+  if (nrow(df) == 1 && df$from[[1]] != df$to[[1]]) {
+    data_frame(from = c("a", "b"), to = c("b", "c"), length = df$length/2, directed = df$directed[[1]])
+  } else {
+    df
+  }
+}
+
 #' Edge flip score
 #'
 #' @param net1 Network 1
@@ -118,7 +126,8 @@ calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=T
       igraph::as_data_frame() %>%
       rename(length = weight) %>%
       mutate(directed = directed1) %>%
-      insert_two_nodes_into_selfloop()
+      insert_two_nodes_into_selfloop() %>%
+      change_single_edge_into_double()
     net2 <- net2 %>%
       rename(weight = length) %>%
       igraph::graph_from_data_frame(directed = directed2) %>%
@@ -126,7 +135,8 @@ calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=T
       igraph::as_data_frame() %>%
       rename(length = weight) %>%
       mutate(directed = directed2) %>%
-      insert_two_nodes_into_selfloop()
+      insert_two_nodes_into_selfloop() %>%
+      change_single_edge_into_double()
 
   }
 
