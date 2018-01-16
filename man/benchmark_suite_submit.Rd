@@ -5,8 +5,8 @@
 \title{A benchmark suite with which to run all the methods on the different tasks}
 \usage{
 benchmark_suite_submit(tasks, task_group, task_fold, out_dir, timeout = 120,
-  methods = get_descriptions(as_tibble = TRUE), metrics = c("auc_R_nx",
-  "robbie_network_score"), num_cores = 4, memory = "20G",
+  methods = get_descriptions(as_tibble = TRUE), metrics = "correlation",
+  extra_metrics = NULL, num_cores = 4, memory = "20G",
   max_wall_time = NULL, execute_before = NULL, r_module = "R",
   num_iterations = 20, num_init_params = 100, num_repeats = 1,
   save_r2g_to_outdir = FALSE, do_it_local = FALSE)
@@ -26,6 +26,8 @@ benchmark_suite_submit(tasks, task_group, task_fold, out_dir, timeout = 120,
 
 \item{metrics}{Which metrics to use;
 see \code{\link{calculate_metrics}} for a list of which metrics are available.}
+
+\item{extra_metrics}{Extra metrics to calculate but not evaluate with.}
 
 \item{num_cores}{The number of cores to allocate per mlr run.}
 
