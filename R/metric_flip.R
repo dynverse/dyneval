@@ -211,6 +211,11 @@ calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=T
 #' Plotting edge flips
 #' @param oldadj Zouter needs to
 #' @param newadj fill in these fields
+#'
+#' @importFrom tidygraph as_tbl_graph activate
+#' @importFrom ggraph ggraph geom_edge_fan geom_edge_loop geom_node_label scale_edge_colour_manual
+#' @importFrom cowplot theme_nothing
+#'
 #' @examples
 #' net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
 #' net2 <- dyntoy:::generate_toy_milestone_network("trifurcating")
@@ -236,8 +241,6 @@ plot_edge_flips <- function(oldadj, newadj) {
   net <- left_join(oldnet, newnet, by=c("from", "to")) %>%
     left_join(types, by=c("old", "new"))
 
-  library(tidygraph)
-  library(ggraph)
   graph <- net %>% as_tbl_graph(directed=FALSE)
 
   graph <- graph %>%

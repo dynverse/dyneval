@@ -21,6 +21,7 @@ Imports:
   emoa,
   GA,
   GEDEVO,
+  ggraph,
   igraph,
   magrittr, 
   methods,
@@ -38,6 +39,7 @@ Imports:
   smoof,
   testthat,
   tibble, 
+  tidygraph,
   tidyr,
   vegan
 Suggests:
