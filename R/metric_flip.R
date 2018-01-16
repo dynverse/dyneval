@@ -92,8 +92,22 @@ calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=T
   return <- match.arg(return, c("score", "all"))
 
   if (simplify) {
-    net1 <- dynutils::simplify_milestone_network(net1)
-    net2 <- dynutils::simplify_milestone_network(net2)
+    directed1 <- any(net1$directed)
+    directed2 <- any(net2$directed)
+    net1 <- net1 %>%
+      rename(weight = length) %>%
+      igraph::graph_from_data_frame(directed = directed1) %>%
+      dynutils::simplify_igraph_network() %>%
+      igraph::as_data_frame() %>%
+      rename(length = weight) %>%
+      mutate(directed = directed1)
+    net2 <- net2 %>%
+      rename(weight = length) %>%
+      igraph::graph_from_data_frame(directed = directed2) %>%
+      dynutils::simplify_igraph_network() %>%
+      igraph::as_data_frame() %>%
+      rename(length = weight) %>%
+      mutate(directed = directed2)
   }
 
   adj1 <- get_adjacency(net1)
