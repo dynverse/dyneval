@@ -88,6 +88,10 @@ combn_nice  <- function(x, m) {
 #' net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
 #' net2 <- dyntoy:::generate_toy_milestone_network("trifurcating")
 #' calculate_edge_flip(net1, net2)
+#'
+#' net1 <- dyntoy:::generate_toy_milestone_network("cycle")
+#' net2 <- dyntoy:::generate_toy_milestone_network("linear")
+#' calculate_edge_flip(net1, net2)
 calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=TRUE) {
   return <- match.arg(return, c("score", "all"))
 
