@@ -104,11 +104,7 @@ insert_two_nodes_into_selfloop <- function(df) {
 #' @param net1 Network 1
 #' @param net2 Network 2
 #' @param return Whether to return only the `score` or the full output (`all`)
-#'
-#' @examples
-#' net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
-#' net2 <- dyntoy:::generate_toy_milestone_network("trifurcating")
-#' calculate_edge_flip(net1, net2)
+#' @param simplify Whether or not to simplify the networks
 calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=TRUE) {
   return <- match.arg(return, c("score", "all"))
 
@@ -257,12 +253,6 @@ calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=T
 #' @importFrom tidygraph as_tbl_graph activate
 #' @importFrom ggraph ggraph geom_edge_fan geom_edge_loop geom_node_label scale_edge_colour_manual
 #' @importFrom cowplot theme_nothing
-#'
-#' @examples
-#' net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
-#' net2 <- dyntoy:::generate_toy_milestone_network("trifurcating")
-#' result <- calculate_edge_flip(net1, net2)
-#' plot_edge_flips(result$newadj1, result$oldadj1)
 plot_edge_flips <- function(oldadj, newadj) {
   # names are used for generating the network, make sure they are present and unique
   names <- seq_len(nrow(oldadj))

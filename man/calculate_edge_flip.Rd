@@ -12,12 +12,9 @@ calculate_edge_flip(net1, net2, return = c("score", "all"), simplify = TRUE)
 \item{net2}{Network 2}
 
 \item{return}{Whether to return only the `score` or the full output (`all`)}
+
+\item{simplify}{Whether or not to simplify the networks}
 }
 \description{
 Edge flip score
-}
-\examples{
-net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
-net2 <- dyntoy:::generate_toy_milestone_network("trifurcating")
-calculate_edge_flip(net1, net2)
 }

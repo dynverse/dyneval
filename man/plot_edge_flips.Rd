@@ -14,9 +14,3 @@ plot_edge_flips(oldadj, newadj)
 \description{
 Plotting edge flips
 }
-\examples{
-net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
-net2 <- dyntoy:::generate_toy_milestone_network("trifurcating")
-result <- calculate_edge_flip(net1, net2)
-plot_edge_flips(result$newadj1, result$oldadj1)
-}
