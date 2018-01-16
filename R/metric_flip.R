@@ -134,7 +134,6 @@ calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=T
       rename(length = weight) %>%
       mutate(directed = directed2) %>%
       insert_two_nodes_into_selfloop()
-
   }
 
   # calculate edge flip can't handle directed graphs
