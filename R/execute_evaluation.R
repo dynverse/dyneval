@@ -76,7 +76,7 @@ execute_evaluation <- function(
 
     if ("rf_mse" %in% calc_metrics) {
       time0 <- Sys.time()
-      rfmse <- compute_rfmse(task, prediction)
+      rfmse <- compute_rfmse(task, model)
       time1 <- Sys.time()
       summary$time_rfmse <- as.numeric(difftime(time1, time0, units = "sec"))
       summary$mmse <- rfmse$summary$mmse
