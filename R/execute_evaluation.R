@@ -33,6 +33,7 @@ execute_evaluation <- function(
 ) {
   testthat::expect_true("geodesic_dist" %in% colnames(tasks))
   testthat::expect_false(any(sapply(tasks$geodesic_dist, is.null)))
+  testthat::expect_false(missing(timeout))
 
   calc_metrics <- unique(c(metrics, extra_metrics))
 
