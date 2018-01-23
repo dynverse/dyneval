@@ -99,11 +99,20 @@ insert_two_nodes_into_selfloop <- function(df) {
   )
 }
 
+change_single_edge_into_double <- function(df) {
+  if (nrow(df) == 1 && df$from[[1]] != df$to[[1]]) {
+    data_frame(from = c("a", "b"), to = c("b", "c"), length = df$length/2, directed = df$directed[[1]])
+  } else {
+    df
+  }
+}
+
 #' Edge flip score
 #'
 #' @param net1 Network 1
 #' @param net2 Network 2
 #' @param return Whether to return only the `score` or the full output (`all`)
+#' @param simplify Whether or not to simplify the networks
 #'
 #' @examples
 #' net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
@@ -111,7 +120,7 @@ insert_two_nodes_into_selfloop <- function(df) {
 #' calculate_edge_flip(net1, net2)
 #'
 #' net1 <- dyntoy:::generate_toy_milestone_network("cycle")
-#' net2 <- dyntoy:::generate_toy_milestone_network("linear")
+#' net2 <- dyntoy:::generate_toy_milestone_network("bifurcating_cycle")
 #' calculate_edge_flip(net1, net2)
 calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=TRUE) {
   return <- match.arg(return, c("score", "all"))
@@ -127,7 +136,8 @@ calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=T
       igraph::as_data_frame() %>%
       rename(length = weight) %>%
       mutate(directed = directed1) %>%
-      insert_two_nodes_into_selfloop()
+      insert_two_nodes_into_selfloop() %>%
+      change_single_edge_into_double()
     net2 <- net2 %>%
       rename(weight = length) %>%
       igraph::graph_from_data_frame(directed = directed2) %>%
@@ -135,7 +145,8 @@ calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=T
       igraph::as_data_frame() %>%
       rename(length = weight) %>%
       mutate(directed = directed2) %>%
-      insert_two_nodes_into_selfloop()
+      insert_two_nodes_into_selfloop() %>%
+      change_single_edge_into_double()
   }
 
   # edge flip cannot handle directed networks
@@ -274,12 +285,6 @@ calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=T
 #' @importFrom tidygraph as_tbl_graph activate
 #' @importFrom ggraph ggraph geom_edge_fan geom_edge_loop geom_node_label scale_edge_colour_manual
 #' @importFrom cowplot theme_nothing
-#'
-#' @examples
-#' net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
-#' net2 <- dyntoy:::generate_toy_milestone_network("trifurcating")
-#' result <- calculate_edge_flip(net1, net2)
-#' plot_edge_flips(result$newadj1, result$oldadj1)
 plot_edge_flips <- function(oldadj, newadj) {
   # names are used for generating the network, make sure they are present and unique
   names <- seq_len(nrow(oldadj))
