@@ -5,11 +5,12 @@
 \title{A benchmark suite with which to run all the methods on the different tasks}
 \usage{
 benchmark_suite_submit(tasks, task_group, task_fold, out_dir, timeout = 120,
-  methods = get_descriptions(as_tibble = TRUE), metrics = "correlation",
-  extra_metrics = NULL, num_cores = 4, memory = "20G",
-  max_wall_time = NULL, execute_before = NULL, r_module = "R",
-  num_iterations = 20, num_init_params = 100, num_repeats = 1,
-  save_r2g_to_outdir = FALSE, do_it_local = FALSE)
+  methods = get_descriptions(as_tibble = TRUE), designs = NULL,
+  metrics = "correlation", extra_metrics = NULL, num_cores = 4,
+  memory = "20G", max_wall_time = NULL, execute_before = NULL,
+  r_module = "R", num_iterations = 20, num_init_params = 100,
+  num_repeats = 1, save_r2g_to_outdir = FALSE, do_it_local = FALSE,
+  output_model = FALSE)
 }
 \arguments{
 \item{tasks}{A tibble of tasks.}
@@ -23,6 +24,8 @@ benchmark_suite_submit(tasks, task_group, task_fold, out_dir, timeout = 120,
 \item{timeout}{The number of seconds 1 method has to solve each of the tasks before a timeout is generated.}
 
 \item{methods}{A tibble of TI methods.}
+
+\item{designs}{A names list of given designs data frames. Names must be equal to method short names.}
 
 \item{metrics}{Which metrics to use;
 see \code{\link{calculate_metrics}} for a list of which metrics are available.}
@@ -48,6 +51,8 @@ see \code{\link{calculate_metrics}} for a list of which metrics are available.}
 \item{save_r2g_to_outdir}{Save the r2gridengine output to \code{out_dir} instead of the default \code{local_tmp_path}.}
 
 \item{do_it_local}{Whether or not to run the benchmark suite locally (not recommended)}
+
+\item{output_model}{Whether or not to return the outputted models}
 }
 \description{
 A benchmark suite with which to run all the methods on the different tasks
