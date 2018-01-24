@@ -6,6 +6,7 @@
 #' @param out_dir The folder in which to output intermediate and final results.
 #' @param timeout The number of seconds 1 method has to solve each of the tasks before a timeout is generated.
 #' @param methods A tibble of TI methods.
+#' @param designs A names list of given designs data frames. Names must be equal to method short names.
 #' @param metrics Which metrics to use;
 #'   see \code{\link{calculate_metrics}} for a list of which metrics are available.
 #' @param extra_metrics Extra metrics to calculate but not evaluate with.
@@ -19,6 +20,7 @@
 #' @param num_repeats The number of times to repeat the mlr process, for each group and each fold.
 #' @param save_r2g_to_outdir Save the r2gridengine output to \code{out_dir} instead of the default \code{local_tmp_path}.
 #' @param do_it_local Whether or not to run the benchmark suite locally (not recommended)
+#' @param output_model Whether or not to return the outputted models
 #'
 #' @importFrom testthat expect_equal expect_is
 #' @importFrom PRISM qsub_lapply override_qsub_config
@@ -38,6 +40,7 @@ benchmark_suite_submit <- function(
   out_dir,
   timeout = 120,
   methods = get_descriptions(as_tibble = TRUE),
+  designs = NULL,
   metrics = "correlation",
   extra_metrics = NULL,
   num_cores = 4,
@@ -49,7 +52,8 @@ benchmark_suite_submit <- function(
   num_init_params = 100,
   num_repeats = 1,
   save_r2g_to_outdir = FALSE,
-  do_it_local = FALSE
+  do_it_local = FALSE,
+  output_model = FALSE
 ) {
   testthat::expect_is(tasks, "tbl")
   testthat::expect_equal(nrow(tasks), length(task_group))
@@ -57,7 +61,7 @@ benchmark_suite_submit <- function(
   testthat::expect_is(methods, "tbl")
 
   ## set settings for MBO parameter optimisation
-  control_train <- mlrMBO::makeMBOControl(
+  control <- mlrMBO::makeMBOControl(
     n.objectives = length(metrics),
     propose.points = num_cores,
     y.name = metrics
@@ -68,18 +72,12 @@ benchmark_suite_submit <- function(
 
   # Set infill criterion
   if (length(metrics) == 1) {
-    control_train <- control_train %>%
+    control <- control %>%
       mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritCB())
   } else {
-    control_train <- control_train %>%
+    control <- control %>%
       mlrMBO::setMBOControlInfill(mlrMBO::makeMBOInfillCritDIB())
   }
-
-  # construct control for test phase
-  control_test <- control_train %>% mlrMBO::setMBOControlTermination(
-    iters = 1
-  )
-  control_test$propose.points <- 1
 
   ## create learner for predicting performance of new params
   mlr::configureMlr(show.learner.output = FALSE)
@@ -92,14 +90,16 @@ benchmark_suite_submit <- function(
 
   ## create a grid for each of the folds, groups, and repeats.
   ## one task will be created per row in this grid
+  fold_ixs <- sort(unique(task_fold))
+  num_folds <- length(fold_ixs)
   grid <- expand.grid(
-    fold_i = sort(unique(task_fold)),
+    fold_i = fold_ixs,
     group_sel = sort(unique(task_group)),
     repeat_i = seq_len(num_repeats),
     stringsAsFactors = FALSE
   )
 
-  ## run MBO for each method separatelly
+  ## run MBO for each method separately
   lapply (seq_len(nrow(methods)), function(methodi) {
     method <- dynutils::extract_row_to_list(methods, methodi)
 
@@ -118,10 +118,14 @@ benchmark_suite_submit <- function(
       obj_fun <- make_obj_fun(method = method, metrics = metrics, extra_metrics = extra_metrics)
 
       # generate initial parameters
-      design <- bind_rows(
-        ParamHelpers::generateDesignOfDefaults(method$par_set),
-        ParamHelpers::generateDesign(n = num_init_params, par.set = method$par_set)
-      )
+      if (is.null(designs)) {
+        design <- bind_rows(
+          ParamHelpers::generateDesignOfDefaults(method$par_set),
+          ParamHelpers::generateDesign(n = num_init_params, par.set = method$par_set)
+        )
+      } else {
+        design <- designs[[method$short_name]]
+      }
 
       # the function to run on the cluster
       qsub_x <- seq_len(nrow(grid))
@@ -132,37 +136,58 @@ benchmark_suite_submit <- function(
         repeat_i <- grid[grid_i,]$repeat_i
 
         ## start parameter optimisation
-        # TODO: If the models should be outputted, change the output_model
-        # and process the output
-
         parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
-        tune_train <- mlrMBO::mbo(
-          obj_fun,
-          learner = learner,
-          design = design,
-          control = control_train,
-          show.info = TRUE,
-          more.args = list(
-            tasks = tasks[task_group == group_sel & task_fold != fold_i,],
-            timeout = timeout,
-            output_model = FALSE #"models/"
+
+        if (num_folds != 1) {
+          tune_train <- mlrMBO::mbo(
+            obj_fun,
+            learner = learner,
+            design = design,
+            control = control,
+            show.info = TRUE,
+            more.args = list(
+              tasks = tasks[task_group == group_sel & task_fold != fold_i,],
+              timeout = timeout,
+              output_model = output_model
+            )
           )
-        )
-        tune_test <- mlrMBO::mbo(
+          design_test <- tune_train$opt.path$env$path %>% select(-one_of(metrics))
+        } else {
+          design_test <- design
+        }
+
+        no_train_mlrMBO <- function(fun, design, learner, control, show.info, more.args) {
+          requireNamespace("mlrMBO")
+          opt.problem <- mlrMBO:::initOptProblem(
+            fun = fun,
+            design = design,
+            learner = learner,
+            control = control,
+            show.info = show.info,
+            more.args = more.args
+          )
+          opt.state <- mlrMBO:::makeOptState(opt.problem)
+          mlrMBO:::evalMBODesign.OptState(opt.state)
+          mlrMBO:::finalizeMboLoop(opt.state)
+          opt.result <- mlrMBO:::getOptStateOptResult(opt.state)
+          mbo.result <- mlrMBO:::makeMBOResult.OptState(opt.state)
+        }
+
+        tune_test <- no_train_mlrMBO(
           obj_fun,
           learner = learner,
-          design = tune_train$opt.path$env$path %>% select(-one_of(metrics)),
-          control = control_test,
+          design = design_test,
+          control = control,
           show.info = TRUE,
           more.args = list(
             tasks = tasks[task_group == group_sel & task_fold == fold_i,],
             timeout = timeout,
-            output_model = FALSE #"models/"
+            output_model = output_model
           )
         )
         parallelMap::parallelStop()
 
-        list(design = design, tune_train = tune_train, tune_test = tune_test)
+        list(tune_train = tune_train, tune_test = tune_test)
       }
 
       if (!do_it_local) {
@@ -194,8 +219,10 @@ benchmark_suite_submit <- function(
           "method", "obj_fun", "design",
           "tasks", "task_group", "task_fold",
           "num_cores", "metrics", "extra_metrics",
-          "control_train", "control_test", "grid",
-          "learner", "timeout")
+          "control", "control", "grid",
+          "learner", "timeout", "output_model",
+          "num_folds"
+        )
 
         # submit to the cluster
         qsub_handle <- PRISM::qsub_lapply(
@@ -210,7 +237,7 @@ benchmark_suite_submit <- function(
         out <- lst(
           method, obj_fun, design, tasks, task_group,
           task_fold, num_cores, metrics, extra_metrics,
-          control_train, control_test, grid, qsub_handle)
+          control, control, grid, qsub_handle)
         saveRDS(out, qsubhandle_file)
       } else {
         # run locally
@@ -357,11 +384,11 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
     ),
     bind_cols(
       data_frame(type = "test", grid_i, repeat_i, fold_i, group_sel,
+                 iteration_i = train_out$opt.path$env$dob,
                  time_total = test_out$opt.path$env$exec.time,
                  param_i = seq_along(time_total)),
       test_out$opt.path$env$path
-    ) %>% filter(param_i <= nrow(train_out$opt.path$env$path)) %>%
-      mutate(iteration_i = train_out$opt.path$env$dob)
+    )
   ) %>% as.tibble
   par_set <- train_out$opt.path$par.set
   # par_set <- data$method$par_set
