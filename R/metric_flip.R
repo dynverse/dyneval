@@ -113,15 +113,15 @@ change_single_edge_into_double <- function(df) {
 #' @param net2 Network 2
 #' @param return Whether to return only the `score` or the full output (`all`)
 #' @param simplify Whether or not to simplify the networks
-#'
-#' @examples
-#' net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
-#' net2 <- dyntoy:::generate_toy_milestone_network("trifurcating")
-#' calculate_edge_flip(net1, net2)
-#'
-#' net1 <- dyntoy:::generate_toy_milestone_network("cycle")
-#' net2 <- dyntoy:::generate_toy_milestone_network("bifurcating_cycle")
-#' calculate_edge_flip(net1, net2)
+# either export this function or do not list any examples
+# @examples
+# net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
+# net2 <- dyntoy:::generate_toy_milestone_network("trifurcating")
+# calculate_edge_flip(net1, net2)
+#
+# net1 <- dyntoy:::generate_toy_milestone_network("cycle")
+# net2 <- dyntoy:::generate_toy_milestone_network("bifurcating_cycle")
+# calculate_edge_flip(net1, net2)
 calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=TRUE) {
   return <- match.arg(return, c("score", "all"))
 
