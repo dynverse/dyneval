@@ -105,8 +105,6 @@ benchmark_suite_submit <- function(
     tasks_local_file <- paste0(out_dir, "/tasks_benchmark.rds")
     tasks_remote_file <- paste0(remote_dir, "/tasks_benchmark.rds")
 
-    dir.create(out_dir, recursive = TRUE)
-
     qsub_config <- PRISM::override_qsub_config(
       wait = FALSE,
       remove_tmp_folder = FALSE,
@@ -122,9 +120,11 @@ benchmark_suite_submit <- function(
     )
 
     cat("Saving tasks file\n")
+    PRISM:::mkdir_remote(path = out_dir, remote = "")
     readr::write_rds(tasks, tasks_local_file)
 
     cat("Moving tasks file to remote\n")
+    PRISM:::mkdir_remote(path = remote_dir, remote = qsub_config$remote)
     PRISM:::rsync_remote("", tasks_local_file, qsub_config$remote, remote_dir)
   }
 
