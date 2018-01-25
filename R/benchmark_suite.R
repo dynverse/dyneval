@@ -159,54 +159,6 @@ benchmark_suite_submit <- function(
       # the function to run on the cluster
       qsub_x <- seq_len(nrow(grid))
 
-      qsub_fun <- function(grid_i) {
-        fold_i <- grid[grid_i,]$fold_i
-        group_sel <- grid[grid_i,]$group_sel
-        repeat_i <- grid[grid_i,]$repeat_i
-
-        if (!"tasks" %in% ls()) {
-          tasks <- readr::read_rds(tasks_remote_file)
-        }
-
-        ## start parameter optimisation
-        parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
-
-        if (num_folds != 1) {
-          tune_train <- mlrMBO::mbo(
-            obj_fun,
-            learner = learner,
-            design = design,
-            control = control,
-            show.info = TRUE,
-            more.args = list(
-              tasks = tasks[task_group == group_sel & task_fold != fold_i,],
-              timeout = timeout,
-              output_model = output_model
-            )
-          )
-          design_test <- tune_train$opt.path$env$path %>% select(-one_of(metrics))
-        } else {
-          tune_train <- NULL
-          design_test <- design
-        }
-
-        tune_test <- no_train_mlrMBO(
-          obj_fun,
-          learner = learner,
-          design = design_test,
-          control = control,
-          show.info = TRUE,
-          more.args = list(
-            tasks = tasks[task_group == group_sel & task_fold == fold_i,],
-            timeout = timeout,
-            output_model = output_model
-          )
-        )
-        parallelMap::parallelStop()
-
-        list(tune_train = tune_train, tune_test = tune_test)
-      }
-
       if (!do_it_local) {
         # set parameters for the cluster
         qsub_config_method <- PRISM::override_qsub_config(
@@ -223,7 +175,7 @@ benchmark_suite_submit <- function(
           "method", "obj_fun", "design",
           "task_group", "task_fold", "tasks_remote_file",
           "num_cores", "metrics", "extra_metrics",
-          "control", "control", "grid",
+          "control", "grid",
           "learner", "timeout", "output_model",
           "num_folds"
         )
@@ -234,7 +186,7 @@ benchmark_suite_submit <- function(
           qsub_environment = qsub_environment,
           qsub_packages = qsub_packages,
           qsub_config = qsub_config_method,
-          FUN = qsub_fun
+          FUN = benchmark_qsub_fun
         )
 
         # save data and handle to RDS file
@@ -249,12 +201,67 @@ benchmark_suite_submit <- function(
         # run locally
         out <- pbapply::pblapply(
           X = qsub_x,
-          FUN = qsub_fun
+          FUN = benchmark_qsub_fun
         )
         out
       }
     }
   })
+}
+
+#' Helper function for benchmark suite
+#'
+#' @param grid_i Benchmark config index
+#'
+#' @importFrom readr read_rds
+#' @importFrom parallelMap parallelStartMulticore parallelStop
+#' @importFrom mlrMBO mbo
+benchmark_qsub_fun <- function(grid_i) {
+  fold_i <- grid[grid_i,]$fold_i
+  group_sel <- grid[grid_i,]$group_sel
+  repeat_i <- grid[grid_i,]$repeat_i
+
+  if (!"tasks" %in% ls()) {
+    tasks <- readr::read_rds(tasks_remote_file)
+  }
+
+  ## start parameter optimisation
+  parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
+
+  if (num_folds != 1) {
+    tune_train <- mlrMBO::mbo(
+      obj_fun,
+      learner = learner,
+      design = design,
+      control = control,
+      show.info = TRUE,
+      more.args = list(
+        tasks = tasks[task_group == group_sel & task_fold != fold_i,],
+        timeout = timeout,
+        output_model = output_model
+      )
+    )
+    design_test <- tune_train$opt.path$env$path %>% select(-one_of(metrics))
+  } else {
+    tune_train <- NULL
+    design_test <- design
+  }
+
+  tune_test <- no_train_mlrMBO(
+    obj_fun,
+    learner = learner,
+    design = design_test,
+    control = control,
+    show.info = TRUE,
+    more.args = list(
+      tasks = tasks[task_group == group_sel & task_fold == fold_i,],
+      timeout = timeout,
+      output_model = output_model
+    )
+  )
+  parallelMap::parallelStop()
+
+  list(tune_train = tune_train, tune_test = tune_test)
 }
 
 # Helper function for running just the initialisation of mlrMBO
