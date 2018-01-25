@@ -192,7 +192,8 @@ benchmark_suite_submit <- function(
           method, design,
           task_group, task_fold,
           num_cores, metrics, extra_metrics,
-          control, control, grid, qsub_handle
+          control, control, grid, qsub_handle,
+          tasks_local_file, tasks_remote_file
         )
         readr::write_rds(out, qsubhandle_file)
 
@@ -337,7 +338,7 @@ benchmark_suite_retrieve <- function(out_dir) {
             )
           } else {
             # check to see whether all jobs failed
-            all_errored <- all(x$individual_scores$error %>%  map_lgl(~ !is.null(.)))
+            all_errored <- all(x$individual_scores$error %>% map_lgl(~ !is.null(.)))
             x$which_errored <- list(all_errored)
             x$qsub_error <- list(ifelse(all_errored, "all parameter settings errored", ""))
             x
@@ -379,11 +380,9 @@ benchmark_suite_retrieve <- function(out_dir) {
   })
 }
 
+#' @importFrom readr read_rds
 benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
   grid <- data$grid
-  tasks <- data$tasks
-  task_group <- data$task_group
-  task_fold <- data$task_fold
 
   grid_i <- rds_i
   fold_i <- grid$fold_i[[rds_i]]
@@ -392,41 +391,50 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
   design <- out_rds$design
   train_out <- out_rds$tune_train
   test_out <- out_rds$tune_test
+  x_names <- names(test_out$x)
+  y_names <- test_out$opt.path$y.names
 
-  best_ind <- train_out$best.ind
-  x_names <- names(train_out$x)
-  y_names <- train_out$opt.path$y.names
-  best <- list(
-    param_index = best_ind,
-    params = train_out$x,
-    y_names = y_names,
-    train_score = train_out$y,
-    test_score = test_out$opt.path$env$path[best_ind,y_names]
-  ) %>%
-    list() %>%
-    list_as_tibble() %>%
-    mutate(
-      grid_i, repeat_i, fold_i, group_sel
-    )
+  if (!is.null(train_out)) {
+    best_ind <- train_out$best.ind
+    best <- list(
+      param_index = best_ind,
+      params = train_out$x,
+      y_names = y_names,
+      train_score = train_out$y,
+      test_score = test_out$opt.path$env$path[best_ind,y_names]
+    ) %>%
+      list() %>%
+      list_as_tibble() %>%
+      mutate(
+        grid_i, repeat_i, fold_i, group_sel
+      )
+  } else {
+    best_ind <- NA
+    best <- NULL
+  }
 
   ## construct the global summary, 2 rows per parameter
   path_summary <- bind_rows(
-    bind_cols(
-      data_frame(type = "train", grid_i, repeat_i, fold_i, group_sel,
-                 iteration_i = train_out$opt.path$env$dob,
-                 time_total = train_out$opt.path$env$exec.time,
-                 param_i = seq_along(time_total)),
-      train_out$opt.path$env$path
-    ),
+    if (!is.null(train_out)) {
+      bind_cols(
+        data_frame(type = "train", grid_i, repeat_i, fold_i, group_sel,
+                   iteration_i = train_out$opt.path$env$dob,
+                   time_total = train_out$opt.path$env$exec.time,
+                   param_i = seq_along(time_total)),
+        train_out$opt.path$env$path
+      )
+    } else {
+      NULL
+    },
     bind_cols(
       data_frame(type = "test", grid_i, repeat_i, fold_i, group_sel,
-                 iteration_i = train_out$opt.path$env$dob,
+                 iteration_i = test_out$opt.path$env$dob,
                  time_total = test_out$opt.path$env$exec.time,
                  param_i = seq_along(time_total)),
       test_out$opt.path$env$path
     )
   ) %>% as.tibble
-  par_set <- train_out$opt.path$par.set
+  par_set <- test_out$opt.path$par.set
   # par_set <- data$method$par_set
 
   for (parname in names(par_set$pars)) {
@@ -446,10 +454,12 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
   }
 
   ## collect the scores per task individually
-  individual_scores <- map_df(seq_along(train_out$opt.path$env$dob), function(param_i) {
-    train_summary <- train_out$opt.path$env$extra[[param_i]]$.summary
-    if (!is.null(train_summary)) {
-      train_summary <- train_summary %>% mutate(fold_type = "train")
+  individual_scores <- map_df(seq_along(test_out$opt.path$env$dob), function(param_i) {
+    if (!is.null(train_out)) {
+      train_summary <- train_out$opt.path$env$extra[[param_i]]$.summary
+      if (!is.null(train_summary)) {
+        train_summary <- train_summary %>% mutate(fold_type = "train")
+      }
     }
 
     test_summary <- test_out$opt.path$env$extra[[param_i]]$.summary
@@ -457,9 +467,15 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
       test_summary <- test_summary %>% mutate(fold_type = "test")
     }
 
-    bind_rows(train_summary, test_summary) %>%
-      mutate(grid_i, repeat_i, fold_i, group_sel, param_i,
-             iteration_i = train_out$opt.path$env$dob[param_i])
+    if (!is.null(train_out)) {
+      bind_rows(train_summary, test_summary) %>%
+        mutate(grid_i, repeat_i, fold_i, group_sel, param_i,
+               iteration_i = train_out$opt.path$env$dob[param_i])
+    } else {
+      test_summary %>%
+        mutate(grid_i, repeat_i, fold_i, group_sel, param_i,
+               iteration_i = test_out$opt.path$env$dob[param_i])
+    }
   })
 
   lst(best, path_summary, individual_scores)
