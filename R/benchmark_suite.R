@@ -154,24 +154,8 @@ benchmark_suite_submit <- function(
           )
           design_test <- tune_train$opt.path$env$path %>% select(-one_of(metrics))
         } else {
+          tune_train <- NULL
           design_test <- design
-        }
-
-        no_train_mlrMBO <- function(fun, design, learner, control, show.info, more.args) {
-          requireNamespace("mlrMBO")
-          opt.problem <- mlrMBO:::initOptProblem(
-            fun = fun,
-            design = design,
-            learner = learner,
-            control = control,
-            show.info = show.info,
-            more.args = more.args
-          )
-          opt.state <- mlrMBO:::makeOptState(opt.problem)
-          mlrMBO:::evalMBODesign.OptState(opt.state)
-          mlrMBO:::finalizeMboLoop(opt.state)
-          opt.result <- mlrMBO:::getOptStateOptResult(opt.state)
-          mbo.result <- mlrMBO:::makeMBOResult.OptState(opt.state)
         }
 
         tune_test <- no_train_mlrMBO(
@@ -250,6 +234,25 @@ benchmark_suite_submit <- function(
       }
     }
   })
+}
+
+# Helper function for running just the initialisation of mlrMBO
+no_train_mlrMBO <- function(fun, design, learner, control, show.info, more.args) {
+  requireNamespace("mlrMBO")
+  opt.problem <- mlrMBO:::initOptProblem(
+    fun = fun,
+    design = design,
+    learner = learner,
+    control = control,
+    show.info = show.info,
+    more.args = more.args
+  )
+  opt.state <- mlrMBO:::makeOptState(opt.problem)
+  mlrMBO:::evalMBODesign.OptState(opt.state)
+  mlrMBO:::finalizeMboLoop(opt.state)
+  opt.result <- mlrMBO:::getOptStateOptResult(opt.state)
+  mbo.result <- mlrMBO:::makeMBOResult.OptState(opt.state)
+  mbo.result
 }
 
 #' Downloading and processing the results of the benchmark jobs
