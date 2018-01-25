@@ -195,6 +195,8 @@ benchmark_suite_submit <- function(
           control, control, grid, qsub_handle
         )
         readr::write_rds(out, qsubhandle_file)
+
+        invisible()
       } else {
         # run locally
         out <- pbapply::pblapply(
