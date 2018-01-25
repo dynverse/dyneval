@@ -4,12 +4,12 @@
 \alias{benchmark_suite_submit}
 \title{A benchmark suite with which to run all the methods on the different tasks}
 \usage{
-benchmark_suite_submit(tasks, task_group, task_fold, out_dir, timeout = 120,
-  methods = get_descriptions(as_tibble = TRUE), designs = NULL,
-  metrics = "correlation", extra_metrics = NULL, num_cores = 4,
-  memory = "20G", max_wall_time = NULL, execute_before = NULL,
-  r_module = "R", num_iterations = 20, num_init_params = 100,
-  num_repeats = 1, save_r2g_to_outdir = FALSE, do_it_local = FALSE,
+benchmark_suite_submit(tasks, task_group, task_fold, out_dir, remote_dir,
+  timeout = 120, methods = get_descriptions(as_tibble = TRUE),
+  designs = NULL, metrics = "correlation", extra_metrics = NULL,
+  num_cores = 4, memory = "20G", max_wall_time = NULL,
+  execute_before = NULL, r_module = "R", num_iterations = 20,
+  num_init_params = 100, num_repeats = 1, do_it_local = FALSE,
   output_model = FALSE)
 }
 \arguments{
@@ -19,7 +19,9 @@ benchmark_suite_submit(tasks, task_group, task_fold, out_dir, timeout = 120,
 
 \item{task_fold}{A fold index vector for the different tasks.}
 
-\item{out_dir}{The folder in which to output intermediate and final results.}
+\item{out_dir}{A folder in which to output intermediate and final results.}
+
+\item{remote_dir}{A folder in which to store intermediate results in a remote directory when using the PRISM package.}
 
 \item{timeout}{The number of seconds 1 method has to solve each of the tasks before a timeout is generated.}
 
@@ -47,8 +49,6 @@ see \code{\link{calculate_metrics}} for a list of which metrics are available.}
 \item{num_init_params}{The number of initial parameters to evaluate.}
 
 \item{num_repeats}{The number of times to repeat the mlr process, for each group and each fold.}
-
-\item{save_r2g_to_outdir}{Save the r2gridengine output to \code{out_dir} instead of the default \code{local_tmp_path}.}
 
 \item{do_it_local}{Whether or not to run the benchmark suite locally (not recommended)}
 

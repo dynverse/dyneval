@@ -3,7 +3,8 @@
 #' @param tasks A tibble of tasks.
 #' @param task_group A grouping vector for the different tasks.
 #' @param task_fold A fold index vector for the different tasks.
-#' @param out_dir The folder in which to output intermediate and final results.
+#' @param out_dir A folder in which to output intermediate and final results.
+#' @param remote_dir A folder in which to store intermediate results in a remote directory when using the PRISM package.
 #' @param timeout The number of seconds 1 method has to solve each of the tasks before a timeout is generated.
 #' @param methods A tibble of TI methods.
 #' @param designs A names list of given designs data frames. Names must be equal to method short names.
@@ -18,7 +19,6 @@
 #' @param num_iterations The number of iterations to run.
 #' @param num_init_params The number of initial parameters to evaluate.
 #' @param num_repeats The number of times to repeat the mlr process, for each group and each fold.
-#' @param save_r2g_to_outdir Save the r2gridengine output to \code{out_dir} instead of the default \code{local_tmp_path}.
 #' @param do_it_local Whether or not to run the benchmark suite locally (not recommended)
 #' @param output_model Whether or not to return the outputted models
 #'
@@ -31,7 +31,7 @@
 #' @importFrom randomForest randomForest
 #' @importFrom pbapply pblapply
 #' @importFrom emoa emoa_control
-#' @importFrom readr write_rds
+#' @importFrom readr read_rds write_rds
 #'
 #' @export
 benchmark_suite_submit <- function(
@@ -39,6 +39,7 @@ benchmark_suite_submit <- function(
   task_group,
   task_fold,
   out_dir,
+  remote_dir,
   timeout = 120,
   methods = get_descriptions(as_tibble = TRUE),
   designs = NULL,
@@ -52,7 +53,6 @@ benchmark_suite_submit <- function(
   num_iterations = 20,
   num_init_params = 100,
   num_repeats = 1,
-  save_r2g_to_outdir = FALSE,
   do_it_local = FALSE,
   output_model = FALSE
 ) {
@@ -100,6 +100,34 @@ benchmark_suite_submit <- function(
     stringsAsFactors = FALSE
   )
 
+  ## save tasks to local file
+  if (!do_it_local) {
+    tasks_local_file <- paste0(out_dir, "/tasks_benchmark.rds")
+    tasks_remote_file <- paste0(remote_dir, "/tasks_benchmark.rds")
+
+    dir.create(out_dir, recursive = TRUE)
+
+    qsub_config <- PRISM::override_qsub_config(
+      wait = FALSE,
+      remove_tmp_folder = FALSE,
+      stop_on_error = FALSE,
+      verbose = FALSE,
+      num_cores = num_cores,
+      memory = memory,
+      max_wall_time = max_wall_time,
+      r_module = r_module,
+      execute_before = execute_before,
+      local_tmp_path = out_dir,
+      remote_tmp_path = remote_dir
+    )
+
+    cat("Saving tasks file\n")
+    readr::write_rds(tasks, tasks_local_file)
+
+    cat("Moving tasks file to remote\n")
+    PRISM:::rsync_remote("", tasks_local_file, qsub_config$remote, remote_dir)
+  }
+
   ## run MBO for each method separately
   lapply (seq_len(nrow(methods)), function(methodi) {
     method <- dynutils::extract_row_to_list(methods, methodi)
@@ -135,6 +163,10 @@ benchmark_suite_submit <- function(
         fold_i <- grid[grid_i,]$fold_i
         group_sel <- grid[grid_i,]$group_sel
         repeat_i <- grid[grid_i,]$repeat_i
+
+        if (!"tasks" %in% ls()) {
+          tasks <- readr::read_rds(tasks_remote_file)
+        }
 
         ## start parameter optimisation
         parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
@@ -177,32 +209,19 @@ benchmark_suite_submit <- function(
 
       if (!do_it_local) {
         # set parameters for the cluster
-        qsub_config <- PRISM::override_qsub_config(
-          wait = FALSE,
-          num_cores = num_cores,
-          memory = memory,
+        qsub_config_method <- PRISM::override_qsub_config(
+          qsub_config = qsub_config,
           name = paste0("D_", method$short_name),
-          remove_tmp_folder = FALSE,
-          stop_on_error = FALSE,
-          verbose = FALSE,
-          max_wall_time = max_wall_time,
-          r_module = r_module,
-          execute_before = execute_before
+          local_tmp_path = paste0(method_folder, "/r2gridengine")
         )
 
-        # if the cluster data needs to be saved to dyneval output folder
-        if (save_r2g_to_outdir) {
-          qsub_config$local_tmp_path <- paste0(method_folder, "/r2gridengine")
-          dir.create(qsub_config$local_tmp_path, recursive = T, showWarnings = F)
-        }
-
         # which packages to load on the cluster
-        qsub_packages <- c("dplyr", "purrr", "dyneval", "mlrMBO", "parallelMap")
+        qsub_packages <- c("dplyr", "purrr", "dyneval", "mlrMBO", "parallelMap", "readr")
 
         # which data objects will need to be transferred to the cluster
         qsub_environment <-  c(
           "method", "obj_fun", "design",
-          "tasks", "task_group", "task_fold",
+          "task_group", "task_fold", "tasks_remote_file",
           "num_cores", "metrics", "extra_metrics",
           "control", "control", "grid",
           "learner", "timeout", "output_model",
@@ -214,15 +233,17 @@ benchmark_suite_submit <- function(
           X = qsub_x,
           qsub_environment = qsub_environment,
           qsub_packages = qsub_packages,
-          qsub_config = qsub_config,
+          qsub_config = qsub_config_method,
           FUN = qsub_fun
         )
 
         # save data and handle to RDS file
         out <- lst(
-          method, obj_fun, design, tasks, task_group,
-          task_fold, num_cores, metrics, extra_metrics,
-          control, control, grid, qsub_handle)
+          method, obj_fun, design,
+          task_group, task_fold,
+          num_cores, metrics, extra_metrics,
+          control, control, grid, qsub_handle
+        )
         readr::write_rds(out, qsubhandle_file)
       } else {
         # run locally
