@@ -196,7 +196,7 @@ benchmark_suite_submit <- function(
         )
         readr::write_rds(out, qsubhandle_file)
 
-        invisible()
+        NULL
       } else {
         # run locally
         out <- pbapply::pblapply(
