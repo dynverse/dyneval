@@ -143,10 +143,7 @@ benchmark_suite_submit <- function(
     if ((!file.exists(output_file) && !file.exists(qsubhandle_file)) || do_it_local) {
       cat("Submitting ", method$name, "\n", sep="")
 
-      # create an objective function
-      obj_fun <- make_obj_fun(method = method, metrics = metrics, extra_metrics = extra_metrics)
-
-      # generate initial parameters
+            # generate initial parameters
       if (is.null(designs)) {
         design <- bind_rows(
           ParamHelpers::generateDesignOfDefaults(method$par_set),
@@ -183,6 +180,7 @@ benchmark_suite_submit <- function(
         # submit to the cluster
         qsub_handle <- PRISM::qsub_lapply(
           X = qsub_x,
+          object_envir = environment(),
           qsub_environment = qsub_environment,
           qsub_packages = qsub_packages,
           qsub_config = qsub_config_method,
@@ -191,7 +189,7 @@ benchmark_suite_submit <- function(
 
         # save data and handle to RDS file
         out <- lst(
-          method, obj_fun, design,
+          method, design,
           task_group, task_fold,
           num_cores, metrics, extra_metrics,
           control, control, grid, qsub_handle
@@ -224,6 +222,9 @@ benchmark_qsub_fun <- function(grid_i) {
   if (!"tasks" %in% ls()) {
     tasks <- readr::read_rds(tasks_remote_file)
   }
+
+  # create an objective function
+  obj_fun <- make_obj_fun(method = method, metrics = metrics, extra_metrics = extra_metrics)
 
   ## start parameter optimisation
   parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
