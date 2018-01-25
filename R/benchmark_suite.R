@@ -31,6 +31,7 @@
 #' @importFrom randomForest randomForest
 #' @importFrom pbapply pblapply
 #' @importFrom emoa emoa_control
+#' @importFrom readr write_rds
 #'
 #' @export
 benchmark_suite_submit <- function(
@@ -238,7 +239,7 @@ benchmark_suite_submit <- function(
           method, obj_fun, design, tasks, task_group,
           task_fold, num_cores, metrics, extra_metrics,
           control, control, grid, qsub_handle)
-        saveRDS(out, qsubhandle_file)
+        readr::write_rds(out, qsubhandle_file)
       } else {
         # run locally
         out <- pbapply::pblapply(
@@ -256,6 +257,7 @@ benchmark_suite_submit <- function(
 #' @param out_dir The folder in which to output intermediate and final results.
 #'
 #' @importFrom PRISM qsub_retrieve qacct qstat_j
+#' @importFrom readr read_rds write_rds
 #' @export
 benchmark_suite_retrieve <- function(out_dir) {
   method_names <- list.dirs(out_dir, full.names = FALSE, recursive = FALSE) %>% discard(~ . == "")
@@ -266,10 +268,10 @@ benchmark_suite_retrieve <- function(out_dir) {
 
     if (file.exists(output_file)) {
       cat(method_name, ": Reading previous output\n", sep = "")
-      readRDS(output_file)
+      readr::read_rds(output_file)
     } else if (!file.exists(output_file) && file.exists(qsubhandle_file)) {
       cat(method_name, ": Attempting to retrieve output from cluster: ", sep = "")
-      data <- readRDS(qsubhandle_file)
+      data <- readr::read_rds(qsubhandle_file)
       qsub_handle <- data$qsub_handle
       num_tasks <- qsub_handle$num_tasks
 
@@ -333,7 +335,7 @@ benchmark_suite_retrieve <- function(out_dir) {
         select(method_name, task_id, which_errored, qsub_error, everything())
 
       if (output_succeeded) {
-        saveRDS(out_rds, output_file)
+        readr::write_rds(out_rds, output_file)
       }
 
       out_rds

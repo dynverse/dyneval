@@ -19,6 +19,7 @@
 #' @importFrom dynmethods execute_method
 #' @importFrom parallel mclapply
 #' @importFrom testthat expect_false expect_true
+#' @importFrom readr write_rds
 execute_evaluation <- function(
   tasks,
   method,
@@ -119,7 +120,7 @@ execute_evaluation <- function(
       ifelse(grepl("/$", output_model), "", "/"),
       dynutils::random_time_string(), ".rds"
     )
-    saveRDS(models, file = filename)
+    readr::write_rds(models, file = filename)
     extras$.models_file <- filename
   }
 
