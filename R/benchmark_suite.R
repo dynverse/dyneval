@@ -32,6 +32,7 @@
 #' @importFrom pbapply pblapply
 #' @importFrom emoa emoa_control
 #' @importFrom readr read_rds write_rds
+#' @importFrom dynmethods get_descriptions
 #'
 #' @export
 benchmark_suite_submit <- function(
@@ -40,8 +41,8 @@ benchmark_suite_submit <- function(
   task_fold,
   out_dir,
   remote_dir,
-  timeout = 120,
-  methods = get_descriptions(as_tibble = TRUE),
+  timeout = 24 * 3600,
+  methods = dynmethods::get_descriptions(as_tibble = TRUE),
   designs = NULL,
   metrics = "correlation",
   extra_metrics = NULL,
@@ -100,11 +101,9 @@ benchmark_suite_submit <- function(
     stringsAsFactors = FALSE
   )
 
-  ## save tasks to local file
+  ## Prepare for remote execution
   if (!do_it_local) {
-    tasks_local_file <- paste0(out_dir, "/tasks_benchmark.rds")
-    tasks_remote_file <- paste0(remote_dir, "/tasks_benchmark.rds")
-
+    ## Create a qsub config
     qsub_config <- PRISM::override_qsub_config(
       wait = FALSE,
       remove_tmp_folder = FALSE,
@@ -118,6 +117,10 @@ benchmark_suite_submit <- function(
       local_tmp_path = out_dir,
       remote_tmp_path = remote_dir
     )
+
+    ## save tasks to local file
+    tasks_local_file <- paste0(out_dir, "/tasks_benchmark.rds")
+    tasks_remote_file <- paste0(remote_dir, "/tasks_benchmark.rds")
 
     cat("Saving tasks file\n")
     PRISM:::mkdir_remote(path = out_dir, remote = "")
@@ -133,17 +136,25 @@ benchmark_suite_submit <- function(
     method <- dynutils::extract_row_to_list(methods, methodi)
 
     # determine where to store certain outputs
-    method_folder <- paste0(out_dir, method$short_name)
+    method_folder <- paste0(out_dir, "/", method$short_name)
+    method_remote_folder <- paste0(remote_dir, "/", method$short_name)
+    mlrMBO_file <-
+      if (do_it_local) {
+      paste0(method_folder, "/mlrMBO.RData")
+    } else {
+      paste0(method_remote_folder, "/mlrMBO.RData")
+    }
     output_file <- paste0(method_folder, "/output.rds")
     qsubhandle_file <- paste0(method_folder, "/qsubhandle.rds")
 
-    dir.create(method_folder, recursive = TRUE, showWarnings = FALSE)
+    PRISM:::mkdir_remote(path = method_folder, remote = "")
+    PRISM:::mkdir_remote(path = method_remote_folder, remote = qsub_config$remote)
 
     ## If no output or qsub handle exists yet
     if ((!file.exists(output_file) && !file.exists(qsubhandle_file)) || do_it_local) {
       cat("Submitting ", method$name, "\n", sep="")
 
-            # generate initial parameters
+      # generate initial parameters
       if (is.null(designs)) {
         design <- bind_rows(
           ParamHelpers::generateDesignOfDefaults(method$par_set),
@@ -152,9 +163,6 @@ benchmark_suite_submit <- function(
       } else {
         design <- designs[[method$short_name]]
       }
-
-      # the function to run on the cluster
-      qsub_x <- seq_len(nrow(grid))
 
       if (!do_it_local) {
         # set parameters for the cluster
@@ -169,17 +177,14 @@ benchmark_suite_submit <- function(
 
         # which data objects will need to be transferred to the cluster
         qsub_environment <-  c(
-          "method", "obj_fun", "design",
-          "task_group", "task_fold", "tasks_remote_file",
-          "num_cores", "metrics", "extra_metrics",
-          "control", "grid",
-          "learner", "timeout", "output_model",
-          "num_folds"
+          "method", "obj_fun", "design", "task_group", "task_fold", "tasks_remote_file",
+          "num_cores", "metrics", "extra_metrics", "control", "grid",
+          "learner", "timeout", "output_model", "num_folds", "mlrMBO_file"
         )
 
         # submit to the cluster
         qsub_handle <- PRISM::qsub_lapply(
-          X = qsub_x,
+          X = seq_len(nrow(grid)),
           object_envir = environment(),
           qsub_environment = qsub_environment,
           qsub_packages = qsub_packages,
@@ -192,8 +197,8 @@ benchmark_suite_submit <- function(
           method, design,
           task_group, task_fold,
           num_cores, metrics, extra_metrics,
-          control, control, grid, qsub_handle,
-          tasks_local_file, tasks_remote_file
+          control, grid, qsub_handle,
+          tasks_local_file, tasks_remote_file, mlrMBO_file
         )
         readr::write_rds(out, qsubhandle_file)
 
@@ -201,7 +206,7 @@ benchmark_suite_submit <- function(
       } else {
         # run locally
         out <- pbapply::pblapply(
-          X = qsub_x,
+          X = seq_len(nrow(grid)),
           FUN = benchmark_qsub_fun
         )
         out
@@ -233,18 +238,39 @@ benchmark_qsub_fun <- function(grid_i) {
   parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
 
   if (num_folds != 1) {
-    tune_train <- mlrMBO::mbo(
-      obj_fun,
-      learner = learner,
-      design = design,
-      control = control,
-      show.info = TRUE,
-      more.args = list(
-        tasks = tasks[task_group == group_sel & task_fold != fold_i,],
-        timeout = timeout,
-        output_model = output_model
-      )
+    ## Configure mlrMBO to save the training at every iteration
+    control_train <- control
+
+    control_train$save.file.path <- mlrMBO_file
+    control_train$save.on.disk.at <- seq(0, control_train$iters+1, by = 1)
+
+    ## Start training. If a timeout is reached, the training will stop prematurely.
+    tune_train_poss_timeout <- dynutils::eval_with_timeout(
+      timeout = timeout,
+      expr = {
+        mlrMBO::mbo(
+          obj_fun,
+          learner = learner,
+          design = design,
+          control = control_train,
+          show.info = TRUE,
+          more.args = list(
+            tasks = tasks[task_group == group_sel & task_fold != fold_i,],
+            output_model = output_model
+          )
+        )
+      }
     )
+
+
+    ## Read the last saved state
+    tune_train <- mlrMBO::mboFinalize(mlrMBO_file)
+
+    ## Remove the optimisation problem as the datasets included might be fairly large
+    tune_train$final.opt.state$opt.problem <- NULL
+    tune_train$final.opt.state$opt.path <- NULL
+
+    ## Extract all parameters from the training, to be run on the test datasets
     design_test <- tune_train$opt.path$env$path %>% select(-one_of(metrics))
   } else {
     tune_train <- NULL
@@ -259,10 +285,14 @@ benchmark_qsub_fun <- function(grid_i) {
     show.info = TRUE,
     more.args = list(
       tasks = tasks[task_group == group_sel & task_fold == fold_i,],
-      timeout = timeout,
       output_model = output_model
     )
   )
+
+  ## Remove the optimisation problem as the datasets included might be fairly large
+  tune_test$final.opt.state$opt.problem <- NULL
+  tune_test$final.opt.state$opt.path <- NULL
+
   parallelMap::parallelStop()
 
   list(tune_train = tune_train, tune_test = tune_test)

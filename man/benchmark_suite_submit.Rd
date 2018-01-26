@@ -5,8 +5,8 @@
 \title{A benchmark suite with which to run all the methods on the different tasks}
 \usage{
 benchmark_suite_submit(tasks, task_group, task_fold, out_dir, remote_dir,
-  timeout = 120, methods = get_descriptions(as_tibble = TRUE),
-  designs = NULL, metrics = "correlation", extra_metrics = NULL,
+  timeout = 24 * 3600, methods = dynmethods::get_descriptions(as_tibble =
+  TRUE), designs = NULL, metrics = "correlation", extra_metrics = NULL,
   num_cores = 4, memory = "20G", max_wall_time = NULL,
   execute_before = NULL, r_module = "R", num_iterations = 20,
   num_init_params = 100, num_repeats = 1, do_it_local = FALSE,
