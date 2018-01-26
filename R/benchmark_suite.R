@@ -99,35 +99,32 @@ benchmark_suite_submit <- function(
     stringsAsFactors = FALSE
   )
 
-  ## Prepare for remote execution
-  if (!do_it_local) {
-    ## Create a qsub config
-    qsub_config <- PRISM::override_qsub_config(
-      wait = FALSE,
-      remove_tmp_folder = FALSE,
-      stop_on_error = FALSE,
-      verbose = FALSE,
-      num_cores = num_cores,
-      memory = memory,
-      max_wall_time = max_wall_time,
-      r_module = r_module,
-      execute_before = execute_before,
-      local_tmp_path = out_dir,
-      remote_tmp_path = remote_dir
-    )
+  ## Prepare for remote execution; create a qsub config
+  qsub_config <- PRISM::override_qsub_config(
+    wait = FALSE,
+    remove_tmp_folder = FALSE,
+    stop_on_error = FALSE,
+    verbose = FALSE,
+    num_cores = num_cores,
+    memory = memory,
+    max_wall_time = max_wall_time,
+    r_module = r_module,
+    execute_before = execute_before,
+    local_tmp_path = out_dir,
+    remote_tmp_path = remote_dir
+  )
 
-    ## save tasks to local file
-    tasks_local_file <- paste0(out_dir, "/tasks_benchmark.rds")
-    tasks_remote_file <- paste0(remote_dir, "/tasks_benchmark.rds")
+  ## Save tasks to local file
+  tasks_local_file <- paste0(out_dir, "/tasks_benchmark.rds")
+  tasks_remote_file <- paste0(remote_dir, "/tasks_benchmark.rds")
 
-    cat("Saving tasks file\n")
-    PRISM:::mkdir_remote(path = out_dir, remote = "")
-    readr::write_rds(tasks, tasks_local_file)
+  cat("Saving tasks file\n")
+  PRISM:::mkdir_remote(path = out_dir, remote = "")
+  readr::write_rds(tasks, tasks_local_file)
 
-    cat("Moving tasks file to remote\n")
-    PRISM:::mkdir_remote(path = remote_dir, remote = qsub_config$remote)
-    PRISM:::rsync_remote("", tasks_local_file, qsub_config$remote, remote_dir)
-  }
+  cat("Moving tasks file to remote\n")
+  PRISM:::mkdir_remote(path = remote_dir, remote = qsub_config$remote)
+  PRISM:::rsync_remote("", tasks_local_file, qsub_config$remote, remote_dir)
 
   ## run MBO for each method separately
   lapply (seq_len(nrow(methods)), function(methodi) {
@@ -141,7 +138,7 @@ benchmark_suite_submit <- function(
     PRISM:::mkdir_remote(path = method_folder, remote = "")
 
     ## If no output or qsub handle exists yet
-    if ((!file.exists(output_file) && !file.exists(qsubhandle_file)) || do_it_local) {
+    if (!file.exists(output_file) && !file.exists(qsubhandle_file)) {
       cat("Submitting ", method$name, "\n", sep="")
 
       # generate initial parameters
@@ -168,7 +165,7 @@ benchmark_suite_submit <- function(
       qsub_environment <-  c(
         "method", "obj_fun", "design", "task_group", "task_fold", "tasks_remote_file",
         "num_cores", "metrics", "extra_metrics", "control", "grid",
-        "learner", "timeout", "output_model", "num_folds", "mlrMBO_file"
+        "learner", "timeout", "output_model", "num_folds"
       )
 
       # submit to the cluster
@@ -187,7 +184,7 @@ benchmark_suite_submit <- function(
         task_group, task_fold,
         num_cores, metrics, extra_metrics,
         control, grid, qsub_handle,
-        tasks_local_file, tasks_remote_file, mlrMBO_file
+        tasks_local_file, tasks_remote_file
       )
       readr::write_rds(out, qsubhandle_file)
 
@@ -208,6 +205,8 @@ benchmark_qsub_fun <- function(grid_i) {
   group_sel <- grid[grid_i,]$group_sel
   repeat_i <- grid[grid_i,]$repeat_i
 
+  working_dir <- getwd()
+
   if (!"tasks" %in% ls()) {
     tasks <- readr::read_rds(tasks_remote_file)
   }
@@ -220,7 +219,7 @@ benchmark_qsub_fun <- function(grid_i) {
 
   if (num_folds != 1) {
     ## create a folder to save the intermediate mbo files in
-    save_file_path <- paste0(qsub_handle$remote_dir, "/mlrmbo")
+    save_file_path <- paste0(working_dir, "/mlrmbo")
     dir.create(save_file_path, showWarnings = FALSE, recursive = TRUE)
 
     ## configure intermediate output
