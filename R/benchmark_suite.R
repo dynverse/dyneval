@@ -19,7 +19,6 @@
 #' @param num_iterations The number of iterations to run.
 #' @param num_init_params The number of initial parameters to evaluate.
 #' @param num_repeats The number of times to repeat the mlr process, for each group and each fold.
-#' @param do_it_local Whether or not to run the benchmark suite locally (not recommended)
 #' @param output_model Whether or not to return the outputted models
 #'
 #' @importFrom testthat expect_equal expect_is
@@ -54,7 +53,6 @@ benchmark_suite_submit <- function(
   num_iterations = 20,
   num_init_params = 100,
   num_repeats = 1,
-  do_it_local = FALSE,
   output_model = FALSE
 ) {
   testthat::expect_is(tasks, "tbl")
@@ -137,18 +135,10 @@ benchmark_suite_submit <- function(
 
     # determine where to store certain outputs
     method_folder <- paste0(out_dir, "/", method$short_name)
-    method_remote_folder <- paste0(remote_dir, "/", method$short_name)
-    mlrMBO_file <-
-      if (do_it_local) {
-      paste0(method_folder, "/mlrMBO.RData")
-    } else {
-      paste0(method_remote_folder, "/mlrMBO.RData")
-    }
     output_file <- paste0(method_folder, "/output.rds")
     qsubhandle_file <- paste0(method_folder, "/qsubhandle.rds")
 
     PRISM:::mkdir_remote(path = method_folder, remote = "")
-    PRISM:::mkdir_remote(path = method_remote_folder, remote = qsub_config$remote)
 
     ## If no output or qsub handle exists yet
     if ((!file.exists(output_file) && !file.exists(qsubhandle_file)) || do_it_local) {
@@ -164,53 +154,44 @@ benchmark_suite_submit <- function(
         design <- designs[[method$short_name]]
       }
 
-      if (!do_it_local) {
-        # set parameters for the cluster
-        qsub_config_method <- PRISM::override_qsub_config(
-          qsub_config = qsub_config,
-          name = paste0("D_", method$short_name),
-          local_tmp_path = paste0(method_folder, "/r2gridengine")
-        )
+      # set parameters for the cluster
+      qsub_config_method <- PRISM::override_qsub_config(
+        qsub_config = qsub_config,
+        name = paste0("D_", method$short_name),
+        local_tmp_path = paste0(method_folder, "/r2gridengine")
+      )
 
-        # which packages to load on the cluster
-        qsub_packages <- c("dplyr", "purrr", "dyneval", "mlrMBO", "parallelMap", "readr")
+      # which packages to load on the cluster
+      qsub_packages <- c("dplyr", "purrr", "dyneval", "mlrMBO", "parallelMap", "readr")
 
-        # which data objects will need to be transferred to the cluster
-        qsub_environment <-  c(
-          "method", "obj_fun", "design", "task_group", "task_fold", "tasks_remote_file",
-          "num_cores", "metrics", "extra_metrics", "control", "grid",
-          "learner", "timeout", "output_model", "num_folds", "mlrMBO_file"
-        )
+      # which data objects will need to be transferred to the cluster
+      qsub_environment <-  c(
+        "method", "obj_fun", "design", "task_group", "task_fold", "tasks_remote_file",
+        "num_cores", "metrics", "extra_metrics", "control", "grid",
+        "learner", "timeout", "output_model", "num_folds", "mlrMBO_file"
+      )
 
-        # submit to the cluster
-        qsub_handle <- PRISM::qsub_lapply(
-          X = seq_len(nrow(grid)),
-          object_envir = environment(),
-          qsub_environment = qsub_environment,
-          qsub_packages = qsub_packages,
-          qsub_config = qsub_config_method,
-          FUN = benchmark_qsub_fun
-        )
+      # submit to the cluster
+      qsub_handle <- PRISM::qsub_lapply(
+        X = seq_len(nrow(grid)),
+        object_envir = environment(),
+        qsub_environment = qsub_environment,
+        qsub_packages = qsub_packages,
+        qsub_config = qsub_config_method,
+        FUN = benchmark_qsub_fun
+      )
 
-        # save data and handle to RDS file
-        out <- lst(
-          method, design,
-          task_group, task_fold,
-          num_cores, metrics, extra_metrics,
-          control, grid, qsub_handle,
-          tasks_local_file, tasks_remote_file, mlrMBO_file
-        )
-        readr::write_rds(out, qsubhandle_file)
+      # save data and handle to RDS file
+      out <- lst(
+        method, design,
+        task_group, task_fold,
+        num_cores, metrics, extra_metrics,
+        control, grid, qsub_handle,
+        tasks_local_file, tasks_remote_file, mlrMBO_file
+      )
+      readr::write_rds(out, qsubhandle_file)
 
-        NULL
-      } else {
-        # run locally
-        out <- pbapply::pblapply(
-          X = seq_len(nrow(grid)),
-          FUN = benchmark_qsub_fun
-        )
-        out
-      }
+      NULL
     }
   })
 }
@@ -238,10 +219,13 @@ benchmark_qsub_fun <- function(grid_i) {
   parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
 
   if (num_folds != 1) {
-    ## Configure mlrMBO to save the training at every iteration
-    control_train <- control
+    ## create a folder to save the intermediate mbo files in
+    save_file_path <- paste0(qsub_handle$remote_dir, "/mlrmbo")
+    dir.create(save_file_path, showWarnings = FALSE, recursive = TRUE)
 
-    control_train$save.file.path <- mlrMBO_file
+    ## configure intermediate output
+    control_train <- control
+    control_train$save.file.path <- paste0(save_file_path, "/mlr_progress_", grid_i, ".RData")
     control_train$save.on.disk.at <- seq(0, control_train$iters+1, by = 1)
 
     ## Start training. If a timeout is reached, the training will stop prematurely.
@@ -262,9 +246,8 @@ benchmark_qsub_fun <- function(grid_i) {
       }
     )
 
-
     ## Read the last saved state
-    tune_train <- mlrMBO::mboFinalize(mlrMBO_file)
+    tune_train <- mlrMBO::mboFinalize(control_train$save.file.path)
 
     ## Remove the optimisation problem as the datasets included might be fairly large
     tune_train$final.opt.state$opt.problem <- NULL
