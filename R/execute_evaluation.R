@@ -5,11 +5,6 @@
 #' @param method The method to evaluate.
 #' @param parameters The parameters to evaluate with.
 #' @param extra_metrics Extra metrics to calculate but not evaluate with.
-#' @param timeout Kill execution after a given amount of time.
-#' @param debug_timeout Setting debug to \code{TRUE} will avoid running the method in a separate R session
-#'   using \code{\link[dynutils]{eval_with_timeout}} and run the method directly. Note that the timeout functionality
-#'   will not work when \code{debug} is \code{TRUE}.#' @param metrics which metrics to use;
-#'   see \code{\link{calculate_metrics}} for a list of which metrics are available.
 #' @param output_model Whether or not the model will be outputted.
 #'   If this is a character string, it will save the model in the requested folder.
 #' @param error_score The aggregated score a method gets if it produces errors.
@@ -26,15 +21,12 @@ execute_evaluation <- function(
   parameters,
   metrics,
   extra_metrics = NULL,
-  timeout,
-  debug_timeout = FALSE,
   output_model = TRUE,
   error_score = 0,
   mc_cores = 1
 ) {
   testthat::expect_true("geodesic_dist" %in% colnames(tasks))
   testthat::expect_false(any(sapply(tasks$geodesic_dist, is.null)))
-  testthat::expect_false(missing(timeout))
 
   calc_metrics <- unique(c(metrics, extra_metrics))
 
@@ -42,8 +34,6 @@ execute_evaluation <- function(
     tasks = tasks,
     method = method,
     parameters = parameters,
-    timeout = timeout,
-    debug_timeout = debug_timeout,
     mc_cores = mc_cores
   )
 
