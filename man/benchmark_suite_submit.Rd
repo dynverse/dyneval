@@ -9,8 +9,7 @@ benchmark_suite_submit(tasks, task_group, task_fold, out_dir, remote_dir,
   TRUE), designs = NULL, metrics = "correlation", extra_metrics = NULL,
   num_cores = 4, memory = "20G", max_wall_time = NULL,
   execute_before = NULL, r_module = "R", num_iterations = 20,
-  num_init_params = 100, num_repeats = 1, do_it_local = FALSE,
-  output_model = FALSE)
+  num_init_params = 100, num_repeats = 1, output_model = FALSE)
 }
 \arguments{
 \item{tasks}{A tibble of tasks.}
@@ -49,8 +48,6 @@ see \code{\link{calculate_metrics}} for a list of which metrics are available.}
 \item{num_init_params}{The number of initial parameters to evaluate.}
 
 \item{num_repeats}{The number of times to repeat the mlr process, for each group and each fold.}
-
-\item{do_it_local}{Whether or not to run the benchmark suite locally (not recommended)}
 
 \item{output_model}{Whether or not to return the outputted models}
 }
