@@ -21,14 +21,13 @@ make_obj_fun <- function(method, metrics, extra_metrics, noisy = FALSE) {
     noisy = noisy,
     has.simple.signature = FALSE,
     par.set = method$par_set,
-    fn = function(x, tasks, output_model, timeout) {
+    fn = function(x, tasks, output_model) {
       execute_evaluation(
         tasks = tasks,
         method = method,
         parameters = x,
         metrics = metrics,
         extra_metrics = extra_metrics,
-        timeout = timeout,
         output_model = output_model,
         error_score = 0
       )
