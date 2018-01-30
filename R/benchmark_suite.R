@@ -345,14 +345,14 @@ benchmark_suite_retrieve <- function(out_dir) {
         outputs <- lapply(output, function(x) {
           if(length(x) == 1 && is.na(x)) {
             list(
-              which_errored = list(TRUE),
-              qsub_error = list(attr(x, "qsub_error"))
+              which_errored = TRUE,
+              qsub_error = attr(x, "qsub_error")
             )
           } else {
             # check to see whether all jobs failed
             all_errored <- all(x$individual_scores$error %>% map_lgl(~ !is.null(.)))
-            x$which_errored <- list(all_errored)
-            x$qsub_error <- list(ifelse(all_errored, "all parameter settings errored", ""))
+            x$which_errored <- all_errored
+            x$qsub_error <- ifelse(all_errored, "all parameter settings errored", "")
             x
           }
         }) %>% list_as_tibble()
@@ -367,8 +367,8 @@ benchmark_suite_retrieve <- function(out_dir) {
         cat("Output not found. ", error_message, ".\n", sep = "")
         output_succeeded <- FALSE
         outputs <- tibble(
-          which_errored = list(rep(TRUE, num_tasks)),
-          qsub_error = list(rep(error_message, num_tasks))
+          which_errored = rep(TRUE, num_tasks),
+          qsub_error = rep(error_message, num_tasks)
         )
       }
 
