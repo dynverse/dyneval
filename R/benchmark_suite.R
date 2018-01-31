@@ -228,7 +228,7 @@ benchmark_qsub_fun <- function(grid_i) {
     control_train$save.on.disk.at <- seq(0, control_train$iters+1, by = 1)
 
     ## Start training. If a timeout is reached, the training will stop prematurely.
-    tune_train_poss_timeout <- dynutils::eval_with_timeout(
+    train_out_poss_timeout <- dynutils::eval_with_timeout(
       timeout = timeout,
       expr = {
         mlrMBO::mbo(
@@ -246,20 +246,20 @@ benchmark_qsub_fun <- function(grid_i) {
     )
 
     ## Read the last saved state
-    tune_train <- mlrMBO::mboFinalize(control_train$save.file.path)
+    train_out <- mlrMBO::mboFinalize(control_train$save.file.path)
 
     ## Remove the optimisation problem as the datasets included might be fairly large
-    tune_train$final.opt.state$opt.problem <- NULL
-    tune_train$final.opt.state$opt.path <- NULL
+    train_out$final.opt.state$opt.problem <- NULL
+    train_out$final.opt.state$opt.path <- NULL
 
     ## Extract all parameters from the training, to be run on the test datasets
-    design_test <- tune_train$opt.path$env$path %>% select(-one_of(metrics))
+    design_test <- train_out$opt.path$env$path %>% select(-one_of(metrics))
   } else {
-    tune_train <- NULL
+    train_out <- NULL
     design_test <- design
   }
 
-  tune_test <- no_train_mlrmbo(
+  test_out <- no_train_mlrmbo(
     obj_fun,
     learner = learner,
     design = design_test,
@@ -271,13 +271,9 @@ benchmark_qsub_fun <- function(grid_i) {
     )
   )
 
-  ## Remove the optimisation problem as the datasets included might be fairly large
-  tune_test$final.opt.state$opt.problem <- NULL
-  tune_test$final.opt.state$opt.path <- NULL
-
   parallelMap::parallelStop()
 
-  post_process_mlrmbo_output(tune_train, tune_test, grid, grid_i)
+  post_process_mlrmbo_output(train_out, test_out, grid, grid_i)
 }
 
 # Helper function for running just the initialisation of mlrMBO
