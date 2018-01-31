@@ -259,7 +259,7 @@ benchmark_qsub_fun <- function(grid_i) {
     design_test <- design
   }
 
-  tune_test <- no_train_mlrMBO(
+  tune_test <- no_train_mlrmbo(
     obj_fun,
     learner = learner,
     design = design_test,
@@ -277,11 +277,11 @@ benchmark_qsub_fun <- function(grid_i) {
 
   parallelMap::parallelStop()
 
-  list(tune_train = tune_train, tune_test = tune_test)
+  post_process_mlrmbo_output(tune_train, tune_test, grid, grid_i)
 }
 
 # Helper function for running just the initialisation of mlrMBO
-no_train_mlrMBO <- function(fun, design, learner, control, show.info, more.args) {
+no_train_mlrmbo <- function(fun, design, learner, control, show.info, more.args) {
   requireNamespace("mlrMBO")
   opt.problem <- mlrMBO:::initOptProblem(
     fun = fun,
@@ -297,6 +297,105 @@ no_train_mlrMBO <- function(fun, design, learner, control, show.info, more.args)
   opt.result <- mlrMBO:::getOptStateOptResult(opt.state)
   mbo.result <- mlrMBO:::makeMBOResult.OptState(opt.state)
   mbo.result
+}
+
+
+#' @importFrom readr read_rds
+post_process_mlrmbo_output <- function(train_out, test_out, grid, grid_i) {
+  fold_i <- grid$fold_i[[grid_i]]
+  group_sel <- grid$group_sel[[grid_i]]
+  repeat_i <- grid$repeat_i[[grid_i]]
+
+  x_names <- names(test_out$x)
+  y_names <- test_out$opt.path$y.names
+
+  ## get the best trained parameters
+  if (!is.null(train_out)) {
+    best_ind <- train_out$best.ind
+    best <- list(
+      param_index = best_ind,
+      params = train_out$x,
+      y_names = y_names,
+      train_score = train_out$y,
+      test_score = test_out$opt.path$env$path[best_ind,y_names]
+    ) %>%
+      list() %>%
+      list_as_tibble() %>%
+      mutate(
+        grid_i, repeat_i, fold_i, group_sel
+      )
+  } else {
+    best_ind <- NA
+    best <- NULL
+  }
+
+  ## construct the global summary, 2 rows per parameter
+  path_summary <- bind_rows(
+    if (!is.null(train_out)) {
+      bind_cols(
+        data_frame(type = "train", grid_i, repeat_i, fold_i, group_sel,
+                   iteration_i = train_out$opt.path$env$dob,
+                   time_total = train_out$opt.path$env$exec.time,
+                   param_i = seq_along(time_total)),
+        train_out$opt.path$env$path
+      )
+    } else {
+      NULL
+    },
+    bind_cols(
+      data_frame(type = "test", grid_i, repeat_i, fold_i, group_sel,
+                 iteration_i = test_out$opt.path$env$dob,
+                 time_total = test_out$opt.path$env$exec.time,
+                 param_i = seq_along(time_total)),
+      test_out$opt.path$env$path
+    )
+  ) %>% as.tibble
+  par_set <- test_out$opt.path$par.set
+
+  for (parname in names(par_set$pars)) {
+    parlen <- par_set$pars[[parname]]$len
+    if (parlen > 1) {
+      parlist <-
+        path_summary %>%
+        select(starts_with(parname)) %>%
+        t %>%
+        as.data.frame %>%
+        as.list %>%
+        set_names(NULL)
+      path_summary <- path_summary %>%
+        select(-starts_with(parname)) %>%
+        mutate(!!parname := parlist)
+    }
+  }
+
+  ## collect the scores per task individually
+  individual_scores <- map_df(seq_along(test_out$opt.path$env$dob), function(param_i) {
+    if (!is.null(train_out)) {
+      train_summary <- train_out$opt.path$env$extra[[param_i]]$.summary
+      if (!is.null(train_summary)) {
+        train_summary <- train_summary %>% mutate(fold_type = "train")
+      }
+    } else {
+      train_summary <- NULL
+    }
+
+    test_summary <- test_out$opt.path$env$extra[[param_i]]$.summary
+    if (!is.null(test_summary)) {
+      test_summary <- test_summary %>% mutate(fold_type = "test")
+    }
+
+    bind_rows(train_summary, test_summary) %>%
+      mutate(
+        grid_i,
+        repeat_i,
+        fold_i,
+        group_sel,
+        param_i,
+        iteration_i = test_out$opt.path$env$dob[param_i]
+      )
+  })
+
+  lst(best, path_summary, individual_scores)
 }
 
 #' Downloading and processing the results of the benchmark jobs
@@ -324,9 +423,6 @@ benchmark_suite_retrieve <- function(out_dir) {
 
       output <- PRISM::qsub_retrieve(
         qsub_handle,
-        post_fun = function(rds_i, out_rds) {
-          benchmark_suite_retrieve_helper(rds_i, out_rds, data)
-        },
         wait = FALSE
       )
 
@@ -392,104 +488,5 @@ benchmark_suite_retrieve <- function(out_dir) {
   })
 }
 
-#' @importFrom readr read_rds
-benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
-  grid <- data$grid
 
-  grid_i <- rds_i
-  fold_i <- grid$fold_i[[rds_i]]
-  group_sel <- grid$group_sel[[rds_i]]
-  repeat_i <- grid$repeat_i[[rds_i]]
-  design <- out_rds$design
-  train_out <- out_rds$tune_train
-  test_out <- out_rds$tune_test
-  x_names <- names(test_out$x)
-  y_names <- test_out$opt.path$y.names
-
-  if (!is.null(train_out)) {
-    best_ind <- train_out$best.ind
-    best <- list(
-      param_index = best_ind,
-      params = train_out$x,
-      y_names = y_names,
-      train_score = train_out$y,
-      test_score = test_out$opt.path$env$path[best_ind,y_names]
-    ) %>%
-      list() %>%
-      list_as_tibble() %>%
-      mutate(
-        grid_i, repeat_i, fold_i, group_sel
-      )
-  } else {
-    best_ind <- NA
-    best <- NULL
-  }
-
-  ## construct the global summary, 2 rows per parameter
-  path_summary <- bind_rows(
-    if (!is.null(train_out)) {
-      bind_cols(
-        data_frame(type = "train", grid_i, repeat_i, fold_i, group_sel,
-                   iteration_i = train_out$opt.path$env$dob,
-                   time_total = train_out$opt.path$env$exec.time,
-                   param_i = seq_along(time_total)),
-        train_out$opt.path$env$path
-      )
-    } else {
-      NULL
-    },
-    bind_cols(
-      data_frame(type = "test", grid_i, repeat_i, fold_i, group_sel,
-                 iteration_i = test_out$opt.path$env$dob,
-                 time_total = test_out$opt.path$env$exec.time,
-                 param_i = seq_along(time_total)),
-      test_out$opt.path$env$path
-    )
-  ) %>% as.tibble
-  par_set <- test_out$opt.path$par.set
-  # par_set <- data$method$par_set
-
-  for (parname in names(par_set$pars)) {
-    parlen <- par_set$pars[[parname]]$len
-    if (parlen > 1) {
-      parlist <-
-        path_summary %>%
-        select(starts_with(parname)) %>%
-        t %>%
-        as.data.frame %>%
-        as.list %>%
-        set_names(NULL)
-      path_summary <- path_summary %>%
-        select(-starts_with(parname)) %>%
-        mutate(!!parname := parlist)
-    }
-  }
-
-  ## collect the scores per task individually
-  individual_scores <- map_df(seq_along(test_out$opt.path$env$dob), function(param_i) {
-    if (!is.null(train_out)) {
-      train_summary <- train_out$opt.path$env$extra[[param_i]]$.summary
-      if (!is.null(train_summary)) {
-        train_summary <- train_summary %>% mutate(fold_type = "train")
-      }
-    }
-
-    test_summary <- test_out$opt.path$env$extra[[param_i]]$.summary
-    if (!is.null(test_summary)) {
-      test_summary <- test_summary %>% mutate(fold_type = "test")
-    }
-
-    if (!is.null(train_out)) {
-      bind_rows(train_summary, test_summary) %>%
-        mutate(grid_i, repeat_i, fold_i, group_sel, param_i,
-               iteration_i = train_out$opt.path$env$dob[param_i])
-    } else {
-      test_summary %>%
-        mutate(grid_i, repeat_i, fold_i, group_sel, param_i,
-               iteration_i = test_out$opt.path$env$dob[param_i])
-    }
-  })
-
-  lst(best, path_summary, individual_scores)
-}
 
