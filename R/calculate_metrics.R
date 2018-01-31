@@ -58,7 +58,7 @@ calculate_metrics <- function(task, model, metrics) {
     }
   }
 
-  if (c("rf_mse", "rf_rsq") %in% metrics) {
+  if (any(c("rf_mse", "rf_rsq") %in% metrics)) {
     time0 <- Sys.time()
     rfmse <- compute_rfmse(task, model)
     time1 <- Sys.time()
