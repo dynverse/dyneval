@@ -28,7 +28,7 @@ compute_rfmse <- function(task, prediction) {
     rsqs <- map_dbl(rfs, ~ mean(.$rsq)) %>% setNames(colnames(gold_milenet_m))
     mrsq <- mean(rsqs)
 
-    summary <- lst(mmse, mrsq)
+    summary <- lst(rf_mse, rf_rsq)
 
     lst(
       mses,
@@ -38,8 +38,8 @@ compute_rfmse <- function(task, prediction) {
   } else {
     lst(
       summary = lst(
-        mmse = Inf,
-        mrsq = 0
+        rf_mse = Inf,
+        rf_rsq = 0
       )
     )
   }

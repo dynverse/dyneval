@@ -45,7 +45,6 @@ execute_evaluation <- function(
     method_output <- method_outputs[[i]]
     model <- method_output$model
 
-    if (!is.null(model)) {
       # Calculate geodesic distances
       time0 <- Sys.time()
       model$geodesic_dist <- dynutils::compute_emlike_dist(model)
@@ -61,19 +60,6 @@ execute_evaluation <- function(
         data_frame(time_geodesic),
         metrics_output$summary
       )
-    } else {
-      summary <- method_output$summary %>%
-        mutate_at(calc_metrics, ~ error_score)
-    }
-
-    if ("rf_mse" %in% calc_metrics) {
-      time0 <- Sys.time()
-      rfmse <- compute_rfmse(task, model)
-      time1 <- Sys.time()
-      summary$time_rfmse <- as.numeric(difftime(time1, time0, units = "sec"))
-      summary$mmse <- rfmse$summary$mmse
-      summary$mrsq <- rfmse$summary$mrsq
-    }
 
     # Return the output
     lst(model, summary)

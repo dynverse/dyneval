@@ -18,11 +18,9 @@ execute_evaluation(tasks, method, parameters, metrics, extra_metrics = NULL,
 \enumerate{
   \item Coranking of geodesic distances: \code{"mean_R_nx"}, \code{"auc_R_nx"}, \code{"Q_local"}, \code{"Q_global"}
   \item Spearman correlation of geodesic distances: \code{"correlation"}
-  \item Isomorphism of the two networks: \code{"isomorphic"}
-  \item GEDEVO Graph Edit Distance: \code{"ged"}
-  \item Earth Mover's Distance on orbit counts: \code{"net_emd"}
-  \item Genetic Algorithm for aligning small graphs: \code{"robbie_network_score"}
   \item Mantel test p-value: \code{"mantel_pval"}
+  \item Edge flip score: \code{"edge_flip"}
+  \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
 }}
 
 \item{extra_metrics}{Extra metrics to calculate but not evaluate with.}
