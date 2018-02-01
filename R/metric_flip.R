@@ -4,7 +4,7 @@ get_adjacency_lengths <- function(net, nodes=sort(unique(c(net$from, net$to)))) 
     dimnames(newnet) <- list(nodes, nodes)
   } else {
     newnet <- net %>%
-      mutate(from=factor(from, levels=nodes), to=factor(to, levels=nodes)) %>%
+      mutate(from = factor(from, levels = nodes), to = factor(to, levels = nodes)) %>%
       reshape2::acast(from~to, value.var="length", fill=0, drop=FALSE, fun.aggregate=sum)
   }
   (newnet + t(newnet)) > 0
@@ -101,7 +101,12 @@ insert_two_nodes_into_selfloop <- function(df) {
 
 change_single_edge_into_double <- function(df) {
   if (nrow(df) == 1 && df$from[[1]] != df$to[[1]]) {
-    data_frame(from = c("a", "b"), to = c("b", "c"), length = df$length/2, directed = df$directed[[1]])
+    data_frame(
+      from = c("a", "b"),
+      to = c("b", "c"),
+      length = df$length/2,
+      directed = df$directed[[1]]
+    )
   } else {
     df
   }
@@ -122,7 +127,7 @@ change_single_edge_into_double <- function(df) {
 # net1 <- dyntoy:::generate_toy_milestone_network("cycle")
 # net2 <- dyntoy:::generate_toy_milestone_network("bifurcating_cycle")
 # calculate_edge_flip(net1, net2)
-calculate_edge_flip <- function(net1, net2, return=c("score", "all"), simplify=TRUE) {
+calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify = TRUE) {
   return <- match.arg(return, c("score", "all"))
 
   # simplify networks if wanted
