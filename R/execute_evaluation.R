@@ -7,7 +7,6 @@
 #' @param extra_metrics Extra metrics to calculate but not evaluate with.
 #' @param output_model Whether or not the model will be outputted.
 #'   If this is a character string, it will save the model in the requested folder.
-#' @param error_score The aggregated score a method gets if it produces errors.
 #' @param mc_cores The number of cores to use, allowing to parallellise the different tasks
 #'
 #' @export
@@ -22,7 +21,6 @@ execute_evaluation <- function(
   metrics,
   extra_metrics = NULL,
   output_model = TRUE,
-  error_score = 0,
   mc_cores = 1
 ) {
   testthat::expect_true("geodesic_dist" %in% colnames(tasks))
