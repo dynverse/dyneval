@@ -45,21 +45,23 @@ execute_evaluation <- function(
     method_output <- method_outputs[[i]]
     model <- method_output$model
 
+    if (!is.null(model)) {
       # Calculate geodesic distances
       time0 <- Sys.time()
       model$geodesic_dist <- dynutils::compute_emlike_dist(model)
       time1 <- Sys.time()
       time_geodesic <- as.numeric(difftime(time1, time0, units = "sec"))
+    }
 
-      # Calculate metrics
-      metrics_output <- calculate_metrics(task, model, calc_metrics)
+    # Calculate metrics
+    metrics_output <- calculate_metrics(task, model, calc_metrics)
 
-      # Create summary statistics
-      summary <- bind_cols(
-        method_output$summary,
-        data_frame(time_geodesic),
-        metrics_output$summary
-      )
+    # Create summary statistics
+    summary <- bind_cols(
+      method_output$summary,
+      data_frame(time_geodesic),
+      metrics_output$summary
+    )
 
     # Return the output
     lst(model, summary)
