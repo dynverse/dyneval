@@ -271,6 +271,11 @@ benchmark_qsub_fun <- function(grid_i) {
     )
   )
 
+
+  ## here too
+  test_out$final.opt.state$opt.problem <- NULL
+  test_out$final.opt.state$opt.path <- NULL
+
   parallelMap::parallelStop()
 
   post_process_mlrmbo_output(train_out, test_out, grid, grid_i)
