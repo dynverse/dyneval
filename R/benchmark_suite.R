@@ -214,9 +214,6 @@ benchmark_qsub_fun <- function(grid_i) {
   # create an objective function
   obj_fun <- make_obj_fun(method = method, metrics = metrics, extra_metrics = extra_metrics)
 
-  ## start parameter optimisation
-  parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
-
   if (num_folds != 1) {
     ## create a folder to save the intermediate mbo files in
     save_file_path <- paste0(working_dir, "/mlrmbo")
@@ -226,6 +223,9 @@ benchmark_qsub_fun <- function(grid_i) {
     control_train <- control
     control_train$save.file.path <- paste0(save_file_path, "/mlr_progress_", grid_i, ".RData")
     control_train$save.on.disk.at <- seq(0, control_train$iters+1, by = 1)
+
+    ## start parallellisation
+    parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
 
     ## Start training. If a timeout is reached, the training will stop prematurely.
     train_out_poss_timeout <- dynutils::eval_with_timeout(
@@ -245,6 +245,9 @@ benchmark_qsub_fun <- function(grid_i) {
       }
     )
 
+    ## stop parallellisation
+    parallelMap::parallelStop()
+
     ## Read the last saved state
     train_out <- mlrMBO::mboFinalize(control_train$save.file.path)
 
@@ -259,6 +262,14 @@ benchmark_qsub_fun <- function(grid_i) {
     design_test <- design
   }
 
+  if (num_folds != 1) {
+    ## start parallellisation
+    parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
+    mc_cores <- 1
+  } else {
+    mc_cores = num_cores
+  }
+
   test_out <- no_train_mlrmbo(
     obj_fun,
     learner = learner,
@@ -267,16 +278,19 @@ benchmark_qsub_fun <- function(grid_i) {
     show.info = TRUE,
     more.args = list(
       tasks = tasks[task_group == group_sel & task_fold == fold_i,],
-      output_model = output_model
+      output_model = output_model,
+      mc_cores = num_cores
     )
   )
 
+  if (num_folds != 1) {
+    ## stop parallellisation
+    parallelMap::parallelStop()
+  }
 
   ## here too
   test_out$final.opt.state$opt.problem <- NULL
   test_out$final.opt.state$opt.path <- NULL
-
-  parallelMap::parallelStop()
 
   post_process_mlrmbo_output(train_out, test_out, grid, grid_i)
 }
