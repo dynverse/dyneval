@@ -51,6 +51,9 @@ execute_evaluation <- function(
       model$geodesic_dist <- dynutils::compute_emlike_dist(model)
       time1 <- Sys.time()
       time_geodesic <- as.numeric(difftime(time1, time0, units = "sec"))
+      df_geodesic <- data_frame(time_geodesic)
+    } else {
+      df_geodesic <- NULL
     }
 
     # Calculate metrics
@@ -59,7 +62,7 @@ execute_evaluation <- function(
     # Create summary statistics
     summary <- bind_cols(
       method_output$summary,
-      data_frame(time_geodesic),
+      df_geodesic,
       metrics_output$summary
     )
 
