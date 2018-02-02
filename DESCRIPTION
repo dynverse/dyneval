@@ -21,7 +21,6 @@ Imports:
   dynutils,
   emoa,
   GA,
-  GEDEVO,
   ggraph,
   igraph,
   magrittr, 
@@ -48,7 +47,6 @@ Suggests:
   roxygen2
 Remotes:
   berndbischl/ParamHelpers,
-  dynverse/GEDEVO,
   mlr-org/mlr,
   rcannood/dynmethods,
   rcannood/dynutils,

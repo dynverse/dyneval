@@ -21,7 +21,7 @@ make_obj_fun <- function(method, metrics, extra_metrics, noisy = FALSE) {
     noisy = noisy,
     has.simple.signature = FALSE,
     par.set = method$par_set,
-    fn = function(x, tasks, output_model) {
+    fn = function(x, tasks, output_model, mc_cores = 1) {
       execute_evaluation(
         tasks = tasks,
         method = method,
@@ -29,7 +29,7 @@ make_obj_fun <- function(method, metrics, extra_metrics, noisy = FALSE) {
         metrics = metrics,
         extra_metrics = extra_metrics,
         output_model = output_model,
-        error_score = 0
+        mc_cores = mc_cores
       )
     }
   )
