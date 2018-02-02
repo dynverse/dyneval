@@ -21,7 +21,8 @@ execute_evaluation(tasks, method, parameters, metrics, extra_metrics = NULL,
   \item Isomorphism of the two networks: \code{"isomorphic"}
   \item GEDEVO Graph Edit Distance: \code{"ged"}
   \item Earth Mover's Distance on orbit counts: \code{"net_emd"}
-  \item Genetic Algorithm for aligning small graphs: \code{"robbie_network_score"}
+  \item Genetic Algorithm for aligning small graphs: \code{"node_edit_score"}
+  \item Edit distance for edges \code{"edge_flip"}
   \item Mantel test p-value: \code{"mantel_pval"}
 }}
 
