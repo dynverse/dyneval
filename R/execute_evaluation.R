@@ -7,7 +7,6 @@
 #' @param extra_metrics Extra metrics to calculate but not evaluate with.
 #' @param output_model Whether or not the model will be outputted.
 #'   If this is a character string, it will save the model in the requested folder.
-#' @param error_score The aggregated score a method gets if it produces errors.
 #' @param mc_cores The number of cores to use, allowing to parallellise the different tasks
 #'
 #' @export
@@ -22,7 +21,6 @@ execute_evaluation <- function(
   metrics,
   extra_metrics = NULL,
   output_model = TRUE,
-  error_score = 0,
   mc_cores = 1
 ) {
   testthat::expect_true("geodesic_dist" %in% colnames(tasks))
@@ -51,29 +49,20 @@ execute_evaluation <- function(
       model$geodesic_dist <- dynutils::compute_emlike_dist(model)
       time1 <- Sys.time()
       time_geodesic <- as.numeric(difftime(time1, time0, units = "sec"))
-
-      # Calculate metrics
-      metrics_output <- calculate_metrics(task, model, calc_metrics)
-
-      # Create summary statistics
-      summary <- bind_cols(
-        method_output$summary,
-        data_frame(time_geodesic),
-        metrics_output$summary
-      )
+      df_geodesic <- data_frame(time_geodesic)
     } else {
-      summary <- method_output$summary %>%
-        mutate_at(calc_metrics, ~ error_score)
+      df_geodesic <- NULL
     }
 
-    if ("rf_mse" %in% calc_metrics) {
-      time0 <- Sys.time()
-      rfmse <- compute_rfmse(task, model)
-      time1 <- Sys.time()
-      summary$time_rfmse <- as.numeric(difftime(time1, time0, units = "sec"))
-      summary$mmse <- rfmse$summary$mmse
-      summary$mrsq <- rfmse$summary$mrsq
-    }
+    # Calculate metrics
+    metrics_output <- calculate_metrics(task, model, calc_metrics)
+
+    # Create summary statistics
+    summary <- bind_cols(
+      method_output$summary,
+      df_geodesic,
+      metrics_output$summary
+    )
 
     # Return the output
     lst(model, summary)

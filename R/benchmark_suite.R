@@ -214,9 +214,6 @@ benchmark_qsub_fun <- function(grid_i) {
   # create an objective function
   obj_fun <- make_obj_fun(method = method, metrics = metrics, extra_metrics = extra_metrics)
 
-  ## start parameter optimisation
-  parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
-
   if (num_folds != 1) {
     ## create a folder to save the intermediate mbo files in
     save_file_path <- paste0(working_dir, "/mlrmbo")
@@ -227,8 +224,11 @@ benchmark_qsub_fun <- function(grid_i) {
     control_train$save.file.path <- paste0(save_file_path, "/mlr_progress_", grid_i, ".RData")
     control_train$save.on.disk.at <- seq(0, control_train$iters+1, by = 1)
 
+    ## start parallellisation
+    parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
+
     ## Start training. If a timeout is reached, the training will stop prematurely.
-    tune_train_poss_timeout <- dynutils::eval_with_timeout(
+    train_out_poss_timeout <- dynutils::eval_with_timeout(
       timeout = timeout,
       expr = {
         mlrMBO::mbo(
@@ -245,21 +245,32 @@ benchmark_qsub_fun <- function(grid_i) {
       }
     )
 
+    ## stop parallellisation
+    parallelMap::parallelStop()
+
     ## Read the last saved state
-    tune_train <- mlrMBO::mboFinalize(control_train$save.file.path)
+    train_out <- mlrMBO::mboFinalize(control_train$save.file.path)
 
     ## Remove the optimisation problem as the datasets included might be fairly large
-    tune_train$final.opt.state$opt.problem <- NULL
-    tune_train$final.opt.state$opt.path <- NULL
+    train_out$final.opt.state$opt.problem <- NULL
+    train_out$final.opt.state$opt.path <- NULL
 
     ## Extract all parameters from the training, to be run on the test datasets
-    design_test <- tune_train$opt.path$env$path %>% select(-one_of(metrics))
+    design_test <- train_out$opt.path$env$path %>% select(-one_of(metrics))
   } else {
-    tune_train <- NULL
+    train_out <- NULL
     design_test <- design
   }
 
-  tune_test <- no_train_mlrMBO(
+  if (num_folds != 1) {
+    ## start parallellisation
+    parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
+    mc_cores <- 1
+  } else {
+    mc_cores = num_cores
+  }
+
+  test_out <- no_train_mlrmbo(
     obj_fun,
     learner = learner,
     design = design_test,
@@ -267,21 +278,25 @@ benchmark_qsub_fun <- function(grid_i) {
     show.info = TRUE,
     more.args = list(
       tasks = tasks[task_group == group_sel & task_fold == fold_i,],
-      output_model = output_model
+      output_model = output_model,
+      mc_cores = num_cores
     )
   )
 
-  ## Remove the optimisation problem as the datasets included might be fairly large
-  tune_test$final.opt.state$opt.problem <- NULL
-  tune_test$final.opt.state$opt.path <- NULL
+  if (num_folds != 1) {
+    ## stop parallellisation
+    parallelMap::parallelStop()
+  }
 
-  parallelMap::parallelStop()
+  ## here too
+  test_out$final.opt.state$opt.problem <- NULL
+  test_out$final.opt.state$opt.path <- NULL
 
-  list(tune_train = tune_train, tune_test = tune_test)
+  post_process_mlrmbo_output(train_out, test_out, grid, grid_i)
 }
 
 # Helper function for running just the initialisation of mlrMBO
-no_train_mlrMBO <- function(fun, design, learner, control, show.info, more.args) {
+no_train_mlrmbo <- function(fun, design, learner, control, show.info, more.args) {
   requireNamespace("mlrMBO")
   opt.problem <- mlrMBO:::initOptProblem(
     fun = fun,
@@ -299,113 +314,17 @@ no_train_mlrMBO <- function(fun, design, learner, control, show.info, more.args)
   mbo.result
 }
 
-#' Downloading and processing the results of the benchmark jobs
-#'
-#' @param out_dir The folder in which to output intermediate and final results.
-#'
-#' @importFrom PRISM qsub_retrieve qacct qstat_j
-#' @importFrom readr read_rds write_rds
-#' @export
-benchmark_suite_retrieve <- function(out_dir) {
-  method_names <- list.dirs(out_dir, full.names = FALSE, recursive = FALSE) %>% discard(~ . == "")
-  map_df(method_names, function(method_name) {
-    method_folder <- paste0(out_dir, method_name)
-    output_file <- paste0(method_folder, "/output.rds")
-    qsubhandle_file <- paste0(method_folder, "/qsubhandle.rds")
-
-    if (file.exists(output_file)) {
-      cat(method_name, ": Reading previous output\n", sep = "")
-      readr::read_rds(output_file)
-    } else if (!file.exists(output_file) && file.exists(qsubhandle_file)) {
-      cat(method_name, ": Attempting to retrieve output from cluster: ", sep = "")
-      data <- readr::read_rds(qsubhandle_file)
-      qsub_handle <- data$qsub_handle
-      num_tasks <- qsub_handle$num_tasks
-
-      output <- PRISM::qsub_retrieve(
-        qsub_handle,
-        post_fun = function(rds_i, out_rds) {
-          benchmark_suite_retrieve_helper(rds_i, out_rds, data)
-        },
-        wait = FALSE
-      )
-
-      # suppressing inevitable warnings:
-      # when the job is still partly running, calling qacct will generate a warning
-      # when the job is finished, calling qstat will generate a warning
-      suppressWarnings({
-        qacct_out <- PRISM::qacct(qsub_handle)
-        qstat_out <- PRISM::qstat_j(qsub_handle)
-      })
-
-      if (!is.null(output)) {
-        cat("Output found! Saving output.\n", sep = "")
-
-        output_succeeded <- TRUE
-        outputs <- lapply(output, function(x) {
-          if(length(x) == 1 && is.na(x)) {
-            list(
-              which_errored = list(TRUE),
-              qsub_error = list(attr(x, "qsub_error"))
-            )
-          } else {
-            # check to see whether all jobs failed
-            all_errored <- all(x$individual_scores$error %>% map_lgl(~ !is.null(.)))
-            x$which_errored <- list(all_errored)
-            x$qsub_error <- list(ifelse(all_errored, "all parameter settings errored", ""))
-            x
-          }
-        }) %>% list_as_tibble()
-      } else {
-        error_message <-
-          if (is.null(qstat_out) || nrow(qstat_out) > 0) {
-            "job is still running"
-          } else {
-            "qsub_retrieve of results failed -- no output was produced, but job is not running any more"
-          }
-
-        cat("Output not found. ", error_message, ".\n", sep = "")
-        output_succeeded <- FALSE
-        outputs <- tibble(
-          which_errored = list(rep(TRUE, num_tasks)),
-          qsub_error = list(rep(error_message, num_tasks))
-        )
-      }
-
-      out_rds <- outputs %>% mutate(
-        task_id = seq_len(n()),
-        method_name,
-        qacct = map(seq_len(n()), ~ extract_row_to_list(qacct_out, .)),
-        qstat = map(seq_len(n()), ~ qstat_out),
-        qsub_handle = map(seq_len(n()), ~ qsub_handle)
-      ) %>%
-        select(method_name, task_id, which_errored, qsub_error, everything())
-
-      if (output_succeeded) {
-        readr::write_rds(out_rds, output_file)
-      }
-
-      out_rds
-    } else {
-      stop("Could not find an output.rds or qsubhandle.rds file in out_dir = ", sQuote(out_dir))
-    }
-  })
-}
 
 #' @importFrom readr read_rds
-benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
-  grid <- data$grid
+post_process_mlrmbo_output <- function(train_out, test_out, grid, grid_i) {
+  fold_i <- grid$fold_i[[grid_i]]
+  group_sel <- grid$group_sel[[grid_i]]
+  repeat_i <- grid$repeat_i[[grid_i]]
 
-  grid_i <- rds_i
-  fold_i <- grid$fold_i[[rds_i]]
-  group_sel <- grid$group_sel[[rds_i]]
-  repeat_i <- grid$repeat_i[[rds_i]]
-  design <- out_rds$design
-  train_out <- out_rds$tune_train
-  test_out <- out_rds$tune_test
   x_names <- names(test_out$x)
   y_names <- test_out$opt.path$y.names
 
+  ## get the best trained parameters
   if (!is.null(train_out)) {
     best_ind <- train_out$best.ind
     best <- list(
@@ -447,7 +366,6 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
     )
   ) %>% as.tibble
   par_set <- test_out$opt.path$par.set
-  # par_set <- data$method$par_set
 
   for (parname in names(par_set$pars)) {
     parlen <- par_set$pars[[parname]]$len
@@ -472,6 +390,8 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
       if (!is.null(train_summary)) {
         train_summary <- train_summary %>% mutate(fold_type = "train")
       }
+    } else {
+      train_summary <- NULL
     }
 
     test_summary <- test_out$opt.path$env$extra[[param_i]]$.summary
@@ -479,17 +399,109 @@ benchmark_suite_retrieve_helper <- function(rds_i, out_rds, data) {
       test_summary <- test_summary %>% mutate(fold_type = "test")
     }
 
-    if (!is.null(train_out)) {
-      bind_rows(train_summary, test_summary) %>%
-        mutate(grid_i, repeat_i, fold_i, group_sel, param_i,
-               iteration_i = train_out$opt.path$env$dob[param_i])
-    } else {
-      test_summary %>%
-        mutate(grid_i, repeat_i, fold_i, group_sel, param_i,
-               iteration_i = test_out$opt.path$env$dob[param_i])
-    }
+    bind_rows(train_summary, test_summary) %>%
+      mutate(
+        grid_i,
+        repeat_i,
+        fold_i,
+        group_sel,
+        param_i,
+        iteration_i = test_out$opt.path$env$dob[param_i]
+      )
   })
 
   lst(best, path_summary, individual_scores)
 }
+
+#' Downloading and processing the results of the benchmark jobs
+#'
+#' @param out_dir The folder in which to output intermediate and final results.
+#'
+#' @importFrom PRISM qsub_retrieve qacct qstat_j
+#' @importFrom readr read_rds write_rds
+#' @export
+benchmark_suite_retrieve <- function(out_dir) {
+  method_names <- list.dirs(out_dir, full.names = FALSE, recursive = FALSE) %>% discard(~ . == "")
+  map_df(method_names, function(method_name) {
+    method_folder <- paste0(out_dir, method_name)
+    output_file <- paste0(method_folder, "/output.rds")
+    qsubhandle_file <- paste0(method_folder, "/qsubhandle.rds")
+
+    if (file.exists(output_file)) {
+      cat(method_name, ": Reading previous output\n", sep = "")
+      readr::read_rds(output_file)
+    } else if (!file.exists(output_file) && file.exists(qsubhandle_file)) {
+      cat(method_name, ": Attempting to retrieve output from cluster: ", sep = "")
+      data <- readr::read_rds(qsubhandle_file)
+      qsub_handle <- data$qsub_handle
+      num_tasks <- qsub_handle$num_tasks
+
+      output <- PRISM::qsub_retrieve(
+        qsub_handle,
+        wait = FALSE
+      )
+
+      # suppressing inevitable warnings:
+      # when the job is still partly running, calling qacct will generate a warning
+      # when the job is finished, calling qstat will generate a warning
+      suppressWarnings({
+        qacct_out <- PRISM::qacct(qsub_handle)
+        qstat_out <- PRISM::qstat_j(qsub_handle)
+      })
+
+      if (!is.null(output)) {
+        cat("Output found! Saving output.\n", sep = "")
+
+        output_succeeded <- TRUE
+        outputs <- lapply(output, function(x) {
+          if(length(x) == 1 && is.na(x)) {
+            list(
+              which_errored = TRUE,
+              qsub_error = attr(x, "qsub_error")
+            )
+          } else {
+            # check to see whether all jobs failed
+            all_errored <- all(x$individual_scores$error %>% map_lgl(~ !is.null(.)))
+            x$which_errored <- all_errored
+            x$qsub_error <- ifelse(all_errored, "all parameter settings errored", "")
+            x
+          }
+        }) %>% list_as_tibble()
+      } else {
+        error_message <-
+          if (is.null(qstat_out) || nrow(qstat_out) > 0) {
+            "job is still running"
+          } else {
+            "qsub_retrieve of results failed -- no output was produced, but job is not running any more"
+          }
+
+        cat("Output not found. ", error_message, ".\n", sep = "")
+        output_succeeded <- FALSE
+        outputs <- tibble(
+          which_errored = rep(TRUE, num_tasks),
+          qsub_error = rep(error_message, num_tasks)
+        )
+      }
+
+      out_rds <- outputs %>% mutate(
+        task_id = seq_len(n()),
+        method_name,
+        qacct = map(seq_len(n()), ~ extract_row_to_list(qacct_out, .)),
+        qstat = map(seq_len(n()), ~ qstat_out),
+        qsub_handle = map(seq_len(n()), ~ qsub_handle)
+      ) %>%
+        select(method_name, task_id, which_errored, qsub_error, everything())
+
+      if (output_succeeded) {
+        readr::write_rds(out_rds, output_file)
+      }
+
+      out_rds
+    } else {
+      stop("Could not find an output.rds or qsubhandle.rds file in out_dir = ", sQuote(out_dir))
+    }
+  })
+}
+
+
 
