@@ -15,6 +15,8 @@ calculate_edge_flip(net1, net2, return = c("score", "all"), simplify = TRUE,
 \item{return}{Whether to return only the `score` or the full output (`all`)}
 
 \item{simplify}{Whether or not to simplify the networks}
+
+\item{limit_flips}{Maximal number of flips to check}
 }
 \description{
 Edge flip score
