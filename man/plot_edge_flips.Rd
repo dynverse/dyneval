@@ -7,9 +7,9 @@
 plot_edge_flips(oldadj, newadj)
 }
 \arguments{
-\item{oldadj}{Zouter needs to}
+\item{oldadj}{Old adjacency matrix}
 
-\item{newadj}{fill in these fields}
+\item{newadj}{New adjancency matrix}
 }
 \description{
 Plotting edge flips
