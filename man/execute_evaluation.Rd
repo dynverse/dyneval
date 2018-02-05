@@ -5,7 +5,7 @@
 \title{Running an evaluation of a method on a set of tasks with a set of parameters}
 \usage{
 execute_evaluation(tasks, method, parameters, metrics, extra_metrics = NULL,
-  output_model = TRUE, mc_cores = 1)
+  output_model = TRUE, mc_cores = 1, verbose = FALSE)
 }
 \arguments{
 \item{tasks}{The tasks on which to evaluate.}
@@ -29,6 +29,8 @@ execute_evaluation(tasks, method, parameters, metrics, extra_metrics = NULL,
 If this is a character string, it will save the model in the requested folder.}
 
 \item{mc_cores}{The number of cores to use, allowing to parallellise the different tasks}
+
+\item{verbose}{Whether or not to print extra information output.}
 }
 \description{
 Running an evaluation of a method on a set of tasks with a set of parameters

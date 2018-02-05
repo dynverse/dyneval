@@ -20,6 +20,7 @@
 #' @param num_init_params The number of initial parameters to evaluate.
 #' @param num_repeats The number of times to repeat the mlr process, for each group and each fold.
 #' @param output_model Whether or not to return the outputted models
+#' @param verbose Whether or not to print extra information during parameter training
 #'
 #' @importFrom testthat expect_equal expect_is
 #' @importFrom PRISM qsub_lapply override_qsub_config
@@ -53,7 +54,8 @@ benchmark_suite_submit <- function(
   num_iterations = 20,
   num_init_params = 100,
   num_repeats = 1,
-  output_model = FALSE
+  output_model = FALSE,
+  verbose = FALSE
 ) {
   testthat::expect_is(tasks, "tbl")
   testthat::expect_equal(nrow(tasks), length(task_group))
@@ -165,7 +167,7 @@ benchmark_suite_submit <- function(
       qsub_environment <-  c(
         "method", "obj_fun", "design", "task_group", "task_fold", "tasks_remote_file",
         "num_cores", "metrics", "extra_metrics", "control", "grid",
-        "learner", "timeout", "output_model", "num_folds"
+        "learner", "timeout", "output_model", "num_folds", "verbose"
       )
 
       # submit to the cluster
@@ -212,7 +214,7 @@ benchmark_qsub_fun <- function(grid_i) {
   }
 
   # create an objective function
-  obj_fun <- make_obj_fun(method = method, metrics = metrics, extra_metrics = extra_metrics)
+  obj_fun <- make_obj_fun(method = method, metrics = metrics, extra_metrics = extra_metrics, verbose = verbose)
 
   if (num_folds != 1) {
     ## create a folder to save the intermediate mbo files in
