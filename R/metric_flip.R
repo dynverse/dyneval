@@ -99,6 +99,28 @@ insert_two_nodes_into_selfloop <- function(df) {
   )
 }
 
+# df <- tibble(from=c("M1", "M2", "M2"), to=c("M2", "M1", "M1"), length=1, directed=T)
+insert_one_node_into_duplicate_edges <- function(df) {
+  ix <- paste0(df$from, "#", df$to) %in% names(which(table(paste0(df$from, "#", df$to)) >= 2))
+  new <- map_df(which(ix), function(i) {
+    n <- df$from[[i]]
+    t <- df$to[[i]]
+    l <- df$length[[i]]
+    d <- df$directed[[i]]
+    newn <- paste0(dynutils::random_time_string(), seq_len(1))
+    data_frame(
+      from = c(n, newn),
+      to = c(newn, t),
+      length = l/2,
+      directed = d
+    )
+  })
+  bind_rows(
+    df[!ix,],
+    new
+  )
+}
+
 change_single_edge_into_double <- function(df) {
   if (nrow(df) == 1 && df$from[[1]] != df$to[[1]]) {
     data_frame(
@@ -127,7 +149,8 @@ change_single_edge_into_double <- function(df) {
 # calculate_edge_flip(net1, net2)
 #
 # net1 <- dyntoy:::generate_toy_milestone_network("cycle")
-# net2 <- dyntoy:::generate_toy_milestone_network("bifurcating_cycle")
+# net1 <- dyntoy:::generate_toy_milestone_network("bifurcating_cycle")
+# net2 <- dyntoy:::generate_toy_milestone_network("bifuracting_loop")
 # calculate_edge_flip(net1, net2)
 calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify = TRUE, limit_flips=10) {
   return <- match.arg(return, c("score", "all"))
@@ -144,7 +167,8 @@ calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify
       rename(length = weight) %>%
       mutate(directed = directed1) %>%
       insert_two_nodes_into_selfloop() %>%
-      change_single_edge_into_double()
+      change_single_edge_into_double() %>%
+      insert_one_node_into_duplicate_edges()
     net2 <- net2 %>%
       rename(weight = length) %>%
       igraph::graph_from_data_frame(directed = directed2) %>%
@@ -153,7 +177,8 @@ calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify
       rename(length = weight) %>%
       mutate(directed = directed2) %>%
       insert_two_nodes_into_selfloop() %>%
-      change_single_edge_into_double()
+      change_single_edge_into_double() %>%
+      insert_one_node_into_duplicate_edges()
   }
 
   # edge flip cannot handle directed networks
