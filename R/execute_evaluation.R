@@ -8,6 +8,7 @@
 #' @param output_model Whether or not the model will be outputted.
 #'   If this is a character string, it will save the model in the requested folder.
 #' @param mc_cores The number of cores to use, allowing to parallellise the different tasks
+#' @param verbose Whether or not to print extra information output.
 #'
 #' @export
 #' @importFrom dynmethods execute_method
@@ -21,7 +22,8 @@ execute_evaluation <- function(
   metrics,
   extra_metrics = NULL,
   output_model = TRUE,
-  mc_cores = 1
+  mc_cores = 1,
+  verbose = FALSE
 ) {
   testthat::expect_true("geodesic_dist" %in% colnames(tasks))
   testthat::expect_false(any(sapply(tasks$geodesic_dist, is.null)))
@@ -32,7 +34,8 @@ execute_evaluation <- function(
     tasks = tasks,
     method = method,
     parameters = parameters,
-    mc_cores = mc_cores
+    mc_cores = mc_cores,
+    verbose = verbose
   )
 
   # Calculate scores

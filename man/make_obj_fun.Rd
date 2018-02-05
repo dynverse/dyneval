@@ -4,7 +4,7 @@
 \alias{make_obj_fun}
 \title{Used for wrapping an evaluation function around a TI method}
 \usage{
-make_obj_fun(method, metrics, extra_metrics, noisy = FALSE)
+make_obj_fun(method, metrics, extra_metrics, noisy = FALSE, verbose = FALSE)
 }
 \arguments{
 \item{method}{The method to evaluate.}
@@ -20,7 +20,9 @@ make_obj_fun(method, metrics, extra_metrics, noisy = FALSE)
 
 \item{extra_metrics}{Extra metrics to calculate but not evaluate with.}
 
-\item{noisy}{whether or not the metric is noisy or not}
+\item{noisy}{Whether or not the metric is noisy or not}
+
+\item{verbose}{Whether or not to print extra information output}
 }
 \description{
 Used for wrapping an evaluation function around a TI method

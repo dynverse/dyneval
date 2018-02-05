@@ -1,11 +1,12 @@
 #' Used for wrapping an evaluation function around a TI method
 #'
 #' @inheritParams execute_evaluation
-#' @param noisy whether or not the metric is noisy or not
+#' @param noisy Whether or not the metric is noisy or not
+#' @param verbose Whether or not to print extra information output
 #'
 #' @importFrom smoof makeSingleObjectiveFunction makeMultiObjectiveFunction
 #' @export
-make_obj_fun <- function(method, metrics, extra_metrics, noisy = FALSE) {
+make_obj_fun <- function(method, metrics, extra_metrics, noisy = FALSE, verbose = FALSE) {
   # Use different makefunction if there are multiple metrics versus one
   if (length(metrics) > 1) {
     make_fun <- function(...) makeMultiObjectiveFunction(..., n.objectives = length(metrics))
@@ -29,7 +30,8 @@ make_obj_fun <- function(method, metrics, extra_metrics, noisy = FALSE) {
         metrics = metrics,
         extra_metrics = extra_metrics,
         output_model = output_model,
-        mc_cores = mc_cores
+        mc_cores = mc_cores,
+        verbose = verbose
       )
     }
   )
