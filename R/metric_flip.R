@@ -292,8 +292,8 @@ calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify
 }
 
 #' Plotting edge flips
-#' @param oldadj Zouter needs to
-#' @param newadj fill in these fields
+#' @param oldadj Old adjacency matrix
+#' @param newadj New adjancency matrix
 #'
 #' @importFrom tidygraph as_tbl_graph activate
 #' @importFrom ggraph ggraph geom_edge_fan geom_edge_loop geom_node_label scale_edge_colour_manual
