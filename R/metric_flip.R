@@ -99,6 +99,28 @@ insert_two_nodes_into_selfloop <- function(df) {
   )
 }
 
+# df <- tibble(from=c("M1", "M2", "M2"), to=c("M2", "M1", "M1"), length=1, directed=T)
+insert_one_node_into_duplicate_edges <- function(df) {
+  ix <- paste0(df$from, "#", df$to) %in% names(which(table(paste0(df$from, "#", df$to)) >= 2))
+  new <- map_df(which(ix), function(i) {
+    n <- df$from[[i]]
+    t <- df$to[[i]]
+    l <- df$length[[i]]
+    d <- df$directed[[i]]
+    newn <- paste0(dynutils::random_time_string(), seq_len(1))
+    data_frame(
+      from = c(n, newn),
+      to = c(newn, t),
+      length = l/2,
+      directed = d
+    )
+  })
+  bind_rows(
+    df[!ix,],
+    new
+  )
+}
+
 change_single_edge_into_double <- function(df) {
   if (nrow(df) == 1 && df$from[[1]] != df$to[[1]]) {
     data_frame(
@@ -118,6 +140,8 @@ change_single_edge_into_double <- function(df) {
 #' @param net2 Network 2
 #' @param return Whether to return only the `score` or the full output (`all`)
 #' @param simplify Whether or not to simplify the networks
+#' @param limit_flips Maximal number of flips to check
+#'
 # either export this function or do not list any examples
 # @examples
 # net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
@@ -125,9 +149,10 @@ change_single_edge_into_double <- function(df) {
 # calculate_edge_flip(net1, net2)
 #
 # net1 <- dyntoy:::generate_toy_milestone_network("cycle")
-# net2 <- dyntoy:::generate_toy_milestone_network("bifurcating_cycle")
+# net1 <- dyntoy:::generate_toy_milestone_network("bifurcating_cycle")
+# net2 <- dyntoy:::generate_toy_milestone_network("bifuracting_loop")
 # calculate_edge_flip(net1, net2)
-calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify = TRUE) {
+calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify = TRUE, limit_flips=10) {
   return <- match.arg(return, c("score", "all"))
 
   # simplify networks if wanted
@@ -142,7 +167,8 @@ calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify
       rename(length = weight) %>%
       mutate(directed = directed1) %>%
       insert_two_nodes_into_selfloop() %>%
-      change_single_edge_into_double()
+      change_single_edge_into_double() %>%
+      insert_one_node_into_duplicate_edges()
     net2 <- net2 %>%
       rename(weight = length) %>%
       igraph::graph_from_data_frame(directed = directed2) %>%
@@ -151,7 +177,8 @@ calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify
       rename(length = weight) %>%
       mutate(directed = directed2) %>%
       insert_two_nodes_into_selfloop() %>%
-      change_single_edge_into_double()
+      change_single_edge_into_double() %>%
+      insert_one_node_into_duplicate_edges()
   }
 
   # edge flip cannot handle directed networks
@@ -181,7 +208,7 @@ calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify
   graph2 <- adj2 %>% get_undirected_graph() # used later to calculate isomorphism
   sorted_degrees2 <- adj2 %>% rowSums() %>% sort(method="radix") # used later to compare degree distributions
 
-  # prepore for looping over the number of edges which can be flipped
+  # prepare for looping over the number of edges which can be flipped
   found <- FALSE
   n_flips <- abs(edge_difference) - 2
 
@@ -193,75 +220,81 @@ calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify
     n_flips <- n_flips + 2
     # print(glue::glue("flips: {n_flips}"))
 
-    # calculate the number of additions and removes
-    n_additions <- (n_flips + edge_difference)/2
-    n_removes <- n_additions - edge_difference
-
-    if (n_additions < 0 | n_removes < 0) {stop("Edge additions and removes should be integer and higher than 0")}
-
-    # create the matrix which contains in the columns all possible flips, with in the rows the edge_id which will be flipped
-    edge_additions <- combn_nice(possible_edge_additions, n_additions)
-    edge_removes <- combn_nice(possible_edge_removes, n_removes)
-
-    if (n_additions > 0 & n_removes > 0) {
-      edge_flips <- rbind(
-        matrix(rep(edge_additions, ncol(edge_removes)), nrow=nrow(edge_additions)),
-        t(edge_removes) %>% rep(each=ncol(edge_additions)) %>% matrix(ncol=nrow(edge_removes)) %>% t
-      )
-    } else if (n_additions > 0) {
-      edge_flips <- edge_additions
+    # limit number of checked flips
+    if (n_flips > limit_flips) {
+      found <- TRUE
+      nflips <- max_flips
     } else {
-      edge_flips <- edge_removes
-    }
+      # calculate the number of additions and removes
+      n_additions <- (n_flips + edge_difference)/2
+      n_removes <- n_additions - edge_difference
 
-    # cut the edge_flips, avoiding huge memory consumption
-    grouping <- ceiling(seq_len(ncol(edge_flips)) / 1000)
-    ngroups <- max(grouping)
-    group_id <- 0
+      if (n_additions < 0 | n_removes < 0) {stop("Edge additions and removes should be integer and higher than 0")}
 
-    # loop over each group of edge_flips
-    while(!found & group_id < ngroups) {
-      group_id <- group_id + 1
-      edge_flips_group <- edge_flips[, grouping == group_id, drop=F]
+      # create the matrix which contains in the columns all possible flips, with in the rows the edge_id which will be flipped
+      edge_additions <- combn_nice(possible_edge_additions, n_additions)
+      edge_removes <- combn_nice(possible_edge_removes, n_removes)
 
-      # generate matrix with in the columns each flip and in the rows the vector format of the new adjacency of net1
-      edge_flip_vectors1 <- generate_edge_flip_vectors(edge_flips_group, adj1)
-      degree_vectors1 <- t(edge_flip_vectors1) %*% edge_membership1
+      if (n_additions > 0 & n_removes > 0) {
+        edge_flips <- rbind(
+          matrix(rep(edge_additions, ncol(edge_removes)), nrow=nrow(edge_additions)),
+          t(edge_removes) %>% rep(each=ncol(edge_additions)) %>% matrix(ncol=nrow(edge_removes)) %>% t
+        )
+      } else if (n_additions > 0) {
+        edge_flips <- edge_additions
+      } else {
+        edge_flips <- edge_removes
+      }
 
-      # now check several metrics of the new adjacency matrix, from fastest to slowest
-      # after each check, the flips which are not OK are removed (in the selected object)
+      # cut the edge_flips, avoiding huge memory consumption
+      grouping <- ceiling(seq_len(ncol(edge_flips)) / 1000)
+      ngroups <- max(grouping)
+      group_id <- 0
 
-      selected <- seq_len(nrow(degree_vectors1))
+      # loop over each group of edge_flips
+      while(!found & group_id < ngroups) {
+        group_id <- group_id + 1
+        edge_flips_group <- edge_flips[, grouping == group_id, drop=F]
 
-      # quick max check
-      degree_max_check <- check_degrees_max(degree_vectors1, sorted_degrees2)
-      if (any(degree_max_check)) {
-        selected <- selected[degree_max_check]
+        # generate matrix with in the columns each flip and in the rows the vector format of the new adjacency of net1
+        edge_flip_vectors1 <- generate_edge_flip_vectors(edge_flips_group, adj1)
+        degree_vectors1 <- t(edge_flip_vectors1) %*% edge_membership1
 
-        # quick min check
-        degree_min_check <- check_degrees_min(degree_vectors1[selected, , drop=F], sorted_degrees2)
-        if (any(degree_min_check)) {
-          selected <- selected[degree_min_check]
+        # now check several metrics of the new adjacency matrix, from fastest to slowest
+        # after each check, the flips which are not OK are removed (in the selected object)
 
-          # now check sorted
-          degree_sorted_check <- check_degrees_sorted(degree_vectors1[selected, , drop=F], sorted_degrees2)
+        selected <- seq_len(nrow(degree_vectors1))
 
-          if (any(degree_sorted_check)) {
-            selected <- selected[degree_sorted_check]
+        # quick max check
+        degree_max_check <- check_degrees_max(degree_vectors1, sorted_degrees2)
+        if (any(degree_max_check)) {
+          selected <- selected[degree_max_check]
 
-            # now check isomorphic
-            adj1s <- map(selected, ~edge_flips_group[, ., drop=F]) %>% map(flip_adj, adj1)
+          # quick min check
+          degree_min_check <- check_degrees_min(degree_vectors1[selected, , drop=F], sorted_degrees2)
+          if (any(degree_min_check)) {
+            selected <- selected[degree_min_check]
 
-            isomorphic <- map_lgl(adj1s, function(adj1) {
-              graph1 <- adj1 %>% get_undirected_graph()
+            # now check sorted
+            degree_sorted_check <- check_degrees_sorted(degree_vectors1[selected, , drop=F], sorted_degrees2)
 
-              igraph::is_isomorphic_to(graph1, graph2)
-            })
+            if (any(degree_sorted_check)) {
+              selected <- selected[degree_sorted_check]
 
-            if(any(isomorphic)) {
-              found <- TRUE
-              # print("found!")
-              newadj1 <- first(adj1s[isomorphic])
+              # now check isomorphic
+              adj1s <- map(selected, ~edge_flips_group[, ., drop=F]) %>% map(flip_adj, adj1)
+
+              isomorphic <- map_lgl(adj1s, function(adj1) {
+                graph1 <- adj1 %>% get_undirected_graph()
+
+                igraph::is_isomorphic_to(graph1, graph2)
+              })
+
+              if(any(isomorphic)) {
+                found <- TRUE
+                # print("found!")
+                newadj1 <- first(adj1s[isomorphic])
+              }
             }
           }
         }
@@ -284,8 +317,8 @@ calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify
 }
 
 #' Plotting edge flips
-#' @param oldadj Zouter needs to
-#' @param newadj fill in these fields
+#' @param oldadj Old adjacency matrix
+#' @param newadj New adjancency matrix
 #'
 #' @importFrom tidygraph as_tbl_graph activate
 #' @importFrom ggraph ggraph geom_edge_fan geom_edge_loop geom_node_label scale_edge_colour_manual
