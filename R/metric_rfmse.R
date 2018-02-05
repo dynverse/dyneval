@@ -7,10 +7,12 @@
 #' @importFrom randomForest randomForest
 #' @importFrom reshape2 acast
 #' @importFrom tibble lst
+#' @importFrom ranger ranger
 compute_rfmse <- function(task, prediction) {
   cell_ids <- task$cell_ids
 
   if (!is.null(prediction)) {
+
     gold_milenet_m <- task$milestone_percentages %>%
       reshape2::acast(cell_id ~ milestone_id, value.var = "percentage", fill = 0) %>%
       expand_mat(cell_ids)
@@ -18,14 +20,22 @@ compute_rfmse <- function(task, prediction) {
       reshape2::acast(cell_id ~ milestone_id, value.var = "percentage", fill = 0) %>%
       expand_mat(cell_ids)
 
+    colnames(pred_milenet_m) <- make.names(colnames(pred_milenet_m))
+
     rfs <- lapply(seq_len(ncol(gold_milenet_m)), function(i) {
-      randomForest::randomForest(pred_milenet_m, gold_milenet_m[,i])
+      data <- cbind(
+        pred_milenet_m,
+        gold_milenet_m[,i, drop=F] %>%
+          magrittr::set_colnames("PREDICT")
+        ) %>%
+        as.data.frame()
+      ranger::ranger(PREDICT~., data, num.trees=5000, num.threads=1)
     })
 
-    mses <- map_dbl(rfs, ~ mean(.$mse)) %>% setNames(colnames(gold_milenet_m))
+    mses <- map_dbl(rfs, ~ mean(.$prediction.error)) %>% setNames(colnames(gold_milenet_m))
     rf_mse <- mean(mses)
 
-    rsqs <- map_dbl(rfs, ~ mean(.$rsq)) %>% setNames(colnames(gold_milenet_m))
+    rsqs <- map_dbl(rfs, ~ mean(.$r.squared)) %>% setNames(colnames(gold_milenet_m))
     rf_rsq <- mean(rsqs)
 
     summary <- lst(rf_mse, rf_rsq)

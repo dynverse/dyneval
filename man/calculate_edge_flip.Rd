@@ -4,7 +4,8 @@
 \alias{calculate_edge_flip}
 \title{Edge flip score}
 \usage{
-calculate_edge_flip(net1, net2, return = c("score", "all"), simplify = TRUE)
+calculate_edge_flip(net1, net2, return = c("score", "all"), simplify = TRUE,
+  limit_flips = 10)
 }
 \arguments{
 \item{net1}{Network 1}
@@ -14,6 +15,8 @@ calculate_edge_flip(net1, net2, return = c("score", "all"), simplify = TRUE)
 \item{return}{Whether to return only the `score` or the full output (`all`)}
 
 \item{simplify}{Whether or not to simplify the networks}
+
+\item{limit_flips}{Maximal number of flips to check}
 }
 \description{
 Edge flip score
