@@ -24,7 +24,7 @@ compute_rfmse <- function(task, prediction) {
       data <- cbind(pred_milenet_m, gold_milenet_m[,i, drop=F] %>%
         magrittr::set_colnames("PREDICT")) %>%
         as.data.frame()
-      ranger::ranger(PREDICT~., data, sample.fraction=1, replace=TRUE, mtry=ncol(pred_milenet_m), num.trees=5000)
+      ranger::ranger(PREDICT~., data, num.trees=5000, num.threads=1)
     })
 
     mses <- map_dbl(rfs, ~ mean(.$prediction.error)) %>% setNames(colnames(gold_milenet_m))
