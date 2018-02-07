@@ -453,7 +453,7 @@ benchmark_suite_retrieve <- function(out_dir) {
         cat("Output not found. ", error_message, ".\n", sep = "")
         output_succeeded <- FALSE
 
-        grid %>% mutate(
+        outputs <- grid %>% mutate(
           grid_i = seq_len(n()),
           method_name = data$method$name,
           method_short_name = data$method$short_name,
