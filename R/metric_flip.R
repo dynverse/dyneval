@@ -71,9 +71,10 @@ check_degrees_sorted <- function(degree_vectors1, sorted_degrees2) {
 }
 
 # nice combn, which doesn't just use seq_len(x) if x is an integer -___-
+#' @importFrom utils combn
 combn_nice  <- function(x, m) {
   if(length(x) > 1 || m == 0) {
-    combn(x, m)
+    utils::combn(x, m)
   } else {
     matrix(x, nrow=1, ncol=1)
   }
