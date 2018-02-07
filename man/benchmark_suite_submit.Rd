@@ -5,12 +5,12 @@
 \title{A benchmark suite with which to run all the methods on the different tasks}
 \usage{
 benchmark_suite_submit(tasks, task_group, task_fold, out_dir, remote_dir,
-  timeout = 24 * 3600, methods = dynmethods::get_descriptions(as_tibble =
-  TRUE), designs = NULL, metrics = "correlation", extra_metrics = NULL,
-  num_cores = 4, memory = "20G", max_wall_time = NULL,
-  execute_before = NULL, r_module = "R", num_iterations = 20,
-  num_init_params = 100, num_repeats = 1, output_model = FALSE,
-  verbose = FALSE)
+  optimisation_timeout = 24 * 3600,
+  methods = dynmethods::get_descriptions(as_tibble = TRUE), designs = NULL,
+  metrics = "correlation", extra_metrics = NULL, num_cores = 4,
+  memory = "20G", max_wall_time = NULL, execute_before = NULL,
+  r_module = "R", num_iterations = 20, num_init_params = 100,
+  num_repeats = 1, output_model = FALSE, verbose = FALSE)
 }
 \arguments{
 \item{tasks}{A tibble of tasks.}
@@ -23,7 +23,7 @@ benchmark_suite_submit(tasks, task_group, task_fold, out_dir, remote_dir,
 
 \item{remote_dir}{A folder in which to store intermediate results in a remote directory when using the PRISM package.}
 
-\item{timeout}{The number of seconds 1 method has to solve each of the tasks before a timeout is generated.}
+\item{optimisation_timeout}{The number of seconds a method is allowed to optimise parameters in a fold before generating a timeout.}
 
 \item{methods}{A tibble of TI methods.}
 
