@@ -5,7 +5,7 @@
 #' @param task_fold A fold index vector for the different tasks.
 #' @param out_dir A folder in which to output intermediate and final results.
 #' @param remote_dir A folder in which to store intermediate results in a remote directory when using the PRISM package.
-#' @param timeout The number of seconds 1 method has to solve each of the tasks before a timeout is generated.
+#' @param optimisation_timeout The number of seconds a method is allowed to optimise parameters in a fold before generating a timeout.
 #' @param methods A tibble of TI methods.
 #' @param designs A names list of given designs data frames. Names must be equal to method short names.
 #' @param metrics Which metrics to use;
@@ -41,7 +41,7 @@ benchmark_suite_submit <- function(
   task_fold,
   out_dir,
   remote_dir,
-  timeout = 24 * 3600,
+  optimisation_timeout = 24 * 3600,
   methods = dynmethods::get_descriptions(as_tibble = TRUE),
   designs = NULL,
   metrics = "correlation",
@@ -167,7 +167,7 @@ benchmark_suite_submit <- function(
       qsub_environment <-  c(
         "method", "obj_fun", "design", "task_group", "task_fold", "tasks_remote_file",
         "num_cores", "metrics", "extra_metrics", "control", "grid",
-        "learner", "timeout", "output_model", "num_folds", "verbose"
+        "learner", "optimisation_timeout", "output_model", "num_folds", "verbose"
       )
 
       # submit to the cluster
@@ -229,9 +229,9 @@ benchmark_qsub_fun <- function(grid_i) {
     ## start parallellisation
     parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
 
-    ## Start training. If a timeout is reached, the training will stop prematurely.
+    ## Start training. If a optimisation_timeout is reached, the training will stop prematurely.
     train_out_poss_timeout <- dynutils::eval_with_timeout(
-      timeout = timeout,
+      timeout = optimisation_timeout,
       expr = {
         mlrMBO::mbo(
           obj_fun,
