@@ -48,7 +48,7 @@ compute_rfmse <- function(task, prediction) {
   } else {
     lst(
       summary = lst(
-        rf_mse = Inf,
+        rf_mse = .Machine$double.xmax,
         rf_rsq = 0
       )
     )
