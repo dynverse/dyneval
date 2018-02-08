@@ -308,7 +308,42 @@ benchmark_qsub_fun <- function(grid_i) {
     iterations <- test_out$opt.path$env$dob
   }
 
-  lst(design, iterations, train_out, test_out)
+  # get each individual evaluation (model, params, performance, timings) and put it in a data frame
+  eval_ind <- map_df(seq_len(nrow(design)), function(param_i) {
+    if (!is.null(train_out)) {
+      train_summary <- train_out$opt.path$env$extra[[param_i]]$.summary
+      if (!is.null(train_summary)) {
+        train_summary <- train_summary %>% mutate(
+          fold_type = "train",
+          param_row = list(design[param_i,])
+        )
+      }
+    } else {
+      train_summary <- NULL
+    }
+
+    test_summary <- test_out$opt.path$env$extra[[param_i]]$.summary
+    if (!is.null(test_summary)) {
+      test_summary <- test_summary %>% mutate(
+        fold_type = "test",
+        param_row = list(design[param_i,])
+      )
+    }
+
+    bind_rows(train_summary, test_summary) %>%
+      mutate(
+        grid_i,
+        repeat_i = grid$repeat_i[grid_i],
+        fold_i = grid$fold_i[grid_i],
+        group_sel = grid$group_sel[grid_i],
+        param_i,
+        iteration_i = iterations[param_i],
+        error_message = sapply(error, function(err) ifelse(is.null(err), "", err$message))
+      ) %>%
+      select(-error)
+  })
+
+  eval_ind
 }
 
 # Helper function for running just the initialisation of mlrMBO
@@ -379,48 +414,7 @@ benchmark_suite_retrieve <- function(out_dir) {
         outputs <- map_df(seq_along(output), function(grid_i) {
           x <- output[[grid_i]]
           if(length(x) != 1 || !is.na(x)) {
-            design <- x$design
-            iterations <- x$iterations
-            train_out <- x$train_out
-            test_out <- x$test_out
-
-            eval_ind <- map_df(seq_len(nrow(design)), function(param_i) {
-              if (!is.null(train_out)) {
-                train_summary <- train_out$opt.path$env$extra[[param_i]]$.summary
-                if (!is.null(train_summary)) {
-                  train_summary <- train_summary %>% mutate(
-                    fold_type = "train",
-                    param_row = list(design[param_i,])
-                  )
-                }
-              } else {
-                train_summary <- NULL
-              }
-
-              test_summary <- test_out$opt.path$env$extra[[param_i]]$.summary
-              if (!is.null(test_summary)) {
-                test_summary <- test_summary %>% mutate(
-                  fold_type = "test",
-                  param_row = list(design[param_i,])
-                )
-              }
-
-              bind_rows(train_summary, test_summary) %>%
-                mutate(
-                  repeat_i = grid$repeat_i[[grid_i]],
-                  fold_i = grid$fold_i[[grid_i]],
-                  group_sel = grid$group_sel[[grid_i]],
-                  iteration_i = iterations[[param_i]],
-                  grid_i,
-                  param_i
-                ) %>%
-                rowwise() %>%
-                mutate(error_message = ifelse(is.null(error), "", error$message)) %>%
-                ungroup() %>%
-                select(-error)
-            })
-
-            eval_ind
+            x
           } else {
             qsub_error <- attr(x, "qsub_error")
 
@@ -431,6 +425,7 @@ benchmark_suite_retrieve <- function(out_dir) {
               qsub_error <- "Memory limit exceeded"
             }
 
+            # mimic eval_ind format
             data_frame(
               method_name = data$method$name,
               method_short_name = data$method$short_name,
@@ -453,6 +448,7 @@ benchmark_suite_retrieve <- function(out_dir) {
         cat("Output not found. ", error_message, ".\n", sep = "")
         output_succeeded <- FALSE
 
+        # mimic eval_ind format
         outputs <- grid %>% mutate(
           grid_i = seq_len(n()),
           method_name = data$method$name,
