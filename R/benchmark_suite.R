@@ -5,7 +5,7 @@
 #' @param task_fold A fold index vector for the different tasks.
 #' @param out_dir A folder in which to output intermediate and final results.
 #' @param remote_dir A folder in which to store intermediate results in a remote directory when using the PRISM package.
-#' @param timeout The number of seconds 1 method has to solve each of the tasks before a timeout is generated.
+#' @param optimisation_timeout The number of seconds a method is allowed to optimise parameters in a fold before generating a timeout.
 #' @param methods A tibble of TI methods.
 #' @param designs A names list of given designs data frames. Names must be equal to method short names.
 #' @param metrics Which metrics to use;
@@ -41,7 +41,7 @@ benchmark_suite_submit <- function(
   task_fold,
   out_dir,
   remote_dir,
-  timeout = 24 * 3600,
+  optimisation_timeout = 24 * 3600,
   methods = dynmethods::get_descriptions(as_tibble = TRUE),
   designs = NULL,
   metrics = "correlation",
@@ -82,7 +82,7 @@ benchmark_suite_submit <- function(
   }
 
   ## create learner for predicting performance of new params
-  mlr::configureMlr(show.learner.output = FALSE)
+  mlr::configureMlr(show.learner.output = FALSE, on.learner.warning = "warn")
   learner <- mlr::makeLearner(
     "regr.randomForest",
     se.method = "jackknife",
@@ -165,9 +165,9 @@ benchmark_suite_submit <- function(
 
       # which data objects will need to be transferred to the cluster
       qsub_environment <-  c(
-        "method", "obj_fun", "design", "task_group", "task_fold", "tasks_remote_file",
+        "method", "design", "task_group", "task_fold", "tasks_remote_file",
         "num_cores", "metrics", "extra_metrics", "control", "grid",
-        "learner", "timeout", "output_model", "num_folds", "verbose"
+        "learner", "optimisation_timeout", "output_model", "num_folds", "verbose"
       )
 
       # submit to the cluster
@@ -202,12 +202,16 @@ benchmark_suite_submit <- function(
 #' @importFrom readr read_rds
 #' @importFrom parallelMap parallelStartMulticore parallelStop
 #' @importFrom mlrMBO mbo
+#' @importFrom mlr configureMlr
 benchmark_qsub_fun <- function(grid_i) {
   fold_i <- grid[grid_i,]$fold_i
   group_sel <- grid[grid_i,]$group_sel
   repeat_i <- grid[grid_i,]$repeat_i
 
   working_dir <- getwd()
+
+  # configure mlr
+  mlr::configureMlr(show.learner.output = FALSE, on.learner.warning = "warn")
 
   if (!"tasks" %in% ls()) {
     tasks <- readr::read_rds(tasks_remote_file)
@@ -229,9 +233,9 @@ benchmark_qsub_fun <- function(grid_i) {
     ## start parallellisation
     parallelMap::parallelStartMulticore(cpus = num_cores, show.info = TRUE)
 
-    ## Start training. If a timeout is reached, the training will stop prematurely.
+    ## Start training. If a optimisation_timeout is reached, the training will stop prematurely.
     train_out_poss_timeout <- dynutils::eval_with_timeout(
-      timeout = timeout,
+      timeout = optimisation_timeout,
       expr = {
         mlrMBO::mbo(
           obj_fun,
@@ -294,7 +298,52 @@ benchmark_qsub_fun <- function(grid_i) {
   test_out$final.opt.state$opt.problem <- NULL
   test_out$final.opt.state$opt.path <- NULL
 
-  post_process_mlrmbo_output(train_out, test_out, grid, grid_i)
+  # extract params and the iterations
+  design <- design_test
+
+  # get iterations
+  if (!is.null(train_out)) {
+    iterations <- train_out$opt.path$env$dob
+  } else {
+    iterations <- test_out$opt.path$env$dob
+  }
+
+  # get each individual evaluation (model, params, performance, timings) and put it in a data frame
+  eval_ind <- map_df(seq_len(nrow(design)), function(param_i) {
+    if (!is.null(train_out)) {
+      train_summary <- train_out$opt.path$env$extra[[param_i]]$.summary
+      if (!is.null(train_summary)) {
+        train_summary <- train_summary %>% mutate(
+          fold_type = "train",
+          param_row = list(design[param_i,])
+        )
+      }
+    } else {
+      train_summary <- NULL
+    }
+
+    test_summary <- test_out$opt.path$env$extra[[param_i]]$.summary
+    if (!is.null(test_summary)) {
+      test_summary <- test_summary %>% mutate(
+        fold_type = "test",
+        param_row = list(design[param_i,])
+      )
+    }
+
+    bind_rows(train_summary, test_summary) %>%
+      mutate(
+        grid_i,
+        repeat_i = grid$repeat_i[grid_i],
+        fold_i = grid$fold_i[grid_i],
+        group_sel = grid$group_sel[grid_i],
+        param_i,
+        iteration_i = iterations[param_i],
+        error_message = sapply(error, function(err) ifelse(is.null(err), "", err$message))
+      ) %>%
+      select(-error)
+  })
+
+  eval_ind
 }
 
 # Helper function for running just the initialisation of mlrMBO
@@ -317,104 +366,6 @@ no_train_mlrmbo <- function(fun, design, learner, control, show.info, more.args)
 }
 
 
-#' @importFrom readr read_rds
-post_process_mlrmbo_output <- function(train_out, test_out, grid, grid_i) {
-  fold_i <- grid$fold_i[[grid_i]]
-  group_sel <- grid$group_sel[[grid_i]]
-  repeat_i <- grid$repeat_i[[grid_i]]
-
-  x_names <- names(test_out$x)
-  y_names <- test_out$opt.path$y.names
-
-  ## get the best trained parameters
-  if (!is.null(train_out)) {
-    best_ind <- train_out$best.ind
-    best <- list(
-      param_index = best_ind,
-      params = train_out$x,
-      y_names = y_names,
-      train_score = train_out$y,
-      test_score = test_out$opt.path$env$path[best_ind,y_names]
-    ) %>%
-      list() %>%
-      list_as_tibble() %>%
-      mutate(
-        grid_i, repeat_i, fold_i, group_sel
-      )
-  } else {
-    best_ind <- NA
-    best <- NULL
-  }
-
-  ## construct the global summary, 2 rows per parameter
-  path_summary <- bind_rows(
-    if (!is.null(train_out)) {
-      bind_cols(
-        data_frame(type = "train", grid_i, repeat_i, fold_i, group_sel,
-                   iteration_i = train_out$opt.path$env$dob,
-                   time_total = train_out$opt.path$env$exec.time,
-                   param_i = seq_along(time_total)),
-        train_out$opt.path$env$path
-      )
-    } else {
-      NULL
-    },
-    bind_cols(
-      data_frame(type = "test", grid_i, repeat_i, fold_i, group_sel,
-                 iteration_i = test_out$opt.path$env$dob,
-                 time_total = test_out$opt.path$env$exec.time,
-                 param_i = seq_along(time_total)),
-      test_out$opt.path$env$path
-    )
-  ) %>% as.tibble
-  par_set <- test_out$opt.path$par.set
-
-  for (parname in names(par_set$pars)) {
-    parlen <- par_set$pars[[parname]]$len
-    if (parlen > 1) {
-      parlist <-
-        path_summary %>%
-        select(starts_with(parname)) %>%
-        t %>%
-        as.data.frame %>%
-        as.list %>%
-        set_names(NULL)
-      path_summary <- path_summary %>%
-        select(-starts_with(parname)) %>%
-        mutate(!!parname := parlist)
-    }
-  }
-
-  ## collect the scores per task individually
-  individual_scores <- map_df(seq_along(test_out$opt.path$env$dob), function(param_i) {
-    if (!is.null(train_out)) {
-      train_summary <- train_out$opt.path$env$extra[[param_i]]$.summary
-      if (!is.null(train_summary)) {
-        train_summary <- train_summary %>% mutate(fold_type = "train")
-      }
-    } else {
-      train_summary <- NULL
-    }
-
-    test_summary <- test_out$opt.path$env$extra[[param_i]]$.summary
-    if (!is.null(test_summary)) {
-      test_summary <- test_summary %>% mutate(fold_type = "test")
-    }
-
-    bind_rows(train_summary, test_summary) %>%
-      mutate(
-        grid_i,
-        repeat_i,
-        fold_i,
-        group_sel,
-        param_i,
-        iteration_i = test_out$opt.path$env$dob[param_i]
-      )
-  })
-
-  lst(best, path_summary, individual_scores)
-}
-
 #' Downloading and processing the results of the benchmark jobs
 #'
 #' @param out_dir The folder in which to output intermediate and final results.
@@ -435,6 +386,7 @@ benchmark_suite_retrieve <- function(out_dir) {
     } else if (!file.exists(output_file) && file.exists(qsubhandle_file)) {
       cat(method_name, ": Attempting to retrieve output from cluster: ", sep = "")
       data <- readr::read_rds(qsubhandle_file)
+      grid <- data$grid
       qsub_handle <- data$qsub_handle
       num_tasks <- qsub_handle$num_tasks
 
@@ -442,6 +394,10 @@ benchmark_suite_retrieve <- function(out_dir) {
         qsub_handle,
         wait = FALSE
       )
+
+      if (!"tasks" %in% ls()) {
+        tasks <- readr::read_rds(data$tasks_local_file)
+      }
 
       # suppressing inevitable warnings:
       # when the job is still partly running, calling qacct will generate a warning
@@ -455,20 +411,32 @@ benchmark_suite_retrieve <- function(out_dir) {
         cat("Output found! Saving output.\n", sep = "")
 
         output_succeeded <- TRUE
-        outputs <- lapply(output, function(x) {
-          if(length(x) == 1 && is.na(x)) {
-            list(
-              which_errored = TRUE,
-              qsub_error = attr(x, "qsub_error")
-            )
-          } else {
-            # check to see whether all jobs failed
-            all_errored <- all(x$individual_scores$error %>% map_lgl(~ !is.null(.)))
-            x$which_errored <- all_errored
-            x$qsub_error <- ifelse(all_errored, "all parameter settings errored", "")
+        outputs <- map_df(seq_along(output), function(grid_i) {
+          x <- output[[grid_i]]
+          if(length(x) != 1 || !is.na(x)) {
             x
+          } else {
+            qsub_error <- attr(x, "qsub_error")
+
+            qsub_memory <- qsub_handle$memory %>% str_replace("G$", "") %>% as.numeric
+            qacct_memory <- qacct_out$maxvmem %>% str_replace("GB$", "") %>% as.numeric
+
+            if (!is.na(qacct_memory) && length(qacct_memory) > 0 && qacct_memory > qsub_memory) {
+              qsub_error <- "Memory limit exceeded"
+            }
+
+            # mimic eval_ind format
+            data_frame(
+              method_name = data$method$name,
+              method_short_name = data$method$short_name,
+              error_message = qsub_error,
+              repeat_i = grid$repeat_i[[grid_i]],
+              fold_i = grid$fold_i[[grid_i]],
+              group_sel = grid$group_sel[[grid_i]],
+              grid_i
+            )
           }
-        }) %>% list_as_tibble()
+        })
       } else {
         error_message <-
           if (is.null(qstat_out) || nrow(qstat_out) > 0) {
@@ -479,26 +447,21 @@ benchmark_suite_retrieve <- function(out_dir) {
 
         cat("Output not found. ", error_message, ".\n", sep = "")
         output_succeeded <- FALSE
-        outputs <- tibble(
-          which_errored = rep(TRUE, num_tasks),
-          qsub_error = rep(error_message, num_tasks)
+
+        # mimic eval_ind format
+        outputs <- grid %>% mutate(
+          grid_i = seq_len(n()),
+          method_name = data$method$name,
+          method_short_name = data$method$short_name,
+          error_message = error_message
         )
       }
 
-      out_rds <- outputs %>% mutate(
-        task_id = seq_len(n()),
-        method_name,
-        qacct = map(seq_len(n()), ~ extract_row_to_list(qacct_out, .)),
-        qstat = map(seq_len(n()), ~ qstat_out),
-        qsub_handle = map(seq_len(n()), ~ qsub_handle)
-      ) %>%
-        select(method_name, task_id, which_errored, qsub_error, everything())
-
       if (output_succeeded) {
-        readr::write_rds(out_rds, output_file)
+        readr::write_rds(outputs, output_file)
       }
 
-      out_rds
+      outputs
     } else {
       stop("Could not find an output.rds or qsubhandle.rds file in out_dir = ", sQuote(out_dir))
     }

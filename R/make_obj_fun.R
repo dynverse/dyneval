@@ -18,7 +18,7 @@ make_obj_fun <- function(method, metrics, extra_metrics, noisy = FALSE, verbose 
   make_fun(
     name = "TItrain",
     vectorized = FALSE,
-    minimize = rep(FALSE, length(metrics)),
+    minimize = metrics %in% c("rf_mse"),
     noisy = noisy,
     has.simple.signature = FALSE,
     par.set = method$par_set,
