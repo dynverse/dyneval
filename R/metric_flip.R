@@ -161,7 +161,7 @@ calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify
     directed2 <- any(net2$directed)
     net1 <- net1 %>%
       rename(weight = length) %>%
-      igraph::graph_from_data_frame(directed = directed1) %>%
+      igraph::graph_from_data_frame(directed = F) %>%
       dynutils::simplify_igraph_network() %>%
       igraph::as_data_frame() %>%
       rename(length = weight) %>%
@@ -171,7 +171,7 @@ calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify
       insert_one_node_into_duplicate_edges()
     net2 <- net2 %>%
       rename(weight = length) %>%
-      igraph::graph_from_data_frame(directed = directed2) %>%
+      igraph::graph_from_data_frame(directed = F) %>%
       dynutils::simplify_igraph_network() %>%
       igraph::as_data_frame() %>%
       rename(length = weight) %>%
