@@ -290,9 +290,6 @@ benchmark_qsub_fun <- function(grid_i) {
     parallelMap::parallelStop()
   }
 
-  # extract params and the iterations
-  design <- design_test
-
   # get iterations
   if (!is.null(train_out)) {
     iterations <- train_out$opt.path$env$dob
@@ -300,11 +297,11 @@ benchmark_qsub_fun <- function(grid_i) {
     iterations <- test_out$opt.path$env$dob
   }
 
-  # get each individual evaluation (model, params, performance, timings) and put it in a data frame
-  map_df(seq_len(nrow(design)), function(param_i) {
+  # get each individual evaluation (model, params, performance, timings) and put it in a tibble
+  map_df(seq_len(nrow(design_test)), function(param_i) {
     bind_rows(
-      summarise_mlr_output(fold_type = "train", train_out, param_i, design, output_model, grid, grid_i, iterations),
-      summarise_mlr_output(fold_type = "test", test_out, param_i, design, output_model, grid, grid_i, iterations)
+      summarise_mlr_output(fold_type = "train", train_out, param_i, design_test, output_model, grid, grid_i, iterations),
+      summarise_mlr_output(fold_type = "test", test_out, param_i, design_test, output_model, grid, grid_i, iterations)
     )
   })
 }
