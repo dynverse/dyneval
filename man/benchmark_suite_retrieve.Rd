@@ -4,10 +4,12 @@
 \alias{benchmark_suite_retrieve}
 \title{Downloading and processing the results of the benchmark jobs}
 \usage{
-benchmark_suite_retrieve(out_dir)
+benchmark_suite_retrieve(out_dir, return_outputs = TRUE)
 }
 \arguments{
 \item{out_dir}{The folder in which to output intermediate and final results.}
+
+\item{return_outputs}{Whether or not to return the outputs, or only retrieve them from the cluster.}
 }
 \description{
 Downloading and processing the results of the benchmark jobs
