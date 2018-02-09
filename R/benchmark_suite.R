@@ -360,11 +360,12 @@ no_train_mlrmbo <- function(fun, design, learner, control, show.info, more.args)
 #' Downloading and processing the results of the benchmark jobs
 #'
 #' @param out_dir The folder in which to output intermediate and final results.
+#' @param return_outputs Whether or not to return the outputs, or only retrieve them from the cluster.
 #'
 #' @importFrom PRISM qsub_retrieve qacct qstat_j
 #' @importFrom readr read_rds write_rds
 #' @export
-benchmark_suite_retrieve <- function(out_dir) {
+benchmark_suite_retrieve <- function(out_dir, return_outputs = TRUE) {
   method_names <- list.dirs(out_dir, full.names = FALSE, recursive = FALSE) %>% discard(~ . == "")
   map_df(method_names, function(method_name) {
     method_folder <- paste0(out_dir, method_name)
@@ -373,7 +374,11 @@ benchmark_suite_retrieve <- function(out_dir) {
 
     if (file.exists(output_file)) {
       cat(method_name, ": Reading previous output\n", sep = "")
-      readr::read_rds(output_file)
+      if (return_outputs) {
+        readr::read_rds(output_file)
+      } else {
+        NULL
+      }
     } else if (!file.exists(output_file) && file.exists(qsubhandle_file)) {
       cat(method_name, ": Attempting to retrieve output from cluster: ", sep = "")
       data <- readr::read_rds(qsubhandle_file)
@@ -385,10 +390,6 @@ benchmark_suite_retrieve <- function(out_dir) {
         qsub_handle,
         wait = FALSE
       )
-
-      if (!"tasks" %in% ls()) {
-        tasks <- readr::read_rds(data$tasks_local_file)
-      }
 
       # suppressing inevitable warnings:
       # when the job is still partly running, calling qacct will generate a warning
@@ -403,11 +404,11 @@ benchmark_suite_retrieve <- function(out_dir) {
 
         output_succeeded <- TRUE
         outputs <- map_df(seq_along(output), function(grid_i) {
-          x <- output[[grid_i]]
-          if(length(x) != 1 || !is.na(x)) {
-            x
+          out <- output[[grid_i]]
+          if(length(out) != 1 || !is.na(out)) {
+            out
           } else {
-            qsub_error <- attr(x, "qsub_error")
+            qsub_error <- attr(out, "qsub_error")
 
             qsub_memory <- qsub_handle$memory %>% str_replace("G$", "") %>% as.numeric
             qacct_memory <- qacct_out$maxvmem %>% str_replace("GB$", "") %>% as.numeric
@@ -451,6 +452,12 @@ benchmark_suite_retrieve <- function(out_dir) {
       if (output_succeeded) {
         readr::write_rds(outputs, output_file)
       }
+
+      if (!return_outputs) {
+        outputs <- NULL
+      }
+
+      gc()
 
       outputs
     } else {
