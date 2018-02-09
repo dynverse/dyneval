@@ -257,10 +257,6 @@ benchmark_qsub_fun <- function(grid_i) {
     ## Read the last saved state
     train_out <- mlrMBO::mboFinalize(control_train$save.file.path)
 
-    ## Remove the optimisation problem as the datasets included might be fairly large
-    train_out$final.opt.state$opt.problem <- NULL
-    train_out$final.opt.state$opt.path <- NULL
-
     ## Extract all parameters from the training, to be run on the test datasets
     design_test <- train_out$opt.path$env$path %>% select(-one_of(metrics))
   } else {
@@ -294,10 +290,6 @@ benchmark_qsub_fun <- function(grid_i) {
     parallelMap::parallelStop()
   }
 
-  ## here too
-  test_out$final.opt.state$opt.problem <- NULL
-  test_out$final.opt.state$opt.path <- NULL
-
   # extract params and the iterations
   design <- design_test
 
@@ -309,41 +301,43 @@ benchmark_qsub_fun <- function(grid_i) {
   }
 
   # get each individual evaluation (model, params, performance, timings) and put it in a data frame
-  eval_ind <- map_df(seq_len(nrow(design)), function(param_i) {
-    if (!is.null(train_out)) {
-      train_summary <- train_out$opt.path$env$extra[[param_i]]$.summary
-      if (!is.null(train_summary)) {
-        train_summary <- train_summary %>% mutate(
-          fold_type = "train",
-          param_row = list(design[param_i,])
-        )
-      }
-    } else {
-      train_summary <- NULL
-    }
-
-    test_summary <- test_out$opt.path$env$extra[[param_i]]$.summary
-    if (!is.null(test_summary)) {
-      test_summary <- test_summary %>% mutate(
-        fold_type = "test",
-        param_row = list(design[param_i,])
-      )
-    }
-
-    bind_rows(train_summary, test_summary) %>%
-      mutate(
-        grid_i,
-        repeat_i = grid$repeat_i[grid_i],
-        fold_i = grid$fold_i[grid_i],
-        group_sel = grid$group_sel[grid_i],
-        param_i,
-        iteration_i = iterations[param_i],
-        error_message = sapply(error, function(err) ifelse(is.null(err), "", err$message))
-      ) %>%
-      select(-error)
+  map_df(seq_len(nrow(design)), function(param_i) {
+    bind_rows(
+      summarise_mlr_output(fold_type = "train", train_out, param_i, design, output_model, grid, grid_i, iterations),
+      summarise_mlr_output(fold_type = "test", test_out, param_i, design, output_model, grid, grid_i, iterations)
+    )
   })
+}
 
-  eval_ind
+summarise_mlr_output <- function(fold_type, mlr_out, param_i, design, output_model, grid, grid_i, iterations) {
+  if (!is.null(mlr_out)) {
+    summary <- mlr_out$opt.path$env$extra[[param_i]]$.summary
+
+    if (!is.null(summary)) {
+      summary <- summary %>%
+        mutate(
+          fold_type,
+          param_row = list(design[param_i,]),
+          grid_i,
+          repeat_i = grid$repeat_i[grid_i],
+          fold_i = grid$fold_i[grid_i],
+          group_sel = grid$group_sel[grid_i],
+          param_i,
+          iteration_i = iterations[param_i],
+          error_message = sapply(error, function(err) ifelse(is.null(err), "", err$message))
+        ) %>%
+        select(-error)
+
+      # save models, if asked for
+      if (output_model) {
+        summary$model <- mlr_out$opt.path$env$extra[[param_i]]$.models
+      }
+    }
+
+    summary
+  } else {
+    NULL
+  }
 }
 
 # Helper function for running just the initialisation of mlrMBO
