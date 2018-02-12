@@ -82,7 +82,7 @@ bs_fetch_results <- function(out_dir) {
         if ("model" %in% colnames(outputs)) {
           models <- outputs$model
           model_ids <- map_chr(models, ~.$id)
-          outputs <- outputs %>% slice(-model) %>% mutate(model_i = seq_len(n()), model_id = model_ids)
+          outputs <- outputs %>% select(-model) %>% mutate(model_i = seq_len(n()), model_id = model_ids)
           readr::write_rds(models, output_models_file)
         }
 
