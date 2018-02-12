@@ -29,5 +29,6 @@ bs_bind_results <- function(out_dir, load_models = FALSE) {
       cat(method_name, ": Output not found, skipping\n", sep = "")
       NULL
     }
-  })
+  }) %>%
+    as_tibble()
 }

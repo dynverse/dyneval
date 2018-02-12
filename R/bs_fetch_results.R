@@ -8,42 +8,47 @@
 bs_fetch_results <- function(out_dir) {
   method_names <- list.dirs(out_dir, full.names = FALSE, recursive = FALSE) %>% discard(~ . == "")
 
-  map_df(method_names, function(method_name) {
+  # process each method separately
+  map(method_names, function(method_name) {
     method_folder <- paste0(out_dir, method_name)
     output_metrics_file <- paste0(method_folder, "/output_metrics.rds")
     output_models_file <- paste0(method_folder, "/output_models.rds")
     qsubhandle_file <- paste0(method_folder, "/qsubhandle.rds")
 
+    # if the output has not been processed yet, but a qsub handle exists,
+    # attempt to fetch the results from the cluster
     if (!file.exists(output_metrics_file) && file.exists(qsubhandle_file)) {
+
       cat(method_name, ": Attempting to retrieve output from cluster: ", sep = "")
       data <- readr::read_rds(qsubhandle_file)
       grid <- data$grid
       qsub_handle <- data$qsub_handle
       num_tasks <- qsub_handle$num_tasks
 
+      # attempt to retrieve results; return NULL if job is still busy or has failed
       output <- PRISM::qsub_retrieve(
         qsub_handle,
         wait = FALSE
       )
 
-      # suppressing inevitable warnings:
-      # when the job is still partly running, calling qacct will generate a warning
-      # when the job is finished, calling qstat will generate a warning
-      suppressWarnings({
-        qacct_out <- PRISM::qacct(qsub_handle)
-        qstat_out <- PRISM::qstat_j(qsub_handle)
-      })
-
       if (!is.null(output)) {
         cat("Output found! Saving output.\n", sep = "")
 
-        output_succeeded <- TRUE
+        # process each job separately
         outputs <- map_df(seq_along(output), function(grid_i) {
           out <- output[[grid_i]]
-          if(length(out) != 1 || !is.na(out)) {
+
+          if (length(out) != 1 || !is.na(out)) {
+            # hooray, the benchmark suite ran fine!
             out
+
           } else {
+            # a subtask has errored, will mimic regular output
             qsub_error <- attr(out, "qsub_error")
+
+            suppressWarnings({
+              qacct_out <- PRISM::qacct(qsub_handle)
+            })
 
             qsub_memory <- qsub_handle$memory %>% str_replace("G$", "") %>% as.numeric
             qacct_memory <- qacct_out$maxvmem %>% str_replace("GB$", "") %>% as.numeric
@@ -64,21 +69,7 @@ bs_fetch_results <- function(out_dir) {
             )
           }
         })
-      } else {
-        error_message <-
-          if (is.null(qstat_out) || nrow(qstat_out) > 0) {
-            "job is still running"
-          } else {
-            "qsub_retrieve of results failed -- no output was produced, but job is not running any more"
-          }
 
-        cat("Output not found. ", error_message, ".\n", sep = "")
-        output_succeeded <- FALSE
-
-        NULL
-      }
-
-      if (output_succeeded) {
         if ("model" %in% colnames(outputs)) {
           models <- outputs$model
           model_ids <- map_chr(models, function(model) {
@@ -93,7 +84,24 @@ bs_fetch_results <- function(out_dir) {
           readr::write_rds(models, output_models_file)
         }
 
+        # save output
         readr::write_rds(outputs, output_metrics_file)
+
+      } else {
+        # the whole job has errored, will mimic regular output
+
+        suppressWarnings({
+          qstat_out <- PRISM::qstat_j(qsub_handle)
+        })
+
+        error_message <-
+          if (is.null(qstat_out) || nrow(qstat_out) > 0) {
+            "job is still running"
+          } else {
+            "qsub_retrieve of results failed -- no output was produced, but job is not running any more"
+          }
+
+        cat("Output not found. ", error_message, ".\n", sep = "")
       }
 
       gc()
@@ -111,6 +119,9 @@ bs_fetch_results <- function(out_dir) {
     }
 
   })
+
+  # return nothing
+  invisible()
 }
 
 
