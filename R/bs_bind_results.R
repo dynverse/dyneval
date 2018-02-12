@@ -14,7 +14,7 @@ bs_bind_results <- function(out_dir, load_models = FALSE) {
     output_metrics_file <- paste0(method_folder, "/output_metrics.rds")
     output_models_file <- paste0(method_folder, "/output_models.rds")
 
-    if (file.exists(output_metrics_file)) {
+    if (load_models && file.exists(output_metrics_file)) {
       cat(method_name, ": Reading previous output\n", sep = "")
       output <- readr::read_rds(output_metrics_file)
 
