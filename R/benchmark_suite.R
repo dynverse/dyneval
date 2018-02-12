@@ -455,9 +455,9 @@ benchmark_suite_retrieve <- function(out_dir, return_outputs = TRUE) {
 
       } else {
         if (file.exists(output_file)) {
-          cat(method_name, ": Output already present", sep = "")
+          cat(method_name, ": Output already present.\n", sep = "")
         } else {
-          cat(method_name, ": No qsub file was found", sep = "")
+          cat(method_name, ": No qsub file was found.\n", sep = "")
         }
 
         NULL
