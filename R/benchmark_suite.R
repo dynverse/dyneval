@@ -370,7 +370,7 @@ benchmark_suite_retrieve <- function(out_dir, return_outputs = TRUE) {
   map_df(method_names, function(method_name) {
     method_folder <- paste0(out_dir, method_name)
     output_file <- paste0(method_folder, "/output.rds")
-    qsubhandle_file <- paste0
+    qsubhandle_file <- paste0(method_folder, "/qsubhandle.rds")
 
     if (return_outputs) {
       if (file.exists(output_file)) {
@@ -380,8 +380,7 @@ benchmark_suite_retrieve <- function(out_dir, return_outputs = TRUE) {
         cat(method_name, ": Output not found, skipping\n", sep = "")
         NULL
       }
-    } else
-    {
+    } else {
       if (!file.exists(output_file) && file.exists(qsubhandle_file)) {
         cat(method_name, ": Attempting to retrieve output from cluster: ", sep = "")
         data <- readr::read_rds(qsubhandle_file)
