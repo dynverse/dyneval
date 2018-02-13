@@ -44,6 +44,11 @@ execute_evaluation <- function(
 
     # Fetch method outputs
     method_output <- method_outputs[[i]]
+
+    if (any("try-error" %in% class(method_output))) {
+      stop(method_output)
+    }
+
     model <- method_output$model
 
     if (!is.null(model)) {
