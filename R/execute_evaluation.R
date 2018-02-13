@@ -54,7 +54,7 @@ execute_evaluation <- function(
     if (!is.null(model)) {
       # Calculate geodesic distances
       time0 <- Sys.time()
-      model$geodesic_dist <- dynutils::compute_emlike_dist(model)
+      model$geodesic_dist <- dynutils::compute_tented_geodesic_distances(model)
       time1 <- Sys.time()
       time_geodesic <- as.numeric(difftime(time1, time0, units = "sec"))
       df_geodesic <- data_frame(time_geodesic)
