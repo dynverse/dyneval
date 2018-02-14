@@ -34,6 +34,10 @@ bs_fetch_results <- function(out_dir) {
       if (!is.null(output)) {
         cat("Output found! Saving output.\n", sep = "")
 
+        suppressWarnings({
+          qacct_out <- PRISM::qacct(qsub_handle)
+        })
+
         # process each job separately
         outputs <- map_df(seq_along(output), function(grid_i) {
           out <- output[[grid_i]]
@@ -46,15 +50,17 @@ bs_fetch_results <- function(out_dir) {
             # a subtask has errored, will mimic regular output
             qsub_error <- attr(out, "qsub_error")
 
-            suppressWarnings({
-              qacct_out <- PRISM::qacct(qsub_handle)
-            })
+            # TODO: add checks for things other than memory, e.g. timeout
+            qacct_filt <- qacct_out %>% filter(task_id == grid_i)
+            if (nrow(qacct_filt) == 0) {
+              qsub_error <- "Cancelled"
+            } else {
+              qsub_memory <- qsub_handle$memory %>% str_replace("G$", "") %>% as.numeric
+              qacct_memory <- qacct_filt$maxvmem[[1]] %>% str_replace("GB$", "") %>% as.numeric
 
-            qsub_memory <- qsub_handle$memory %>% str_replace("G$", "") %>% as.numeric
-            qacct_memory <- qacct_out$maxvmem %>% str_replace("GB$", "") %>% as.numeric
-
-            if (!is.na(qacct_memory) && length(qacct_memory) > 0 && qacct_memory > qsub_memory) {
-              qsub_error <- "Memory limit exceeded"
+              if (!is.na(qacct_memory) && length(qacct_memory) > 0 && qacct_memory > qsub_memory) {
+                qsub_error <- "Memory limit exceeded"
+              }
             }
 
             # mimic eval_ind format

@@ -193,6 +193,8 @@ bs_submit <- function(
       NULL
     }
   })
+
+  invisible()
 }
 
 #' Helper function for benchmark suite
