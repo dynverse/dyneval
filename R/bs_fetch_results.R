@@ -51,11 +51,15 @@ bs_fetch_results <- function(out_dir) {
             qsub_error <- attr(out, "qsub_error")
 
             # TODO: add checks for things other than memory, e.g. timeout
-            qsub_memory <- qsub_handle$memory[[grid_i]] %>% str_replace("G$", "") %>% as.numeric
-            qacct_memory <- qacct_out$maxvmem %>% str_replace("GB$", "") %>% as.numeric
+            if (grid_i >= nrow(qacct_out)) {
+              qsub_error <- "Cancelled"
+            } else {
+              qsub_memory <- qsub_handle$memory[[grid_i]] %>% str_replace("G$", "") %>% as.numeric
+              qacct_memory <- qacct_out$maxvmem %>% str_replace("GB$", "") %>% as.numeric
 
-            if (!is.na(qacct_memory) && length(qacct_memory) > 0 && qacct_memory > qsub_memory) {
-              qsub_error <- "Memory limit exceeded"
+              if (!is.na(qacct_memory) && length(qacct_memory) > 0 && qacct_memory > qsub_memory) {
+                qsub_error <- "Memory limit exceeded"
+              }
             }
 
             # mimic eval_ind format
