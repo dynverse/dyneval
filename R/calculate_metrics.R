@@ -20,6 +20,9 @@ calculate_metrics <- function(task, model, metrics) {
   if (any(c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "mantel_pval") %in% metrics)) {
 
     if (!is.null(model)) {
+      task$geodesic_dist[is.infinite(task$geodesic_dist)] <- .Machine$double.xmax
+      model$geodesic_dist[is.infinite(model$geodesic_dist)] <- .Machine$double.xmax
+
       # compute coranking
       time0 <- Sys.time()
       coranking <- compute_coranking(task$geodesic_dist, model$geodesic_dist)
