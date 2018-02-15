@@ -4,7 +4,8 @@
 \alias{calculate_metrics}
 \title{Calculate the performance of a model with respect to a task}
 \usage{
-calculate_metrics(task, model, metrics)
+calculate_metrics(task, model, metrics = c("mean_R_nx", "auc_R_nx", "Q_local",
+  "Q_global", "correlation", "mantel_pval", "edge_flip", "rf_mse", "rf_rsq"))
 }
 \arguments{
 \item{task}{the original task}

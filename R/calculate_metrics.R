@@ -12,9 +12,24 @@
 #' }
 #'
 #' @importFrom igraph is_isomorphic_to graph_from_data_frame
+#' @importFrom testthat expect_equal
 #'
 #' @export
-calculate_metrics <- function(task, model, metrics) {
+calculate_metrics <- function(
+  task,
+  model,
+  metrics = c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "mantel_pval", "edge_flip", "rf_mse", "rf_rsq")
+) {
+
+  testthat::expect_equal(task$cell_ids, rownames(task$geodesic_dist))
+  testthat::expect_equal(task$cell_ids, colnames(task$geodesic_dist))
+
+  if (!is.null(model)) {
+    testthat::expect_equal(task$cell_ids, model$cell_ids)
+    testthat::expect_equal(task$cell_ids, rownames(model$geodesic_dist))
+    testthat::expect_equal(task$cell_ids, colnames(model$geodesic_dist))
+  }
+
   summary_list <- list()
 
   if (any(c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "mantel_pval") %in% metrics)) {
@@ -29,7 +44,7 @@ calculate_metrics <- function(task, model, metrics) {
 
       # compute corrrelation
       time0 <- Sys.time()
-      summary_list$correlation <- cor(task$geodesic_dist %>% as.vector, model$geodesic_dist %>% as.vector, method="spearman")
+      summary_list$correlation <- cor(task$geodesic_dist %>% as.vector, model$geodesic_dist %>% as.vector, method = "spearman")
       time1 <- Sys.time()
       summary_list$time_correlation <- as.numeric(difftime(time1, time0, units = "sec"))
 
@@ -46,7 +61,7 @@ calculate_metrics <- function(task, model, metrics) {
 
   if ("edge_flip" %in% metrics) {
     if (!is.null(model)) {
-      net1 <- model$milestone_network
+      net1 <- model$milestone_network %>% filter(to != "FILTERED_CELLS")
       net2 <- task$milestone_network %>% filter(to != "FILTERED_CELLS")
 
       time0 <- Sys.time()
