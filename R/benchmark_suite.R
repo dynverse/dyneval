@@ -181,20 +181,23 @@ benchmark_submit_check <- function(
     par_set <- methods$par_set[[mi]]
     short_name <- methods$short_name[[mi]]
 
+    cat("Checking parameters for ", sQuote(short_name), "\n", sep = "")
+
     # extract given_parameters, and check that paramset_id is present
     given_params <- parameters[[short_name]]
     testthat::expect_true("paramset_id" %in% colnames(given_params))
 
     # convert given params to list to avoid problems with vector parameters
-    param_list <- given_params %>%
+    param_list <-
+      given_params %>%
       select(-paramset_id) %>%
       ParamHelpers::dfRowToList(par_set, 1)
 
     # filter tunable params in par_set
-    tunable_pars <- par_set$pars %>% keep(~.$tunable)
+    tunable_pars <- par_set$pars
 
     # compare that indeed the params in param_list and tunable_pars are the same
-    testthat::expect_equal(sort(names(param_list)), sort(names(tunable_pars)))
+    testthat::expect_true(all(names(param_list) %in% names(tunable_pars)))
   }
 
   # check timeout_per_execution
@@ -211,10 +214,6 @@ benchmark_submit_check <- function(
 #'
 #' @importFrom testthat expect_true
 benchmark_qsub_fun <- function(grid_i) {
-  # test whether we indeed have all the parameters that we require
-  required_variable_names <- names(formals(benchmark_run_evaluation))
-  testthat::expect_true(all(required_variable_names %in% ls()))
-
   # call helper function
   benchmark_run_evaluation(grid, grid_i, remote_tasks_folder, parms, method, metrics, verbose)
 }
