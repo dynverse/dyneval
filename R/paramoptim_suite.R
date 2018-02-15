@@ -411,7 +411,7 @@
 #'             qsub_error <- attr(out, "qsub_error")
 #'
 #'             # TODO: add checks for things other than memory, e.g. timeout
-#'             qacct_filt <- qacct_out %>% filter(task_id == grid_i)
+#'             qacct_filt <- qacct_out %>% filter(taskid == grid_i)
 #'             if (nrow(qacct_filt) == 0) {
 #'               qsub_error <- "Cancelled"
 #'             } else {

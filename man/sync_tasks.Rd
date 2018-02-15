@@ -4,14 +4,14 @@
 \alias{sync_tasks}
 \title{Save a tibble of tasks as separate files, locally and on a remote}
 \usage{
-sync_tasks(tasks, local_task_folder, remote_task_folder)
+sync_tasks(tasks, local_tasks_folder, remote_tasks_folder)
 }
 \arguments{
 \item{tasks}{A tibble of tasks}
 
-\item{local_task_folder}{An empty directory on the local device}
+\item{local_tasks_folder}{An empty directory on the local device}
 
-\item{remote_task_folder}{An empty directory on a remote device}
+\item{remote_tasks_folder}{An empty directory on a remote device}
 }
 \description{
 Save a tibble of tasks as separate files, locally and on a remote
