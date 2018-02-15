@@ -32,6 +32,8 @@ sync_tasks <- function(
     write_rds(task, paste0(local_tasks_folder, "/", task_id, ".rds"))
   }
 
+  write_rds(tasks$id, paste0(local_tasks_folder, "/task_ids.rds"))
+
   PRISM:::rsync_remote(
     remote_src = "",
     path_src = paste0(local_tasks_folder, "/"),
