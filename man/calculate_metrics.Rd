@@ -4,8 +4,8 @@
 \alias{calculate_metrics}
 \title{Calculate the performance of a model with respect to a task}
 \usage{
-calculate_metrics(task, model, metrics = c("mean_R_nx", "auc_R_nx", "Q_local",
-  "Q_global", "correlation", "mantel_pval", "edge_flip", "rf_mse", "rf_rsq"))
+calculate_metrics(task, model, metrics = c("correlation", "mantel_pval",
+  "edge_flip", "rf_mse", "rf_rsq"))
 }
 \arguments{
 \item{task}{the original task}
@@ -14,7 +14,6 @@ calculate_metrics(task, model, metrics = c("mean_R_nx", "auc_R_nx", "Q_local",
 
 \item{metrics}{which metrics to evaluate:
 \enumerate{
-  \item Coranking of geodesic distances: \code{"mean_R_nx"}, \code{"auc_R_nx"}, \code{"Q_local"}, \code{"Q_global"}
   \item Spearman correlation of geodesic distances: \code{"correlation"}
   \item Mantel test p-value: \code{"mantel_pval"}
   \item Edge flip score: \code{"edge_flip"}

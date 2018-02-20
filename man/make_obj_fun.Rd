@@ -11,7 +11,6 @@ make_obj_fun(method, metrics, extra_metrics, noisy = FALSE, verbose = FALSE)
 
 \item{metrics}{which metrics to evaluate:
 \enumerate{
-  \item Coranking of geodesic distances: \code{"mean_R_nx"}, \code{"auc_R_nx"}, \code{"Q_local"}, \code{"Q_global"}
   \item Spearman correlation of geodesic distances: \code{"correlation"}
   \item Mantel test p-value: \code{"mantel_pval"}
   \item Edge flip score: \code{"edge_flip"}

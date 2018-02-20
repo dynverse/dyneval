@@ -4,7 +4,6 @@
 #' @param model the predicted model
 #' @param metrics which metrics to evaluate:
 #' \enumerate{
-#'   \item Coranking of geodesic distances: \code{"mean_R_nx"}, \code{"auc_R_nx"}, \code{"Q_local"}, \code{"Q_global"}
 #'   \item Spearman correlation of geodesic distances: \code{"correlation"}
 #'   \item Mantel test p-value: \code{"mantel_pval"}
 #'   \item Edge flip score: \code{"edge_flip"}
@@ -18,32 +17,32 @@
 calculate_metrics <- function(
   task,
   model,
-  metrics = c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "mantel_pval", "edge_flip", "rf_mse", "rf_rsq")
+  metrics = c("correlation", "mantel_pval", "edge_flip", "rf_mse", "rf_rsq")
+
 ) {
-
-  testthat::expect_equal(task$cell_ids, rownames(task$geodesic_dist))
-  testthat::expect_equal(task$cell_ids, colnames(task$geodesic_dist))
-
-  if (!is.null(model)) {
-    testthat::expect_equal(task$cell_ids, model$cell_ids)
-    testthat::expect_equal(task$cell_ids, rownames(model$geodesic_dist))
-    testthat::expect_equal(task$cell_ids, colnames(model$geodesic_dist))
-  }
+  testthat::expect_true(is_wrapper_with_waypoint_cells(task))
+  testthat::expect_true(is.null(model) || is_wrapper_with_waypoint_cells(model))
 
   summary_list <- list()
 
-  if (any(c("mean_R_nx", "auc_R_nx", "Q_local", "Q_global", "correlation", "mantel_pval") %in% metrics)) {
+  if (!is.null(model)) {
+    testthat::expect_equal(task$cell_ids, model$cell_ids)
+
+    waypoints <- unique(c(task$waypoint_cells, model$waypoint_cells))
+
+    # compute waypointed geodesic distances
+    time0 <- Sys.time()
+    task$geodesic_dist <- dynutils::compute_tented_geodesic_distances(task, waypoints)
+    model$geodesic_dist <- dynutils::compute_tented_geodesic_distances(model, waypoints)
+    time1 <- Sys.time()
+    summary_list$time_waypointedgeodesic <- as.numeric(difftime(time1, time0, units = "sec"))
+  }
+
+  if (any(c("correlation", "mantel_pval") %in% metrics)) {
 
     if (!is.null(model)) {
       task$geodesic_dist[is.infinite(task$geodesic_dist)] <- .Machine$double.xmax
       model$geodesic_dist[is.infinite(model$geodesic_dist)] <- .Machine$double.xmax
-
-      # compute coranking
-      time0 <- Sys.time()
-      coranking <- compute_coranking(task$geodesic_dist, model$geodesic_dist)
-      summary_list <- c(summary_list, coranking$summary)
-      time1 <- Sys.time()
-      summary_list$time_coranking <- as.numeric(difftime(time1, time0, units = "sec"))
 
       # compute corrrelation
       time0 <- Sys.time()
@@ -58,7 +57,7 @@ calculate_metrics <- function(
       time1 <- Sys.time()
       summary_list$time_mantel <- as.numeric(difftime(time1, time0, units = "sec"))
     } else {
-      summary_list <- c(summary_list, list(mean_R_nx = 0, auc_R_nx = 0, Q_local = 0, Q_global = 0, correlation = 0, mantel_pval = 0))
+      summary_list <- c(summary_list, list(correlation = 0, mantel_pval = 0))
     }
   }
 

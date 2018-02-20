@@ -13,7 +13,7 @@
 #     out_dir = tmpdir,
 #     timeout = 120,
 #     methods = get_descriptions(as_tibble = TRUE) %>% filter(short_name == "CTVEM"),
-#     metrics = c("auc_R_nx"),
+#     metrics = c("correlation"),
 #     num_cores = 4,
 #     num_iterations = 2,
 #     num_init_params = 10,
@@ -23,7 +23,7 @@
 #
 #   unlink(tmpdir, recursive = TRUE)
 #   # # # expect to fail
-#   # out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = description_celltree_maptpx(), parameters = list(), timeout = 4, metrics = "auc_R_nx")
+#   # out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = description_celltree_maptpx(), parameters = list(), timeout = 4, metrics = "correlation")
 #   # attr(out, "extras")$.summary
 # })
 #
@@ -40,7 +40,7 @@
 #     out_dir = tmpdir,
 #     timeout = 0,
 #     methods = get_descriptions(as_tibble = TRUE) %>% filter(short_name == "CTVEM"),
-#     metrics = c("auc_R_nx"),
+#     metrics = c("correlation"),
 #     num_cores = 4,
 #     num_iterations = 2,
 #     num_init_params = 10,
@@ -50,6 +50,6 @@
 #
 #   unlink(tmpdir, recursive = TRUE)
 #   # # # expect to fail
-#   # out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = description_celltree_maptpx(), parameters = list(), timeout = 4, metrics = "auc_R_nx")
+#   # out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = description_celltree_maptpx(), parameters = list(), timeout = 4, metrics = "correlation")
 #   # attr(out, "extras")$.summary
 # })
