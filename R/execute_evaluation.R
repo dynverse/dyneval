@@ -63,13 +63,13 @@ execute_evaluation <- function(
     }
 
     # Calculate metrics
-    metrics_output <- calculate_metrics(task, model, calc_metrics)
+    metrics_summary <- calculate_metrics(task, model, calc_metrics)
 
     # Create summary statistics
     summary <- bind_cols(
       method_output$summary,
       df_cellwaypoints,
-      metrics_output$summary
+      metrics_summary
     )
 
     # Return the output

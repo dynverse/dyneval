@@ -18,7 +18,6 @@ calculate_metrics <- function(
   task,
   model,
   metrics = c("correlation", "mantel_pval", "edge_flip", "rf_mse", "rf_rsq")
-
 ) {
   testthat::expect_true(is_wrapper_with_waypoint_cells(task))
   testthat::expect_true(is.null(model) || is_wrapper_with_waypoint_cells(model))
@@ -39,7 +38,6 @@ calculate_metrics <- function(
   }
 
   if (any(c("correlation", "mantel_pval") %in% metrics)) {
-
     if (!is.null(model)) {
       task$geodesic_dist[is.infinite(task$geodesic_dist)] <- .Machine$double.xmax
       model$geodesic_dist[is.infinite(model$geodesic_dist)] <- .Machine$double.xmax
@@ -86,5 +84,5 @@ calculate_metrics <- function(
 
   summary <- as_tibble(summary_list)
 
-  list(coranking = coranking, summary = summary)
+  summary
 }
