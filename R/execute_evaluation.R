@@ -25,8 +25,8 @@ execute_evaluation <- function(
   mc_cores = 1,
   verbose = FALSE
 ) {
-  testthat::expect_true("geodesic_dist" %in% colnames(tasks))
-  testthat::expect_false(any(sapply(tasks$geodesic_dist, is.null)))
+  testthat::expect_true("waypoint_cells" %in% colnames(tasks))
+  testthat::expect_false(any(sapply(tasks$waypoint_cells, is.null)))
 
   calc_metrics <- unique(c(metrics, extra_metrics))
 
@@ -54,12 +54,12 @@ execute_evaluation <- function(
     if (!is.null(model)) {
       # Calculate geodesic distances
       time0 <- Sys.time()
-      model$geodesic_dist <- dynutils::compute_tented_geodesic_distances(model)
+      model <- model %>% add_cell_waypoints_to_wrapper(num_cells_selected = length(task$waypoint_cells))
       time1 <- Sys.time()
-      time_geodesic <- as.numeric(difftime(time1, time0, units = "sec"))
-      df_geodesic <- data_frame(time_geodesic)
+      time_cellwaypoints <- as.numeric(difftime(time1, time0, units = "sec"))
+      df_cellwaypoints <- data_frame(time_cellwaypoints)
     } else {
-      df_geodesic <- NULL
+      df_cellwaypoints <- NULL
     }
 
     # Calculate metrics
@@ -68,7 +68,7 @@ execute_evaluation <- function(
     # Create summary statistics
     summary <- bind_cols(
       method_output$summary,
-      df_geodesic,
+      df_cellwaypoints,
       metrics_output$summary
     )
 
