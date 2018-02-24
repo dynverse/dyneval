@@ -122,9 +122,6 @@ paramoptim_submit <- function(
     if (!file.exists(output_file) && !file.exists(qsubhandle_file)) {
       cat("Submitting ", method$name, "\n", sep="")
 
-      # fetch parameters
-      parms <- parameters[[method$short_name]]
-
       ## create a grid for each of the tasks, paramsets, and repeats
       grid <- crossing(
         repeat_i = seq_len(num_repeats)
@@ -149,7 +146,7 @@ paramoptim_submit <- function(
 
       # which data objects will need to be transferred to the cluster
       qsub_environment <-  c(
-        "grid", "remote_tasks_folder", "remote_output_folder", "parms", "method", "metrics", "verbose",
+        "grid", "remote_tasks_folder", "remote_output_folder", "method", "metrics", "verbose",
         "num_cores", "control", "learner", "design", "task_ids"
       )
 
@@ -184,7 +181,6 @@ paramoptim_submit <- function(
         method_folder,
         output_file,
         qsubhandle_file,
-        parms,
         qsub_handle
       )
       readr::write_rds(metadata, qsubhandle_file)
@@ -242,7 +238,6 @@ paramoptim_qsub_fun <- function(grid_i) {
     learner,
     design,
     remote_tasks_folder,
-    parms,
     method,
     metrics,
     num_cores,
@@ -263,7 +258,6 @@ paramoptim_run_evaluation <- function(
   learner,
   design,
   remote_tasks_folder,
-  parms,
   method,
   metrics,
   num_cores,
@@ -279,7 +273,7 @@ paramoptim_run_evaluation <- function(
   obj_fun <- make_obj_fun(method = method, metrics = metrics, extra_metrics = NULL, verbose = verbose)
 
   ## create a folder to save the intermediate mbo files in
-  save_file_path <- paste0(working_dir, "/mlrmbo")
+  save_file_path <- paste0(getwd(), "/mlrmbo")
   dir.create(save_file_path, showWarnings = FALSE, recursive = TRUE)
 
   ## configure intermediate output
@@ -428,7 +422,6 @@ paramoptim_fetch_results <- function(local_output_folder) {
     #           grid = grid,
     #           grid_i = grid_i,
     #           remote_tasks_folder = metadata$local_tasks_folder,
-    #           parms = metadata$parms,
     #           method = method_failer,
     #           metrics = metadata$metrics,
     #           verbose = FALSE
