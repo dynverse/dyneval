@@ -221,11 +221,11 @@ paramoptim_submit_check <- function(
   testthat::expect_is(methods, "tbl")
 
   # check timeout_per_execution
-  testthat::expect_is(timeout_per_execution, "numeric")
+  testthat::expect_is(timeout_paramoptim, "numeric")
 
   # check max_memory_per_execution
-  testthat::expect_is(max_memory_per_execution, "character")
-  testthat::expect_match(max_memory_per_execution, "[0-9]+G")
+  testthat::expect_is(max_memory_per_core, "character")
+  testthat::expect_match(max_memory_per_core, "[0-9]+G")
 }
 
 
