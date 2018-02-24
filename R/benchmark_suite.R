@@ -50,8 +50,8 @@ benchmark_submit <- function(
     num_repeats,
     local_output_folder,
     remote_output_folder,
-    execute_before = NULL,
-    verbose = FALSE
+    execute_before,
+    verbose
   )
 
   ## prepare for remote execution; create a qsub config
@@ -211,8 +211,6 @@ benchmark_submit_check <- function(
 #' Helper function for benchmark suite
 #'
 #' @param grid_i Benchmark config index
-#'
-#' @importFrom testthat expect_true
 benchmark_qsub_fun <- function(grid_i) {
   # call helper function
   benchmark_run_evaluation(grid, grid_i, remote_tasks_folder, parms, method, metrics, verbose)
