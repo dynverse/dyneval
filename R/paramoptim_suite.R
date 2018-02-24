@@ -196,11 +196,9 @@ paramoptim_submit <- function(
   invisible()
 }
 
-
-
 #' @importFrom testthat expect_equal expect_is
 #' @importFrom ParamHelpers dfRowToList
-benchmark_submit_check <- function(
+paramoptim_submit_check <- function(
   local_tasks_folder,
   remote_tasks_folder,
   task_ids,
