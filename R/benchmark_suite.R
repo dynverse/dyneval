@@ -336,7 +336,7 @@ benchmark_fetch_results <- function(local_output_folder) {
 
               qsub_error <-
                 #if (qacct_memory > qsub_memory) {
-                if (qacct_exit_status_number %in% c("134", "139")) {
+                if (qacct_exit_status_number %in% c("134", "139") || grepl("MemoryError", attr(out, "qsub_error"))) {
                   "Memory limit exceeded"
                 #} else if (qacct_user_time > qacct_user_time) {
                 } else if (qacct_exit_status_number %in% c("137", "140", "9", "64")) {
