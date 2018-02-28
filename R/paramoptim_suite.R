@@ -401,7 +401,7 @@ paramoptim_bind_results <- function(local_output_folder) {
   # process each method separately
   as_tibble(map_df(method_names, function(method_name) {
     method_folder <- paste0(local_output_folder, method_name)
-    output_metrics_file <- paste0(method_folder, "/output_metrics.rds")
+    output_metrics_file <- paste0(method_folder, "/output_parameters.rds")
 
     if (file.exists(output_metrics_file)) {
       cat(method_name, ": Reading previous output\n", sep = "")
