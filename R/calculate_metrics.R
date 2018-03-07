@@ -5,7 +5,6 @@
 #' @param metrics which metrics to evaluate:
 #' \enumerate{
 #'   \item Spearman correlation of geodesic distances: \code{"correlation"}
-#'   \item Mantel test p-value: \code{"mantel_pval"}
 #'   \item Edge flip score: \code{"edge_flip"}
 #'   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
 #' }
@@ -17,7 +16,7 @@
 calculate_metrics <- function(
   task,
   model,
-  metrics = c("correlation", "mantel_pval", "edge_flip", "rf_mse", "rf_rsq")
+  metrics = c("correlation", "edge_flip", "rf_mse", "rf_rsq")
 ) {
   testthat::expect_true(is_wrapper_with_waypoint_cells(task))
   testthat::expect_true(is.null(model) || is_wrapper_with_waypoint_cells(model))
@@ -31,13 +30,13 @@ calculate_metrics <- function(
 
     # compute waypointed geodesic distances
     time0 <- Sys.time()
-    task$geodesic_dist <- dynutils::compute_tented_geodesic_distances(task, waypoints)
-    model$geodesic_dist <- dynutils::compute_tented_geodesic_distances(model, waypoints)
+    task$geodesic_dist <- compute_tented_geodesic_distances(task, waypoints)
+    model$geodesic_dist <- compute_tented_geodesic_distances(model, waypoints)
     time1 <- Sys.time()
     summary_list$time_waypointedgeodesic <- as.numeric(difftime(time1, time0, units = "sec"))
   }
 
-  if (any(c("correlation", "mantel_pval") %in% metrics)) {
+  if (any(c("correlation") %in% metrics)) {
     if (!is.null(model)) {
       task$geodesic_dist[is.infinite(task$geodesic_dist)] <- .Machine$double.xmax
       model$geodesic_dist[is.infinite(model$geodesic_dist)] <- .Machine$double.xmax
@@ -47,13 +46,6 @@ calculate_metrics <- function(
       summary_list$correlation <- cor(task$geodesic_dist %>% as.vector, model$geodesic_dist %>% as.vector, method = "spearman")
       time1 <- Sys.time()
       summary_list$time_correlation <- as.numeric(difftime(time1, time0, units = "sec"))
-
-      # compute mantel pval
-      time0 <- Sys.time()
-      mantel <- vegan::mantel(task$geodesic_dist, model$geodesic_dist, permutations = 100)
-      summary_list$mantel_pval <- -log10(mantel$signif)
-      time1 <- Sys.time()
-      summary_list$time_mantel <- as.numeric(difftime(time1, time0, units = "sec"))
     } else {
       summary_list <- c(summary_list, list(correlation = 0, mantel_pval = 0))
     }
