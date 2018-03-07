@@ -19,6 +19,7 @@ Imports:
   dplyr, 
   dynmethods,
   dynutils,
+  dynwrap,
   emoa,
   GA,
   ggraph,
@@ -41,8 +42,7 @@ Imports:
   testthat,
   tibble, 
   tidygraph,
-  tidyr,
-  vegan
+  tidyr
 Suggests:
   dyntoy,
   roxygen2
@@ -51,6 +51,7 @@ Remotes:
   mlr-org/mlr,
   rcannood/dynmethods,
   rcannood/dynutils,
+  rcannood/dynwrap,
   rcannood/PRISM,
   Zouter/dyntoy
 

@@ -17,7 +17,6 @@ execute_evaluation(tasks, method, parameters, metrics, extra_metrics = NULL,
 \item{metrics}{which metrics to evaluate:
 \enumerate{
   \item Spearman correlation of geodesic distances: \code{"correlation"}
-  \item Mantel test p-value: \code{"mantel_pval"}
   \item Edge flip score: \code{"edge_flip"}
   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
 }}
