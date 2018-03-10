@@ -49,9 +49,9 @@ Suggests:
 Remotes:
   berndbischl/ParamHelpers,
   mlr-org/mlr,
-  rcannood/dynmethods,
-  rcannood/dynutils,
-  rcannood/dynwrap,
-  rcannood/PRISM,
-  Zouter/dyntoy
+  dynverse/dynmethods,
+  dynverse/dynutils,
+  dynverse/dynwrap,
+  dynverse/dyntoy,
+  rcannood/PRISM
 
