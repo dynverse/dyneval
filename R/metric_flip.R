@@ -153,7 +153,7 @@ change_single_edge_into_double <- function(df) {
 # net1 <- dyntoy:::generate_toy_milestone_network("bifurcating_cycle")
 # net2 <- dyntoy:::generate_toy_milestone_network("bifuracting_loop")
 # calculate_edge_flip(net1, net2)
-calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify = TRUE, limit_flips=10) {
+calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify = TRUE, limit_flips=10, limit_combinations=choose(25, 7)) {
   return <- match.arg(return, c("score", "all"))
 
   # simplify networks if wanted
@@ -238,69 +238,74 @@ calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify
 
       if (n_additions < 0 | n_removes < 0) {stop("Edge additions and removes should be integer and higher than 0")}
 
-      # create the matrix which contains in the columns all possible flips, with in the rows the edge_id which will be flipped
-      edge_additions <- combn_nice(possible_edge_additions, n_additions)
-      edge_removes <- combn_nice(possible_edge_removes, n_removes)
-
-      if (n_additions > 0 & n_removes > 0) {
-        edge_flips <- rbind(
-          matrix(rep(edge_additions, ncol(edge_removes)), nrow=nrow(edge_additions)),
-          t(edge_removes) %>% rep(each=ncol(edge_additions)) %>% matrix(ncol=nrow(edge_removes)) %>% t
-        )
-      } else if (n_additions > 0) {
-        edge_flips <- edge_additions
+      if (choose(length(possible_edge_additions), n_additions) > limit_combinations | choose(length(possible_edge_removes), n_removes)) {
+        found <- TRUE
+        nflips <- max_flips
       } else {
-        edge_flips <- edge_removes
-      }
+        # create the matrix which contains in the columns all possible flips, with in the rows the edge_id which will be flipped
+        edge_additions <- combn_nice(possible_edge_additions, n_additions)
+        edge_removes <- combn_nice(possible_edge_removes, n_removes)
 
-      # cut the edge_flips, avoiding huge memory consumption
-      grouping <- ceiling(seq_len(ncol(edge_flips)) / 1000)
-      ngroups <- max(grouping)
-      group_id <- 0
+        if (n_additions > 0 & n_removes > 0) {
+          edge_flips <- rbind(
+            matrix(rep(edge_additions, ncol(edge_removes)), nrow=nrow(edge_additions)),
+            t(edge_removes) %>% rep(each=ncol(edge_additions)) %>% matrix(ncol=nrow(edge_removes)) %>% t
+          )
+        } else if (n_additions > 0) {
+          edge_flips <- edge_additions
+        } else {
+          edge_flips <- edge_removes
+        }
 
-      # loop over each group of edge_flips
-      while(!found & group_id < ngroups) {
-        group_id <- group_id + 1
-        edge_flips_group <- edge_flips[, grouping == group_id, drop=F]
+        # cut the edge_flips, avoiding huge memory consumption
+        grouping <- ceiling(seq_len(ncol(edge_flips)) / 1000)
+        ngroups <- max(grouping)
+        group_id <- 0
 
-        # generate matrix with in the columns each flip and in the rows the vector format of the new adjacency of net1
-        edge_flip_vectors1 <- generate_edge_flip_vectors(edge_flips_group, adj1)
-        degree_vectors1 <- t(edge_flip_vectors1) %*% edge_membership1
+        # loop over each group of edge_flips
+        while(!found & group_id < ngroups) {
+          group_id <- group_id + 1
+          edge_flips_group <- edge_flips[, grouping == group_id, drop=F]
 
-        # now check several metrics of the new adjacency matrix, from fastest to slowest
-        # after each check, the flips which are not OK are removed (in the selected object)
+          # generate matrix with in the columns each flip and in the rows the vector format of the new adjacency of net1
+          edge_flip_vectors1 <- generate_edge_flip_vectors(edge_flips_group, adj1)
+          degree_vectors1 <- t(edge_flip_vectors1) %*% edge_membership1
 
-        selected <- seq_len(nrow(degree_vectors1))
+          # now check several metrics of the new adjacency matrix, from fastest to slowest
+          # after each check, the flips which are not OK are removed (in the selected object)
 
-        # quick max check
-        degree_max_check <- check_degrees_max(degree_vectors1, sorted_degrees2)
-        if (any(degree_max_check)) {
-          selected <- selected[degree_max_check]
+          selected <- seq_len(nrow(degree_vectors1))
 
-          # quick min check
-          degree_min_check <- check_degrees_min(degree_vectors1[selected, , drop=F], sorted_degrees2)
-          if (any(degree_min_check)) {
-            selected <- selected[degree_min_check]
+          # quick max check
+          degree_max_check <- check_degrees_max(degree_vectors1, sorted_degrees2)
+          if (any(degree_max_check)) {
+            selected <- selected[degree_max_check]
 
-            # now check sorted
-            degree_sorted_check <- check_degrees_sorted(degree_vectors1[selected, , drop=F], sorted_degrees2)
+            # quick min check
+            degree_min_check <- check_degrees_min(degree_vectors1[selected, , drop=F], sorted_degrees2)
+            if (any(degree_min_check)) {
+              selected <- selected[degree_min_check]
 
-            if (any(degree_sorted_check)) {
-              selected <- selected[degree_sorted_check]
+              # now check sorted
+              degree_sorted_check <- check_degrees_sorted(degree_vectors1[selected, , drop=F], sorted_degrees2)
 
-              # now check isomorphic
-              adj1s <- map(selected, ~edge_flips_group[, ., drop=F]) %>% map(flip_adj, adj1)
+              if (any(degree_sorted_check)) {
+                selected <- selected[degree_sorted_check]
 
-              isomorphic <- map_lgl(adj1s, function(adj1) {
-                graph1 <- adj1 %>% get_undirected_graph()
+                # now check isomorphic
+                adj1s <- map(selected, ~edge_flips_group[, ., drop=F]) %>% map(flip_adj, adj1)
 
-                igraph::is_isomorphic_to(graph1, graph2)
-              })
+                isomorphic <- map_lgl(adj1s, function(adj1) {
+                  graph1 <- adj1 %>% get_undirected_graph()
 
-              if(any(isomorphic)) {
-                found <- TRUE
-                # print("found!")
-                newadj1 <- first(adj1s[isomorphic])
+                  igraph::is_isomorphic_to(graph1, graph2)
+                })
+
+                if(any(isomorphic)) {
+                  found <- TRUE
+                  # print("found!")
+                  newadj1 <- first(adj1s[isomorphic])
+                }
               }
             }
           }
