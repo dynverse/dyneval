@@ -182,6 +182,12 @@ calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify
       insert_one_node_into_duplicate_edges()
   }
 
+  if (nrow(net1) < nrow(net2)) {
+    net3 <- net1
+    net1 <- net2
+    net2 <- net3
+  }
+
   # edge flip cannot handle directed networks
   net1$directed <- FALSE
   net2$directed <- FALSE
