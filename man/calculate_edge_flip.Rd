@@ -5,7 +5,7 @@
 \title{Edge flip score}
 \usage{
 calculate_edge_flip(net1, net2, return = c("score", "all"), simplify = TRUE,
-  limit_flips = 10)
+  limit_flips = 10, limit_combinations = choose(25, 7))
 }
 \arguments{
 \item{net1}{Network 1}
@@ -17,6 +17,8 @@ calculate_edge_flip(net1, net2, return = c("score", "all"), simplify = TRUE,
 \item{simplify}{Whether or not to simplify the networks}
 
 \item{limit_flips}{Maximal number of flips to check}
+
+\item{limit_combinations}{Maximal number of combinations to check}
 }
 \description{
 Edge flip score
