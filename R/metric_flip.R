@@ -142,6 +142,7 @@ change_single_edge_into_double <- function(df) {
 #' @param return Whether to return only the `score` or the full output (`all`)
 #' @param simplify Whether or not to simplify the networks
 #' @param limit_flips Maximal number of flips to check
+#' @param limit_combinations Maximal number of combinations to check
 #'
 # either export this function or do not list any examples
 # @examples
