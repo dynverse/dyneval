@@ -47,7 +47,7 @@ calculate_metrics <- function(
       time1 <- Sys.time()
       summary_list$time_correlation <- as.numeric(difftime(time1, time0, units = "sec"))
     } else {
-      summary_list <- c(summary_list, list(correlation = 0, mantel_pval = 0))
+      summary_list <- c(summary_list, list(correlation = 0))
     }
   }
 
