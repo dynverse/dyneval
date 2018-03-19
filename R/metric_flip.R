@@ -231,7 +231,7 @@ calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify
     # limit number of checked flips
     if (n_flips > limit_flips) {
       found <- TRUE
-      nflips <- max_flips
+      n_flips <- max_flips
     } else {
       # calculate the number of additions and removes
       n_additions <- (n_flips + edge_difference)/2
@@ -241,7 +241,7 @@ calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify
 
       if (choose(length(possible_edge_additions), n_additions) > limit_combinations | choose(length(possible_edge_removes), n_removes)) {
         found <- TRUE
-        nflips <- max_flips
+        n_flips <- max_flips
       } else {
         # create the matrix which contains in the columns all possible flips, with in the rows the edge_id which will be flipped
         edge_additions <- combn_nice(possible_edge_additions, n_additions)
