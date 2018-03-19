@@ -1,4 +1,4 @@
-# context("Score metrics")
+context("Score metrics")
 #
 # test_that(paste0("Check lies network score"), {
 #   net1 <- tibble(from=c(1), to=c(1), directed=TRUE, length=1)
@@ -17,21 +17,27 @@
 #   expect_lt(dyneval:::calculate_lies_network_score(net1, net2), 1)
 # })
 
-#
-#
-# library(tidyverse)
-# trajectory_types <- eval(formals(dyntoy:::generate_toy_milestone_network)$trajectory_type)
-# networks <- map(trajectory_types, dyntoy:::generate_toy_milestone_network) %>% tibble(milestone_network = ., trajectory_type = trajectory_types)
-# design <- crossing(networks, networks)
-# design <- design %>% bind_cols(pbapply::pblapply(cl=8, seq_len(nrow(design)), function(row_id) {
-#   print(row_id)
-#   row <- dynutils::extract_row_to_list(design, row_id)
-#
-#   tibble(
-#     node_edit_score = dyneval:::calculate_node_edit_score(row$milestone_network, row$milestone_network1),
-#     node_edge_edit_score = dyneval:::calculate_node_edge_edit_score(row$milestone_network, row$milestone_network1)
-#   )
-# }) %>% bind_rows())
+test_that(paste0("Edge flip returns relevant results"), {
+  library(tidyverse)
+  topologies <- eval(formals(dyntoy:::generate_toy_milestone_network)$model)
+  topologies <- topologies[topologies != "BA"]
+  networks <- map(topologies, dyntoy:::generate_toy_milestone_network) %>% tibble(milestone_network = ., topology = topologies)
+  design <- crossing(networks, networks)
+
+  scores <- design %>% as.list() %>% pmap(function(milestone_network, milestone_network1, ...) {
+    score <- dyneval:::calculate_edge_flip(milestone_network, milestone_network1)
+    tibble(score=score)
+  }) %>% bind_rows()
+  design <- bind_cols(design, scores)
+
+  expect_type(design$score, "double")
+  expect_equal(design$score[design$topology == "simple_linear" & design$topology1 == "simple_linear"], 1)
+  expect_equal(design$score[design$topology == "simple_linear" & design$topology1 == "linear"], 1)
+  expect_lt(design$score[design$topology == "simple_linear" & design$topology1 == "bifurcating"], 1)
+})
+
+
+
 #
 # library(ggplot2)
 # design %>% ggplot() + geom_raster(aes(trajectory_type, trajectory_type1, fill=robbie_network_score))
