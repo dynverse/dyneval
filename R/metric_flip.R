@@ -239,7 +239,7 @@ calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify
 
       if (n_additions < 0 | n_removes < 0) {stop("Edge additions and removes should be integer and higher than 0")}
 
-      if (choose(length(possible_edge_additions), n_additions) > limit_combinations | choose(length(possible_edge_removes), n_removes)) {
+      if (choose(length(possible_edge_additions), n_additions) > limit_combinations | choose(length(possible_edge_removes), n_removes) > limit_combinations ) {
         found <- TRUE
         n_flips <- max_flips
       } else {
