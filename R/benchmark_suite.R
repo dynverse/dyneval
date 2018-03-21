@@ -334,11 +334,14 @@ benchmark_fetch_results <- function(local_output_folder) {
               qsub_memory <- qsub_handle$memory %>% str_replace("G$", "") %>% as.numeric
               qsub_user_time <- qsub_handle$max_wall_time
 
+              memory_messages <- c("cannot allocate vector of size", "MemoryError")
+              is_memory_problem <- function(message) {
+                any(map_lgl(memory_messages, ~grepl(., message)))
+              }
+
               qsub_error <-
-                #if (qacct_memory > qsub_memory) {
-                if (qacct_exit_status_number %in% c("134", "139") || grepl("MemoryError", attr(out, "qsub_error"))) {
+                if (qacct_exit_status_number %in% c("134", "139") || is_memory_problem(attr(out, "qsub_error"))) {
                   "Memory limit exceeded"
-                #} else if (qacct_user_time > qacct_user_time) {
                 } else if (qacct_exit_status_number %in% c("137", "140", "9", "64")) {
                   "Time limit exceeded"
                 } else if (qacct_exit_status_number != "0") {
