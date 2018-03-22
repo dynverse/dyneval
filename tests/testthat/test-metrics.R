@@ -1,7 +1,8 @@
 context("Score metrics")
 
+library(purrr)
+
 test_that(paste0("Edge flip returns relevant results"), {
-  library(tidyverse)
   topologies <- eval(formals(dyntoy:::generate_toy_milestone_network)$model)
   topologies <- topologies[topologies != "BA"]
   networks <- map(topologies, dyntoy:::generate_toy_milestone_network) %>% tibble(milestone_network = ., topology = topologies)
