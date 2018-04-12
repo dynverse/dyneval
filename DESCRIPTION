@@ -48,11 +48,12 @@ Suggests:
   roxygen2
 Remotes:
   berndbischl/ParamHelpers,
-  mlr-org/mlr,
-  mlr-org/mlrMBO,
   dynverse/dynmethods,
   dynverse/dynutils,
   dynverse/dynwrap,
   dynverse/dyntoy,
+  mlr-org/mlr,
+  mlr-org/mlrMBO,
+  jakobbossek/smoof,
   rcannood/PRISM
 
