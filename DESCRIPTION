@@ -30,7 +30,7 @@ Imports:
   mlrMBO,
   parallel,
   parallelMap,
-  ParamHelpers,
+  ParamHelpers (>= 1.11),
   pbapply,
   PRISM,
   purrr, 
@@ -49,6 +49,7 @@ Suggests:
 Remotes:
   berndbischl/ParamHelpers,
   mlr-org/mlr,
+  mlr-org/mlrMBO,
   dynverse/dynmethods,
   dynverse/dynutils,
   dynverse/dynwrap,
