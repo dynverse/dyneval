@@ -18,14 +18,6 @@ get_undirected_graph <- function(adj) {
   adj %>% igraph::graph_from_adjacency_matrix(mode="upper", weighted=TRUE) %>% igraph::as.undirected()
 }
 
-# check whether the degree distributions are equal
-calculate_degree_equivalence <- function(adj1, sorted_degrees2) {
-  degrees1 <- adj1 %>% rowSums()
-  if(max(degrees1) == sorted_degrees2[length(sorted_degrees2)]) {
-    all(sort(degrees1) == sorted_degrees2)
-  }
-  FALSE
-}
 
 # add extra rows and columns to matrix
 complete_matrix <- function(mat, dim, fill=0) {
