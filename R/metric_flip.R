@@ -34,12 +34,18 @@ complete_matrix <- function(mat, dim, fill=0) {
 }
 
 # what nodes are connecting to which edges
+#' @importFrom purrr invoke
 calculate_edge_membership <- function(adj) {
   adj_mapper <- adj
   tri_ids <- seq_len(sum(lower.tri(adj_mapper, diag = FALSE)))
   adj_mapper[lower.tri(adj_mapper, diag = FALSE)] <- tri_ids
   adj_mapper[upper.tri(adj_mapper, diag = TRUE)] <- 0
-  map(seq_len(nrow(adj_mapper)), function(i) as.integer(tri_ids %in% c(adj_mapper[i, ], adj_mapper[, i]))) %>% invoke(cbind, .)
+  purrr::invoke(cbind, map(
+    seq_len(nrow(adj_mapper)),
+    function(i) {
+      as.integer(tri_ids %in% c(adj_mapper[i, ], adj_mapper[, i]))
+    }
+  ))
 }
 
 # flip edges (in adjacency format)
