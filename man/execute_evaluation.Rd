@@ -23,8 +23,7 @@ execute_evaluation(tasks, method, parameters, metrics, extra_metrics = NULL,
 
 \item{extra_metrics}{Extra metrics to calculate but not evaluate with.}
 
-\item{output_model}{Whether or not the model will be outputted.
-If this is a character string, it will save the model in the requested folder.}
+\item{output_model}{Whether or not the model will be outputted.}
 
 \item{mc_cores}{The number of cores to use, allowing to parallellise the different tasks}
 
