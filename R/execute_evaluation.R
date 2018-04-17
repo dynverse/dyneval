@@ -6,7 +6,6 @@
 #' @param parameters The parameters to evaluate with.
 #' @param extra_metrics Extra metrics to calculate but not evaluate with.
 #' @param output_model Whether or not the model will be outputted.
-#'   If this is a character string, it will save the model in the requested folder.
 #' @param mc_cores The number of cores to use, allowing to parallellise the different tasks
 #' @param verbose Whether or not to print extra information output.
 #'
@@ -90,25 +89,9 @@ execute_evaluation <- function(
   # Return extra information
   extras <- list(.summary = summary)
 
-  # If output_model is a boolean, it decides on whether
-  # to add the model to the extras output
-  if (is.logical(output_model) && output_model) {
+  # If output_model is true, add the model to the extras output
+  if (output_model) {
     extras$.models <- models
-  }
-
-  # If output_model is a character, write the model
-  # to the given destination
-  if (is.character(output_model)) {
-    if (!dir.exists(output_model)) {
-      dir.create(output_model)
-    }
-    filename <- paste0(
-      output_model,
-      ifelse(grepl("/$", output_model), "", "/"),
-      dynutils::random_time_string(), ".rds"
-    )
-    readr::write_rds(models, file = filename)
-    extras$.models_file <- filename
   }
 
   # attach extras to score
