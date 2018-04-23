@@ -5,7 +5,6 @@ library(dyntoy)
 library(dynutils)
 library(dplyr)
 library(purrr)
-library(mlrMBO)
 library(tidyr)
 
 Sys.setenv("R_TESTS" = "")
