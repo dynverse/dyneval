@@ -20,16 +20,18 @@ compute_rfmse <- function(task, prediction) {
       reshape2::acast(cell_id ~ milestone_id, value.var = "percentage", fill = 0) %>%
       expand_matrix(rownames = cell_ids)
 
-    colnames(pred_milenet_m) <- make.names(colnames(pred_milenet_m))
-
     rfs <- lapply(seq_len(ncol(gold_milenet_m)), function(i) {
-      data <- cbind(
-        pred_milenet_m,
-        gold_milenet_m[,i, drop=F] %>%
-          magrittr::set_colnames("PREDICT")
-        ) %>%
+      data <- gold_milenet_m[,i, drop=F] %>%
+        magrittr::set_colnames("PREDICT") %>%
+        cbind(pred_milenet_m) %>%
         as.data.frame()
-      ranger::ranger(PREDICT~., data, num.trees=5000, num.threads=1)
+
+      ranger::ranger(
+        dependent.variable.name = "PREDICT",
+        data = data,
+        num.trees = 5000,
+        num.threads = 1
+      )
     })
 
     mses <- map_dbl(rfs, ~ mean(.$prediction.error)) %>% setNames(colnames(gold_milenet_m))
