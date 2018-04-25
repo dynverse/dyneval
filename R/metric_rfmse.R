@@ -15,10 +15,10 @@ compute_rfmse <- function(task, prediction) {
 
     gold_milenet_m <- task$milestone_percentages %>%
       reshape2::acast(cell_id ~ milestone_id, value.var = "percentage", fill = 0) %>%
-      expand_mat(cell_ids)
+      expand_mat(rownames = cell_ids)
     pred_milenet_m <- prediction$milestone_percentages %>%
       reshape2::acast(cell_id ~ milestone_id, value.var = "percentage", fill = 0) %>%
-      expand_mat(cell_ids)
+      expand_mat(rownames = cell_ids)
 
     colnames(pred_milenet_m) <- make.names(colnames(pred_milenet_m))
 
@@ -53,10 +53,4 @@ compute_rfmse <- function(task, prediction) {
       )
     )
   }
-}
-
-expand_mat <- function(mat, rownames) {
-  newmat <- matrix(0, nrow = length(rownames), ncol = ncol(mat), dimnames = list(rownames, colnames(mat)))
-  newmat[rownames(mat),] <- mat
-  newmat
 }
