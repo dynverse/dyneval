@@ -53,7 +53,7 @@ execute_evaluation <- function(
     if (!is.null(model)) {
       # Calculate geodesic distances
       time0 <- Sys.time()
-      model <- model %>% add_cell_waypoints_to_wrapper(num_cells_selected = length(task$waypoint_cells))
+      model <- model %>% add_cell_waypoints(num_cells_selected = length(task$waypoint_cells))
       time1 <- Sys.time()
       time_cellwaypoints <- as.numeric(difftime(time1, time0, units = "sec"))
       df_cellwaypoints <- data_frame(time_cellwaypoints)
