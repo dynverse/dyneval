@@ -30,7 +30,7 @@ evaluate_ti_method <- function(
   calc_metrics <- unique(c(metrics, extra_metrics))
 
   method_outputs <- dynmethods::infer_trajectories(
-    tasks = tasks,
+    task = tasks,
     method = method,
     parameters = parameters,
     mc_cores = mc_cores,
@@ -42,13 +42,7 @@ evaluate_ti_method <- function(
     task <- dynutils::extract_row_to_list(tasks, i)
 
     # Fetch method outputs
-    method_output <- method_outputs[[i]]
-
-    if (any("try-error" %in% class(method_output))) {
-      stop(method_output)
-    }
-
-    model <- method_output$model
+    model <- method_outputs$model[[i]]
 
     if (!is.null(model)) {
       # Calculate geodesic distances
@@ -66,7 +60,7 @@ evaluate_ti_method <- function(
 
     # Create summary statistics
     summary <- bind_cols(
-      method_output$summary,
+      method_outputs$summary[[i]],
       df_cellwaypoints,
       metrics_summary
     )

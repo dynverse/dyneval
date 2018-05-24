@@ -4,7 +4,7 @@ test_that(paste0("Testing evaluate_ti_method with random"), {
   out <- evaluate_ti_method(
     tasks = dyntoy::toy_tasks[5,],
     method = dynmethods::ti_random(),
-    parameters = list(),
+    parameters = NULL,
     metrics = c("correlation", "edge_flip", "rf_mse"),
     output_model = TRUE,
     extra_metrics = NULL,
