@@ -23,7 +23,7 @@
 #
 #   unlink(tmpdir, recursive = TRUE)
 #   # # # expect to fail
-#   # out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = description_celltree_maptpx(), parameters = list(), timeout = 4, metrics = "correlation")
+#   # out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = ti_celltree_maptpx(), parameters = list(), timeout = 4, metrics = "correlation")
 #   # attr(out, "extras")$.summary
 # })
 #
@@ -50,6 +50,6 @@
 #
 #   unlink(tmpdir, recursive = TRUE)
 #   # # # expect to fail
-#   # out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = description_celltree_maptpx(), parameters = list(), timeout = 4, metrics = "correlation")
+#   # out <- execute_evaluation(tasks = dyntoy::toy_tasks[5,], method = ti_celltree_maptpx(), parameters = list(), timeout = 4, metrics = "correlation")
 #   # attr(out, "extras")$.summary
 # })
