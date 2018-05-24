@@ -3,7 +3,7 @@ context("Testing execute_evaluation")
 test_that(paste0("Testing execute_evaluation with random"), {
   out <- execute_evaluation(
     tasks = dyntoy::toy_tasks[5,],
-    method = dynmethods::description_random(),
+    method = dynmethods::ti_random(),
     parameters = list(),
     metrics = c("correlation", "edge_flip", "rf_mse"),
     output_model = TRUE,
@@ -33,7 +33,7 @@ test_that(paste0("Testing execute_evaluation with random"), {
 test_that(paste0("Testing execute_evaluation with error"), {
   out <- execute_evaluation(
     tasks = dyntoy::toy_tasks[5,],
-    method = dynmethods::description_error(),
+    method = dynmethods::ti_error(),
     parameters = list(),
     metrics = c("correlation", "edge_flip", "rf_mse"),
     output_model = TRUE,
@@ -63,7 +63,7 @@ test_that(paste0("Testing execute_evaluation with error"), {
 test_that(paste0("Testing execute_evaluation with identity"), {
   out <- execute_evaluation(
     tasks = dyntoy::toy_tasks[5,],
-    method = dynmethods::description_identity(),
+    method = dynmethods::ti_identity(),
     parameters = list(),
     metrics = c("correlation", "edge_flip", "rf_mse"),
     output_model = TRUE,
