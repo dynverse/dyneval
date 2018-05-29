@@ -15,21 +15,23 @@ compute_rfmse <- function(task, prediction) {
 
     gold_milenet_m <- task$milestone_percentages %>%
       reshape2::acast(cell_id ~ milestone_id, value.var = "percentage", fill = 0) %>%
-      expand_mat(cell_ids)
+      expand_matrix(rownames = cell_ids)
     pred_milenet_m <- prediction$milestone_percentages %>%
       reshape2::acast(cell_id ~ milestone_id, value.var = "percentage", fill = 0) %>%
-      expand_mat(cell_ids)
-
-    colnames(pred_milenet_m) <- make.names(colnames(pred_milenet_m))
+      expand_matrix(rownames = cell_ids)
 
     rfs <- lapply(seq_len(ncol(gold_milenet_m)), function(i) {
-      data <- cbind(
-        pred_milenet_m,
-        gold_milenet_m[,i, drop=F] %>%
-          magrittr::set_colnames("PREDICT")
-        ) %>%
+      data <- gold_milenet_m[,i, drop=F] %>%
+        magrittr::set_colnames("PREDICT") %>%
+        cbind(pred_milenet_m) %>%
         as.data.frame()
-      ranger::ranger(PREDICT~., data, num.trees=5000, num.threads=1)
+
+      ranger::ranger(
+        dependent.variable.name = "PREDICT",
+        data = data,
+        num.trees = 5000,
+        num.threads = 1
+      )
     })
 
     mses <- map_dbl(rfs, ~ mean(.$prediction.error)) %>% setNames(colnames(gold_milenet_m))
@@ -53,10 +55,4 @@ compute_rfmse <- function(task, prediction) {
       )
     )
   }
-}
-
-expand_mat <- function(mat, rownames) {
-  newmat <- matrix(0, nrow = length(rownames), ncol = ncol(mat), dimnames = list(rownames, colnames(mat)))
-  newmat[rownames(mat),] <- mat
-  newmat
 }

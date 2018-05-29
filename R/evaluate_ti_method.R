@@ -10,11 +10,11 @@
 #' @param verbose Whether or not to print extra information output.
 #'
 #' @export
-#' @importFrom dynmethods execute_method
+#' @importFrom dynmethods infer_trajectories
 #' @importFrom parallel mclapply
 #' @importFrom testthat expect_false expect_true
 #' @importFrom readr write_rds
-execute_evaluation <- function(
+evaluate_ti_method <- function(
   tasks,
   method,
   parameters,
@@ -29,8 +29,8 @@ execute_evaluation <- function(
 
   calc_metrics <- unique(c(metrics, extra_metrics))
 
-  method_outputs <- dynmethods::execute_method(
-    tasks = tasks,
+  method_outputs <- dynmethods::infer_trajectories(
+    task = tasks,
     method = method,
     parameters = parameters,
     mc_cores = mc_cores,
@@ -42,18 +42,12 @@ execute_evaluation <- function(
     task <- dynutils::extract_row_to_list(tasks, i)
 
     # Fetch method outputs
-    method_output <- method_outputs[[i]]
-
-    if (any("try-error" %in% class(method_output))) {
-      stop(method_output)
-    }
-
-    model <- method_output$model
+    model <- method_outputs$model[[i]]
 
     if (!is.null(model)) {
       # Calculate geodesic distances
       time0 <- Sys.time()
-      model <- model %>% add_cell_waypoints_to_wrapper(num_cells_selected = length(task$waypoint_cells))
+      model <- model %>% add_cell_waypoints(num_cells_selected = length(task$waypoint_cells))
       time1 <- Sys.time()
       time_cellwaypoints <- as.numeric(difftime(time1, time0, units = "sec"))
       df_cellwaypoints <- data_frame(time_cellwaypoints)
@@ -66,7 +60,7 @@ execute_evaluation <- function(
 
     # Create summary statistics
     summary <- bind_cols(
-      method_output$summary,
+      method_outputs$summary[[i]],
       df_cellwaypoints,
       metrics_summary
     )
