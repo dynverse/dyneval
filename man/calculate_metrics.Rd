@@ -5,7 +5,7 @@
 \title{Calculate the performance of a model with respect to a task}
 \usage{
 calculate_metrics(task, model, metrics = c("correlation", "edge_flip",
-  "rf_mse", "rf_rsq"))
+  "rf_mse", "rf_rsq", "featureimp_cor"))
 }
 \arguments{
 \item{task}{the original task}
@@ -17,6 +17,7 @@ calculate_metrics(task, model, metrics = c("correlation", "edge_flip",
   \item Spearman correlation of geodesic distances: \code{"correlation"}
   \item Edge flip score: \code{"edge_flip"}
   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
+  \item Similarity in feature importance: \code{"featureimp_cor"}
 }}
 }
 \description{

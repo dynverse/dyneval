@@ -4,9 +4,7 @@
 #' @param task A task
 #' @param prediction A predicted model
 #'
-#' @importFrom randomForest randomForest
 #' @importFrom reshape2 acast
-#' @importFrom tibble lst
 #' @importFrom ranger ranger
 compute_rfmse <- function(task, prediction) {
   cell_ids <- task$cell_ids

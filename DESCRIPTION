@@ -17,6 +17,7 @@ Imports:
   coRanking,
   cowplot,
   dplyr, 
+  dynfeature,
   dynmethods,
   dynutils,
   dynwrap,
@@ -28,7 +29,6 @@ Imports:
   parallel, 
   ParamHelpers (>= 1.11),
   purrr, 
-  randomForest,
   ranger,
   readr,
   reshape2,
@@ -44,4 +44,5 @@ Remotes:
   dynverse/dynmethods,
   dynverse/dynutils,
   dynverse/dynwrap,
-  dynverse/dyntoy
+  dynverse/dyntoy,
+  dynverse/dynfeature
