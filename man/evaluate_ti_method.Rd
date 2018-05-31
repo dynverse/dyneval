@@ -19,6 +19,7 @@ evaluate_ti_method(tasks, method, parameters, metrics, extra_metrics = NULL,
   \item Spearman correlation of geodesic distances: \code{"correlation"}
   \item Edge flip score: \code{"edge_flip"}
   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
+  \item Correlation of feature importance scores
 }}
 
 \item{extra_metrics}{Extra metrics to calculate but not evaluate with.}

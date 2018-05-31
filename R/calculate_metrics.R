@@ -7,6 +7,7 @@
 #'   \item Spearman correlation of geodesic distances: \code{"correlation"}
 #'   \item Edge flip score: \code{"edge_flip"}
 #'   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
+#'   \item Correlation of feature importance scores
 #' }
 #'
 #' @importFrom igraph is_isomorphic_to graph_from_data_frame
@@ -16,7 +17,7 @@
 calculate_metrics <- function(
   task,
   model,
-  metrics = c("correlation", "edge_flip", "rf_mse", "rf_rsq")
+  metrics = c("correlation", "edge_flip", "rf_mse", "rf_rsq", "featureimpcor")
 ) {
   testthat::expect_true(is_wrapper_with_waypoint_cells(task))
   testthat::expect_true(is.null(model) || is_wrapper_with_waypoint_cells(model))
@@ -36,7 +37,7 @@ calculate_metrics <- function(
     summary_list$time_waypointedgeodesic <- as.numeric(difftime(time1, time0, units = "sec"))
   }
 
-  if (any(c("correlation") %in% metrics)) {
+  if (("correlation" %in% metrics)) {
     if (!is.null(model)) {
       task$geodesic_dist[is.infinite(task$geodesic_dist)] <- .Machine$double.xmax
       model$geodesic_dist[is.infinite(model$geodesic_dist)] <- .Machine$double.xmax
@@ -72,6 +73,14 @@ calculate_metrics <- function(
     summary_list$time_rf <- as.numeric(difftime(time1, time0, units = "sec"))
     summary_list$rf_mse <- rfmse$summary$rf_mse
     summary_list$rf_rsq <- rfmse$summary$rf_rsq
+  }
+
+  if ("featureimpcor" %in% metrics) {
+    time0 <- Sys.time()
+    featureimpcor <- compute_featureimpcor(task, model)
+    time1 <- Sys.time()
+    summary_list$time_featureimp <- as.numeric(difftime(time1, time0, units = "sec"))
+    summary_list$featureimpcor <- featureimpcor
   }
 
   summary <- as_tibble(summary_list)
