@@ -10,7 +10,7 @@
 #' @param verbose Whether or not to print extra information output.
 #'
 #' @export
-#' @importFrom dynmethods infer_trajectories
+#' @importFrom dynwrap infer_trajectories
 #' @importFrom parallel mclapply
 #' @importFrom testthat expect_false expect_true
 #' @importFrom readr write_rds
@@ -29,7 +29,7 @@ evaluate_ti_method <- function(
 
   calc_metrics <- unique(c(metrics, extra_metrics))
 
-  method_outputs <- dynmethods::infer_trajectories(
+  method_outputs <- dynwrap::infer_trajectories(
     task = tasks,
     method = method,
     parameters = parameters,
