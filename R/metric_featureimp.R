@@ -6,7 +6,7 @@
 #' @param num_trees the number of trees to use during the calculation of the metric
 #'
 #' @importFrom dynfeature calculate_overall_feature_importance
-compute_featureimpcor <- function(task, prediction, num_trees = 50000) {
+compute_featureimp <- function(task, prediction, num_trees = 50000) {
   cell_ids <- task$cell_ids
 
   if (!is.null(prediction)) {
@@ -24,9 +24,14 @@ compute_featureimpcor <- function(task, prediction, num_trees = 50000) {
 
     # plot:
     # ggplot(imp_joined) + geom_point(aes(task_imp, pred_imp))
-    cor(imp_joined$task_imp, imp_joined$pred_imp)
+    featureimp_cor <- cor(imp_joined$task_imp, imp_joined$pred_imp)
 
+    lst(
+      featureimp_cor
+    )
   } else {
-    0
+    list(
+      featureimp_cor = 0
+    )
   }
 }
