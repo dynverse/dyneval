@@ -5,7 +5,7 @@ test_that(paste0("Testing evaluate_ti_method with random"), {
     tasks = dyntoy::toy_tasks[5,],
     method = dynmethods::ti_random(),
     parameters = NULL,
-    metrics = c("correlation", "edge_flip", "rf_mse"),
+    metrics = c("correlation", "edge_flip", "rf_mse", "featureimp_cor"),
     output_model = TRUE,
     extra_metrics = NULL,
     mc_cores = 2,
@@ -25,6 +25,8 @@ test_that(paste0("Testing evaluate_ti_method with random"), {
 
   expect_is(summary$rf_mse, "numeric")
 
+  expect_is(summary$featureimp_cor, "numeric")
+
   expect_true(dynwrap::is_wrapper_with_trajectory(models[[1]]))
 })
 
@@ -35,7 +37,7 @@ test_that(paste0("Testing evaluate_ti_method with error"), {
     tasks = dyntoy::toy_tasks[5,],
     method = dynmethods::ti_error(),
     parameters = list(),
-    metrics = c("correlation", "edge_flip", "rf_mse"),
+    metrics = c("correlation", "edge_flip", "rf_mse", "featureimp_cor"),
     output_model = TRUE,
     extra_metrics = NULL,
     mc_cores = 2,
@@ -43,7 +45,7 @@ test_that(paste0("Testing evaluate_ti_method with error"), {
   )
 
   expect_is(out, "numeric")
-  expect_true(all(out == c(0, 0, 1)))
+  expect_true(all(out == c(0, 0, 1, 0)))
 
   summary <- attr(out, "extras")$.summary
   models <- attr(out, "extras")$.models
@@ -56,6 +58,8 @@ test_that(paste0("Testing evaluate_ti_method with error"), {
 
   expect_is(summary$rf_mse, "numeric")
 
+  expect_is(summary$featureimp_cor, "numeric")
+
   expect_true(is.null(models[[1]]))
 })
 
@@ -65,7 +69,7 @@ test_that(paste0("Testing evaluate_ti_method with identity"), {
     tasks = dyntoy::toy_tasks[5,],
     method = dynmethods::ti_identity(),
     parameters = list(),
-    metrics = c("correlation", "edge_flip", "rf_mse"),
+    metrics = c("correlation", "edge_flip", "rf_mse", "featureimp_cor"),
     output_model = TRUE,
     extra_metrics = NULL,
     mc_cores = 2,
@@ -73,7 +77,7 @@ test_that(paste0("Testing evaluate_ti_method with identity"), {
   )
 
   expect_is(out, "numeric")
-  expect_true(all(out - c(1, 1, 0) < .001))
+  expect_true(all(out - c(1, 1, 0, 1) < .01))
 
   summary <- attr(out, "extras")$.summary
   models <- attr(out, "extras")$.models
@@ -85,6 +89,8 @@ test_that(paste0("Testing evaluate_ti_method with identity"), {
   expect_is(summary$edge_flip, "numeric")
 
   expect_is(summary$rf_mse, "numeric")
+
+  expect_is(summary$featureimp_cor, "numeric")
 
   expect_true(dynwrap::is_wrapper_with_trajectory(models[[1]]))
 })

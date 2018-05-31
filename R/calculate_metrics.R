@@ -7,7 +7,7 @@
 #'   \item Spearman correlation of geodesic distances: \code{"correlation"}
 #'   \item Edge flip score: \code{"edge_flip"}
 #'   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
-#'   \item Correlation of feature importance scores
+#'   \item Similarity in feature importance: \code{"featureimp_cor"}
 #' }
 #'
 #' @importFrom igraph is_isomorphic_to graph_from_data_frame
@@ -17,7 +17,7 @@
 calculate_metrics <- function(
   task,
   model,
-  metrics = c("correlation", "edge_flip", "rf_mse", "rf_rsq", "featureimpcor")
+  metrics = c("correlation", "edge_flip", "rf_mse", "rf_rsq", "featureimp_cor")
 ) {
   testthat::expect_true(is_wrapper_with_waypoint_cells(task))
   testthat::expect_true(is.null(model) || is_wrapper_with_waypoint_cells(model))
@@ -75,12 +75,12 @@ calculate_metrics <- function(
     summary_list$rf_rsq <- rfmse$summary$rf_rsq
   }
 
-  if ("featureimpcor" %in% metrics) {
+  if ("featureimp_cor" %in% metrics) {
     time0 <- Sys.time()
-    featureimpcor <- compute_featureimpcor(task, model)
+    fimp <- compute_featureimp(task, model)
     time1 <- Sys.time()
     summary_list$time_featureimp <- as.numeric(difftime(time1, time0, units = "sec"))
-    summary_list$featureimpcor <- featureimpcor
+    summary_list$featureimp_cor <- fimp$featureimp_cor
   }
 
   summary <- as_tibble(summary_list)
