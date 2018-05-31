@@ -17,6 +17,7 @@ Imports:
   coRanking,
   cowplot,
   dplyr, 
+  dynfeature,
   dynmethods,
   dynutils,
   dynwrap,
@@ -43,4 +44,5 @@ Remotes:
   dynverse/dynmethods,
   dynverse/dynutils,
   dynverse/dynwrap,
-  dynverse/dyntoy
+  dynverse/dyntoy,
+  dynverse/dynfeature
