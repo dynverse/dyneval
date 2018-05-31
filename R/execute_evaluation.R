@@ -10,7 +10,7 @@
 #' @param verbose Whether or not to print extra information output.
 #'
 #' @export
-#' @importFrom dynmethods execute_method
+#' @importFrom dynwrap execute_method_on_task
 #' @importFrom parallel mclapply
 #' @importFrom testthat expect_false expect_true
 #' @importFrom readr write_rds
@@ -29,7 +29,7 @@ execute_evaluation <- function(
 
   calc_metrics <- unique(c(metrics, extra_metrics))
 
-  method_outputs <- dynmethods::execute_method(
+  method_outputs <- dynwrap::execute_method_on_task(
     tasks = tasks,
     method = method,
     parameters = parameters,
@@ -47,6 +47,8 @@ execute_evaluation <- function(
     if (any("try-error" %in% class(method_output))) {
       stop(method_output)
     }
+
+    browser()
 
     model <- method_output$model
 

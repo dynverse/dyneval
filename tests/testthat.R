@@ -1,5 +1,6 @@
 library(testthat)
 library(dyneval)
+library(dynwrap)
 library(dynmethods)
 library(dyntoy)
 library(dynutils)
