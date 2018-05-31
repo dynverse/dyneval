@@ -28,7 +28,6 @@ Imports:
   parallel, 
   ParamHelpers (>= 1.11),
   purrr, 
-  randomForest,
   ranger,
   readr,
   reshape2,
