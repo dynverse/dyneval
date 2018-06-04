@@ -27,7 +27,8 @@ evaluate_ti_method <- function(
   testthat::expect_true("waypoint_cells" %in% colnames(tasks))
   testthat::expect_false(any(sapply(tasks$waypoint_cells, is.null)))
 
-  calc_metrics <- unique(c(metrics, extra_metrics))
+  calc_metrics <- c(metrics, extra_metrics)
+  calc_metrics <- calc_metrics[!duplicated(calc_metrics)]
 
   method_outputs <- dynwrap::infer_trajectories(
     task = tasks,
