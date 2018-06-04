@@ -20,7 +20,7 @@ evaluate_ti_method(tasks, method, parameters, metrics, extra_metrics = NULL,
   \item Edge flip score: \code{"edge_flip"}
   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
   \item Similarity in feature importance: \code{"featureimp_cor"}
-  \item Custom metric function. Format: \code{function(task, model) { c(score1 = 0, score2 = 1)}}
+  \item Custom metric function. Format: \code{function(task, model) { 1 }}
 }}
 
 \item{extra_metrics}{Extra metrics to calculate but not evaluate with.}
