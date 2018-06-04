@@ -18,6 +18,7 @@ calculate_metrics(task, model, metrics = c("correlation", "edge_flip",
   \item Edge flip score: \code{"edge_flip"}
   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
   \item Similarity in feature importance: \code{"featureimp_cor"}
+  \item Custom metric function. Format: \code{function(task, model) { c(score1 = 0, score2 = 1)}}
 }}
 }
 \description{

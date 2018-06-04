@@ -8,6 +8,7 @@
 #'   \item Edge flip score: \code{"edge_flip"}
 #'   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
 #'   \item Similarity in feature importance: \code{"featureimp_cor"}
+#'   \item Custom metric function. Format: \code{function(task, model) { c(score1 = 0, score2 = 1)}}
 #' }
 #'
 #' @importFrom igraph is_isomorphic_to graph_from_data_frame
@@ -21,6 +22,10 @@ calculate_metrics <- function(
 ) {
   testthat::expect_true(is_wrapper_with_waypoint_cells(task))
   testthat::expect_true(is.null(model) || is_wrapper_with_waypoint_cells(model))
+
+  if (!all(sapply(seq_along(metrics), function(i) !is.function(metrics[[i]]) || !is.null(names(metrics)[[i]])))) {
+    stop("All custom metrics (functions) must be named!")
+  }
 
   summary_list <- list()
 
@@ -81,6 +86,23 @@ calculate_metrics <- function(
     time1 <- Sys.time()
     summary_list$time_featureimp <- as.numeric(difftime(time1, time0, units = "sec"))
     summary_list$featureimp_cor <- fimp$featureimp_cor
+  }
+
+  for (i in seq_along(metrics)) {
+    f <- metrics[[i]]
+    fn <- names(metrics)[[i]]
+    if (is.function(f)) {
+      time0 <- Sys.time()
+      output <- f(task, model)
+      time1 <- Sys.time()
+      summary_list[[paste0("time_", fn)]] <- as.numeric(difftime(time1, time0, units = "sec"))
+
+      if (is.null(names(output)) && length(output) == 1) {
+        names(output) <- fn
+      }
+
+      summary_list[names(output)] <- output
+    }
   }
 
   summary <- as_tibble(summary_list)
