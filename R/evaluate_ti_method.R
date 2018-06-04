@@ -30,6 +30,17 @@ evaluate_ti_method <- function(
   calc_metrics <- c(metrics, extra_metrics)
   calc_metrics <- calc_metrics[!duplicated(calc_metrics)]
 
+  metric_names <- sapply(seq_along(metrics), function(i) {
+    metric <- metrics[[i]]
+    if (is.function(metric)) {
+      names(metrics)[[i]]
+    } else if (is.character(metric)) {
+      metric
+    } else {
+      stop("Unexpected metric, check documentation.")
+    }
+  })
+
   method_outputs <- dynwrap::infer_trajectories(
     task = tasks,
     method = method,
@@ -76,10 +87,10 @@ evaluate_ti_method <- function(
 
   # Calculate the final score
   score <- summary %>%
-    summarise_at(metrics, funs(mean)) %>%
+    summarise_at(metric_names, funs(mean)) %>%
     as.matrix %>%
     as.vector %>%
-    setNames(metrics)
+    setNames(metric_names)
 
   # Return extra information
   extras <- list(.summary = summary)
