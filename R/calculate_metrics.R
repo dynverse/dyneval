@@ -92,13 +92,18 @@ calculate_metrics <- function(
     f <- metrics[[i]]
     fn <- names(metrics)[[i]]
     if (is.function(f)) {
-      time0 <- Sys.time()
-      output <- f(task, model)
-      time1 <- Sys.time()
-      summary_list[[paste0("time_", fn)]] <- as.numeric(difftime(time1, time0, units = "sec"))
 
-      if (length(output) != 1) {
-        stop("Metric ", sQuote(fn), " should return exactly 1 numeric score.")
+      if (!is.null(model)) {
+        time0 <- Sys.time()
+        output <- f(task, model)
+        time1 <- Sys.time()
+        summary_list[[paste0("time_", fn)]] <- as.numeric(difftime(time1, time0, units = "sec"))
+
+        if (length(output) != 1) {
+          stop("Metric ", sQuote(fn), " should return exactly 1 numeric score.")
+        }
+      } else {
+        output <- 0
       }
       names(output) <- fn
 
