@@ -97,9 +97,10 @@ calculate_metrics <- function(
       time1 <- Sys.time()
       summary_list[[paste0("time_", fn)]] <- as.numeric(difftime(time1, time0, units = "sec"))
 
-      if (is.null(names(output)) && length(output) == 1) {
-        names(output) <- fn
+      if (length(output) != 1) {
+        stop("Metric ", sQuote(fn), " should return exactly 1 numeric score.")
       }
+      names(output) <- fn
 
       summary_list[names(output)] <- output
     }
