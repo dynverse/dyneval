@@ -18,7 +18,14 @@ custom_metric_2 <- function(task, model) {
   ifelse(score < 0, 0, score)
 }
 
-metrics <- list("correlation", "edge_flip", "rf_mse", "featureimp_cor", num_edges = custom_metric_1, num_nodes = custom_metric_2)
+metrics <- list(
+  "correlation",
+  "edge_flip",
+  "rf_mse",
+  "featureimp_cor",
+  num_edges = custom_metric_1,
+  num_nodes = custom_metric_2
+)
 
 test_that(paste0("Testing evaluate_ti_method with random"), {
   out <- evaluate_ti_method(
