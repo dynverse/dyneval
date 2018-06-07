@@ -19,7 +19,7 @@ compute_rfmse <- function(task, prediction) {
       expand_matrix(rownames = cell_ids)
 
     rfs <- lapply(seq_len(ncol(gold_milenet_m)), function(i) {
-      data <- gold_milenet_m[,i, drop=F] %>%
+      data <- gold_milenet_m[,i, drop = F] %>%
         magrittr::set_colnames("PREDICT") %>%
         cbind(pred_milenet_m) %>%
         as.data.frame()
