@@ -3,7 +3,7 @@ context("Score metrics")
 library(purrr)
 
 test_that(paste0("Edge flip returns relevant results"), {
-  topologies <- eval(formals(dyntoy:::generate_toy_milestone_network)$model)
+  topologies <- eval(formals(dyntoy:::generate_milestone_network)$model)
 
   milestone_networks <- list(
     linear1 = tribble(
