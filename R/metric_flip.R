@@ -143,15 +143,14 @@ change_single_edge_into_double <- function(df) {
 #' @param limit_combinations Maximal number of combinations to check
 #'
 # either export this function or do not list any examples
-# @examples
-# net1 <- dyntoy:::generate_toy_milestone_network("linear_long")
-# net2 <- dyntoy:::generate_toy_milestone_network("trifurcating")
-# calculate_edge_flip(net1, net2)
-#
-# net1 <- dyntoy:::generate_toy_milestone_network("cycle")
-# net1 <- dyntoy:::generate_toy_milestone_network("bifurcating_cycle")
-# net2 <- dyntoy:::generate_toy_milestone_network("bifuracting_loop")
-# calculate_edge_flip(net1, net2)
+#' @examples
+#' net1 <- dyntoy::generate_milestone_network("linear")
+#' net2 <- dyntoy::generate_milestone_network("bifurcating")
+#' calculate_edge_flip(net1, net2)
+#' 
+#' net1 <- dyntoy::generate_milestone_network("cyclic")
+#' net2 <- dyntoy::generate_milestone_network("diverging_with_loops")
+#' calculate_edge_flip(net1, net2)
 calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify = TRUE, limit_flips = 10, limit_combinations = choose(25, 7)) {
   return <- match.arg(return, c("score", "all"))
 
