@@ -59,7 +59,7 @@ test_that(paste0("Edge flip returns relevant results"), {
   networks <- tibble(
     name = names(milestone_networks),
     milestone_network = milestone_networks,
-    topology = str_replace(name, "\\d*$", "")
+    topology = gsub("\\d*$", "", name)
   )
 
   design <- crossing(networks, networks)
