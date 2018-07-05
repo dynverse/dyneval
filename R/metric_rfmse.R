@@ -1,17 +1,17 @@
 
 #' Compute the random forest OOB-MSE metric
 #'
-#' @param task A task
+#' @param dataset A dataset
 #' @param prediction A predicted model
 #'
 #' @importFrom reshape2 acast
 #' @importFrom ranger ranger
-compute_rfmse <- function(task, prediction) {
-  cell_ids <- task$cell_ids
+compute_rfmse <- function(dataset, prediction) {
+  cell_ids <- dataset$cell_ids
 
   if (!is.null(prediction)) {
 
-    gold_milenet_m <- task$milestone_percentages %>%
+    gold_milenet_m <- dataset$milestone_percentages %>%
       reshape2::acast(cell_id ~ milestone_id, value.var = "percentage", fill = 0) %>%
       expand_matrix(rownames = cell_ids)
     pred_milenet_m <- prediction$milestone_percentages %>%
@@ -19,7 +19,7 @@ compute_rfmse <- function(task, prediction) {
       expand_matrix(rownames = cell_ids)
 
     rfs <- lapply(seq_len(ncol(gold_milenet_m)), function(i) {
-      data <- gold_milenet_m[,i, drop=F] %>%
+      data <- gold_milenet_m[,i, drop = F] %>%
         magrittr::set_colnames("PREDICT") %>%
         cbind(pred_milenet_m) %>%
         as.data.frame()

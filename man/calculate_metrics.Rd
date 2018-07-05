@@ -2,13 +2,13 @@
 % Please edit documentation in R/calculate_metrics.R
 \name{calculate_metrics}
 \alias{calculate_metrics}
-\title{Calculate the performance of a model with respect to a task}
+\title{Calculate the performance of a model with respect to a dataset}
 \usage{
-calculate_metrics(task, model, metrics = c("correlation", "edge_flip",
+calculate_metrics(dataset, model, metrics = c("correlation", "edge_flip",
   "rf_mse", "rf_rsq", "featureimp_cor"))
 }
 \arguments{
-\item{task}{the original task}
+\item{dataset}{the original dataset}
 
 \item{model}{the predicted model}
 
@@ -18,8 +18,9 @@ calculate_metrics(task, model, metrics = c("correlation", "edge_flip",
   \item Edge flip score: \code{"edge_flip"}
   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
   \item Similarity in feature importance: \code{"featureimp_cor"}
+  \item Custom metric function. Format: \code{function(dataset, model) { 1 }}
 }}
 }
 \description{
-Calculate the performance of a model with respect to a task
+Calculate the performance of a model with respect to a dataset
 }
