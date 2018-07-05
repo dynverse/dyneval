@@ -4,10 +4,10 @@
 \alias{compute_featureimp}
 \title{Compare feature importances derived by both trajectories}
 \usage{
-compute_featureimp(task, prediction, num_trees = 50000)
+compute_featureimp(dataset, prediction, num_trees = 50000)
 }
 \arguments{
-\item{task}{A task}
+\item{dataset}{A dataset}
 
 \item{prediction}{A predicted model}
 

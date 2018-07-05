@@ -4,10 +4,10 @@
 \alias{compute_rfmse}
 \title{Compute the random forest OOB-MSE metric}
 \usage{
-compute_rfmse(task, prediction)
+compute_rfmse(dataset, prediction)
 }
 \arguments{
-\item{task}{A task}
+\item{dataset}{A dataset}
 
 \item{prediction}{A predicted model}
 }

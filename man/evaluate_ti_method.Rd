@@ -2,13 +2,14 @@
 % Please edit documentation in R/evaluate_ti_method.R
 \name{evaluate_ti_method}
 \alias{evaluate_ti_method}
-\title{Running an evaluation of a method on a set of tasks with a set of parameters}
+\title{Running an evaluation of a method on a set of datasets with a set of parameters}
 \usage{
-evaluate_ti_method(tasks, method, parameters, metrics, extra_metrics = NULL,
-  output_model = TRUE, mc_cores = 1, verbose = FALSE)
+evaluate_ti_method(datasets, method, parameters, metrics,
+  extra_metrics = NULL, output_model = TRUE, mc_cores = 1,
+  verbose = FALSE)
 }
 \arguments{
-\item{tasks}{The tasks on which to evaluate.}
+\item{datasets}{The datasets on which to evaluate.}
 
 \item{method}{The method to evaluate.}
 
@@ -20,17 +21,17 @@ evaluate_ti_method(tasks, method, parameters, metrics, extra_metrics = NULL,
   \item Edge flip score: \code{"edge_flip"}
   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
   \item Similarity in feature importance: \code{"featureimp_cor"}
-  \item Custom metric function. Format: \code{function(task, model) { 1 }}
+  \item Custom metric function. Format: \code{function(dataset, model) { 1 }}
 }}
 
 \item{extra_metrics}{Extra metrics to calculate but not evaluate with.}
 
 \item{output_model}{Whether or not the model will be outputted.}
 
-\item{mc_cores}{The number of cores to use, allowing to parallellise the different tasks}
+\item{mc_cores}{The number of cores to use, allowing to parallellise the different datasets}
 
 \item{verbose}{Whether or not to print extra information output.}
 }
 \description{
-Running an evaluation of a method on a set of tasks with a set of parameters
+Running an evaluation of a method on a set of datasets with a set of parameters
 }

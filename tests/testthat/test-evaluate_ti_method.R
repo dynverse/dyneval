@@ -1,19 +1,19 @@
 context("Testing evaluate_ti_method")
 
-custom_metric_1 <- function(task, model) {
-  num_edges_task <- nrow(task$milestone_network)
+custom_metric_1 <- function(dataset, model) {
+  num_edges_dataset <- nrow(dataset$milestone_network)
   num_edges_model <- nrow(model$milestone_network)
 
-  score <- 1 - abs(num_edges_task - num_edges_model) / num_edges_task
+  score <- 1 - abs(num_edges_dataset - num_edges_model) / num_edges_dataset
 
   ifelse(score < 0, 0, score)
 }
 
-custom_metric_2 <- function(task, model) {
-  num_nodes_task <- length(task$milestone_ids)
+custom_metric_2 <- function(dataset, model) {
+  num_nodes_dataset <- length(dataset$milestone_ids)
   num_nodes_model <- length(model$milestone_ids)
 
-  score <- 1 - abs(num_nodes_task - num_nodes_model) / num_nodes_task
+  score <- 1 - abs(num_nodes_dataset - num_nodes_model) / num_nodes_dataset
 
   ifelse(score < 0, 0, score)
 }
@@ -29,7 +29,7 @@ metrics <- list(
 
 test_that(paste0("Testing evaluate_ti_method with random"), {
   out <- evaluate_ti_method(
-    tasks = dyntoy::toy_tasks[5,],
+    datasets = dyntoy::toy_datasets[5,],
     method = dynmethods::ti_random(),
     parameters = NULL,
     metrics = metrics,
@@ -65,7 +65,7 @@ test_that(paste0("Testing evaluate_ti_method with random"), {
 
 test_that(paste0("Testing evaluate_ti_method with error"), {
   out <- evaluate_ti_method(
-    tasks = dyntoy::toy_tasks[5,],
+    datasets = dyntoy::toy_datasets[5,],
     method = dynmethods::ti_error(),
     parameters = list(),
     metrics = metrics,
@@ -97,7 +97,7 @@ test_that(paste0("Testing evaluate_ti_method with error"), {
 
 test_that(paste0("Testing evaluate_ti_method with identity"), {
   out <- evaluate_ti_method(
-    tasks = dyntoy::toy_tasks[5,],
+    datasets = dyntoy::toy_datasets[5,],
     method = dynmethods::ti_identity(),
     parameters = list(),
     metrics = metrics,

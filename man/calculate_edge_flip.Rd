@@ -23,3 +23,12 @@ calculate_edge_flip(net1, net2, return = c("score", "all"), simplify = TRUE,
 \description{
 Edge flip score
 }
+\examples{
+net1 <- dyntoy::generate_milestone_network("linear")
+net2 <- dyntoy::generate_milestone_network("bifurcating")
+calculate_edge_flip(net1, net2)
+
+net1 <- dyntoy::generate_milestone_network("cyclic")
+net2 <- dyntoy::generate_milestone_network("diverging_with_loops")
+calculate_edge_flip(net1, net2)
+}
