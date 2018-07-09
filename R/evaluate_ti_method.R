@@ -10,7 +10,7 @@
 #' @param verbose Whether or not to print extra information output.
 #'
 #' @export
-#' @importFrom dynwrap infer_trajectories
+#' @importFrom dynwrap infer_trajectories add_cell_waypoints
 #' @importFrom parallel mclapply
 #' @importFrom testthat expect_false expect_true
 #' @importFrom readr write_rds
@@ -59,7 +59,7 @@ evaluate_ti_method <- function(
     if (!is.null(model)) {
       # Calculate geodesic distances
       time0 <- Sys.time()
-      model <- model %>% add_cell_waypoints(num_cells_selected = length(dataset$waypoint_cells))
+      model <- model %>% dynwrap::add_cell_waypoints(num_cells_selected = length(dataset$waypoint_cells))
       time1 <- Sys.time()
       time_cellwaypoints <- as.numeric(difftime(time1, time0, units = "sec"))
       df_cellwaypoints <- data_frame(time_cellwaypoints)
@@ -100,7 +100,7 @@ evaluate_ti_method <- function(
 
   # add models if desired
   if (output_model) {
-    out$models <- eval_outputs %>% map_df(~ .$model)
+    out$models <- eval_outputs %>% map(~ .$model)
   }
 
   # return output
