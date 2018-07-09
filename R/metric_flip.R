@@ -151,6 +151,8 @@ change_single_edge_into_double <- function(df) {
 #' net2 <- dyntoy::generate_milestone_network("diverging_with_loops")
 #' calculate_edge_flip(net1, net2)
 #'
+#' @importFrom dynwrap simplify_igraph_network
+#'
 #' @export
 calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify = TRUE, limit_flips = 10, limit_combinations = choose(25, 7)) {
   return <- match.arg(return, c("score", "all"))
@@ -325,46 +327,4 @@ calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify
       list(score = score, newadj1 = newadj1, oldadj1 = adj1)
     }
   }
-}
-
-#' Plotting edge flips
-#' @param oldadj Old adjacency matrix
-#' @param newadj New adjancency matrix
-#'
-#' @importFrom tidygraph as_tbl_graph activate
-#' @importFrom ggraph ggraph geom_edge_fan geom_edge_loop geom_node_label scale_edge_colour_manual
-#' @importFrom cowplot theme_nothing
-plot_edge_flips <- function(oldadj, newadj) {
-  # names are used for generating the network, make sure they are present and unique
-  names <- seq_len(nrow(oldadj))
-  dimnames(oldadj) <- list(names, names)
-  dimnames(newadj) <- list(names, names)
-
-  oldnet <- oldadj %>%
-    reshape2::melt(varnames = c("from", "to"), value.name = "old") %>%
-    mutate(old = old == 1) %>%
-    filter(from >= to)
-
-  newnet <- newadj %>%
-    reshape2::melt(varnames = c("from", "to"), value.name = "new") %>%
-    mutate(new = new == 1) %>%
-    filter(from >= to)
-
-  types <- tibble(old = c(F, F, T, T), new = c(F, T, F, T), type = c("irrelevant", "gained", "lost", "stayed"))
-  net <- left_join(oldnet, newnet, by = c("from", "to")) %>%
-    left_join(types, by = c("old", "new"))
-
-  graph <- net %>% as_tbl_graph(directed = FALSE)
-
-  graph <- graph %>%
-    activate(edges) %>%
-    mutate(weight = as.numeric(type != "irrelevant")) %>%
-    arrange(weight)
-
-  ggraph(graph, layout = "fr") +
-    geom_edge_fan(aes(color = type)) +
-    geom_edge_loop(aes(colour = type)) +
-    geom_node_label(aes(label = name)) +
-    scale_edge_colour_manual(values = c(irrelevant = "#DDDDDD", lost = "#FF4136", stayed = "#0074D9", gained = "#2ECC40")) +
-    cowplot::theme_nothing()
 }
