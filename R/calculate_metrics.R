@@ -13,7 +13,7 @@
 #'
 #' @importFrom igraph is_isomorphic_to graph_from_data_frame
 #' @importFrom testthat expect_equal
-#' @importFrom dynwrap is_wrapper_with_waypoint_cells
+#' @importFrom dynwrap is_wrapper_with_waypoint_cells compute_tented_geodesic_distances
 #'
 #' @export
 calculate_metrics <- function(
@@ -37,8 +37,8 @@ calculate_metrics <- function(
 
     # compute waypointed geodesic distances
     time0 <- Sys.time()
-    dataset$geodesic_dist <- compute_tented_geodesic_distances(dataset, waypoints)
-    model$geodesic_dist <- compute_tented_geodesic_distances(model, waypoints)
+    dataset$geodesic_dist <- dynwrap::compute_tented_geodesic_distances(dataset, waypoints)
+    model$geodesic_dist <- dynwrap::compute_tented_geodesic_distances(model, waypoints)
     time1 <- Sys.time()
     summary_list$time_waypointedgeodesic <- as.numeric(difftime(time1, time0, units = "sec"))
   }
