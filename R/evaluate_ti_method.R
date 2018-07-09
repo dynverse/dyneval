@@ -24,8 +24,8 @@ evaluate_ti_method <- function(
   mc_cores = 1,
   verbose = FALSE
 ) {
-  testthat::expect_true("waypoint_cells" %in% colnames(datasets))
-  testthat::expect_false(any(sapply(datasets$waypoint_cells, is.null)))
+  testthat::expect_is(datasets, "tbl")
+  testthat::expect_true(all(unlist(tmap(datasets, dynwrap::is_wrapper_with_waypoint_cells))))
 
   calc_metrics <- c(metrics, extra_metrics)
   calc_metrics <- calc_metrics[!duplicated(calc_metrics)]
