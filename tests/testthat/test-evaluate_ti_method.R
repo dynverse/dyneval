@@ -28,6 +28,9 @@ metrics <- list(
 )
 
 test_that(paste0("Testing evaluate_ti_method with random"), {
+  tmp <- tempfile()
+
+  sink(tmp)
   out <- evaluate_ti_method(
     datasets = dyntoy::toy_datasets[5,],
     method = dynmethods::ti_random(),
@@ -38,6 +41,8 @@ test_that(paste0("Testing evaluate_ti_method with random"), {
     mc_cores = 2,
     verbose = TRUE
   )
+  sink()
+  unlink(tmp)
 
   score <- out$score
   summary <- out$summary
@@ -73,7 +78,7 @@ test_that(paste0("Testing evaluate_ti_method with error"), {
     output_model = TRUE,
     extra_metrics = NULL,
     mc_cores = 2,
-    verbose = TRUE
+    verbose = FALSE
   )
 
   score <- out$score
@@ -106,7 +111,7 @@ test_that(paste0("Testing evaluate_ti_method with identity"), {
     output_model = TRUE,
     extra_metrics = NULL,
     mc_cores = 2,
-    verbose = TRUE
+    verbose = FALSE
   )
 
   score <- out$score
