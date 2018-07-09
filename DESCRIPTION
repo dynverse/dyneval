@@ -14,14 +14,11 @@ RoxygenNote: 6.0.1
 Depends:
   R (>= 3.4.0)
 Imports: 
-  coRanking,
-  cowplot,
   dplyr, 
   dynfeature,
   dynutils,
   dynwrap,
   GA,
-  ggraph,
   igraph,
   magrittr, 
   methods,
@@ -33,7 +30,6 @@ Imports:
   reshape2,
   testthat,
   tibble, 
-  tidygraph,
   tidyr
 Suggests:
   dynmethods,
