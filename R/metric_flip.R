@@ -151,6 +151,8 @@ change_single_edge_into_double <- function(df) {
 #' net2 <- dyntoy::generate_milestone_network("diverging_with_loops")
 #' calculate_edge_flip(net1, net2)
 #'
+#' @importFrom dynwrap simplify_igraph_network
+#'
 #' @export
 calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify = TRUE, limit_flips = 10, limit_combinations = choose(25, 7)) {
   return <- match.arg(return, c("score", "all"))
