@@ -39,10 +39,11 @@ test_that(paste0("Testing evaluate_ti_method with random"), {
     verbose = TRUE
   )
 
-  expect_is(out, "numeric")
+  score <- out$score
+  summary <- out$summary
+  models <- out$models
 
-  summary <- attr(out, "extras")$.summary
-  models <- attr(out, "extras")$.models
+  expect_is(score, "numeric")
 
   expect_null(summary$error[[1]])
 
@@ -75,11 +76,12 @@ test_that(paste0("Testing evaluate_ti_method with error"), {
     verbose = TRUE
   )
 
-  expect_is(out, "numeric")
-  expect_true(all(out == c(0, 0, 1, 0)))
+  score <- out$score
+  summary <- out$summary
+  models <- out$models
 
-  summary <- attr(out, "extras")$.summary
-  models <- attr(out, "extras")$.models
+  expect_is(score, "numeric")
+  expect_true(all(score == c(0, 0, 1, 0)))
 
   expect_true(!is.null(summary$error[[1]]))
 
@@ -107,11 +109,12 @@ test_that(paste0("Testing evaluate_ti_method with identity"), {
     verbose = TRUE
   )
 
-  expect_is(out, "numeric")
-  expect_true(all(out - c(1, 1, 0, 1) < .01))
+  score <- out$score
+  summary <- out$summary
+  models <- out$models
 
-  summary <- attr(out, "extras")$.summary
-  models <- attr(out, "extras")$.models
+  expect_is(score, "numeric")
+  expect_true(all(score - c(1, 1, 0, 1) < .01))
 
   expect_null(summary$error[[1]])
 
