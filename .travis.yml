@@ -4,15 +4,6 @@ dist: trusty
 bioc_required: true
 cache: packages
 warnings_are_errors: true
-addons:
-  apt:
-    packages:
-      - libgsl-dev
-      - libsdl1.2-dev
-      - libreadline-dev
-      - imagemagick
-      - libfftw3-dev
-      - libudunits2-dev
 install:
  - if [ `git branch | grep '* master' | wc -l` == 0 ]; then sed -i 's#\(dynverse/[^, ]*\)#\1@devel#' DESCRIPTION; fi
  - R -e 'if ("devtools" %in% rownames(installed.packages())) update.packages(oldPkgs = "devtools", ask = FALSE) else install.packages("devtools")'
