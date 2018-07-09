@@ -78,12 +78,12 @@ evaluate_ti_method <- function(
     )
 
     # Return the output
-    lst(model, summary)
+    out <- list(summary = summary)
+    if (output_model) {
+      output$model <- model
+    }
+    out
   })
-
-  # Combine the different outputs in three lists/data frames
-  models <- eval_outputs %>% map(~ .$model)
-  summary <- eval_outputs %>% map_df(~ .$summary)
 
   # Calculate the final score
   score <- summary %>%
@@ -92,17 +92,17 @@ evaluate_ti_method <- function(
     as.vector %>%
     setNames(metric_names)
 
-  # Return extra information
-  extras <- list(.summary = summary)
+  # create output data structure
+  out <- list(
+    score = score,
+    summary = eval_outputs %>% map_df(~ .$summary)
+  )
 
-  # If output_model is true, add the model to the extras output
+  # add models if desired
   if (output_model) {
-    extras$.models <- models
+    out$models <- eval_outputs %>% map_df(~ .$model)
   }
 
-  # attach extras to score
-  attr(score, "extras") <- extras
-
-  # Return output
-  score
+  # return output
+  out
 }
