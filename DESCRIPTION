@@ -18,7 +18,6 @@ Imports:
   cowplot,
   dplyr, 
   dynfeature,
-  dynmethods,
   dynutils,
   dynwrap,
   GA,
@@ -37,12 +36,14 @@ Imports:
   tidygraph,
   tidyr
 Suggests:
+  dynmethods,
   dyntoy,
   roxygen2
 Remotes:
-  berndbischl/ParamHelpers,
+  dynverse/dynfeature,
   dynverse/dynmethods,
-  dynverse/dynutils,
-  dynverse/dynwrap,
   dynverse/dyntoy,
-  dynverse/dynfeature
+  dynverse/dynutils,
+  dynverse/dynwrap
+  
+  
