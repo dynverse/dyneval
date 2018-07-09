@@ -46,7 +46,8 @@ evaluate_ti_method <- function(
     method = method,
     parameters = parameters,
     mc_cores = mc_cores,
-    verbose = verbose
+    verbose = TRUE,
+    capture_output = TRUE
   )
 
   # Calculate scores
@@ -85,6 +86,8 @@ evaluate_ti_method <- function(
     out
   })
 
+  summary <- map_dfr(eval_outputs, "summary")
+
   # Calculate the final score
   score <- summary %>%
     summarise_at(metric_names, funs(mean)) %>%
@@ -95,12 +98,12 @@ evaluate_ti_method <- function(
   # create output data structure
   out <- list(
     score = score,
-    summary = eval_outputs %>% map_df(~ .$summary)
+    summary = summary
   )
 
   # add models if desired
   if (output_model) {
-    out$models <- eval_outputs %>% map(~ .$model)
+    out$models <- eval_outputs %>% map("model")
   }
 
   # return output
