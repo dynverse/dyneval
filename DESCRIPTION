@@ -31,12 +31,10 @@ Imports:
   tibble, 
   tidyr
 Suggests:
-  dynmethods,
   dyntoy,
   roxygen2
 Remotes:
   dynverse/dynfeature,
-  dynverse/dynmethods,
   dynverse/dyntoy,
   dynverse/dynutils,
   dynverse/dynwrap
