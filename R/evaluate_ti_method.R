@@ -100,7 +100,7 @@ evaluate_ti_method <- function(
 
   # add models if desired
   if (output_model) {
-    out$models <- eval_outputs %>% map_df(~ .$model)
+    out$models <- eval_outputs %>% map(~ .$model)
   }
 
   # return output
