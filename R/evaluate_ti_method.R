@@ -80,7 +80,7 @@ evaluate_ti_method <- function(
     # Return the output
     out <- list(summary = summary)
     if (output_model) {
-      output$model <- model
+      out$model <- model
     }
     out
   })
