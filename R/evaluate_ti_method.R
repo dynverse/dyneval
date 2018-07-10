@@ -25,17 +25,6 @@ evaluate_ti_method <- function(
   testthat::expect_is(datasets, "tbl")
   testthat::expect_true(all(unlist(tmap(datasets, dynwrap::is_wrapper_with_waypoint_cells))))
 
-  metric_names <- sapply(seq_along(metrics), function(i) {
-    metric <- metrics[[i]]
-    if (is.function(metric)) {
-      names(metrics)[[i]]
-    } else if (is.character(metric)) {
-      metric
-    } else {
-      stop("Unexpected metric, check documentation.")
-    }
-  })
-
   method_outputs <- dynwrap::infer_trajectories(
     dataset = datasets,
     method = method,
