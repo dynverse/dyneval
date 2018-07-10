@@ -26,6 +26,7 @@ metrics <- list(
   num_edges = custom_metric_1,
   num_nodes = custom_metric_2
 )
+metric_names <- ifelse(purrr::map_chr(metrics, is.character), metrics, names(metrics)) %>% unlist()
 
 test_that(paste0("Testing evaluate_ti_method with random"), {
   tmp <- tempfile()
@@ -43,7 +44,7 @@ test_that(paste0("Testing evaluate_ti_method with random"), {
   sink()
   unlink(tmp)
 
-  score <- out$score
+  score <- as.list(out$summary)[metric_names] %>% unlist()
   summary <- out$summary
   models <- out$models
 
@@ -79,12 +80,13 @@ test_that(paste0("Testing evaluate_ti_method with error"), {
     verbose = FALSE
   )
 
-  score <- out$score
   summary <- out$summary
   models <- out$models
 
+  score <- as.list(out$summary)[metric_names] %>% unlist()
+
   expect_is(score, "numeric")
-  expect_true(all(score == c(0, 0, 1, 0)))
+  expect_true(all(score == c(0, 0, 1, 0, 0, 0)))
 
   expect_true(!is.null(summary$error[[1]]))
 
@@ -111,12 +113,13 @@ test_that(paste0("Testing evaluate_ti_method with identity"), {
     verbose = FALSE
   )
 
-  score <- out$score
   summary <- out$summary
   models <- out$models
 
+  score <- as.list(out$summary)[metric_names] %>% unlist()
+
   expect_is(score, "numeric")
-  expect_true(all(score - c(1, 1, 0, 1) < .01))
+  expect_true(all(score - c(1, 1, 0, 1, 1, 1) < .01))
 
   expect_null(summary$error[[1]])
 
