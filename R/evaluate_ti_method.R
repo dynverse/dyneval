@@ -86,7 +86,7 @@ evaluate_ti_method <- function(
     out
   })
 
-  summary <- map_dfr(eval_outputs, "summary")
+  summary <- purrr::map_dfr(eval_outputs, "summary")
 
   # Calculate the final score
   score <- summary %>%
