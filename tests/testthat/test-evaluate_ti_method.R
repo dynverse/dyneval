@@ -37,7 +37,6 @@ test_that(paste0("Testing evaluate_ti_method with random"), {
     parameters = NULL,
     metrics = metrics,
     output_model = TRUE,
-    extra_metrics = NULL,
     mc_cores = 2,
     verbose = TRUE
   )
@@ -76,7 +75,6 @@ test_that(paste0("Testing evaluate_ti_method with error"), {
     parameters = list(),
     metrics = metrics,
     output_model = TRUE,
-    extra_metrics = NULL,
     mc_cores = 2,
     verbose = FALSE
   )
@@ -109,7 +107,6 @@ test_that(paste0("Testing evaluate_ti_method with identity"), {
     parameters = list(),
     metrics = metrics,
     output_model = TRUE,
-    extra_metrics = NULL,
     mc_cores = 2,
     verbose = FALSE
   )
