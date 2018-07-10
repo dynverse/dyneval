@@ -4,7 +4,6 @@
 #' @param datasets The datasets on which to evaluate.
 #' @param method The method to evaluate.
 #' @param parameters The parameters to evaluate with.
-#' @param extra_metrics Extra metrics to calculate but not evaluate with.
 #' @param output_model Whether or not the model will be outputted.
 #' @param mc_cores The number of cores to use, allowing to parallellise the different datasets
 #' @param verbose Whether or not to print extra information output.
@@ -19,16 +18,12 @@ evaluate_ti_method <- function(
   method,
   parameters,
   metrics,
-  extra_metrics = NULL,
   output_model = TRUE,
   mc_cores = 1,
   verbose = FALSE
 ) {
   testthat::expect_is(datasets, "tbl")
   testthat::expect_true(all(unlist(tmap(datasets, dynwrap::is_wrapper_with_waypoint_cells))))
-
-  calc_metrics <- c(metrics, extra_metrics)
-  calc_metrics <- calc_metrics[!duplicated(calc_metrics)]
 
   metric_names <- sapply(seq_along(metrics), function(i) {
     metric <- metrics[[i]]
@@ -69,7 +64,7 @@ evaluate_ti_method <- function(
     }
 
     # Calculate metrics
-    metrics_summary <- calculate_metrics(dataset, model, calc_metrics)
+    metrics_summary <- calculate_metrics(dataset, model, metrics)
 
     # Create summary statistics
     summary <- bind_cols(
@@ -86,19 +81,9 @@ evaluate_ti_method <- function(
     out
   })
 
-  summary <- map_dfr(eval_outputs, "summary")
-
-  # Calculate the final score
-  score <- summary %>%
-    summarise_at(metric_names, funs(mean)) %>%
-    as.matrix %>%
-    as.vector %>%
-    setNames(metric_names)
-
   # create output data structure
   out <- list(
-    score = score,
-    summary = summary
+    summary = map_df(eval_outputs, "summary")
   )
 
   # add models if desired
