@@ -26,23 +26,29 @@ metrics <- list(
   num_edges = custom_metric_1,
   num_nodes = custom_metric_2
 )
+metric_names <- ifelse(purrr::map_chr(metrics, is.character), metrics, names(metrics)) %>% unlist()
 
 test_that(paste0("Testing evaluate_ti_method with random"), {
+  tmp <- tempfile()
+
+  sink(tmp)
   out <- evaluate_ti_method(
     datasets = dyntoy::toy_datasets[5,],
-    method = dynmethods::ti_random(),
+    method = dynwrap:::ti_random(),
     parameters = NULL,
     metrics = metrics,
     output_model = TRUE,
-    extra_metrics = NULL,
     mc_cores = 2,
     verbose = TRUE
   )
+  sink()
+  unlink(tmp)
 
-  expect_is(out, "numeric")
+  score <- as.list(out$summary)[metric_names] %>% unlist()
+  summary <- out$summary
+  models <- out$models
 
-  summary <- attr(out, "extras")$.summary
-  models <- attr(out, "extras")$.models
+  expect_is(score, "numeric")
 
   expect_null(summary$error[[1]])
 
@@ -66,20 +72,21 @@ test_that(paste0("Testing evaluate_ti_method with random"), {
 test_that(paste0("Testing evaluate_ti_method with error"), {
   out <- evaluate_ti_method(
     datasets = dyntoy::toy_datasets[5,],
-    method = dynmethods::ti_error(),
+    method = dynwrap:::ti_error(),
     parameters = list(),
     metrics = metrics,
     output_model = TRUE,
-    extra_metrics = NULL,
     mc_cores = 2,
-    verbose = TRUE
+    verbose = FALSE
   )
 
-  expect_is(out, "numeric")
-  expect_true(all(out == c(0, 0, 1, 0)))
+  summary <- out$summary
+  models <- out$models
 
-  summary <- attr(out, "extras")$.summary
-  models <- attr(out, "extras")$.models
+  score <- as.list(out$summary)[metric_names] %>% unlist()
+
+  expect_is(score, "numeric")
+  expect_true(all(score == c(0, 0, 1, 0, 0, 0)))
 
   expect_true(!is.null(summary$error[[1]]))
 
@@ -98,20 +105,21 @@ test_that(paste0("Testing evaluate_ti_method with error"), {
 test_that(paste0("Testing evaluate_ti_method with identity"), {
   out <- evaluate_ti_method(
     datasets = dyntoy::toy_datasets[5,],
-    method = dynmethods::ti_identity(),
+    method = dynwrap:::ti_identity(),
     parameters = list(),
     metrics = metrics,
     output_model = TRUE,
-    extra_metrics = NULL,
     mc_cores = 2,
-    verbose = TRUE
+    verbose = FALSE
   )
 
-  expect_is(out, "numeric")
-  expect_true(all(out - c(1, 1, 0, 1) < .01))
+  summary <- out$summary
+  models <- out$models
 
-  summary <- attr(out, "extras")$.summary
-  models <- attr(out, "extras")$.models
+  score <- as.list(out$summary)[metric_names] %>% unlist()
+
+  expect_is(score, "numeric")
+  expect_true(all(score - c(1, 1, 0, 1, 1, 1) < .01))
 
   expect_null(summary$error[[1]])
 

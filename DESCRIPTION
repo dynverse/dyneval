@@ -14,15 +14,10 @@ RoxygenNote: 6.0.1
 Depends:
   R (>= 3.4.0)
 Imports: 
-  coRanking,
-  cowplot,
   dplyr, 
   dynfeature,
-  dynmethods,
   dynutils,
   dynwrap,
-  GA,
-  ggraph,
   igraph,
   magrittr, 
   methods,
@@ -34,15 +29,14 @@ Imports:
   reshape2,
   testthat,
   tibble, 
-  tidygraph,
   tidyr
 Suggests:
   dyntoy,
   roxygen2
 Remotes:
-  berndbischl/ParamHelpers,
-  dynverse/dynmethods,
-  dynverse/dynutils,
-  dynverse/dynwrap,
+  dynverse/dynfeature,
   dynverse/dyntoy,
-  dynverse/dynfeature
+  dynverse/dynutils,
+  dynverse/dynwrap
+  
+  
