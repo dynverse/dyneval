@@ -36,7 +36,7 @@ test_that(paste0("Testing evaluate_ti_method with random"), {
     datasets = dyntoy::toy_datasets[5,],
     method = dynwrap:::ti_random(),
     parameters = NULL,
-    metrics = "edge_flip",
+    metrics = metrics,
     output_model = TRUE,
     mc_cores = 2,
     verbose = TRUE
