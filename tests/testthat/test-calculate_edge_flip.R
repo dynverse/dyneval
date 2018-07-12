@@ -65,7 +65,7 @@ test_that(paste0("Edge flip returns relevant results"), {
   design <- crossing(networks, networks)
 
   scores <- design %>% as.list() %>% pmap(function(milestone_network, milestone_network1, ...) {
-    score <- dyneval:::calculate_edge_flip(milestone_network, milestone_network1)
+    score <- calculate_edge_flip(milestone_network, milestone_network1)
     tibble(score = score)
   }) %>% bind_rows()
   design <- bind_cols(design, scores)
