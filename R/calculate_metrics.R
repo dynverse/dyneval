@@ -50,9 +50,15 @@ calculate_metrics <- function(
 
       # compute corrrelation
       time0 <- Sys.time()
-      summary_list$correlation <- cor(dataset$geodesic_dist %>% as.vector, model$geodesic_dist %>% as.vector, method = "spearman")
+      if (max(model$geodesic_dist) == 0 || max(dataset$geodesic_dist) == 0) {
+        correlation <- 0
+      } else {
+        summary_list$correlation <- cor(dataset$geodesic_dist %>% as.vector, model$geodesic_dist %>% as.vector, method = "spearman")
+      }
+
       time1 <- Sys.time()
       summary_list$time_correlation <- as.numeric(difftime(time1, time0, units = "sec"))
+
     } else {
       summary_list <- c(summary_list, list(correlation = 0))
     }
