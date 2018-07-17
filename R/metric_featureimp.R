@@ -6,7 +6,7 @@
 #' @param num_trees the number of trees to use during the calculation of the metric
 #'
 #' @importFrom dynfeature calculate_overall_feature_importance
-compute_featureimp <- function(dataset, prediction, num_trees = 50000) {
+compute_featureimp <- function(dataset, prediction, num_trees = 10000) {
   cell_ids <- dataset$cell_ids
 
   if (!is.null(prediction)) {

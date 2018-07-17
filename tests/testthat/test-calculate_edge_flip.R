@@ -76,3 +76,29 @@ test_that(paste0("Edge flip returns relevant results"), {
 
   expect_true(all(same_topology_scores))
 })
+
+
+
+
+test_that(paste0("Correlation returns relevant results"), {
+  # test for when cells are on one point -> correlation == 0
+  cell_ids <- letters[1:10]
+  dataset <- dynwrap::wrap_data(cell_ids = cell_ids) %>%
+    dynwrap::add_trajectory(
+      milestone_network = tribble(
+        ~from, ~to, ~length, ~directed,
+        "A", "B", 1, TRUE
+      ),
+      progressions = tibble(
+        cell_id = cell_ids,
+        from = "A",
+        to = "B",
+        percentage = 0
+      )
+    ) %>%
+    dynwrap::add_cell_waypoints()
+
+  scores <- calculate_metrics(dataset, dataset, "correlation")
+
+  expect_equal(scores$correlation, 0)
+})
