@@ -23,7 +23,7 @@ evaluate_ti_method <- function(
   verbose = FALSE
 ) {
   testthat::expect_is(datasets, "tbl")
-  testthat::expect_true(all(unlist(tmap(datasets, dynwrap::is_wrapper_with_waypoint_cells))))
+  testthat::expect_true(all(mapdf_lgl(datasets, dynwrap::is_wrapper_with_waypoint_cells)))
 
   method_outputs <- dynwrap::infer_trajectories(
     dataset = datasets,
