@@ -14,7 +14,7 @@ evaluate_ti_method <- function(
   method,
   parameters,
   metrics,
-  give_priors,
+  give_priors = NULL,
   output_model = TRUE,
   mc_cores = 1,
   verbose = FALSE
