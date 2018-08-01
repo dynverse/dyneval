@@ -10,7 +10,7 @@
 #' @importFrom testthat expect_false expect_true
 #' @importFrom readr write_rds
 evaluate_ti_method <- function(
-  datasets,
+  dataset,
   method,
   parameters,
   metrics,
@@ -19,11 +19,11 @@ evaluate_ti_method <- function(
   mc_cores = 1,
   verbose = FALSE
 ) {
-  testthat::expect_is(datasets, "tbl")
-  testthat::expect_true(all(mapdf_lgl(datasets, dynwrap::is_wrapper_with_waypoint_cells)))
+  testthat::expect_is(dataset, "tbl")
+  testthat::expect_true(all(mapdf_lgl(dataset, dynwrap::is_wrapper_with_waypoint_cells)))
 
   method_outputs <- dynwrap::infer_trajectories(
-    dataset = datasets,
+    dataset = dataset,
     method = method,
     parameters = parameters,
     give_priors = give_priors,
@@ -33,8 +33,8 @@ evaluate_ti_method <- function(
   )
 
   # Calculate scores
-  eval_outputs <- parallel::mclapply(seq_len(nrow(datasets)), mc.cores = mc_cores, function(i) {
-    dataset <- dynutils::extract_row_to_list(datasets, i)
+  eval_outputs <- parallel::mclapply(seq_len(nrow(dataset)), mc.cores = mc_cores, function(i) {
+    dataseti <- dynutils::extract_row_to_list(dataset, i)
 
     # Fetch method outputs
     model <- method_outputs$model[[i]]
@@ -42,7 +42,7 @@ evaluate_ti_method <- function(
     if (!is.null(model)) {
       # Calculate geodesic distances
       time0 <- Sys.time()
-      model <- model %>% dynwrap::add_cell_waypoints(num_cells_selected = length(dataset$waypoint_cells))
+      model <- model %>% dynwrap::add_cell_waypoints(num_cells_selected = length(dataseti$waypoint_cells))
       time1 <- Sys.time()
       time_cellwaypoints <- as.numeric(difftime(time1, time0, units = "sec"))
       df_cellwaypoints <- data_frame(time_cellwaypoints)
@@ -51,7 +51,7 @@ evaluate_ti_method <- function(
     }
 
     # Calculate metrics
-    metrics_summary <- calculate_metrics(dataset, model, metrics)
+    metrics_summary <- calculate_metrics(dataseti, model, metrics)
 
     # Create summary statistics
     summary <- bind_cols(

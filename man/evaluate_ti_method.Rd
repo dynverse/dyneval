@@ -4,10 +4,12 @@
 \alias{evaluate_ti_method}
 \title{Running an evaluation of a method on a set of datasets with a set of parameters}
 \usage{
-evaluate_ti_method(datasets, method, parameters, metrics, give_priors,
+evaluate_ti_method(dataset, method, parameters, metrics, give_priors,
   output_model = TRUE, mc_cores = 1, verbose = FALSE)
 }
 \arguments{
+\item{dataset}{the original dataset}
+
 \item{method}{One or more methods. Must be one of:
 \itemize{
 \item{an object or list of ti_... objects (eg. \code{\link[=ti_comp1]{ti_comp1()}})}
