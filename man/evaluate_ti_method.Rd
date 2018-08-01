@@ -4,8 +4,9 @@
 \alias{evaluate_ti_method}
 \title{Running an evaluation of a method on a set of datasets with a set of parameters}
 \usage{
-evaluate_ti_method(dataset, method, parameters, metrics, give_priors,
-  output_model = TRUE, mc_cores = 1, verbose = FALSE)
+evaluate_ti_method(dataset, method, parameters, metrics,
+  give_priors = NULL, output_model = TRUE, mc_cores = 1,
+  verbose = FALSE)
 }
 \arguments{
 \item{dataset}{the original dataset}
