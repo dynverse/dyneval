@@ -1,12 +1,8 @@
 #' Running an evaluation of a method on a set of datasets with a set of parameters
 #'
 #' @inheritParams calculate_metrics
-#' @param datasets The datasets on which to evaluate.
-#' @param method The method to evaluate.
-#' @param parameters The parameters to evaluate with.
+#' @inheritParams dynwrap::infer_trajectories
 #' @param output_model Whether or not the model will be outputted.
-#' @param mc_cores The number of cores to use, allowing to parallellise the different datasets
-#' @param verbose Whether or not to print extra information output.
 #'
 #' @export
 #' @importFrom dynwrap infer_trajectories add_cell_waypoints
@@ -18,6 +14,7 @@ evaluate_ti_method <- function(
   method,
   parameters,
   metrics,
+  give_priors,
   output_model = TRUE,
   mc_cores = 1,
   verbose = FALSE
@@ -29,6 +26,7 @@ evaluate_ti_method <- function(
     dataset = datasets,
     method = method,
     parameters = parameters,
+    give_priors = give_priors,
     mc_cores = mc_cores,
     verbose = TRUE,
     capture_output = TRUE
