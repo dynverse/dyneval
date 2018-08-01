@@ -33,7 +33,7 @@ test_that(paste0("Testing evaluate_ti_method with random"), {
 
   sink(tmp)
   out <- evaluate_ti_method(
-    datasets = dyntoy::toy_datasets[5,],
+    dataset = dyntoy::toy_datasets[5,],
     method = dynwrap:::ti_random(),
     parameters = NULL,
     metrics = metrics,
@@ -71,7 +71,7 @@ test_that(paste0("Testing evaluate_ti_method with random"), {
 
 test_that(paste0("Testing evaluate_ti_method with error"), {
   out <- evaluate_ti_method(
-    datasets = dyntoy::toy_datasets[5,],
+    dataset = dyntoy::toy_datasets[5,],
     method = dynwrap:::ti_error(),
     parameters = list(),
     metrics = metrics,
@@ -104,7 +104,7 @@ test_that(paste0("Testing evaluate_ti_method with error"), {
 
 test_that(paste0("Testing evaluate_ti_method with identity"), {
   out <- evaluate_ti_method(
-    datasets = dyntoy::toy_datasets[5,],
+    dataset = dyntoy::toy_datasets[5,],
     method = dynwrap:::ti_identity(),
     parameters = list(),
     metrics = metrics,
