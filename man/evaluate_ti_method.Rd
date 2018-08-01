@@ -4,15 +4,21 @@
 \alias{evaluate_ti_method}
 \title{Running an evaluation of a method on a set of datasets with a set of parameters}
 \usage{
-evaluate_ti_method(datasets, method, parameters, metrics, output_model = TRUE,
-  mc_cores = 1, verbose = FALSE)
+evaluate_ti_method(datasets, method, parameters, metrics, give_priors,
+  output_model = TRUE, mc_cores = 1, verbose = FALSE)
 }
 \arguments{
-\item{datasets}{The datasets on which to evaluate.}
+\item{method}{One or more methods. Must be one of:
+\itemize{
+\item{an object or list of ti_... objects (eg. \code{\link[=ti_comp1]{ti_comp1()}})}
+\item{a character vector containing the names of methods to execute (e.g. \code{"scorpius"}), or}
+\item{a dynguidelines data frame.}
+}}
 
-\item{method}{The method to evaluate.}
-
-\item{parameters}{The parameters to evaluate with.}
+\item{parameters}{A set of parameters to be used during trajectory inference.
+A parameter set must be a named list of parameters.
+If multiple methods were provided in the \code{method} parameter,
+\code{parameters} must be an unnamed list of the same length.}
 
 \item{metrics}{which metrics to evaluate:
 \enumerate{
@@ -23,11 +29,13 @@ evaluate_ti_method(datasets, method, parameters, metrics, output_model = TRUE,
   \item Custom metric function. Format: \code{function(dataset, model) { 1 }}
 }}
 
+\item{give_priors}{All the priors a method is allowed to receive. Must be a subset of all available priors (\code{\link[dynwrap:priors]{priors}}).}
+
 \item{output_model}{Whether or not the model will be outputted.}
 
 \item{mc_cores}{The number of cores to use, allowing to parallellise the different datasets}
 
-\item{verbose}{Whether or not to print extra information output.}
+\item{verbose}{Whether or not to print information output}
 }
 \description{
 Running an evaluation of a method on a set of datasets with a set of parameters

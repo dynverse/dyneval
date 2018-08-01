@@ -4,8 +4,9 @@
 \alias{calculate_edge_flip}
 \title{Edge flip score}
 \usage{
-calculate_edge_flip(net1, net2, return = c("score", "all"), simplify = TRUE,
-  limit_flips = 5, limit_combinations = choose(25, 4))
+calculate_edge_flip(net1, net2, return = c("score", "all"),
+  simplify = TRUE, limit_flips = 5, limit_combinations = choose(25,
+  4))
 }
 \arguments{
 \item{net1}{Network 1}
