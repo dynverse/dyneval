@@ -21,7 +21,6 @@ evaluate_ti_method <- function(
 ) {
   if (dynwrap::is_wrapper_with_trajectory(dataset)) {
     dataset <- list_as_tibble(list(dataset))
-    parameters <- list(parameters)
   }
   testthat::expect_true(all(mapdf_lgl(dataset, dynwrap::is_wrapper_with_waypoint_cells)))
 
