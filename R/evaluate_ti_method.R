@@ -64,8 +64,8 @@ evaluate_ti_method <- function(
 
     # if not interested in the created model,
     # do still return whether a model was created or not.
-    if (!output_model) {
-      model <- !is.null(model)
+    if (!output_model && !is.null(model)) {
+      model <- TRUE
     }
 
     # Return the output
@@ -73,15 +73,8 @@ evaluate_ti_method <- function(
   })
 
   # create output data structure
-  out <- list(
-    summary = map_df(eval_outputs, "summary")
+  list(
+    summary = map_df(eval_outputs, "summary"),
+    models = map(eval_outputs, "model")
   )
-
-  # add models if desired
-  if (output_model) {
-    out$models <- eval_outputs %>% map("model")
-  }
-
-  # return output
-  out
 }
