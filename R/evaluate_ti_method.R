@@ -62,12 +62,14 @@ evaluate_ti_method <- function(
       metrics_summary
     )
 
-    # Return the output
-    out <- list(summary = summary)
-    if (output_model) {
-      out$model <- model
+    # if not interested in the created model,
+    # do still return whether a model was created or not.
+    if (!output_model) {
+      model <- !is.null(model)
     }
-    out
+
+    # Return the output
+    lst(summary, model)
   })
 
   # create output data structure
