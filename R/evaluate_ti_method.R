@@ -30,7 +30,7 @@ evaluate_ti_method <- function(
     parameters = parameters,
     give_priors = give_priors,
     mc_cores = mc_cores,
-    verbose = TRUE,
+    verbose = verbose,
     capture_output = TRUE
   )
 

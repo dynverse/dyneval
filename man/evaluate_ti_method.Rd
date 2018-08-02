@@ -32,7 +32,8 @@ If multiple methods were provided in the \code{method} parameter,
   \item Custom metric function. Format: \code{function(dataset, model) { 1 }}
 }}
 
-\item{give_priors}{All the priors a method is allowed to receive. Must be a subset of all available priors (\code{\link[dynwrap:priors]{priors}}).}
+\item{give_priors}{All the priors a method is allowed to receive.
+Must be a subset of all available priors (\code{\link[dynwrap:priors]{priors}}).}
 
 \item{output_model}{Whether or not the model will be outputted.}
 
