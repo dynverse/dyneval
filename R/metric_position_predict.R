@@ -18,9 +18,6 @@ compute_position_predict <- function(dataset, prediction, metrics = c("rf_mse", 
     reshape2::acast(cell_id ~ milestone_id, value.var = "percentage", fill = 0) %>%
     expand_matrix(rownames = cell_ids)
 
-  # remove milestones with no closeby cells
-  gold_milenet_m <- gold_milenet_m[, apply(gold_milenet_m, 2, sd) > 0]
-
   # calculate the baseline mean squared error, by using the mean of each milestone as the prediction
   baseline_mse <- (t(gold_milenet_m) - apply(gold_milenet_m, 2, mean)) %>% apply(1, function(x) mean(x^2)) %>% mean()
 
@@ -50,6 +47,7 @@ compute_position_predict <- function(dataset, prediction, metrics = c("rf_mse", 
       output$summary$rf_mse <- mean(output$rf_mses)
 
       output$rf_rsqs <- map_dbl(rfs, ~ mean(.$r.squared)) %>% setNames(colnames(gold_milenet_m))
+      output$rf_rsqs[is.na(output$rf_rsqs)] <- 1 # if no cells are nearby this milestones, the rsq will obviously be perfect
       output$summary$rf_rsq <- mean(output$rf_rsqs)
 
       output$summary$rf_nmse <- 1 - output$summary$rf_mse / baseline_mse
@@ -72,7 +70,11 @@ compute_position_predict <- function(dataset, prediction, metrics = c("rf_mse", 
       })
 
       output$summary$lm_mse <- map_dbl(lms, "mse") %>% mean()
-      output$summary$lm_rsq <- mean(map_dbl(lms, "rsq"))
+
+      output$lm_rsqs <- map_dbl(lms, "rsq")
+      output$lm_rsqs[is.na(output$lm_rsqs)] <- 1 # if no cells are nearby this milestones, the rsq will obviously be perfect
+      output$summary$lm_rsq <- mean(output$lm_rsqs)
+
       output$summary$lm_nmse <- 1 - output$summary$lm_mse / baseline_mse
     }
   } else {
