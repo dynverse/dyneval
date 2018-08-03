@@ -95,8 +95,6 @@ test_that(paste0("Testing evaluate_ti_method with error"), {
 
   expect_true(!is.null(summary$error[[1]]))
 
-  expect_true(all(is.numeric(summary[, metrics])))
-
   expect_is(summary$correlation, "numeric")
   expect_is(summary$edge_flip, "numeric")
   expect_is(summary$rf_mse, "numeric")
