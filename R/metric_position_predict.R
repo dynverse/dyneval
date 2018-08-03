@@ -21,7 +21,7 @@ compute_position_predict <- function(dataset, prediction, metrics = c("rf_mse", 
   # calculate the baseline mean squared error, by using the mean of each milestone as the prediction
   baseline_mse <- (t(gold_milenet_m) - apply(gold_milenet_m, 2, mean)) %>% apply(1, function(x) mean(x^2)) %>% mean()
 
-  if (!is.null(prediction)) {
+  if (!is.null(prediction) && nrow(prediction$milestone_percentages) > 0) {
     pred_milenet_m <- prediction$milestone_percentages %>%
       reshape2::acast(cell_id ~ milestone_id, value.var = "percentage", fill = 0) %>%
       expand_matrix(rownames = cell_ids)
