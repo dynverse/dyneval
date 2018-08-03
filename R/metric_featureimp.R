@@ -9,7 +9,7 @@
 compute_featureimp <- function(dataset, prediction, num_trees = 10000) {
   cell_ids <- dataset$cell_ids
 
-  if (!is.null(prediction)) {
+  if (!is.null(prediction) || length(unique(prediction$milestone_percentages$cell_id)) < 3) {
 
     method_params <- list(num.trees = num_trees)
     dataset_imp <- dynfeature::calculate_overall_feature_importance(dataset, expression_source = dataset$expression, method_params = method_params)
