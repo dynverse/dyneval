@@ -50,7 +50,7 @@ calculate_metrics <- function(
 
       # compute corrrelation
       time0 <- Sys.time()
-      if (length(unique(model$geodesic_dist)) == 1 || length(unique(dataset$geodesic_dist)) == 1) {
+      if (length(unique(c(model$geodesic_dist))) == 1 || length(unique(c(dataset$geodesic_dist))) == 1) {
         summary_list$correlation <- 0
       } else {
         summary_list$correlation <- cor(dataset$geodesic_dist %>% as.vector, model$geodesic_dist %>% as.vector, method = "spearman")
