@@ -18,6 +18,9 @@ compute_position_predict <- function(dataset, prediction, metrics = c("rf_mse", 
     reshape2::acast(cell_id ~ milestone_id, value.var = "percentage", fill = 0) %>%
     expand_matrix(rownames = cell_ids)
 
+  # remove milestones with no closeby cells
+  gold_milenet_m <- gold_milenet_m[, apply(gold_milenet_m, 2, sd) > 0]
+
   # calculate the baseline mean squared error, by using the mean of each milestone as the prediction
   baseline_mse <- (t(gold_milenet_m) - apply(gold_milenet_m, 2, mean)) %>% apply(1, function(x) mean(x^2)) %>% mean()
 
@@ -25,6 +28,7 @@ compute_position_predict <- function(dataset, prediction, metrics = c("rf_mse", 
     pred_milenet_m <- prediction$milestone_percentages %>%
       reshape2::acast(cell_id ~ milestone_id, value.var = "percentage", fill = 0) %>%
       expand_matrix(rownames = cell_ids)
+    pred_milenet_m <- pred_milenet_m[, apply(pred_milenet_m, 2, sd) > 0]
 
     # random forest
     if (any(c("rf_mse", "rf_rsq", "rf_nmse") %in% metrics)) {
@@ -68,7 +72,7 @@ compute_position_predict <- function(dataset, prediction, metrics = c("rf_mse", 
       })
 
       output$summary$lm_mse <- map_dbl(lms, "mse") %>% mean()
-      output$summary$lm_rsq <- map_dbl(lms, "rsq") %>% mean()
+      output$summary$lm_rsq <- mean(map_dbl(lms, "rsq"))
       output$summary$lm_nmse <- 1 - output$summary$lm_mse / baseline_mse
     }
   } else {
