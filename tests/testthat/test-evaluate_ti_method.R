@@ -22,6 +22,11 @@ metrics <- list(
   "correlation",
   "edge_flip",
   "rf_mse",
+  "rf_nmse",
+  "rf_rsq",
+  "lm_mse",
+  "lm_nmse",
+  "lm_rsq",
   "featureimp_cor",
   num_edges = custom_metric_1,
   num_nodes = custom_metric_2
@@ -86,16 +91,15 @@ test_that(paste0("Testing evaluate_ti_method with error"), {
   score <- as.list(out$summary)[metric_names] %>% unlist()
 
   expect_is(score, "numeric")
-  expect_true(all(score == c(0, 0, 1, 0, 0, 0)))
+  expect_equivalent(score, c(0, 0, 0.06721619, 0, 0, 0.06721619, 0, 0, 0, 0, 0))
 
   expect_true(!is.null(summary$error[[1]]))
 
+  expect_true(all(is.numeric(summary[, metrics])))
+
   expect_is(summary$correlation, "numeric")
-
   expect_is(summary$edge_flip, "numeric")
-
   expect_is(summary$rf_mse, "numeric")
-
   expect_is(summary$featureimp_cor, "numeric")
 
   expect_true(is.null(models[[1]]))
@@ -119,7 +123,7 @@ test_that(paste0("Testing evaluate_ti_method with identity"), {
   score <- as.list(out$summary)[metric_names] %>% unlist()
 
   expect_is(score, "numeric")
-  expect_true(all(score - c(1, 1, 0, 1, 1, 1) < .01))
+  expect_true(all(score - c(1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1) < .01))
 
   expect_null(summary$error[[1]])
 
