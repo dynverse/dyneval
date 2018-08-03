@@ -5,7 +5,7 @@
 \title{Calculate the performance of a model with respect to a dataset}
 \usage{
 calculate_metrics(dataset, model, metrics = c("correlation", "edge_flip",
-  "rf_mse", "rf_rsq", "featureimp_cor"))
+  "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor"))
 }
 \arguments{
 \item{dataset}{the original dataset}
