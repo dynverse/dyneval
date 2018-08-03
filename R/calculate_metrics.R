@@ -66,9 +66,6 @@ calculate_metrics <- function(
 
   if ("edge_flip" %in% metrics) {
     if (!is.null(model)) {
-      net1 <- model$milestone_network %>% filter(to != "FILTERED_CELLS")
-      net2 <- dataset$milestone_network %>% filter(to != "FILTERED_CELLS")
-
       time0 <- Sys.time()
       summary_list$edge_flip <- calculate_edge_flip(net1, net2)
       time1 <- Sys.time()
