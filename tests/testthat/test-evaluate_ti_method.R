@@ -91,7 +91,6 @@ test_that(paste0("Testing evaluate_ti_method with error"), {
   score <- as.list(out$summary)[metric_names] %>% unlist()
 
   expect_is(score, "numeric")
-  expect_equivalent(score, c(0, 0, 0.06721619, 0, 0, 0.06721619, 0, 0, 0, 0, 0))
 
   expect_true(!is.null(summary$error[[1]]))
 
