@@ -3,6 +3,7 @@
 #'
 #' @param dataset A dataset
 #' @param prediction A predicted model
+#' @param metrics Which metrics to predict, can be rf_mse, rf_rsq, rf_nmse, lm_mse, lm_rsq and/or lm_nmse
 #'
 #' @importFrom reshape2 acast
 #' @importFrom ranger ranger
