@@ -48,12 +48,20 @@ calculate_metrics <- function(
       dataset$geodesic_dist[is.infinite(dataset$geodesic_dist)] <- .Machine$double.xmax
       model$geodesic_dist[is.infinite(model$geodesic_dist)] <- .Machine$double.xmax
 
+      # make sure the order of the cells is exactly equal
+      testthat::expect_equal(rownames(dataset$geodesic_dist), rownames(model$geodesic_dist))
+      testthat::expect_equal(colnames(dataset$geodesic_dist), colnames(model$geodesic_dist))
+
       # compute corrrelation
       time0 <- Sys.time()
       if (length(unique(c(model$geodesic_dist))) == 1 || length(unique(c(dataset$geodesic_dist))) == 1) {
         summary_list$correlation <- 0
       } else {
-        summary_list$correlation <- cor(dataset$geodesic_dist %>% as.vector, model$geodesic_dist %>% as.vector, method = "spearman")
+        summary_list$correlation <- cor(
+          dataset$geodesic_dist %>% as.vector,
+          model$geodesic_dist %>% as.vector,
+          method = "spearman"
+        ) %>% max(0)
       }
 
       time1 <- Sys.time()
