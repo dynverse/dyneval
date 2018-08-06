@@ -154,7 +154,14 @@ change_single_edge_into_double <- function(df) {
 #' @importFrom dynwrap simplify_igraph_network
 #'
 #' @export
-calculate_edge_flip <- function(net1, net2, return = c("score", "all"), simplify = TRUE, limit_flips = 5, limit_combinations = choose(25, 4)) {
+calculate_edge_flip <- function(
+  net1,
+  net2,
+  return = c("score", "all"),
+  simplify = TRUE,
+  limit_flips = 5,
+  limit_combinations = choose(25, 4)
+) {
   return <- match.arg(return, c("score", "all"))
 
   # simplify networks if wanted
