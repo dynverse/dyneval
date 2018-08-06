@@ -24,7 +24,7 @@ compute_featureimp <- function(dataset, prediction, num_trees = 10000) {
 
     # plot:
     # ggplot(imp_joined) + geom_point(aes(dataset_imp, pred_imp))
-    featureimp_cor <- cor(imp_joined$dataset_imp, imp_joined$pred_imp)
+    featureimp_cor <- cor(imp_joined$dataset_imp, imp_joined$pred_imp) %>% max(0)
 
     lst(
       featureimp_cor
