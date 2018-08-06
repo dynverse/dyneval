@@ -1,12 +1,8 @@
 #' Running an evaluation of a method on a set of datasets with a set of parameters
 #'
 #' @inheritParams calculate_metrics
-#' @param datasets The datasets on which to evaluate.
-#' @param method The method to evaluate.
-#' @param parameters The parameters to evaluate with.
+#' @inheritParams dynwrap::infer_trajectories
 #' @param output_model Whether or not the model will be outputted.
-#' @param mc_cores The number of cores to use, allowing to parallellise the different datasets
-#' @param verbose Whether or not to print extra information output.
 #'
 #' @export
 #' @importFrom dynwrap infer_trajectories add_cell_waypoints
@@ -14,29 +10,33 @@
 #' @importFrom testthat expect_false expect_true
 #' @importFrom readr write_rds
 evaluate_ti_method <- function(
-  datasets,
+  dataset,
   method,
   parameters,
   metrics,
+  give_priors = NULL,
   output_model = TRUE,
   mc_cores = 1,
   verbose = FALSE
 ) {
-  testthat::expect_is(datasets, "tbl")
-  testthat::expect_true(all(unlist(tmap(datasets, dynwrap::is_wrapper_with_waypoint_cells))))
+  if (dynwrap::is_wrapper_with_trajectory(dataset)) {
+    dataset <- list_as_tibble(list(dataset))
+  }
+  testthat::expect_true(all(mapdf_lgl(dataset, dynwrap::is_wrapper_with_waypoint_cells)))
 
   method_outputs <- dynwrap::infer_trajectories(
-    dataset = datasets,
+    dataset = dataset,
     method = method,
     parameters = parameters,
+    give_priors = give_priors,
     mc_cores = mc_cores,
-    verbose = TRUE,
+    verbose = verbose,
     capture_output = TRUE
   )
 
   # Calculate scores
-  eval_outputs <- parallel::mclapply(seq_len(nrow(datasets)), mc.cores = mc_cores, function(i) {
-    dataset <- dynutils::extract_row_to_list(datasets, i)
+  eval_outputs <- parallel::mclapply(seq_len(nrow(dataset)), mc.cores = mc_cores, function(i) {
+    dataseti <- dynutils::extract_row_to_list(dataset, i)
 
     # Fetch method outputs
     model <- method_outputs$model[[i]]
@@ -44,7 +44,7 @@ evaluate_ti_method <- function(
     if (!is.null(model)) {
       # Calculate geodesic distances
       time0 <- Sys.time()
-      model <- model %>% dynwrap::add_cell_waypoints(num_cells_selected = length(dataset$waypoint_cells))
+      model <- model %>% dynwrap::add_cell_waypoints(num_cells_selected = length(dataseti$waypoint_cells))
       time1 <- Sys.time()
       time_cellwaypoints <- as.numeric(difftime(time1, time0, units = "sec"))
       df_cellwaypoints <- data_frame(time_cellwaypoints)
@@ -53,7 +53,7 @@ evaluate_ti_method <- function(
     }
 
     # Calculate metrics
-    metrics_summary <- calculate_metrics(dataset, model, metrics)
+    metrics_summary <- calculate_metrics(dataseti, model, metrics)
 
     # Create summary statistics
     summary <- bind_cols(
@@ -62,24 +62,19 @@ evaluate_ti_method <- function(
       metrics_summary
     )
 
-    # Return the output
-    out <- list(summary = summary)
-    if (output_model) {
-      out$model <- model
+    # if not interested in the created model,
+    # do still return whether a model was created or not.
+    if (!output_model && !is.null(model)) {
+      model <- TRUE
     }
-    out
+
+    # Return the output
+    lst(summary, model)
   })
 
   # create output data structure
-  out <- list(
-    summary = map_df(eval_outputs, "summary")
+  list(
+    summary = map_df(eval_outputs, "summary"),
+    models = map(eval_outputs, "model")
   )
-
-  # add models if desired
-  if (output_model) {
-    out$models <- eval_outputs %>% map("model")
-  }
-
-  # return output
-  out
 }

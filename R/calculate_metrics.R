@@ -19,7 +19,7 @@
 calculate_metrics <- function(
   dataset,
   model,
-  metrics = c("correlation", "edge_flip", "rf_mse", "rf_rsq", "featureimp_cor")
+  metrics = c("correlation", "edge_flip", "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor")
 ) {
   testthat::expect_true(dynwrap::is_wrapper_with_waypoint_cells(dataset))
   testthat::expect_true(is.null(model) || dynwrap::is_wrapper_with_waypoint_cells(model))
@@ -48,12 +48,20 @@ calculate_metrics <- function(
       dataset$geodesic_dist[is.infinite(dataset$geodesic_dist)] <- .Machine$double.xmax
       model$geodesic_dist[is.infinite(model$geodesic_dist)] <- .Machine$double.xmax
 
+      # make sure the order of the cells is exactly equal
+      testthat::expect_equal(rownames(dataset$geodesic_dist), rownames(model$geodesic_dist))
+      testthat::expect_equal(colnames(dataset$geodesic_dist), colnames(model$geodesic_dist))
+
       # compute corrrelation
       time0 <- Sys.time()
-      if (max(model$geodesic_dist) == 0 || max(dataset$geodesic_dist) == 0) {
+      if (length(unique(c(model$geodesic_dist))) == 1 || length(unique(c(dataset$geodesic_dist))) == 1) {
         summary_list$correlation <- 0
       } else {
-        summary_list$correlation <- cor(dataset$geodesic_dist %>% as.vector, model$geodesic_dist %>% as.vector, method = "spearman")
+        summary_list$correlation <- cor(
+          dataset$geodesic_dist %>% as.vector,
+          model$geodesic_dist %>% as.vector,
+          method = "spearman"
+        ) %>% max(0)
       }
 
       time1 <- Sys.time()
@@ -66,8 +74,8 @@ calculate_metrics <- function(
 
   if ("edge_flip" %in% metrics) {
     if (!is.null(model)) {
-      net1 <- model$milestone_network %>% filter(to != "FILTERED_CELLS")
-      net2 <- dataset$milestone_network %>% filter(to != "FILTERED_CELLS")
+      net1 <- model$milestone_network
+      net2 <- dataset$milestone_network
 
       time0 <- Sys.time()
       summary_list$edge_flip <- calculate_edge_flip(net1, net2)
@@ -78,13 +86,16 @@ calculate_metrics <- function(
     }
   }
 
-  if (any(c("rf_mse", "rf_rsq") %in% metrics)) {
+  if (any(c("rf_mse", "rf_rsq", "rf_nmse", "lm_mse", "lm_rsq", "lm_nmse") %in% metrics)) {
     time0 <- Sys.time()
-    rfmse <- compute_rfmse(dataset, model)
+    position_predict <- compute_position_predict(dataset, model)
     time1 <- Sys.time()
-    summary_list$time_rf <- as.numeric(difftime(time1, time0, units = "sec"))
-    summary_list$rf_mse <- rfmse$summary$rf_mse
-    summary_list$rf_rsq <- rfmse$summary$rf_rsq
+    summary_list$time_pp <- as.numeric(difftime(time1, time0, units = "sec"))
+
+    summary_list <- c(
+      summary_list,
+      position_predict$summary[intersect(metrics, names(position_predict$summary))]
+    )
   }
 
   if ("featureimp_cor" %in% metrics) {
