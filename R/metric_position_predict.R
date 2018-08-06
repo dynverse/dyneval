@@ -48,9 +48,9 @@ compute_position_predict <- function(dataset, prediction, metrics = c("rf_mse", 
 
       output$rf_rsqs <- map_dbl(rfs, ~ mean(.$r.squared)) %>% setNames(colnames(gold_milenet_m))
       output$rf_rsqs[is.na(output$rf_rsqs)] <- 1 # if no cells are nearby this milestones, the rsq will obviously be perfect
-      output$summary$rf_rsq <- mean(output$rf_rsqs)
+      output$summary$rf_rsq <- mean(output$rf_rsqs) %>% max(0)
 
-      output$summary$rf_nmse <- 1 - output$summary$rf_mse / baseline_mse
+      output$summary$rf_nmse <- (1 - output$summary$rf_mse / baseline_mse) %>% max(0)
     }
 
     # linear model
@@ -73,9 +73,9 @@ compute_position_predict <- function(dataset, prediction, metrics = c("rf_mse", 
 
       output$lm_rsqs <- map_dbl(lms, "rsq")
       output$lm_rsqs[is.na(output$lm_rsqs)] <- 1 # if no cells are nearby this milestones, the rsq will obviously be perfect
-      output$summary$lm_rsq <- mean(output$lm_rsqs)
+      output$summary$lm_rsq <- mean(output$lm_rsqs) %>% max(0)
 
-      output$summary$lm_nmse <- 1 - output$summary$lm_mse / baseline_mse
+      output$summary$lm_nmse <- (1 - output$summary$lm_mse / baseline_mse) %>% max(0)
     }
   } else {
     output$summary <- list(
