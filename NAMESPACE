@@ -3,6 +3,7 @@
 export(calculate_edge_flip)
 export(calculate_metrics)
 export(evaluate_ti_method)
+export(metrics)
 import(ParamHelpers)
 import(dplyr)
 import(dynutils)
