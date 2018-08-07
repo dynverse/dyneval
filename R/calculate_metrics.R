@@ -12,7 +12,7 @@
 #' }
 #'
 #' @importFrom igraph is_isomorphic_to graph_from_data_frame
-#' @importFrom testthat expect_equal
+#' @importFrom testthat expect_equal expect_true
 #' @importFrom dynwrap is_wrapper_with_waypoint_cells compute_tented_geodesic_distances
 #'
 #' @export
@@ -31,7 +31,8 @@ calculate_metrics <- function(
   summary_list <- list()
 
   if (!is.null(model)) {
-    testthat::expect_equal(dataset$cell_ids, model$cell_ids)
+    testthat::expect_true(all(model$cell_ids %in% dataset$cell_ids))
+    model$cell_ids <- dataset$cell_ids
 
     waypoints <- unique(c(dataset$waypoint_cells, model$waypoint_cells))
 
