@@ -7,6 +7,7 @@
 #'
 #' @importFrom reshape2 acast
 #' @importFrom ranger ranger
+#' @importFrom stats lm sd
 compute_position_predict <- function(dataset, prediction, metrics = c("rf_mse", "rf_rsq", "lm_mse", "lm_rsq")) {
   cell_ids <- dataset$cell_ids
 
@@ -25,7 +26,7 @@ compute_position_predict <- function(dataset, prediction, metrics = c("rf_mse", 
     pred_milenet_m <- prediction$milestone_percentages %>%
       reshape2::acast(cell_id ~ milestone_id, value.var = "percentage", fill = 0) %>%
       expand_matrix(rownames = cell_ids)
-    pred_milenet_m <- pred_milenet_m[, apply(pred_milenet_m, 2, sd) > 0]
+    pred_milenet_m <- pred_milenet_m[, apply(pred_milenet_m, 2, stats::sd) > 0]
 
     # random forest
     if (any(c("rf_mse", "rf_rsq", "rf_nmse") %in% metrics)) {
@@ -61,7 +62,7 @@ compute_position_predict <- function(dataset, prediction, metrics = c("rf_mse", 
           cbind(pred_milenet_m) %>%
           as.data.frame()
 
-        model <- lm(PREDICT~., data=data)
+        model <- stats::lm(PREDICT~., data=data)
 
         list(
           mse = mean(model$residuals^2),
