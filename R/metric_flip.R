@@ -170,7 +170,7 @@ calculate_edge_flip <- function(
     directed2 <- any(net2$directed)
     net1 <- net1 %>%
       rename(weight = length) %>%
-      filter(!(from == to & length == 0)) %>% # remove self loop edges with length 0
+      filter(!(from == to & weight == 0)) %>% # remove self loop edges with length 0
       igraph::graph_from_data_frame(directed = F) %>%
       dynwrap::simplify_igraph_network() %>%
       igraph::as_data_frame() %>%
@@ -181,7 +181,7 @@ calculate_edge_flip <- function(
       insert_one_node_into_duplicate_edges()
     net2 <- net2 %>%
       rename(weight = length) %>%
-      filter(!(from == to & length == 0)) %>% # remove self loop edges with length 0
+      filter(!(from == to & weight == 0)) %>% # remove self loop edges with length 0
       igraph::graph_from_data_frame(directed = F) %>%
       dynwrap::simplify_igraph_network() %>%
       igraph::as_data_frame() %>%
