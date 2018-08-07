@@ -4,3 +4,4 @@
 ^\.travis
 ^scripts$
 ^.git$
+^data-raw$
