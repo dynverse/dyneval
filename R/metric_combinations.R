@@ -14,18 +14,21 @@
 #'
 #' calculate_harmonic_mean(c(0.1, 0.9), c(0.2, 1))
 #' calculate_arithmetic_mean(c(0.1, 10), c(0.9, 20))
+#' @export
 calculate_harmonic_mean <- function(...) {
   x <- process_combination_input(...)
   ncol(x) / rowSums(1/x)
 }
 
 #' @rdname calculate_combinations
+#' @export
 calculate_geometric_mean <- function(...) {
   x <- process_combination_input(...)
   apply(x, 1, prod)^(1/ncol(x))
 }
 
 #' @rdname calculate_combinations
+#' @export
 calculate_arithmetic_mean <- function(...) {
   x <- process_combination_input(...)
   rowSums(x)/ncol(x)
