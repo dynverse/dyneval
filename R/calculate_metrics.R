@@ -8,6 +8,7 @@
 #'   \item Edge flip score: \code{"edge_flip"}
 #'   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
 #'   \item Similarity in feature importance: \code{"featureimp_cor"}
+#'   \item Overlap between branches: \code{"F1_branches"}
 #'   \item Custom metric function. Format: \code{function(dataset, model) { 1 }}
 #' }
 #'
@@ -19,7 +20,7 @@
 calculate_metrics <- function(
   dataset,
   model,
-  metrics = c("correlation", "edge_flip", "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor")
+  metrics = c("correlation", "edge_flip", "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor", "F1_branches")
 ) {
   testthat::expect_true(dynwrap::is_wrapper_with_waypoint_cells(dataset))
   testthat::expect_true(is.null(model) || dynwrap::is_wrapper_with_waypoint_cells(model))
@@ -29,6 +30,11 @@ calculate_metrics <- function(
   }
 
   summary_list <- list()
+
+  dataset <- dynwrap::simplify_trajectory(dataset)
+  if (!is.null(model)) {
+    model <- dynwrap::simplify_trajectory(model)
+  }
 
   if (!is.null(model)) {
     testthat::expect_true(all(model$cell_ids %in% dataset$cell_ids))
@@ -105,6 +111,14 @@ calculate_metrics <- function(
     time1 <- Sys.time()
     summary_list$time_featureimp <- as.numeric(difftime(time1, time0, units = "sec"))
     summary_list$featureimp_cor <- fimp$featureimp_cor
+  }
+
+  if (any(c("recovery_branches", "relevance_branches", "F1_branches") %in% metrics)) {
+    time0 <- Sys.time()
+    branch_overlap <- calculate_branch_overlap(dataset, model)
+    time1 <- Sys.time()
+    summary_list$time_featureimp <- as.numeric(difftime(time1, time0, units = "sec"))
+    summary_list <- c(summary_list, branch_overlap)
   }
 
   for (i in seq_along(metrics)) {
