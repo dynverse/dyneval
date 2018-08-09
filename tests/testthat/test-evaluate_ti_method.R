@@ -28,6 +28,7 @@ metrics <- list(
   "lm_nmse",
   "lm_rsq",
   "featureimp_cor",
+  "F1_branches",
   num_edges = custom_metric_1,
   num_nodes = custom_metric_2
 )
@@ -68,6 +69,8 @@ test_that(paste0("Testing evaluate_ti_method with random"), {
   expect_is(summary$num_edges, "numeric")
 
   expect_is(summary$num_nodes, "numeric")
+
+  expect_is(summary$F1_branches, "numeric")
 
   expect_true(dynwrap::is_wrapper_with_trajectory(models[[1]]))
 })
@@ -120,7 +123,7 @@ test_that(paste0("Testing evaluate_ti_method with identity"), {
   score <- as.list(out$summary)[metric_names] %>% unlist()
 
   expect_is(score, "numeric")
-  expect_true(all(score - c(1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1) < .01))
+  expect_true(all(score - c(1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1) < .01))
 
   expect_null(summary$error[[1]])
 
