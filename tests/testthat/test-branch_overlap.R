@@ -1,7 +1,7 @@
 context("Branch overlap")
 
 # generate a simple dataset for comparison
-dataset <- dyntoy::generate_dataset(model = "multifurcating", num_features = 2, allow_tented_progressions = FALSE)
+dataset <- dyntoy::generate_dataset(model = "multifurcating", num_features = 2, allow_tented_progressions = FALSE, normalise = FALSE)
 
 test_that(paste0("Branch overlap returns relevant results"), {
   # when exact gold standard -> all scores = 1
