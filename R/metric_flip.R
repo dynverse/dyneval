@@ -1,137 +1,3 @@
-get_adjacency_lengths <- function(net, nodes = sort(unique(c(net$from, net$to)))) {
-  if(nrow(net) == 0) { # special case for circular
-    newnet <- matrix(rep(0, length(nodes)))
-    dimnames(newnet) <- list(nodes, nodes)
-  } else {
-    newnet <- net %>%
-      mutate(from = factor(from, levels = nodes), to = factor(to, levels = nodes)) %>%
-      reshape2::acast(from~to, value.var = "length", fill = 0, drop = FALSE, fun.aggregate = sum)
-  }
-  (newnet + t(newnet)) > 0
-}
-
-get_adjacency <- function(net) {
-  get_adjacency_lengths(net) != 0
-}
-
-get_undirected_graph <- function(adj) {
-  adj %>% igraph::graph_from_adjacency_matrix(mode = "upper", weighted = TRUE) %>% igraph::as.undirected()
-}
-
-
-# add extra rows and columns to matrix
-complete_matrix <- function(mat, dim, fill = 0) {
-  mat <- rbind(mat, matrix(rep(fill, ncol(mat) * (dim - nrow(mat))), ncol = ncol(mat)))
-  mat <- cbind(mat, matrix(rep(fill, nrow(mat) * (dim - ncol(mat))), nrow = nrow(mat)))
-}
-
-# what nodes are connecting to which edges
-#' @importFrom purrr invoke
-calculate_edge_membership <- function(adj) {
-  adj_mapper <- adj
-  tri_ids <- seq_len(sum(lower.tri(adj_mapper, diag = FALSE)))
-  adj_mapper[lower.tri(adj_mapper, diag = FALSE)] <- tri_ids
-  adj_mapper[upper.tri(adj_mapper, diag = TRUE)] <- 0
-  purrr::invoke(cbind, map(
-    seq_len(nrow(adj_mapper)),
-    function(i) {
-      as.integer(tri_ids %in% c(adj_mapper[i, ], adj_mapper[, i]))
-    }
-  ))
-}
-
-# flip edges (in adjacency format)
-flip_adj <- function(i, adj) {
-  adj[lower.tri(adj, diag = FALSE)][i] <- 1-adj[lower.tri(adj, diag = FALSE)][i]
-  adj[upper.tri(adj, diag = TRUE)] <- 0
-  adj + t(adj)
-}
-
-# flip edges (in edge vector format)
-generate_edge_flip_vectors <- function(edge_flips, adj) {
-  adjv <- adj[lower.tri(adj, diag = FALSE)]
-  edge_flips %>% apply(2, function(x) {adjv[x] <- 1-adjv[x];adjv})
-}
-
-# check whether the maximal degree matches
-check_degrees_max <- function(degree_vectors1, sorted_degrees2) {
-  degree_vectors1 %>% apply(1, max) %>% {. == sorted_degrees2[length(sorted_degrees2)]}
-}
-
-# check whether the minimal degree matches
-check_degrees_min <- function(degree_vectors1, sorted_degrees2) {
-  degree_vectors1 %>% apply(1, min) %>% {. == sorted_degrees2[1]}
-}
-
-# check whether the degree distribution matches
-check_degrees_sorted <- function(degree_vectors1, sorted_degrees2) {
-  degree_vectors1 %>% apply(1, sort) %>% t %>% apply(1, function(x) all(x == sorted_degrees2))
-}
-
-# nice combn, which doesn't just use seq_len(x) if x is an integer -___-
-#' @importFrom utils combn
-combn_nice  <- function(x, m) {
-  if(length(x) > 1 || m == 0) {
-    utils::combn(x, m)
-  } else {
-    matrix(x, nrow = 1, ncol = 1)
-  }
-}
-
-insert_two_nodes_into_selfloop <- function(df) {
-  ix <- df$from == df$to
-  new <- map_df(which(ix), function(i) {
-    n <- df$from[[i]]
-    l <- df$length[[i]]
-    d <- df$directed[[i]]
-    newn <- paste0(dynutils::random_time_string(), seq_len(2))
-    data_frame(
-      from = c(n, newn),
-      to = c(newn, n),
-      length = l/3,
-      directed = d
-    )
-  })
-  bind_rows(
-    df[!ix,],
-    new
-  )
-}
-
-# df <- tibble(from = c("M1", "M2", "M2"), to = c("M2", "M1", "M1"), length = 1, directed = T)
-insert_one_node_into_duplicate_edges <- function(df) {
-  ix <- paste0(df$from, "#", df$to) %in% names(which(table(paste0(df$from, "#", df$to)) >= 2))
-  new <- map_df(which(ix), function(i) {
-    n <- df$from[[i]]
-    t <- df$to[[i]]
-    l <- df$length[[i]]
-    d <- df$directed[[i]]
-    newn <- paste0(dynutils::random_time_string(), seq_len(1))
-    data_frame(
-      from = c(n, newn),
-      to = c(newn, t),
-      length = l/2,
-      directed = d
-    )
-  })
-  bind_rows(
-    df[!ix,],
-    new
-  )
-}
-
-change_single_edge_into_double <- function(df) {
-  if (nrow(df) == 1 && df$from[[1]] != df$to[[1]]) {
-    data_frame(
-      from = c("a", "b"),
-      to = c("b", "c"),
-      length = df$length/2,
-      directed = df$directed[[1]]
-    )
-  } else {
-    df
-  }
-}
 
 #' Edge flip score
 #'
@@ -335,5 +201,141 @@ calculate_edge_flip <- function(
     } else if (return == "all") {
       list(score = score, newadj1 = newadj1, oldadj1 = adj1)
     }
+  }
+}
+
+
+get_adjacency_lengths <- function(net, nodes = sort(unique(c(net$from, net$to)))) {
+  if(nrow(net) == 0) { # special case for circular
+    newnet <- matrix(rep(0, length(nodes)))
+    dimnames(newnet) <- list(nodes, nodes)
+  } else {
+    newnet <- net %>%
+      mutate(from = factor(from, levels = nodes), to = factor(to, levels = nodes)) %>%
+      reshape2::acast(from~to, value.var = "length", fill = 0, drop = FALSE, fun.aggregate = sum)
+  }
+  (newnet + t(newnet)) > 0
+}
+
+get_adjacency <- function(net) {
+  get_adjacency_lengths(net) != 0
+}
+
+get_undirected_graph <- function(adj) {
+  adj %>% igraph::graph_from_adjacency_matrix(mode = "upper", weighted = TRUE) %>% igraph::as.undirected()
+}
+
+
+# add extra rows and columns to matrix
+complete_matrix <- function(mat, dim, fill = 0) {
+  mat <- rbind(mat, matrix(rep(fill, ncol(mat) * (dim - nrow(mat))), ncol = ncol(mat)))
+  mat <- cbind(mat, matrix(rep(fill, nrow(mat) * (dim - ncol(mat))), nrow = nrow(mat)))
+}
+
+# what nodes are connecting to which edges
+#' @importFrom purrr invoke
+calculate_edge_membership <- function(adj) {
+  adj_mapper <- adj
+  tri_ids <- seq_len(sum(lower.tri(adj_mapper, diag = FALSE)))
+  adj_mapper[lower.tri(adj_mapper, diag = FALSE)] <- tri_ids
+  adj_mapper[upper.tri(adj_mapper, diag = TRUE)] <- 0
+  purrr::invoke(cbind, map(
+    seq_len(nrow(adj_mapper)),
+    function(i) {
+      as.integer(tri_ids %in% c(adj_mapper[i, ], adj_mapper[, i]))
+    }
+  ))
+}
+
+# flip edges (in adjacency format)
+flip_adj <- function(i, adj) {
+  adj[lower.tri(adj, diag = FALSE)][i] <- 1-adj[lower.tri(adj, diag = FALSE)][i]
+  adj[upper.tri(adj, diag = TRUE)] <- 0
+  adj + t(adj)
+}
+
+# flip edges (in edge vector format)
+generate_edge_flip_vectors <- function(edge_flips, adj) {
+  adjv <- adj[lower.tri(adj, diag = FALSE)]
+  edge_flips %>% apply(2, function(x) {adjv[x] <- 1-adjv[x];adjv})
+}
+
+# check whether the maximal degree matches
+check_degrees_max <- function(degree_vectors1, sorted_degrees2) {
+  degree_vectors1 %>% apply(1, max) %>% {. == sorted_degrees2[length(sorted_degrees2)]}
+}
+
+# check whether the minimal degree matches
+check_degrees_min <- function(degree_vectors1, sorted_degrees2) {
+  degree_vectors1 %>% apply(1, min) %>% {. == sorted_degrees2[1]}
+}
+
+# check whether the degree distribution matches
+check_degrees_sorted <- function(degree_vectors1, sorted_degrees2) {
+  degree_vectors1 %>% apply(1, sort) %>% t %>% apply(1, function(x) all(x == sorted_degrees2))
+}
+
+# nice combn, which doesn't just use seq_len(x) if x is an integer -___-
+#' @importFrom utils combn
+combn_nice  <- function(x, m) {
+  if(length(x) > 1 || m == 0) {
+    utils::combn(x, m)
+  } else {
+    matrix(x, nrow = 1, ncol = 1)
+  }
+}
+
+insert_two_nodes_into_selfloop <- function(df) {
+  ix <- df$from == df$to
+  new <- map_df(which(ix), function(i) {
+    n <- df$from[[i]]
+    l <- df$length[[i]]
+    d <- df$directed[[i]]
+    newn <- paste0(dynutils::random_time_string(), seq_len(2))
+    data_frame(
+      from = c(n, newn),
+      to = c(newn, n),
+      length = l/3,
+      directed = d
+    )
+  })
+  bind_rows(
+    df[!ix,],
+    new
+  )
+}
+
+# df <- tibble(from = c("M1", "M2", "M2"), to = c("M2", "M1", "M1"), length = 1, directed = T)
+insert_one_node_into_duplicate_edges <- function(df) {
+  ix <- paste0(df$from, "#", df$to) %in% names(which(table(paste0(df$from, "#", df$to)) >= 2))
+  new <- map_df(which(ix), function(i) {
+    n <- df$from[[i]]
+    t <- df$to[[i]]
+    l <- df$length[[i]]
+    d <- df$directed[[i]]
+    newn <- paste0(dynutils::random_time_string(), seq_len(1))
+    data_frame(
+      from = c(n, newn),
+      to = c(newn, t),
+      length = l/2,
+      directed = d
+    )
+  })
+  bind_rows(
+    df[!ix,],
+    new
+  )
+}
+
+change_single_edge_into_double <- function(df) {
+  if (nrow(df) == 1 && df$from[[1]] != df$to[[1]]) {
+    data_frame(
+      from = c("a", "b"),
+      to = c("b", "c"),
+      length = df$length/2,
+      directed = df$directed[[1]]
+    )
+  } else {
+    df
   }
 }
