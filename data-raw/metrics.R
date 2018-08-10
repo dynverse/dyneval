@@ -11,6 +11,8 @@ metrics <- tribble(
   "lm_rsq", "R[lm]^2", "R^{2}_{lm}", "Linear regression R²", "neighbourhood", 1, 0,
   "edge_flip", "edgeflip", "\\textrm{edgeflip}", "Edge flip", "topology", 1, 0,
   "featureimp_cor", "cor[features]", "\\mathit{cor}_{\\textrm{features}}", "Feature importance correlation", "Feature importance", 1, 0,
+  "F1_branches", "F1[branches]", "\\mathit{F1}_{\\textit{branches}}", "Overlap between the branches", "mapping", 1, 0,
+  "F1_milestones", "F1[milestones]", "\\mathit{F1}_{\\textit{milestones}}", "Overlap between the milestones", "mapping", 1, 0,
   "harm_mean", "harmonic mean", "\\textrm{harmonic mean}", "Harmonic mean", "Average", 1, 0
 )
 
