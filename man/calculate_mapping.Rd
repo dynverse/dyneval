@@ -9,9 +9,9 @@
 calculate_mapping(dataset, prediction, grouping = c("branches",
   "milestones"), simplify = TRUE)
 
-calculate_mapping_milestones(dataset, prediction)
+calculate_mapping_milestones(dataset, prediction, simplify = TRUE)
 
-calculate_mapping_branches(dataset, prediction)
+calculate_mapping_branches(dataset, prediction, simplify = TRUE)
 }
 \arguments{
 \item{dataset}{A dataset}
