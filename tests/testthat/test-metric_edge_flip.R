@@ -98,7 +98,7 @@ test_that(paste0("Correlation returns relevant results"), {
     ) %>%
     dynwrap::add_cell_waypoints()
 
-  scores <- calculate_metrics(dataset, dataset, "correlation")
+  scores <- calculate_metrics(dataset = dataset, model = dataset, metrics = "correlation")
 
   expect_equal(scores$correlation, 0)
 })

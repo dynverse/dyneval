@@ -5,7 +5,8 @@
 \title{Calculate the performance of a model with respect to a dataset}
 \usage{
 calculate_metrics(dataset, model, metrics = c("correlation", "edge_flip",
-  "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor"))
+  "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor", "F1_branches",
+  "F1_milestones"))
 }
 \arguments{
 \item{dataset}{the original dataset}
@@ -18,6 +19,7 @@ calculate_metrics(dataset, model, metrics = c("correlation", "edge_flip",
   \item Edge flip score: \code{"edge_flip"}
   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
   \item Similarity in feature importance: \code{"featureimp_cor"}
+  \item Overlap between branches: \code{"F1_branches"}
   \item Custom metric function. Format: \code{function(dataset, model) { 1 }}
 }}
 }

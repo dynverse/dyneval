@@ -8,18 +8,19 @@
 #'   \item Edge flip score: \code{"edge_flip"}
 #'   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
 #'   \item Similarity in feature importance: \code{"featureimp_cor"}
+#'   \item Overlap between branches: \code{"F1_branches"}
 #'   \item Custom metric function. Format: \code{function(dataset, model) { 1 }}
 #' }
 #'
 #' @importFrom igraph is_isomorphic_to graph_from_data_frame
-#' @importFrom testthat expect_equal
+#' @importFrom testthat expect_equal expect_true
 #' @importFrom dynwrap is_wrapper_with_waypoint_cells compute_tented_geodesic_distances
 #'
 #' @export
 calculate_metrics <- function(
   dataset,
   model,
-  metrics = c("correlation", "edge_flip", "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor")
+  metrics = c("correlation", "edge_flip", "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor", "F1_branches", "F1_milestones")
 ) {
   testthat::expect_true(dynwrap::is_wrapper_with_waypoint_cells(dataset))
   testthat::expect_true(is.null(model) || dynwrap::is_wrapper_with_waypoint_cells(model))
@@ -30,8 +31,14 @@ calculate_metrics <- function(
 
   summary_list <- list()
 
+  dataset <- dynwrap::simplify_trajectory(dataset)
   if (!is.null(model)) {
-    testthat::expect_equal(dataset$cell_ids, model$cell_ids)
+    model <- dynwrap::simplify_trajectory(model)
+  }
+
+  if (!is.null(model)) {
+    testthat::expect_true(all(model$cell_ids %in% dataset$cell_ids))
+    model$cell_ids <- dataset$cell_ids
 
     waypoints <- unique(c(dataset$waypoint_cells, model$waypoint_cells))
 
@@ -104,6 +111,33 @@ calculate_metrics <- function(
     time1 <- Sys.time()
     summary_list$time_featureimp <- as.numeric(difftime(time1, time0, units = "sec"))
     summary_list$featureimp_cor <- fimp$featureimp_cor
+  }
+
+
+
+  if (any(c("recovery_branches", "relevance_branches", "F1_branches", "recovery_milestones", "relevance_milestones", "F1_milestones") %in% metrics)) {
+    dataset_simplified <- dynwrap::simplify_trajectory(dataset, allow_self_loops = TRUE)
+    if (!is.null(model)) {
+      model_simplified <- dynwrap::simplify_trajectory(model, allow_self_loops = TRUE)
+    } else {
+      model_simplified <- NULL
+    }
+
+    if (any(c("recovery_branches", "relevance_branches", "F1_branches") %in% metrics)) {
+      time0 <- Sys.time()
+      mapping_branches <- calculate_mapping_branches(dataset_simplified, model_simplified)
+      time1 <- Sys.time()
+      summary_list$time_mapping_branches <- as.numeric(difftime(time1, time0, units = "sec"))
+      summary_list <- c(summary_list, mapping_branches)
+    }
+
+    if (any(c("recovery_milestones", "relevance_milestones", "F1_milestones") %in% metrics)) {
+      time0 <- Sys.time()
+      mapping_milestones <- calculate_mapping_milestones(dataset_simplified, model_simplified)
+      time1 <- Sys.time()
+      summary_list$time_mapping_milestones <- as.numeric(difftime(time1, time0, units = "sec"))
+      summary_list <- c(summary_list, mapping_milestones)
+    }
   }
 
   for (i in seq_along(metrics)) {
