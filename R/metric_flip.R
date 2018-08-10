@@ -64,7 +64,7 @@ calculate_edge_flip <- function(
     net2 <- net3
   }
 
-  # edge flip cannot handle directed networks
+  # edge flip does not discriminate between directed or undirected networks
   net1$directed <- FALSE
   net2$directed <- FALSE
 
@@ -95,18 +95,17 @@ calculate_edge_flip <- function(
   found <- FALSE
   n_flips <- abs(edge_difference) - 2
 
-  max_flips <- sum(adj1[lower.tri(adj1, diag = FALSE)]) + sum(adj2[lower.tri(adj2, diag = FALSE)])
-  baseline <- max_flips
+  upper_bound <- sum(adj1[lower.tri(adj1, diag = FALSE)]) + sum(adj2[lower.tri(adj2, diag = FALSE)])
 
   # now loop over the number of edge flips, starting with the minimal
-  while (!found & n_flips <= max_flips) {
+  while (!found & n_flips <= upper_bound) {
     n_flips <- n_flips + 2
     # print(glue::glue("flips: {n_flips}"))
 
     # limit number of checked flips
     if (n_flips > limit_flips) {
       found <- TRUE
-      n_flips <- max_flips
+      n_flips <- upper_bound
     } else {
       # calculate the number of additions and removes
       n_additions <- (n_flips + edge_difference)/2
@@ -116,7 +115,7 @@ calculate_edge_flip <- function(
 
       if (choose(length(possible_edge_additions), n_additions) > limit_combinations | choose(length(possible_edge_removes), n_removes) > limit_combinations ) {
         found <- TRUE
-        n_flips <- max_flips
+        n_flips <- upper_bound
       } else {
         # create the matrix which contains in the columns all possible flips, with in the rows the edge_id which will be flipped
         edge_additions <- combn_nice(possible_edge_additions, n_additions)
@@ -192,15 +191,15 @@ calculate_edge_flip <- function(
 
   # return output
   if (!found) {
-    stop("Couldn't map, this shouldn't happen! Something went wrong with the 'exact' algorithm!")
-  } else {
-    score <- 1-n_flips/baseline
+    stop("Couldn't map, this shouldn't happen! Something went wrong!")
+  }
 
-    if (return == "score") {
-      score
-    } else if (return == "all") {
-      list(score = score, newadj1 = newadj1, oldadj1 = adj1)
-    }
+  score <- 1-n_flips/upper_bound
+
+  if (return == "score") {
+    score
+  } else if (return == "all") {
+    list(score = score, newadj1 = newadj1, oldadj1 = adj1)
   }
 }
 
