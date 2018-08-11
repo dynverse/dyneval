@@ -95,7 +95,7 @@ calculate_edge_flip <- function(
   found <- FALSE
   n_flips <- abs(edge_difference) - 2
 
-  upper_bound <- sum(adj1[lower.tri(adj1, diag = FALSE)]) + sum(adj2[lower.tri(adj2, diag = FALSE)])
+  upper_bound <- sum(adj1[lower.tri(adj1, diag = FALSE)]) + sum(adj2[lower.tri(adj2, diag = FALSE)]) - 2
 
   # now loop over the number of edge flips, starting with the minimal
   while (!found & n_flips <= upper_bound) {
