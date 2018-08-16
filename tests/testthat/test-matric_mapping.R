@@ -1,5 +1,7 @@
 context("Mapping scores")
 
+library(dplyr)
+
 # generate a simple dataset for comparison
 dataset <- dyntoy::generate_dataset(model = "multifurcating", num_features = 2, allow_tented_progressions = FALSE, normalise = FALSE)
 
