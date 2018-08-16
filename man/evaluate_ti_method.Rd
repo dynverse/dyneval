@@ -27,6 +27,7 @@ If multiple methods were provided in the \code{method} parameter,
 \enumerate{
   \item Spearman correlation of geodesic distances: \code{"correlation"}
   \item Edge flip score: \code{"edge_flip"}
+  \item Isomorphic: \code{"isomorphic"}
   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
   \item Similarity in feature importance: \code{"featureimp_cor"}
   \item Overlap between branches: \code{"F1_branches"}

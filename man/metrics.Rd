@@ -4,7 +4,7 @@
 \name{metrics}
 \alias{metrics}
 \title{Metadata on metrics}
-\format{An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 12 rows and 7 columns.}
+\format{An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 13 rows and 7 columns.}
 \usage{
 metrics
 }

@@ -6,6 +6,7 @@
 #' \enumerate{
 #'   \item Spearman correlation of geodesic distances: \code{"correlation"}
 #'   \item Edge flip score: \code{"edge_flip"}
+#'   \item Isomorphic: \code{"isomorphic"}
 #'   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
 #'   \item Similarity in feature importance: \code{"featureimp_cor"}
 #'   \item Overlap between branches: \code{"F1_branches"}
@@ -20,7 +21,7 @@
 calculate_metrics <- function(
   dataset,
   model,
-  metrics = c("correlation", "edge_flip", "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor", "F1_branches", "F1_milestones")
+  metrics = c("correlation", "edge_flip", "isomorphic", "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor", "F1_branches", "F1_milestones")
 ) {
   testthat::expect_true(dynwrap::is_wrapper_with_waypoint_cells(dataset))
   testthat::expect_true(is.null(model) || dynwrap::is_wrapper_with_waypoint_cells(model))
@@ -86,6 +87,20 @@ calculate_metrics <- function(
 
       time0 <- Sys.time()
       summary_list$edge_flip <- calculate_edge_flip(net1, net2)
+      time1 <- Sys.time()
+      summary_list$time_edge_flip <- as.numeric(difftime(time1, time0, units = "sec"))
+    } else {
+      summary_list$edge_flip <- 0
+    }
+  }
+
+  if ("isomorphic" %in% metrics) {
+    if (!is.null(model)) {
+      graph1 <- model$milestone_network %>% igraph::graph_from_data_frame()
+      graph2 <- dataset$milestone_network %>% igraph::graph_from_data_frame()
+
+      time0 <- Sys.time()
+      summary_list$edge_flip <- igraph::isomorphic(graph1, graph2)
       time1 <- Sys.time()
       summary_list$time_edge_flip <- as.numeric(difftime(time1, time0, units = "sec"))
     } else {
