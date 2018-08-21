@@ -23,9 +23,6 @@ calculate_metrics <- function(
   model,
   metrics = c("correlation", "edge_flip", "isomorphic", "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor", "F1_branches", "F1_milestones")
 ) {
-  testthat::expect_true(dynwrap::is_wrapper_with_waypoint_cells(dataset))
-  testthat::expect_true(is.null(model) || dynwrap::is_wrapper_with_waypoint_cells(model))
-
   if (!all(sapply(seq_along(metrics), function(i) !is.function(metrics[[i]]) || !is.null(names(metrics)[[i]])))) {
     stop("All custom metrics (functions) must be named!")
   }
@@ -52,6 +49,9 @@ calculate_metrics <- function(
   }
 
   if (("correlation" %in% metrics)) {
+    testthat::expect_true(dynwrap::is_wrapper_with_waypoint_cells(dataset))
+    testthat::expect_true(is.null(model) || dynwrap::is_wrapper_with_waypoint_cells(model))
+
     if (!is.null(model)) {
       dataset$geodesic_dist[is.infinite(dataset$geodesic_dist)] <- .Machine$double.xmax
       model$geodesic_dist[is.infinite(model$geodesic_dist)] <- .Machine$double.xmax
@@ -91,6 +91,20 @@ calculate_metrics <- function(
       summary_list$time_edge_flip <- as.numeric(difftime(time1, time0, units = "sec"))
     } else {
       summary_list$edge_flip <- 0
+    }
+  }
+
+  if ("him" %in% metrics) {
+    if (!is.null(model)) {
+      net1 <- model$milestone_network
+      net2 <- dataset$milestone_network
+
+      time0 <- Sys.time()
+      summary_list$him <- calculate_him(net1, net2)
+      time1 <- Sys.time()
+      summary_list$time_him <- as.numeric(difftime(time1, time0, units = "sec"))
+    } else {
+      summary_list$him <- 0
     }
   }
 

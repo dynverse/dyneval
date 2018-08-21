@@ -32,9 +32,11 @@ Imports:
   tidyr
 Suggests:
   dyntoy,
-  roxygen2
+  roxygen2,
+  nettools
 Remotes:
   dynverse/dynfeature,
   dynverse/dyntoy,
   dynverse/dynutils,
-  dynverse/dynwrap
+  dynverse/dynwrap,
+  filosi/nettools#3fcface

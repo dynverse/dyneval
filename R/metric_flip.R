@@ -30,53 +30,15 @@ calculate_edge_flip <- function(
 ) {
   return <- match.arg(return, c("score", "all"))
 
-  # simplify networks if wanted
-  if (simplify) {
-    directed1 <- any(net1$directed)
-    directed2 <- any(net2$directed)
-    net1 <- net1 %>%
-      rename(weight = length) %>%
-      filter(!(from == to & weight == 0)) %>% # remove self loop edges with length 0
-      igraph::graph_from_data_frame(directed = F) %>%
-      dynwrap::simplify_igraph_network() %>%
-      igraph::as_data_frame() %>%
-      rename(length = weight) %>%
-      mutate(directed = directed1) %>%
-      insert_two_nodes_into_selfloop() %>%
-      change_single_edge_into_double() %>%
-      insert_one_node_into_duplicate_edges()
-    net2 <- net2 %>%
-      rename(weight = length) %>%
-      filter(!(from == to & weight == 0)) %>% # remove self loop edges with length 0
-      igraph::graph_from_data_frame(directed = F) %>%
-      dynwrap::simplify_igraph_network() %>%
-      igraph::as_data_frame() %>%
-      rename(length = weight) %>%
-      mutate(directed = directed2) %>%
-      insert_two_nodes_into_selfloop() %>%
-      change_single_edge_into_double() %>%
-      insert_one_node_into_duplicate_edges()
-  }
+  # get the matched adjacencies
+  adjacencies <- get_matched_adjacencies(
+    net1,
+    net2,
+    simplify = simplify
+  )
 
-  if (nrow(net1) < nrow(net2)) {
-    net3 <- net1
-    net1 <- net2
-    net2 <- net3
-  }
-
-  # edge flip does not discriminate between directed or undirected networks
-  net1$directed <- FALSE
-  net2$directed <- FALSE
-
-  adj1 <- get_adjacency(net1)
-  adj2 <- get_adjacency(net2)
-
-  # make the adjacency matrices have the same dimensions
-  if (nrow(adj1) > nrow(adj2)) {
-    adj2 <- complete_matrix(adj2, nrow(adj1), fill = F)
-  } else {
-    adj1 <- complete_matrix(adj1, nrow(adj2), fill = F)
-  }
+  adj1 <- adjacencies[[1]] > 0
+  adj2 <- adjacencies[[2]] > 0
 
   # calculate the mapping which nodes are connected to which edges
   edge_membership1 <- calculate_edge_membership(adj1)
@@ -213,7 +175,7 @@ get_adjacency_lengths <- function(net, nodes = sort(unique(c(net$from, net$to)))
       mutate(from = factor(from, levels = nodes), to = factor(to, levels = nodes)) %>%
       reshape2::acast(from~to, value.var = "length", fill = 0, drop = FALSE, fun.aggregate = sum)
   }
-  (newnet + t(newnet)) > 0
+  (newnet + t(newnet))
 }
 
 get_adjacency <- function(net) {
@@ -227,9 +189,68 @@ get_undirected_graph <- function(adj) {
 
 # add extra rows and columns to matrix
 complete_matrix <- function(mat, dim, fill = 0) {
-  mat <- rbind(mat, matrix(rep(fill, ncol(mat) * (dim - nrow(mat))), ncol = ncol(mat)))
-  mat <- cbind(mat, matrix(rep(fill, nrow(mat) * (dim - ncol(mat))), nrow = nrow(mat)))
+  mat <- rbind(
+    mat,
+    matrix(
+      rep(fill, ncol(mat) * (dim - nrow(mat))),
+      ncol = ncol(mat),
+      dimnames = list(sample.int(dim-nrow(mat)), colnames(mat))
+    )
+  )
+  mat <- cbind(
+    mat,
+    matrix(
+      rep(fill, nrow(mat) * (dim - ncol(mat))),
+      nrow = nrow(mat),
+      dimnames = list(rownames(mat), sample.int(dim-nrow(mat)))
+    )
+  )
+
+  mat
 }
+
+# get the matched adjacency matrices between two networks
+get_matched_adjacencies <- function(net1, net2, simplify = TRUE) {
+  if (simplify) {
+    directed1 <- any(net1$directed)
+    directed2 <- any(net2$directed)
+    net1 <- net1 %>%
+      rename(weight = length) %>%
+      filter(!(from == to & weight == 0)) %>% # remove self loop edges with length 0
+      igraph::graph_from_data_frame(directed = F) %>%
+      dynwrap::simplify_igraph_network() %>%
+      igraph::as_data_frame() %>%
+      rename(length = weight) %>%
+      mutate(directed = directed1) %>%
+      insert_two_nodes_into_selfloop() %>%
+      change_single_edge_into_double() %>%
+      insert_one_node_into_duplicate_edges()
+    net2 <- net2 %>%
+      rename(weight = length) %>%
+      filter(!(from == to & weight == 0)) %>% # remove self loop edges with length 0
+      igraph::graph_from_data_frame(directed = F) %>%
+      dynwrap::simplify_igraph_network() %>%
+      igraph::as_data_frame() %>%
+      rename(length = weight) %>%
+      mutate(directed = directed2) %>%
+      insert_two_nodes_into_selfloop() %>%
+      change_single_edge_into_double() %>%
+      insert_one_node_into_duplicate_edges()
+  }
+
+  adj1 <- get_adjacency_lengths(net1)
+  adj2 <- get_adjacency_lengths(net2)
+
+  # make the adjacency matrices have the same dimensions
+  if (nrow(adj1) > nrow(adj2)) {
+    adj2 <- complete_matrix(adj2, nrow(adj1), fill = 0)
+  } else {
+    adj1 <- complete_matrix(adj1, nrow(adj2), fill = 0)
+  }
+
+  lst(adj1, adj2)
+}
+
 
 # what nodes are connecting to which edges
 #' @importFrom purrr invoke
