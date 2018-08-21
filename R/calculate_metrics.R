@@ -42,23 +42,25 @@ calculate_metrics <- function(
     model <- dynwrap::simplify_trajectory(model)
   }
 
-  if (!is.null(model)) {
-    testthat::expect_true(all(model$cell_ids %in% dataset$cell_ids))
-    model$cell_ids <- dataset$cell_ids
-
-    waypoints <- unique(c(dataset$waypoint_cells, model$waypoint_cells))
-
-    # compute waypointed geodesic distances
-    time0 <- Sys.time()
-    dataset$geodesic_dist <- dynwrap::compute_tented_geodesic_distances(dataset, waypoints)
-    model$geodesic_dist <- dynwrap::compute_tented_geodesic_distances(model, waypoints)
-    time1 <- Sys.time()
-    summary_list$time_waypointedgeodesic <- as.numeric(difftime(time1, time0, units = "sec"))
-  }
-
   if (("correlation" %in% metrics)) {
     testthat::expect_true(dynwrap::is_wrapper_with_waypoint_cells(dataset))
     testthat::expect_true(is.null(model) || dynwrap::is_wrapper_with_waypoint_cells(model))
+
+    # calculate geodesic distances
+    if (!is.null(model)) {
+      testthat::expect_true(all(model$cell_ids %in% dataset$cell_ids))
+      model$cell_ids <- dataset$cell_ids
+
+      waypoints <- unique(c(dataset$waypoint_cells, model$waypoint_cells))
+
+      # compute waypointed geodesic distances
+      time0 <- Sys.time()
+      dataset$geodesic_dist <- dynwrap::compute_tented_geodesic_distances(dataset, waypoints)
+      model$geodesic_dist <- dynwrap::compute_tented_geodesic_distances(model, waypoints)
+      time1 <- Sys.time()
+      summary_list$time_waypointedgeodesic <- as.numeric(difftime(time1, time0, units = "sec"))
+    }
+
 
     if (!is.null(model)) {
       dataset$geodesic_dist[is.infinite(dataset$geodesic_dist)] <- .Machine$double.xmax
