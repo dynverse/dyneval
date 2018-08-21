@@ -10,7 +10,7 @@ metrics <- tribble(
   "lm_mse", "MSE[lm]", "\\mathit{MSE}_{\\textit{lm}}", "Linear regression MSE", "neighbourhood", 0, 0.3,
   "lm_rsq", "R[lm]^2", "R^{2}_{lm}", "Linear regression R²", "neighbourhood", 1, 0,
   "edge_flip", "edgeflip", "\\textrm{edgeflip}", "Edge flip", "topology", 1, 0,
-  "HIM", "HIM", "\\textrm{HIM}", "Hamming-Ipsen-Mikhailov", "topology", 1, 0,
+  "him", "HIM", "\\textrm{HIM}", "Hamming-Ipsen-Mikhailov", "topology", 1, 0,
   "isomorphic", "isomorphic", "\\textrm{isomorphic}", "Isomorphic", "topology", 1, 0,
   "featureimp_cor", "cor[features]", "\\mathit{cor}_{\\textrm{features}}", "Feature importance correlation", "features", 1, 0,
   "F1_branches", "F1[branches]", "\\mathit{F1}_{\\textit{branches}}", "Overlap between the branches", "branches", 1, 0,
