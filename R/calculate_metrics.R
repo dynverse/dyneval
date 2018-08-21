@@ -21,10 +21,18 @@
 calculate_metrics <- function(
   dataset,
   model,
-  metrics = c("correlation", "edge_flip", "isomorphic", "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor", "F1_branches", "F1_milestones")
+  metrics = c("correlation", "edge_flip", "isomorphic", "him", "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor", "F1_branches", "F1_milestones")
 ) {
+  # check if all function metrics are named
   if (!all(sapply(seq_along(metrics), function(i) !is.function(metrics[[i]]) || !is.null(names(metrics)[[i]])))) {
     stop("All custom metrics (functions) must be named!")
+  }
+
+  # check all character function metrics
+  valid_metrics <- c("correlation", "edge_flip", "isomorphic", "him", "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor", "F1_branches", "F1_milestones")
+  character_metrics <- as.character(keep(metrics, is.character))
+  if (!all(character_metrics %in% valid_metrics)) {
+    stop("Invalid metrics: ", glue::glue_collapse(setdiff(character_metrics, valid_metrics), ", "))
   }
 
   summary_list <- list()
@@ -114,11 +122,11 @@ calculate_metrics <- function(
       graph2 <- dataset$milestone_network %>% igraph::graph_from_data_frame()
 
       time0 <- Sys.time()
-      summary_list$edge_flip <- igraph::isomorphic(graph1, graph2)
+      summary_list$isomorphic <- as.numeric(igraph::isomorphic(graph1, graph2))
       time1 <- Sys.time()
-      summary_list$time_edge_flip <- as.numeric(difftime(time1, time0, units = "sec"))
+      summary_list$time_isomorphic <- as.numeric(difftime(time1, time0, units = "sec"))
     } else {
-      summary_list$edge_flip <- 0
+      summary_list$isomorphic <- 0
     }
   }
 
