@@ -13,8 +13,9 @@ evaluate_ti_method(dataset, method, parameters, metrics,
 
 \item{method}{One or more methods. Must be one of:
 \itemize{
-\item{an object or list of ti_... objects (eg. \code{\link[=ti_comp1]{ti_comp1()}})}
-\item{a character vector containing the names of methods to execute (e.g. \code{"scorpius"}), or}
+\item{an object or list of ti_... objects (eg. \code{dynmethods::ti_comp1()}),}
+\item{a character vector containing the names of methods to execute (e.g. \code{"scorpius"}),}
+\item{a character vector containing dockerhub repositories (e.g. \code{dynverse/paga}), or}
 \item{a dynguidelines data frame.}
 }}
 
@@ -27,6 +28,7 @@ If multiple methods were provided in the \code{method} parameter,
 \enumerate{
   \item Spearman correlation of geodesic distances: \code{"correlation"}
   \item Edge flip score: \code{"edge_flip"}
+  \item Isomorphic: \code{"isomorphic"}
   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
   \item Similarity in feature importance: \code{"featureimp_cor"}
   \item Overlap between branches: \code{"F1_branches"}

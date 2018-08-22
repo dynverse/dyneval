@@ -6,6 +6,7 @@
 #' \enumerate{
 #'   \item Spearman correlation of geodesic distances: \code{"correlation"}
 #'   \item Edge flip score: \code{"edge_flip"}
+#'   \item Isomorphic: \code{"isomorphic"}
 #'   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
 #'   \item Similarity in feature importance: \code{"featureimp_cor"}
 #'   \item Overlap between branches: \code{"F1_branches"}
@@ -20,13 +21,18 @@
 calculate_metrics <- function(
   dataset,
   model,
-  metrics = c("correlation", "edge_flip", "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor", "F1_branches", "F1_milestones")
+  metrics = metrics$metric_id
 ) {
-  testthat::expect_true(dynwrap::is_wrapper_with_waypoint_cells(dataset))
-  testthat::expect_true(is.null(model) || dynwrap::is_wrapper_with_waypoint_cells(model))
-
+  # check if all function metrics are named
   if (!all(sapply(seq_along(metrics), function(i) !is.function(metrics[[i]]) || !is.null(names(metrics)[[i]])))) {
     stop("All custom metrics (functions) must be named!")
+  }
+
+  # check all character function metrics
+  valid_metrics <- dyneval::metrics$metric_id
+  character_metrics <- as.character(keep(metrics, is.character))
+  if (!all(character_metrics %in% valid_metrics)) {
+    stop("Invalid metrics: ", glue::glue_collapse(setdiff(character_metrics, valid_metrics), ", "))
   }
 
   summary_list <- list()
@@ -36,21 +42,26 @@ calculate_metrics <- function(
     model <- dynwrap::simplify_trajectory(model)
   }
 
-  if (!is.null(model)) {
-    testthat::expect_true(all(model$cell_ids %in% dataset$cell_ids))
-    model$cell_ids <- dataset$cell_ids
-
-    waypoints <- unique(c(dataset$waypoint_cells, model$waypoint_cells))
-
-    # compute waypointed geodesic distances
-    time0 <- Sys.time()
-    dataset$geodesic_dist <- dynwrap::compute_tented_geodesic_distances(dataset, waypoints)
-    model$geodesic_dist <- dynwrap::compute_tented_geodesic_distances(model, waypoints)
-    time1 <- Sys.time()
-    summary_list$time_waypointedgeodesic <- as.numeric(difftime(time1, time0, units = "sec"))
-  }
-
   if (("correlation" %in% metrics)) {
+    testthat::expect_true(dynwrap::is_wrapper_with_waypoint_cells(dataset))
+    testthat::expect_true(is.null(model) || dynwrap::is_wrapper_with_waypoint_cells(model))
+
+    # calculate geodesic distances
+    if (!is.null(model)) {
+      testthat::expect_true(all(model$cell_ids %in% dataset$cell_ids))
+      model$cell_ids <- dataset$cell_ids
+
+      waypoints <- unique(c(dataset$waypoint_cells, model$waypoint_cells))
+
+      # compute waypointed geodesic distances
+      time0 <- Sys.time()
+      dataset$geodesic_dist <- dynwrap::compute_tented_geodesic_distances(dataset, waypoints)
+      model$geodesic_dist <- dynwrap::compute_tented_geodesic_distances(model, waypoints)
+      time1 <- Sys.time()
+      summary_list$time_waypointedgeodesic <- as.numeric(difftime(time1, time0, units = "sec"))
+    }
+
+
     if (!is.null(model)) {
       dataset$geodesic_dist[is.infinite(dataset$geodesic_dist)] <- .Machine$double.xmax
       model$geodesic_dist[is.infinite(model$geodesic_dist)] <- .Machine$double.xmax
@@ -90,6 +101,34 @@ calculate_metrics <- function(
       summary_list$time_edge_flip <- as.numeric(difftime(time1, time0, units = "sec"))
     } else {
       summary_list$edge_flip <- 0
+    }
+  }
+
+  if ("him" %in% metrics) {
+    if (!is.null(model)) {
+      net1 <- model$milestone_network
+      net2 <- dataset$milestone_network
+
+      time0 <- Sys.time()
+      summary_list$him <- calculate_him(net1, net2)
+      time1 <- Sys.time()
+      summary_list$time_him <- as.numeric(difftime(time1, time0, units = "sec"))
+    } else {
+      summary_list$him <- 0
+    }
+  }
+
+  if ("isomorphic" %in% metrics) {
+    if (!is.null(model)) {
+      graph1 <- model$milestone_network %>% igraph::graph_from_data_frame()
+      graph2 <- dataset$milestone_network %>% igraph::graph_from_data_frame()
+
+      time0 <- Sys.time()
+      summary_list$isomorphic <- as.numeric(igraph::isomorphic(graph1, graph2))
+      time1 <- Sys.time()
+      summary_list$time_isomorphic <- as.numeric(difftime(time1, time0, units = "sec"))
+    } else {
+      summary_list$isomorphic <- 0
     }
   }
 

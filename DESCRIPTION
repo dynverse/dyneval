@@ -19,6 +19,7 @@ Imports:
   dynutils,
   dynwrap,
   igraph,
+  glue,
   magrittr, 
   methods,
   parallel, 
@@ -32,9 +33,11 @@ Imports:
   tidyr
 Suggests:
   dyntoy,
-  roxygen2
+  roxygen2,
+  netdist
 Remotes:
   dynverse/dynfeature,
   dynverse/dyntoy,
   dynverse/dynutils,
-  dynverse/dynwrap
+  dynverse/dynwrap,
+  dynverse/netdist

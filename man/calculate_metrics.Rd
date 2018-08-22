@@ -4,9 +4,7 @@
 \alias{calculate_metrics}
 \title{Calculate the performance of a model with respect to a dataset}
 \usage{
-calculate_metrics(dataset, model, metrics = c("correlation", "edge_flip",
-  "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor", "F1_branches",
-  "F1_milestones"))
+calculate_metrics(dataset, model, metrics = metrics$metric_id)
 }
 \arguments{
 \item{dataset}{the original dataset}
@@ -17,6 +15,7 @@ calculate_metrics(dataset, model, metrics = c("correlation", "edge_flip",
 \enumerate{
   \item Spearman correlation of geodesic distances: \code{"correlation"}
   \item Edge flip score: \code{"edge_flip"}
+  \item Isomorphic: \code{"isomorphic"}
   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
   \item Similarity in feature importance: \code{"featureimp_cor"}
   \item Overlap between branches: \code{"F1_branches"}
