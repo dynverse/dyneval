@@ -19,6 +19,7 @@ Imports:
   dynutils,
   dynwrap,
   igraph,
+  glue,
   magrittr, 
   methods,
   parallel, 
