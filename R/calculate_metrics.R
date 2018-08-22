@@ -21,7 +21,7 @@
 calculate_metrics <- function(
   dataset,
   model,
-  metrics = c("correlation", "edge_flip", "isomorphic", "him", "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor", "F1_branches", "F1_milestones")
+  metrics = metrics$metric_id
 ) {
   # check if all function metrics are named
   if (!all(sapply(seq_along(metrics), function(i) !is.function(metrics[[i]]) || !is.null(names(metrics)[[i]])))) {
@@ -29,7 +29,7 @@ calculate_metrics <- function(
   }
 
   # check all character function metrics
-  valid_metrics <- c("correlation", "edge_flip", "isomorphic", "him", "rf_mse", "rf_rsq", "lm_mse", "lm_rsq", "featureimp_cor", "F1_branches", "F1_milestones")
+  valid_metrics <- dyneval::metrics$metric_id
   character_metrics <- as.character(keep(metrics, is.character))
   if (!all(character_metrics %in% valid_metrics)) {
     stop("Invalid metrics: ", glue::glue_collapse(setdiff(character_metrics, valid_metrics), ", "))
