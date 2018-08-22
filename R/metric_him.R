@@ -21,7 +21,7 @@ calculate_him <- function(
   net2,
   simplify = TRUE
 ) {
-  requireNamespace("nettools")
+  requireNamespace("netdist")
 
   # get the matched adjacencies
   adjacencies <- get_matched_adjacencies(
@@ -30,12 +30,15 @@ calculate_him <- function(
     simplify = simplify
   )
 
-  netdist <- nettools::netdist(
+  netdist <- netdist::netdist(
     adjacencies[[1]] / sum(adjacencies[[1]]),
     adjacencies[[2]] / sum(adjacencies[[2]]),
     "HIM",
-    n.cores = 1
+    n.cores = 1,
+    ga = 0.1
   )["HIM"]
+
+  netdist[netdist < 0] <- 0
 
   1 - netdist
 }

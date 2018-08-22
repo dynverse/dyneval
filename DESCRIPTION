@@ -33,10 +33,10 @@ Imports:
 Suggests:
   dyntoy,
   roxygen2,
-  nettools
+  netdist
 Remotes:
   dynverse/dynfeature,
   dynverse/dyntoy,
   dynverse/dynutils,
   dynverse/dynwrap,
-  filosi/nettools@3fcface
+  dynverse/netdist
