@@ -57,7 +57,12 @@ calculate_edge_flip <- function(
   found <- FALSE
   n_flips <- abs(edge_difference) - 2
 
+  # determine upper bound
   upper_bound <- sum(adj1[lower.tri(adj1, diag = FALSE)]) + sum(adj2[lower.tri(adj2, diag = FALSE)]) - 2
+  if (upper_bound <= 0) {
+    # this is only possible when one of the networks does not have any edges
+    upper_bound <- 1
+  }
 
   # now loop over the number of edge flips, starting with the minimal
   while (!found & n_flips <= upper_bound) {
