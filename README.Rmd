@@ -1,0 +1,53 @@
+---
+output: github_document
+editor_options:
+  chunk_output_type: console
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r setup, echo = FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, error = FALSE, echo = FALSE)
+```
+
+```{r}
+library(tidyverse)
+library(dyneval)
+```
+
+[![Build Status](https://api.travis-ci.org/dynverse/dyneval.svg)](https://travis-ci.org/dynverse/dyneval)
+[![codecov](https://codecov.io/gh/dynverse/dynguidelines/branch/master/graph/badge.svg)](https://codecov.io/gh/dynverse/dynguidelines)
+<img src="man/figures/logo.png" align="right" />
+
+# Metrics to compare two trajectories
+
+This R package implements several metrics for comparing two single-cell trajectories.
+
+These include:
+
+- **Specific metrics**, metrics which look at the similarity of a specific part of the trajectory, such as the topology or the cellular ordering
+
+```{r}
+metrics %>% 
+  filter(type == "specific") %>%
+  select(metric_id, long_name, category) %>% 
+  knitr::kable()
+```
+
+- **Application metrics**, which assess the accuracy of some downstream analyses of trajectories
+
+```{r}
+metrics %>% 
+  filter(type == "application") %>%
+  select(metric_id, long_name) %>% 
+  knitr::kable()
+```
+
+- **Overall metrics**, which combine several specific and/or application metrics to analyse the overall similarity of two trajectories
+
+```{r}
+metrics %>% 
+  filter(type == "overall") %>%
+  select(metric_id, long_name) %>% 
+  knitr::kable()
+```
