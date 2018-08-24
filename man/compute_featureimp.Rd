@@ -4,14 +4,17 @@
 \alias{compute_featureimp}
 \title{Compare feature importances derived by both trajectories}
 \usage{
-compute_featureimp(dataset, prediction, num_trees = 10000)
+compute_featureimp(dataset, prediction, num_trees = 10000,
+  mtry = function(x) ncol(x) * 0.01)
 }
 \arguments{
 \item{dataset}{A dataset}
 
 \item{prediction}{A predicted model}
 
-\item{num_trees}{the number of trees to use during the calculation of the metric}
+\item{num_trees}{The number of trees to use for the random forest}
+
+\item{mtry}{Number of features to split in each node. Can be a function with as argument the dataset}
 }
 \description{
 Compare feature importances derived by both trajectories

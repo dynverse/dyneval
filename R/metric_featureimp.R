@@ -3,10 +3,11 @@
 #'
 #' @param dataset A dataset
 #' @param prediction A predicted model
-#' @param num_trees the number of trees to use during the calculation of the metric
+#' @param num_trees The number of trees to use for the random forest
+#' @param mtry Number of features to split in each node. Can be a function with as argument the dataset
 #'
 #' @importFrom dynfeature calculate_overall_feature_importance
-compute_featureimp <- function(dataset, prediction, num_trees = 10000) {
+compute_featureimp <- function(dataset, prediction, num_trees = 10000, mtry = function(x) ncol(x) * .01) {
   cell_ids <- dataset$cell_ids
 
   if (!is.null(prediction) && length(unique(prediction$milestone_percentages$cell_id)) >= 3) {
