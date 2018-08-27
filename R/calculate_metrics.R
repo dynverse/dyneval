@@ -134,7 +134,7 @@ calculate_metrics <- function(
 
   if (any(c("rf_mse", "rf_rsq", "rf_nmse", "lm_mse", "lm_rsq", "lm_nmse") %in% metrics)) {
     time0 <- Sys.time()
-    position_predict <- compute_position_predict(dataset, model)
+    position_predict <- calculate_position_predict(dataset, model)
     time1 <- Sys.time()
     summary_list$time_pp <- as.numeric(difftime(time1, time0, units = "sec"))
 
@@ -154,7 +154,7 @@ calculate_metrics <- function(
 
   if ("featureimp_ks" %in% metrics) {
     time0 <- Sys.time()
-    featureimp <- compute_featureimp_ks(dataset, model)
+    featureimp <- calculate_featureimp_ks(dataset, model)
     time1 <- Sys.time()
     summary_list$time_featureimp_ks <- as.numeric(difftime(time1, time0, units = "sec"))
     summary_list$featureimp_ks <- featureimp$featureimp_ks
