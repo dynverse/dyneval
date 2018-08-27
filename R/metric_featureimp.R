@@ -3,10 +3,13 @@
 #'
 #' @param dataset A dataset
 #' @param prediction A predicted model
-#' @param num_trees the number of trees to use during the calculation of the metric
+#' @param num_trees The number of trees to use for the random forest
+#' @param mtry Number of features to split in each node. Can be a function with as argument the dataset
 #'
 #' @importFrom dynfeature calculate_overall_feature_importance
-compute_featureimp <- function(dataset, prediction, num_trees = 10000) {
+#'
+#' @export
+calculate_featureimp_cor <- function(dataset, prediction, num_trees = 10000, mtry = function(x) ncol(x) * .01) {
   cell_ids <- dataset$cell_ids
 
   if (!is.null(prediction) && length(unique(prediction$milestone_percentages$cell_id)) >= 3) {
@@ -45,7 +48,7 @@ compute_featureimp <- function(dataset, prediction, num_trees = 10000) {
 #'
 #' @importFrom dynfeature calculate_overall_feature_importance
 #' @importFrom stats ks.test
-compute_fimp_ks <- function(dataset, prediction, num_trees = 10000) {
+compute_featureimp_ks <- function(dataset, prediction, num_trees = 10000) {
   cell_ids <- dataset$cell_ids
 
   if (!is.null(prediction) && length(unique(prediction$milestone_percentages$cell_id)) >= 3) {
@@ -58,16 +61,16 @@ compute_fimp_ks <- function(dataset, prediction, num_trees = 10000) {
     notsel <- pred_imp$importance[!pred_imp$feature_id %in% dataset_features]
 
     if (length(notsel) > 2) {
-      fimp_ks <- stats::ks.test(sel, notsel, alternative = "greater")
+      featureimp_ks <- stats::ks.test(sel, notsel, alternative = "greater")
 
       lst(
-        fimp_ks = fimp_ks$p.value
+        featureimp_ks = featureimp_ks$p.value
       )
     } else {
-      list(fimp_ks = 0)
+      list(featureimp_ks = 0)
     }
   } else {
-    list(fimp_ks = 0)
+    list(featureimp_ks = 0)
   }
 }
 

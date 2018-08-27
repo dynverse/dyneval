@@ -13,7 +13,7 @@ metrics <- tribble(
   "him", "HIM", "\\textrm{HIM}", "Hamming-Ipsen-Mikhailov similarity", "topology", "specific", 1, 0,
   "isomorphic", "isomorphic", "\\textrm{isomorphic}", "Isomorphic", "topology", "specific", 1, 0,
   "featureimp_cor", "cor[features]", "\\mathit{cor}_{\\textrm{features}}", "Feature importance correlation", "features", "application", 1, 0,
-  "fimp_ks", "ks[features]", "\\mathit{ks}_{\\textrm{features}}", "Feature importance enrichment", "features", "application", 1, 0,
+  "featureimp_ks", "ks[features]", "\\mathit{ks}_{\\textrm{features}}", "Feature importance enrichment", "features", "application", 1, 0,
   "F1_branches", "F1[branches]", "\\mathit{F1}_{\\textit{branches}}", "Overlap between the branches", "clustering", "specific", 1, 0,
   "F1_milestones", "F1[milestones]", "\\mathit{F1}_{\\textit{milestones}}", "Overlap between the milestones", "clustering", "specific", 1, 0,
   "harm_mean", "h-mean", "\\textrm{h-mean}", "Harmonic mean", "average", "overall", 1, 0
