@@ -65,7 +65,7 @@ compute_featureimp_ks <- function(dataset, prediction, num_trees = 10000) {
 
         list(featureimp_ks = featureimp_ks$p.value)
       } else {
-        list(featureimp_ks = 0)
+        list(featureimp_ks = 1)
       }
     } else {
       list(featureimp_ks = 0)
