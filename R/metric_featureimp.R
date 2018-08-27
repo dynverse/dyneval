@@ -38,3 +38,43 @@ calculate_featureimp_cor <- function(dataset, prediction, num_trees = 10000, mtr
     )
   }
 }
+
+
+#' Compare enrichment in finding back the most important genes
+#'
+#' @param dataset A dataset
+#' @param prediction A predicted model
+#' @param num_trees the number of trees to use during the calculation of the metric
+#'
+#' @importFrom dynfeature calculate_overall_feature_importance
+#' @importFrom stats ks.test
+compute_featureimp_ks <- function(dataset, prediction, num_trees = 10000) {
+  cell_ids <- dataset$cell_ids
+
+  if (!is.null(prediction) && length(unique(prediction$milestone_percentages$cell_id)) >= 3) {
+
+    method_params <- list(num.trees = num_trees)
+    pred_imp <- dynfeature::calculate_overall_feature_importance(prediction, expression_source = dataset$expression, method_params = method_params)
+    dataset_features <- dataset$prior_information$features_id
+
+    sel <- pred_imp$importance[pred_imp$feature_id %in% dataset_features]
+    notsel <- pred_imp$importance[!pred_imp$feature_id %in% dataset_features]
+
+    if (length(notsel) > 2) {
+      featureimp_ks <- stats::ks.test(sel, notsel, alternative = "greater")
+
+      lst(
+        featureimp_ks = featureimp_ks$p.value
+      )
+    } else {
+      list(featureimp_ks = 0)
+    }
+  } else {
+    list(featureimp_ks = 0)
+  }
+}
+
+#' @examples
+#' dataset <- dyntoy::generate_dataset()
+#' prediction <- dynwrap::infer_trajectory(dataset, "slingshot", parameters = list())
+#'

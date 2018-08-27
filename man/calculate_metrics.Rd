@@ -17,7 +17,7 @@ calculate_metrics(dataset, model, metrics = metrics$metric_id)
   \item Edge flip score: \code{"edge_flip"}
   \item Isomorphic: \code{"isomorphic"}
   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
-  \item Similarity in feature importance: \code{"featureimp_cor"}
+  \item Similarity in feature importance: \code{"featureimp_cor"}, \code{"featureimp_ks"}
   \item Overlap between branches: \code{"F1_branches"}
   \item Custom metric function. Format: \code{function(dataset, model) { 1 }}
 }}
