@@ -9,7 +9,7 @@
 #' @importFrom dynfeature calculate_overall_feature_importance
 #'
 #' @export
-compute_featureimp <- function(dataset, prediction, num_trees = 10000, mtry = function(x) ncol(x) * .01) {
+calculate_featureimp_cor <- function(dataset, prediction, num_trees = 10000, mtry = function(x) ncol(x) * .01) {
   cell_ids <- dataset$cell_ids
 
   if (!is.null(prediction) && length(unique(prediction$milestone_percentages$cell_id)) >= 3) {

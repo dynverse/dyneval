@@ -146,7 +146,7 @@ calculate_metrics <- function(
 
   if ("featureimp_cor" %in% metrics) {
     time0 <- Sys.time()
-    fimp <- compute_featureimp(dataset, model)
+    fimp <- calculate_featureimp_cor(dataset, model)
     time1 <- Sys.time()
     summary_list$time_featureimp <- as.numeric(difftime(time1, time0, units = "sec"))
     summary_list$featureimp_cor <- fimp$featureimp_cor

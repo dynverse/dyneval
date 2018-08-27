@@ -2,11 +2,11 @@
 
 export(calculate_arithmetic_mean)
 export(calculate_edge_flip)
+export(calculate_featureimp_cor)
 export(calculate_geometric_mean)
 export(calculate_harmonic_mean)
 export(calculate_him)
 export(calculate_metrics)
-export(compute_featureimp)
 export(evaluate_ti_method)
 import(ParamHelpers)
 import(dplyr)
