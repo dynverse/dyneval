@@ -7,6 +7,8 @@
 #' @param mtry Number of features to split in each node. Can be a function with as argument the dataset
 #'
 #' @importFrom dynfeature calculate_overall_feature_importance
+#'
+#' @export
 compute_featureimp <- function(dataset, prediction, num_trees = 10000, mtry = function(x) ncol(x) * .01) {
   cell_ids <- dataset$cell_ids
 
