@@ -21,7 +21,7 @@
 calculate_metrics <- function(
   dataset,
   model,
-  metrics = metrics$metric_id
+  metrics = dyneval::metrics$metric_id
 ) {
   # check if all function metrics are named
   if (!all(sapply(seq_along(metrics), function(i) !is.function(metrics[[i]]) || !is.null(names(metrics)[[i]])))) {

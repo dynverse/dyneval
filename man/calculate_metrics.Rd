@@ -4,7 +4,7 @@
 \alias{calculate_metrics}
 \title{Calculate the performance of a model with respect to a dataset}
 \usage{
-calculate_metrics(dataset, model, metrics = metrics$metric_id)
+calculate_metrics(dataset, model, metrics = dyneval::metrics$metric_id)
 }
 \arguments{
 \item{dataset}{the original dataset}
