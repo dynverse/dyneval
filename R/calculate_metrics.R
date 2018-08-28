@@ -8,7 +8,7 @@
 #'   \item Edge flip score: \code{"edge_flip"}
 #'   \item Isomorphic: \code{"isomorphic"}
 #'   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
-#'   \item Similarity in feature importance: \code{"featureimp_cor"}, \code{"featureimp_ks"}
+#'   \item Similarity in feature importance: \code{"featureimp_cor"}, \code{"featureimp_wcor"}, \code{"featureimp_ks"}
 #'   \item Overlap between branches: \code{"F1_branches"}
 #'   \item Custom metric function. Format: \code{function(dataset, model) { 1 }}
 #' }
@@ -144,12 +144,16 @@ calculate_metrics <- function(
     )
   }
 
-  if ("featureimp_cor" %in% metrics) {
+  if (any("featureimp_cor", "featureimp_wcor") %in% metrics) {
     time0 <- Sys.time()
     featureimp <- calculate_featureimp_cor(dataset, model)
     time1 <- Sys.time()
     summary_list$time_featureimp <- as.numeric(difftime(time1, time0, units = "sec"))
-    summary_list$featureimp_cor <- featureimp$featureimp_cor
+
+    summary_list <- c(
+      summary_list,
+      featureimp$summary[intersect(metrics, names(featureimp$summary))]
+    )
   }
 
   if ("featureimp_ks" %in% metrics) {

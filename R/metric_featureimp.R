@@ -29,12 +29,20 @@ calculate_featureimp_cor <- function(dataset, prediction, num_trees = 10000, mtr
     # ggplot(imp_joined) + geom_point(aes(dataset_imp, pred_imp))
     featureimp_cor <- cor(imp_joined$dataset_imp, imp_joined$pred_imp) %>% max(0)
 
+    featureimp_wcor <- cov.wt(
+      matrix(c(imp_joined$dataset_imp, imp_joined$pred_imp), ncol = 2),
+      wt = imp_joined$dataset_imp,
+      cor = TRUE
+    )$cor[1, 2] %>% max(0)
+
     lst(
-      featureimp_cor
+      featureimp_cor,
+      featureimp_wcor
     )
   } else {
     list(
-      featureimp_cor = 0
+      featureimp_cor = 0,
+      featureimp_wcor = 0
     )
   }
 }
