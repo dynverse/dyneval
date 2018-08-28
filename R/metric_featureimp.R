@@ -26,8 +26,6 @@ calculate_featureimp_cor <- function(dataset, prediction, num_trees = 10000, mtr
     ) %>%
       mutate_at(c("dataset_imp", "pred_imp"), ~ ifelse(is.na(.), 0, .))
 
-    #' @examples
-    #' ggplot(join) + geom_point(aes(dataset_imp, pred_imp))
     featureimp_cor <- cor(join$dataset_imp, join$pred_imp) %>% max(0)
 
     cov_wt <- cov.wt(
