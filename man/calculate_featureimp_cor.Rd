@@ -19,6 +19,3 @@ calculate_featureimp_cor(dataset, prediction, num_trees = 10000,
 \description{
 Compare feature importances derived by both trajectories
 }
-\examples{
-ggplot(join) + geom_point(aes(dataset_imp, pred_imp))
-}
