@@ -144,7 +144,7 @@ calculate_metrics <- function(
     )
   }
 
-  if (any("featureimp_cor", "featureimp_wcor") %in% metrics) {
+  if (any(c("featureimp_cor", "featureimp_wcor") %in% metrics)) {
     time0 <- Sys.time()
     featureimp <- calculate_featureimp_cor(dataset, model)
     time1 <- Sys.time()
@@ -152,7 +152,7 @@ calculate_metrics <- function(
 
     summary_list <- c(
       summary_list,
-      featureimp$summary[intersect(metrics, names(featureimp$summary))]
+      featureimp[intersect(metrics, names(featureimp))]
     )
   }
 
