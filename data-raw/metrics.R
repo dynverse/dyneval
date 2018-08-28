@@ -1,24 +1,24 @@
 library(tibble)
 
 metrics <- tribble(
-  ~metric_id, ~plotmath, ~latex, ~long_name, ~category, ~type, ~perfect, ~worst,
-  "correlation", "cor[dist]", "\\mathit{cor}_{\\textrm{dist}}", "Geodesic distance correlation", "ordering", "specific", 1, 0,
-  "rf_nmse", "NMSE[rf]", "\\mathit{NMSE}_{\\textit{rf}}", "Random Forest MSE", "neighbourhood", "specific", 1, 0,
-  "rf_mse", "MSE[rf]", "\\mathit{MSE}_{\\textit{rf}}", "Random Forest Normalised MSE", "neighbourhood", "specific", 0, 0.3,
-  "rf_rsq", "R[rf]^2", "R^{2}_{rf}", "Random Forest R²", "neighbourhood", "specific", 1, 0,
-  "lm_nmse", "NMSE[lm]", "\\mathit{NMSE}_{\\textit{lm}}", "Linear regression Normalised MSE", "specific", "neighbourhood", 1, 0,
-  "lm_mse", "MSE[lm]", "\\mathit{MSE}_{\\textit{lm}}", "Linear regression MSE", "neighbourhood", "specific", 0, 0.3,
-  "lm_rsq", "R[lm]^2", "R^{2}_{lm}", "Linear regression R²", "neighbourhood", "specific", 1, 0,
-  "edge_flip", "edgeflip", "\\textrm{edgeflip}", "Edge flip", "topology", "specific", 1, 0,
-  "him", "HIM", "\\textrm{HIM}", "Hamming-Ipsen-Mikhailov similarity", "topology", "specific", 1, 0,
-  "isomorphic", "isomorphic", "\\textrm{isomorphic}", "Isomorphic", "topology", "specific", 1, 0,
-  "featureimp_cor", "cor[features]", "\\mathit{cor}_{\\textrm{features}}", "Feature importance correlation", "features", "application", 1, 0,
-  "featureimp_wcor", "wcor[features]", "\\mathit{wcor}_{\\textrm{features}}", "Feature importance weighted correlation", "features", "application", 1, 0,
-  "featureimp_ks", "ks[features]", "\\mathit{ks}_{\\textrm{features}}", "Feature importance enrichment ks", "features", "application", 1, 0,
-  "featureimp_wilcox", "wilcox[features]", "\\mathit{wilcox}_{\\textrm{features}}", "Feature importance enrichment wilcox", "features", "application", 1, 0,
-  "F1_branches", "F1[branches]", "\\mathit{F1}_{\\textit{branches}}", "Overlap between the branches", "clustering", "specific", 1, 0,
-  "F1_milestones", "F1[milestones]", "\\mathit{F1}_{\\textit{milestones}}", "Overlap between the milestones", "clustering", "specific", 1, 0,
-  "harm_mean", "h-mean", "\\textrm{h-mean}", "Harmonic mean", "average", "overall", 1, 0
+  ~metric_id, ~plotmath, ~latex, ~html, ~long_name, ~category, ~type, ~perfect, ~worst,
+  "correlation", "cor[dist]", "\\mathit{cor}_{\\textrm{dist}}", "cor<sub>dist</sub>", "Geodesic distance correlation", "ordering", "specific", 1, 0,
+  "rf_nmse", "NMSE[rf]", "\\mathit{NMSE}_{\\textit{rf}}", "NMSE<sub>rf</sub>", "Random Forest MSE", "neighbourhood", "specific", 1, 0,
+  "rf_mse", "MSE[rf]", "\\mathit{MSE}_{\\textit{rf}}", "MSE<sub>rf</sub>", "Random Forest Normalised MSE", "neighbourhood", "specific", 0, 0.3,
+  "rf_rsq", "R[rf]^2", "R^{2}_{rf}", "Random Forest R²", "R<sup>2</sup><sub>rf</sub>", "neighbourhood", "specific", 1, 0,
+  "lm_nmse", "NMSE[lm]", "\\mathit{NMSE}_{\\textit{lm}}", "NMSE<sub>lm</sub>", "Linear regression Normalised MSE", "specific", "neighbourhood", 1, 0,
+  "lm_mse", "MSE[lm]", "\\mathit{MSE}_{\\textit{lm}}", "MSE<sub>lm</sub>", "Linear regression MSE", "neighbourhood", "specific", 0, 0.3,
+  "lm_rsq", "R[lm]^2", "R^{2}_{lm}", "Linear regression R²", "R<sup>2</sup><sub>lm</sub>", "neighbourhood", "specific", 1, 0,
+  "edge_flip", "edgeflip", "\\textrm{edgeflip}", "edgeflip", "Edge flip", "topology", "specific", 1, 0,
+  "him", "HIM", "\\textrm{HIM}", "HIM", "Hamming-Ipsen-Mikhailov similarity", "topology", "specific", 1, 0,
+  "isomorphic", "isomorphic", "\\textrm{isomorphic}", "Isomorphic", "isomorphic", "topology", "specific", 1, 0,
+  "featureimp_cor", "cor[features]", "\\mathit{cor}_{\\textrm{features}}", "cor<sub>features</sub>", "Feature importance correlation", "features", "application", 1, 0,
+  "featureimp_wcor", "wcor[features]", "\\mathit{wcor}_{\\textrm{features}}", "wcor<sub>features</sub>", "Feature importance weighted correlation", "features", "application", 1, 0,
+  "featureimp_ks", "ks[features]", "\\mathit{ks}_{\\textrm{features}}", "ks<sub>feature</sub>", "Feature importance enrichment ks", "features", "application", 1, 0,
+  "featureimp_wilcox", "wilcox[features]", "\\mathit{wilcox}_{\\textrm{features}}", "wilcox<sub>feature</sub>", "Feature importance enrichment wilcox", "features", "application", 1, 0,
+  "F1_branches", "F1[branches]", "\\mathit{F1}_{\\textit{branches}}", "F1<sub>branches</sub>", "Overlap between the branches", "clustering", "specific", 1, 0,
+  "F1_milestones", "F1[milestones]", "\\mathit{F1}_{\\textit{milestones}}", "F1<sub>milestones</sub>", "Overlap between the milestones", "clustering", "specific", 1, 0,
+  "harm_mean", "hmean", "\\textrm{hmean}", "hmean", "Harmonic mean", "average", "overall", 1, 0
 )
 
 devtools::use_data(metrics, overwrite = TRUE)

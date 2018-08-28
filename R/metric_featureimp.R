@@ -58,7 +58,7 @@ calculate_featureimp_cor <- function(dataset, prediction, num_trees = 10000, mtr
 #'
 #' @importFrom dynfeature calculate_overall_feature_importance
 #' @importFrom stats ks.test wilcox.test
-compute_featureimp_enrichment <- function(dataset, prediction, num_trees = 10000) {
+calculate_featureimp_enrichment <- function(dataset, prediction, num_trees = 10000) {
   cell_ids <- dataset$cell_ids
 
   tryCatch({
