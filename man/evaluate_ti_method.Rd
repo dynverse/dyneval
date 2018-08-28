@@ -30,7 +30,7 @@ If multiple methods were provided in the \code{method} parameter,
   \item Edge flip score: \code{"edge_flip"}
   \item Isomorphic: \code{"isomorphic"}
   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
-  \item Similarity in feature importance: \code{"featureimp_cor"}, \code{"featureimp_ks"}
+  \item Similarity in feature importance: \code{"featureimp_cor"}, \code{"featureimp_wcor"}, \code{"featureimp_ks"}, \code{"featureimp_wilcox"}
   \item Overlap between branches: \code{"F1_branches"}
   \item Custom metric function. Format: \code{function(dataset, model) { 1 }}
 }}

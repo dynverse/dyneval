@@ -8,7 +8,7 @@
 #'   \item Edge flip score: \code{"edge_flip"}
 #'   \item Isomorphic: \code{"isomorphic"}
 #'   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
-#'   \item Similarity in feature importance: \code{"featureimp_cor"}, \code{"featureimp_ks"}
+#'   \item Similarity in feature importance: \code{"featureimp_cor"}, \code{"featureimp_wcor"}, \code{"featureimp_ks"}, \code{"featureimp_wilcox"}
 #'   \item Overlap between branches: \code{"F1_branches"}
 #'   \item Custom metric function. Format: \code{function(dataset, model) { 1 }}
 #' }
@@ -144,22 +144,23 @@ calculate_metrics <- function(
     )
   }
 
-  if ("featureimp_cor" %in% metrics) {
+  if (c("featureimp_cor", "featureimp_wcor") %in% metrics) {
     time0 <- Sys.time()
     featureimp <- calculate_featureimp_cor(dataset, model)
     time1 <- Sys.time()
     summary_list$time_featureimp <- as.numeric(difftime(time1, time0, units = "sec"))
     summary_list$featureimp_cor <- featureimp$featureimp_cor
+    summary_list$featureimp_wcor <- featureimp$featureimp_wcor
   }
 
-  if ("featureimp_ks" %in% metrics) {
+  if (c("featureimp_ks", "featureimp_wilcox") %in% metrics) {
     time0 <- Sys.time()
-    featureimp <- compute_featureimp_ks(dataset, model)
+    featureimp <- compute_featureimp_enrichment(dataset, model)
     time1 <- Sys.time()
-    summary_list$time_featureimp_ks <- as.numeric(difftime(time1, time0, units = "sec"))
+    summary_list$time_featureimp_enrichment <- as.numeric(difftime(time1, time0, units = "sec"))
     summary_list$featureimp_ks <- featureimp$featureimp_ks
+    summary_list$featureimp_wilcox <- featureimp$featureimp_wilcox
   }
-
 
 
   if (any(c("recovery_branches", "relevance_branches", "F1_branches", "recovery_milestones", "relevance_milestones", "F1_milestones") %in% metrics)) {
