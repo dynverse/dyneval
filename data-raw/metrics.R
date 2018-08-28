@@ -1,4 +1,4 @@
-library(tibble)
+library(tidyverse)
 
 metrics <- readr::read_tsv("data-raw/metrics.tsv", col_types = cols(perfect = "d", worst = "d", .default = "c"))
 
