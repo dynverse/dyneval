@@ -162,7 +162,6 @@ calculate_metrics <- function(
     summary_list$featureimp_wilcox <- featureimp$featureimp_wilcox
   }
 
-
   if (any(c("recovery_branches", "relevance_branches", "F1_branches", "recovery_milestones", "relevance_milestones", "F1_milestones") %in% metrics)) {
     dataset_simplified <- dynwrap::simplify_trajectory(dataset, allow_self_loops = TRUE)
     if (!is.null(model)) {

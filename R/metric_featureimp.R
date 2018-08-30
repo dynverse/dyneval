@@ -19,28 +19,7 @@ calculate_featureimp_cor <- function(dataset, prediction, num_trees = 10000, mtr
     dataset_imp <- dynfeature::calculate_overall_feature_importance(dataset, expression_source = dataset$expression, method_params = method_params)
     pred_imp <- dynfeature::calculate_overall_feature_importance(prediction, expression_source = dataset$expression, method_params = method_params)
 
-    join <- full_join(
-      dataset_imp %>% rename(dataset_imp = importance),
-      pred_imp %>% rename(pred_imp = importance),
-      by = "feature_id"
-    ) %>%
-      mutate_at(c("dataset_imp", "pred_imp"), ~ ifelse(is.na(.), 0, .))
-
-    #' @examples
-    #' ggplot(join) + geom_point(aes(dataset_imp, pred_imp))
-    featureimp_cor <- cor(join$dataset_imp, join$pred_imp) %>% max(0)
-
-    cov_wt <- cov.wt(
-      x = matrix(c(join$dataset_imp, join$pred_imp), ncol = 2),
-      wt = join$dataset_imp,
-      cor = TRUE
-    )
-    featureimp_wcor <- cov_wt$cor[1, 2] %>% max(0)
-
-    lst(
-      featureimp_cor,
-      featureimp_wcor
-    )
+    .calculate_featureimp_cor(dataset_imp, pred_imp)
   } else {
     list(
       featureimp_cor = 0,
@@ -49,6 +28,30 @@ calculate_featureimp_cor <- function(dataset, prediction, num_trees = 10000, mtr
   }
 }
 
+.calculate_featureimp_cor <- function(dataset_imp, pred_imp) {
+  join <- full_join(
+    dataset_imp %>% rename(dataset_imp = importance),
+    pred_imp %>% rename(pred_imp = importance),
+    by = "feature_id"
+  ) %>%
+    mutate_at(c("dataset_imp", "pred_imp"), ~ ifelse(is.na(.), 0, .))
+
+  #' @examples
+  #' ggplot(join) + geom_point(aes(dataset_imp, pred_imp))
+  featureimp_cor <- cor(join$dataset_imp, join$pred_imp) %>% max(0)
+
+  cov_wt <- cov.wt(
+    x = matrix(c(join$dataset_imp, join$pred_imp), ncol = 2),
+    wt = join$dataset_imp,
+    cor = TRUE
+  )
+  featureimp_wcor <- cov_wt$cor[1, 2] %>% max(0)
+
+  lst(
+    featureimp_cor,
+    featureimp_wcor
+  )
+}
 
 #' Compare enrichment in finding back the most important genes
 #'
