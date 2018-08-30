@@ -22,22 +22,24 @@ These include:
 | correlation    | Geodesic distance correlation      | ordering      |
 | rf\_nmse       | Random Forest MSE                  | neighbourhood |
 | rf\_mse        | Random Forest Normalised MSE       | neighbourhood |
-| rf\_rsq        | Random Forest R²                   | neighbourhood |
+| rf\_rsq        | R<sup>2</sup><sub>rf</sub>         | neighbourhood |
 | lm\_mse        | Linear regression MSE              | neighbourhood |
-| lm\_rsq        | Linear regression R²               | neighbourhood |
+| lm\_rsq        | R<sup>2</sup><sub>lm</sub>         | neighbourhood |
 | edge\_flip     | Edge flip                          | topology      |
 | him            | Hamming-Ipsen-Mikhailov similarity | topology      |
-| isomorphic     | Isomorphic                         | topology      |
+| isomorphic     | isomorphic                         | topology      |
 | F1\_branches   | Overlap between the branches       | clustering    |
 | F1\_milestones | Overlap between the milestones     | clustering    |
 
   - **Application metrics**, which assess the accuracy of some
     downstream analyses of trajectories
 
-| metric\_id      | long\_name                     |
-| :-------------- | :----------------------------- |
-| featureimp\_cor | Feature importance correlation |
-| fimp\_ks        | Feature importance enrichment  |
+| metric\_id         | long\_name                              |
+| :----------------- | :-------------------------------------- |
+| featureimp\_cor    | Feature importance correlation          |
+| featureimp\_wcor   | Feature importance weighted correlation |
+| featureimp\_ks     | Feature importance enrichment ks        |
+| featureimp\_wilcox | Feature importance enrichment wilcox    |
 
   - **Overall metrics**, which combine several specific and/or
     application metrics to analyse the overall similarity of two

@@ -5,3 +5,4 @@
 ^scripts$
 ^.git$
 ^data-raw$
+^README\.Rmd$

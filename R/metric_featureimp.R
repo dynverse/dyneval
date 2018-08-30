@@ -13,7 +13,6 @@ calculate_featureimp_cor <- function(dataset, prediction, num_trees = 10000, mtr
   cell_ids <- dataset$cell_ids
 
   if (!is.null(prediction) && length(unique(prediction$milestone_percentages$cell_id)) >= 3) {
-    mtry <- mtry(dynwrap::get_expression(dataset))
     method_params <- list(num.trees = num_trees, mtry = mtry)
 
     dataset_imp <- dynfeature::calculate_overall_feature_importance(dataset, expression_source = dataset$expression, method_params = method_params)
@@ -36,8 +35,6 @@ calculate_featureimp_cor <- function(dataset, prediction, num_trees = 10000, mtr
   ) %>%
     mutate_at(c("dataset_imp", "pred_imp"), ~ ifelse(is.na(.), 0, .))
 
-  #' @examples
-  #' ggplot(join) + geom_point(aes(dataset_imp, pred_imp))
   featureimp_cor <- cor(join$dataset_imp, join$pred_imp) %>% max(0)
 
   cov_wt <- cov.wt(
@@ -98,4 +95,4 @@ calculate_featureimp_enrichment <- function(dataset, prediction, num_trees = 100
 #' prediction <- dynwrap::infer_trajectory(dataset, "slingshot", parameters = list())
 #' num_trees <- 10000
 #' mtry = function(x) ncol(x) * .01
-#'
+#' calculate_featureimp_cor(dataset, prediction)
