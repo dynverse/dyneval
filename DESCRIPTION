@@ -32,10 +32,12 @@ Imports:
   tibble, 
   tidyr
 Suggests:
+  dyndimred,
   dyntoy,
   roxygen2,
   netdist
 Remotes:
+  dynverse/dyndimred,
   dynverse/dynfeature,
   dynverse/dyntoy,
   dynverse/dynutils,
