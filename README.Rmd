@@ -30,7 +30,7 @@ These include:
 ```{r}
 metrics %>% 
   filter(type == "specific") %>%
-  select(metric_id, long_name, category) %>% 
+  select(Name = html, `Long name`= long_name, Category = category) %>% 
   knitr::kable()
 ```
 
@@ -39,7 +39,7 @@ metrics %>%
 ```{r}
 metrics %>% 
   filter(type == "application") %>%
-  select(metric_id, long_name) %>% 
+  select(Name = html, `Long name`= long_name) %>% 
   knitr::kable()
 ```
 
@@ -48,6 +48,6 @@ metrics %>%
 ```{r}
 metrics %>% 
   filter(type == "overall") %>%
-  select(metric_id, long_name) %>% 
+  select(Name = html, `Long name`= long_name) %>% 
   knitr::kable()
 ```

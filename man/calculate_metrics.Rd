@@ -4,7 +4,7 @@
 \alias{calculate_metrics}
 \title{Calculate the performance of a model with respect to a dataset}
 \usage{
-calculate_metrics(dataset, model, metrics = metrics$metric_id)
+calculate_metrics(dataset, model, metrics = dyneval::metrics$metric_id)
 }
 \arguments{
 \item{dataset}{the original dataset}
@@ -17,7 +17,7 @@ calculate_metrics(dataset, model, metrics = metrics$metric_id)
   \item Edge flip score: \code{"edge_flip"}
   \item Isomorphic: \code{"isomorphic"}
   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
-  \item Similarity in feature importance: \code{"featureimp_cor"}
+  \item Similarity in feature importance: \code{"featureimp_cor"}, \code{"featureimp_wcor"}, \code{"featureimp_ks"}, \code{"featureimp_wilcox"}
   \item Overlap between branches: \code{"F1_branches"}
   \item Custom metric function. Format: \code{function(dataset, model) { 1 }}
 }}

@@ -8,7 +8,7 @@
 #'   \item Edge flip score: \code{"edge_flip"}
 #'   \item Isomorphic: \code{"isomorphic"}
 #'   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
-#'   \item Similarity in feature importance: \code{"featureimp_cor"}
+#'   \item Similarity in feature importance: \code{"featureimp_cor"}, \code{"featureimp_wcor"}, \code{"featureimp_ks"}, \code{"featureimp_wilcox"}
 #'   \item Overlap between branches: \code{"F1_branches"}
 #'   \item Custom metric function. Format: \code{function(dataset, model) { 1 }}
 #' }
@@ -21,7 +21,7 @@
 calculate_metrics <- function(
   dataset,
   model,
-  metrics = metrics$metric_id
+  metrics = dyneval::metrics$metric_id
 ) {
   # check if all function metrics are named
   if (!all(sapply(seq_along(metrics), function(i) !is.function(metrics[[i]]) || !is.null(names(metrics)[[i]])))) {
@@ -134,7 +134,7 @@ calculate_metrics <- function(
 
   if (any(c("rf_mse", "rf_rsq", "rf_nmse", "lm_mse", "lm_rsq", "lm_nmse") %in% metrics)) {
     time0 <- Sys.time()
-    position_predict <- compute_position_predict(dataset, model)
+    position_predict <- calculate_position_predict(dataset, model)
     time1 <- Sys.time()
     summary_list$time_pp <- as.numeric(difftime(time1, time0, units = "sec"))
 
@@ -144,15 +144,23 @@ calculate_metrics <- function(
     )
   }
 
-  if ("featureimp_cor" %in% metrics) {
+  if (any(c("featureimp_cor", "featureimp_wcor") %in% metrics)) {
     time0 <- Sys.time()
-    fimp <- compute_featureimp(dataset, model)
+    featureimp <- calculate_featureimp_cor(dataset, model)
     time1 <- Sys.time()
     summary_list$time_featureimp <- as.numeric(difftime(time1, time0, units = "sec"))
-    summary_list$featureimp_cor <- fimp$featureimp_cor
+    summary_list$featureimp_cor <- featureimp$featureimp_cor
+    summary_list$featureimp_wcor <- featureimp$featureimp_wcor
   }
 
-
+  if (any(c("featureimp_ks", "featureimp_wilcox") %in% metrics)) {
+    time0 <- Sys.time()
+    featureimp <- calculate_featureimp_enrichment(dataset, model)
+    time1 <- Sys.time()
+    summary_list$time_featureimp_enrichment <- as.numeric(difftime(time1, time0, units = "sec"))
+    summary_list$featureimp_ks <- featureimp$featureimp_ks
+    summary_list$featureimp_wilcox <- featureimp$featureimp_wilcox
+  }
 
   if (any(c("recovery_branches", "relevance_branches", "F1_branches", "recovery_milestones", "relevance_milestones", "F1_milestones") %in% metrics)) {
     dataset_simplified <- dynwrap::simplify_trajectory(dataset, allow_self_loops = TRUE)
