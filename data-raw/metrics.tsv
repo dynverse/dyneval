@@ -15,4 +15,6 @@ featureimp_ks	ks[features]	\mathit{ks}_{\textrm{features}}	ks<sub>feature</sub>	
 featureimp_wilcox	wilcox[features]	\mathit{wilcox}_{\textrm{features}}	wilcox<sub>feature</sub>	Feature importance enrichment wilcox	features	application	1	0
 F1_branches	F1[branches]	\mathit{F1}_{\textit{branches}}	F1<sub>branches</sub>	Overlap between the branches	clustering	specific	1	0
 F1_milestones	F1[milestones]	\mathit{F1}_{\textit{milestones}}	F1<sub>milestones</sub>	Overlap between the milestones	clustering	specific	1	0
-harm_mean	hmean	\textrm{hmean}	hmean	Harmonic mean	average	overall	1	0
+harm_mean	mean[harmonic]	\mathit{mean}_{\textit{harmonic}}	mean<sub>harmonic</sub>	Harmonic mean	average	overall	1	0
+geom_mean	mean[geometric]	\mathit{mean}_{\textit{geometric}}	mean<sub>geometric</sub>	Geometric mean	average	overall	1	0
+arith_mean	mean[arithmetic]	\mathit{mean}_{\textit{arithmetic}}	mean<sub>arithmetic</sub>	Arithmetic mean	average	overall	1	0
