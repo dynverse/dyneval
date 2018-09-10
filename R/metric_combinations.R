@@ -4,6 +4,7 @@
 #'   - One numeric vector
 #'   - A list containg numeric vectors
 #'   - Numeric vectors given as separate inputs
+#' @param weights Weights with the same length as ...
 #'
 #' @rdname calculate_combinations
 #'
@@ -15,23 +16,36 @@
 #' calculate_harmonic_mean(c(0.1, 0.9), c(0.2, 1))
 #' calculate_arithmetic_mean(c(0.1, 10), c(0.9, 20))
 #' @export
-calculate_harmonic_mean <- function(...) {
+calculate_harmonic_mean <- function(..., weights = NULL) {
   x <- process_combination_input(...)
-  ncol(x) / rowSums(1/x)
+  if (is.null(weights)) {
+    ncol(x) / rowSums(1/x)
+  } else {
+   sum(weights) / rowSums(process_weights(weights, nrow(x))/x)
+  }
 }
 
 #' @rdname calculate_combinations
 #' @export
-calculate_geometric_mean <- function(...) {
+calculate_geometric_mean <- function(..., weights = NULL) {
   x <- process_combination_input(...)
-  apply(x, 1, prod)^(1/ncol(x))
+  if (is.null(weights)) {
+    apply(x, 1, prod)^(1/ncol(x))
+  } else {
+    exp(rowSums(process_weights(weights, nrow(x)) * log(x)) / sum(weights))
+  }
 }
 
 #' @rdname calculate_combinations
 #' @export
-calculate_arithmetic_mean <- function(...) {
+calculate_arithmetic_mean <- function(..., weights = NULL) {
   x <- process_combination_input(...)
-  rowSums(x)/ncol(x)
+
+  if (is.null(weights)) {
+    rowSums(x)/ncol(x)
+  } else {
+    rowSums(x * process_weights(weights, nrow(x))) / sum(weights)
+  }
 }
 
 # Processes:
@@ -52,4 +66,8 @@ process_combination_input <- function(...) {
   } else {
     stop("Invalid input")
   }
+}
+
+process_weights <- function(weights, n_observations) {
+  matrix(rep(weights, n_observations), nrow = n_observations, byrow = TRUE)
 }
