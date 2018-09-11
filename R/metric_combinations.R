@@ -69,5 +69,5 @@ process_combination_input <- function(...) {
 }
 
 process_weights <- function(weights, n_observations) {
-  matrix(rep(weights, n_observations), nrow = n_observations, byrow = TRUE)
+  matrix(rep(weights, n_observations), nrow = n_observations, ncol = length(weights), byrow = TRUE)
 }
