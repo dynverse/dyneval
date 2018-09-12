@@ -6,17 +6,19 @@
 \alias{calculate_arithmetic_mean}
 \title{Calculate combinations of metrics}
 \usage{
-calculate_harmonic_mean(...)
+calculate_harmonic_mean(..., weights = NULL)
 
-calculate_geometric_mean(...)
+calculate_geometric_mean(..., weights = NULL)
 
-calculate_arithmetic_mean(...)
+calculate_arithmetic_mean(..., weights = NULL)
 }
 \arguments{
 \item{...}{Can be:
 - One numeric vector
 - A list containg numeric vectors
 - Numeric vectors given as separate inputs}
+
+\item{weights}{Weights with the same length as ...}
 }
 \description{
 Calculate combinations of metrics
