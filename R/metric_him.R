@@ -30,6 +30,11 @@ calculate_him <- function(
     simplify = simplify
   )
 
+  # return 0 when the largest length of either graph is 0
+  if (max(adjacencies[[2]]) == 0 || max(adjacencies[[1]]) == 0) {
+    return(0)
+  }
+
   netdist <- netdist::netdist(
     adjacencies[[1]] / sum(adjacencies[[1]]),
     adjacencies[[2]] / sum(adjacencies[[2]]),
