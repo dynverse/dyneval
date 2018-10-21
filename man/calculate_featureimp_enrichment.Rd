@@ -4,14 +4,15 @@
 \alias{calculate_featureimp_enrichment}
 \title{Compare enrichment in finding back the most important genes}
 \usage{
-calculate_featureimp_enrichment(dataset, prediction, num_trees = 10000)
+calculate_featureimp_enrichment(dataset, prediction,
+  fi_method = dynfeature::fi_ranger_rf_lite())
 }
 \arguments{
 \item{dataset}{A dataset}
 
 \item{prediction}{A predicted model}
 
-\item{num_trees}{the number of trees to use during the calculation of the metric}
+\item{fi_method}{A feature importance method. Default: `fi_ranger_rf_lite()`. Check `?fi_methods` for a full list of available feature importance methods.}
 }
 \description{
 Compare enrichment in finding back the most important genes

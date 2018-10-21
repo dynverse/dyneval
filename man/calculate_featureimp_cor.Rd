@@ -4,17 +4,15 @@
 \alias{calculate_featureimp_cor}
 \title{Compare feature importances derived by both trajectories}
 \usage{
-calculate_featureimp_cor(dataset, prediction, num_trees = 10000,
-  mtry = function(x) ncol(x) * 0.01)
+calculate_featureimp_cor(dataset, prediction,
+  fi_method = dynfeature::fi_ranger_rf_lite())
 }
 \arguments{
 \item{dataset}{A dataset}
 
 \item{prediction}{A predicted model}
 
-\item{num_trees}{The number of trees to use for the random forest}
-
-\item{mtry}{Number of features to split in each node. Can be a function with as argument the dataset}
+\item{fi_method}{A feature importance method. Default: `fi_ranger_rf_lite()`. Check `?fi_methods` for a full list of available feature importance methods.}
 }
 \description{
 Compare feature importances derived by both trajectories
