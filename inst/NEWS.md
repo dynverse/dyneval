@@ -1,6 +1,8 @@
 # dyneval 0.2.0 (24-10-2018)
 
-* DOCUMENTATION: Add NEWS.md
+* DOCUMENTATION: Add NEWS.md.
+
+* BUG FIX: Fix long_name of rf_mse and rf_nmse in metrics.tsv.
 
 # dyneval 0.1.0 (10-03-2017)
 
