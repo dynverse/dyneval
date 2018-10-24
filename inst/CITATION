@@ -1,0 +1,13 @@
+citEntry(
+  entry    = "Article",
+  author   = "Robrecht Cannoodt and Wouter Saelens",
+  title    = "dyneval: Evaluating trajectory inference methods",
+  journal  = "In Progress",
+  year     = "2019",
+  month    = "",
+  volume   = "",
+  number   = "",
+  pages    = "",
+  doi      = "",
+  textVersion = "Cannoodt R. and Saelens W., dyneval: Evaluating trajectory inference methods, In Progress, 2019."
+)
