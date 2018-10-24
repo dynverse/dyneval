@@ -6,6 +6,8 @@
 
 * FEATURE: Allow expression_source to be specified for feature importance metrics.
 
+* BUG FIX: Fix category and type of lm_nmse.
+
 # dyneval 0.1.0 (10-03-2017)
 
 * INITIAL RELEASE: dyneval provides an evaluation pipeline and the required metrics for evaluating trajectory inference methods.

@@ -3,7 +3,7 @@ correlation	cor[dist]	\mathit{cor}_{\textrm{dist}}	cor<sub>dist</sub>	Geodesic d
 rf_mse	MSE[rf]	\mathit{MSE}_{\textit{rf}}	MSE<sub>rf</sub>	Random Forest MSE	neighbourhood	specific	0	0.3
 rf_nmse	NMSE[rf]	\mathit{NMSE}_{\textit{rf}}	NMSE<sub>rf</sub>	Random Forest Normalised MSE	neighbourhood	specific	1	0
 rf_rsq	R[rf]^2	R^{2}_{rf}	R<sup>2</sup><sub>rf</sub>	Random Forest R²	neighbourhood	specific	1	0
-lm_nmse	NMSE[lm]	\mathit{NMSE}_{\textit{lm}}	NMSE<sub>lm</sub>	Linear regression Normalised MSE	specific	neighbourhood	1	0
+lm_nmse	NMSE[lm]	\mathit{NMSE}_{\textit{lm}}	NMSE<sub>lm</sub>	Linear regression Normalised MSE	neighbourhood	specific	1	0
 lm_mse	MSE[lm]	\mathit{MSE}_{\textit{lm}}	MSE<sub>lm</sub>	Linear regression MSE	neighbourhood	specific	0	0.3
 lm_rsq	R[lm]^2	R^{2}_{lm}	R<sup>2</sup><sub>lm</sub>	Linear regression R²	neighbourhood	specific	1	0
 edge_flip	edgeflip	\textrm{edgeflip}	edgeflip	Edge flip	topology	specific	1	0
