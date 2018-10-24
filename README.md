@@ -21,9 +21,10 @@ ordering
 | Name                       | Long name                          | Category      |
 | :------------------------- | :--------------------------------- | :------------ |
 | cor<sub>dist</sub>         | Geodesic distance correlation      | ordering      |
-| NMSE<sub>rf</sub>          | Random Forest MSE                  | neighbourhood |
-| MSE<sub>rf</sub>           | Random Forest Normalised MSE       | neighbourhood |
+| MSE<sub>rf</sub>           | Random Forest MSE                  | neighbourhood |
+| NMSE<sub>rf</sub>          | Random Forest Normalised MSE       | neighbourhood |
 | R<sup>2</sup><sub>rf</sub> | Random Forest R²                   | neighbourhood |
+| NMSE<sub>lm</sub>          | Linear regression Normalised MSE   | neighbourhood |
 | MSE<sub>lm</sub>           | Linear regression MSE              | neighbourhood |
 | R<sup>2</sup><sub>lm</sub> | Linear regression R²               | neighbourhood |
 | edgeflip                   | Edge flip                          | topology      |
@@ -62,7 +63,14 @@ changes.
 
 ### Latest changes in dyneval 0.2.0 (24-10-2018)
 
-  - DOCUMENTATION: Add NEWS.md
+  - DOCUMENTATION: Add NEWS.md.
+
+  - BUG FIX: Fix long\_name of rf\_mse and rf\_nmse in metrics.tsv.
+
+  - FEATURE: Allow expression\_source to be specified for feature
+    importance metrics.
+
+  - BUG FIX: Fix category and type of lm\_nmse.
 
 ### Latest changes in dyneval 0.1.0 (10-03-2017)
 
