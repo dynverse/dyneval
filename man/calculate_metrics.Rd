@@ -4,22 +4,22 @@
 \alias{calculate_metrics}
 \title{Calculate the performance of a model with respect to a dataset}
 \usage{
-calculate_metrics(dataset, model, metrics = dyneval::metrics$metric_id)
+calculate_metrics(dataset, model, metrics = dyneval::metrics$metric_id,
+  expression_source = dataset$expression)
 }
 \arguments{
-\item{dataset}{the original dataset}
+\item{dataset}{The original dataset.}
 
-\item{model}{the predicted model}
+\item{model}{The predicted model.}
 
-\item{metrics}{which metrics to evaluate:
-\enumerate{
-  \item Spearman correlation of geodesic distances: \code{"correlation"}
-  \item Edge flip score: \code{"edge_flip"}
-  \item Isomorphic: \code{"isomorphic"}
-  \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
-  \item Similarity in feature importance: \code{"featureimp_cor"}, \code{"featureimp_wcor"}, \code{"featureimp_ks"}, \code{"featureimp_wilcox"}
-  \item Overlap between branches: \code{"F1_branches"}
-  \item Custom metric function. Format: \code{function(dataset, model) { 1 }}
+\item{metrics}{Which metrics to evaluate. Check \code{dyneval::metrics} for a list of possible metrics.
+Passing a custom metric function with format \code{function(dataset, model) { 1 }} is also supported.}
+
+\item{expression_source}{The expression data matrix, with features as columns.
+\itemize{
+\item If a matrix is provided, it is used as is.
+\item If a character is provided, \code{dataset[[expression_source]]} should contain the matrix.
+\item If a function is provided, that function will be called in order to obtain the expression (useful for lazy loading).
 }}
 }
 \description{

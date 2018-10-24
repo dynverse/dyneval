@@ -5,6 +5,7 @@
 \title{Compare enrichment in finding back the most important genes}
 \usage{
 calculate_featureimp_enrichment(dataset, prediction,
+  expression_source = dataset$expression,
   fi_method = dynfeature::fi_ranger_rf_lite())
 }
 \arguments{
@@ -12,7 +13,14 @@ calculate_featureimp_enrichment(dataset, prediction,
 
 \item{prediction}{A predicted model}
 
-\item{fi_method}{A feature importance method. Default: `fi_ranger_rf_lite()`. Check `?fi_methods` for a full list of available feature importance methods.}
+\item{expression_source}{The expression data matrix, with features as columns.
+\itemize{
+\item If a matrix is provided, it is used as is.
+\item If a character is provided, \code{dataset[[expression_source]]} should contain the matrix.
+\item If a function is provided, that function will be called in order to obtain the expression (useful for lazy loading).
+}}
+
+\item{fi_method}{A feature importance method. Default: \code{fi_ranger_rf_lite()}. Check \code{?fi_methods} for a full list of available feature importance methods.}
 }
 \description{
 Compare enrichment in finding back the most important genes

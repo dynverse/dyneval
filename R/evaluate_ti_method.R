@@ -3,7 +3,6 @@
 #' @inheritParams calculate_metrics
 #' @inheritParams dynwrap::infer_trajectories
 #' @param output_model Whether or not the model will be outputted.
-#'
 #' @export
 #' @importFrom dynwrap infer_trajectories add_cell_waypoints
 #' @importFrom parallel mclapply

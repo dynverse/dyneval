@@ -1,17 +1,13 @@
 #' Calculate the performance of a model with respect to a dataset
 #'
-#' @param dataset the original dataset
-#' @param model the predicted model
-#' @param metrics which metrics to evaluate:
-#' \enumerate{
-#'   \item Spearman correlation of geodesic distances: \code{"correlation"}
-#'   \item Edge flip score: \code{"edge_flip"}
-#'   \item Isomorphic: \code{"isomorphic"}
-#'   \item RF MSE: \code{"rf_mse"}, \code{"rf_rsq"}
-#'   \item Similarity in feature importance: \code{"featureimp_cor"}, \code{"featureimp_wcor"}, \code{"featureimp_ks"}, \code{"featureimp_wilcox"}
-#'   \item Overlap between branches: \code{"F1_branches"}
-#'   \item Custom metric function. Format: \code{function(dataset, model) { 1 }}
-#' }
+#' @param dataset The original dataset.
+#' @param model The predicted model.
+#' @param metrics Which metrics to evaluate. Check `dyneval::metrics` for a list of possible metrics.
+#'   Passing a custom metric function with format `function(dataset, model) { 1 }` is also supported.
+#' @param expression_source The expression data matrix, with features as columns.
+#'   * If a matrix is provided, it is used as is.
+#'   * If a character is provided, `dataset[[expression_source]]` should contain the matrix.
+#'   * If a function is provided, that function will be called in order to obtain the expression (useful for lazy loading).
 #'
 #' @importFrom igraph is_isomorphic_to graph_from_data_frame
 #' @importFrom testthat expect_equal expect_true
@@ -21,7 +17,8 @@
 calculate_metrics <- function(
   dataset,
   model,
-  metrics = dyneval::metrics$metric_id
+  metrics = dyneval::metrics$metric_id,
+  expression_source = dataset$expression
 ) {
   # check if all function metrics are named
   if (!all(sapply(seq_along(metrics), function(i) !is.function(metrics[[i]]) || !is.null(names(metrics)[[i]])))) {
@@ -146,7 +143,7 @@ calculate_metrics <- function(
 
   if (any(c("featureimp_cor", "featureimp_wcor") %in% metrics)) {
     time0 <- Sys.time()
-    featureimp <- calculate_featureimp_cor(dataset, model)
+    featureimp <- calculate_featureimp_cor(dataset, model, expression_source = expression_source)
     time1 <- Sys.time()
     summary_list$time_featureimp <- as.numeric(difftime(time1, time0, units = "sec"))
     summary_list$featureimp_cor <- featureimp$featureimp_cor
@@ -155,7 +152,7 @@ calculate_metrics <- function(
 
   if (any(c("featureimp_ks", "featureimp_wilcox") %in% metrics)) {
     time0 <- Sys.time()
-    featureimp <- calculate_featureimp_enrichment(dataset, model)
+    featureimp <- calculate_featureimp_enrichment(dataset, model, expression_source = expression_source)
     time1 <- Sys.time()
     summary_list$time_featureimp_enrichment <- as.numeric(difftime(time1, time0, units = "sec"))
     summary_list$featureimp_ks <- featureimp$featureimp_ks

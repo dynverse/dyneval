@@ -3,17 +3,37 @@
 #'
 #' @param dataset A dataset
 #' @param prediction A predicted model
+#' @param expression_source The expression data matrix, with features as columns.
+#'   * If a matrix is provided, it is used as is.
+#'   * If a character is provided, `dataset[[expression_source]]` should contain the matrix.
+#'   * If a function is provided, that function will be called in order to obtain the expression (useful for lazy loading).
+#'
 #' @inheritParams dynfeature::calculate_overall_feature_importance
 #'
 #' @importFrom dynfeature calculate_overall_feature_importance fi_ranger_rf_lite
 #'
 #' @export
-calculate_featureimp_cor <- function(dataset, prediction, fi_method = dynfeature::fi_ranger_rf_lite()) {
+calculate_featureimp_cor <- function(
+  dataset,
+  prediction,
+  expression_source = dataset$expression_source,
+  fi_method = dynfeature::fi_ranger_rf_lite()
+) {
   cell_ids <- dataset$cell_ids
 
   if (!is.null(prediction) && length(unique(prediction$milestone_percentages$cell_id)) >= 3) {
-    dataset_imp <- dynfeature::calculate_overall_feature_importance(dataset, expression_source = dataset$expression, fi_method = fi_method)
-    pred_imp <- dynfeature::calculate_overall_feature_importance(prediction, expression_source = dataset$expression, fi_method = fi_method)
+    dataset_imp <-
+      dynfeature::calculate_overall_feature_importance(
+        traj = dataset,
+        expression_source = expression_source,
+        fi_method = fi_method
+      )
+    pred_imp <-
+      dynfeature::calculate_overall_feature_importance(
+        traj = prediction,
+        expression_source = expression_source,
+        fi_method = fi_method
+      )
 
     .calculate_featureimp_cor(dataset_imp, pred_imp)
   } else {
@@ -51,17 +71,31 @@ calculate_featureimp_cor <- function(dataset, prediction, fi_method = dynfeature
 #'
 #' @param dataset A dataset
 #' @param prediction A predicted model
+#' @param expression_source The expression data matrix, with features as columns.
+#'   * If a matrix is provided, it is used as is.
+#'   * If a character is provided, `dataset[[expression_source]]` should contain the matrix.
+#'   * If a function is provided, that function will be called in order to obtain the expression (useful for lazy loading).
 #' @inheritParams dynfeature::calculate_overall_feature_importance
 #'
 #' @importFrom dynfeature calculate_overall_feature_importance fi_ranger_rf_lite
 #' @importFrom stats ks.test wilcox.test
-calculate_featureimp_enrichment <- function(dataset, prediction, fi_method = dynfeature::fi_ranger_rf_lite()) {
+calculate_featureimp_enrichment <- function(
+  dataset,
+  prediction,
+  expression_source = dataset$expression,
+  fi_method = dynfeature::fi_ranger_rf_lite()
+) {
   cell_ids <- dataset$cell_ids
 
   tryCatch({
     if (!is.null(prediction) && length(unique(prediction$milestone_percentages$cell_id)) >= 3) {
-      method_params <- list(num.trees = num_trees)
-      pred_imp <- dynfeature::calculate_overall_feature_importance(prediction, expression_source = dataset$expression, fi_method = fi_method)
+      pred_imp <-
+        dynfeature::calculate_overall_feature_importance(
+          prediction,
+          expression_source = expression_source,
+          fi_method = fi_method
+        )
+
       dataset_features <- dataset$prior_information$features_id
 
       sel <- pred_imp$importance[pred_imp$feature_id %in% dataset_features]

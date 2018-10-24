@@ -4,6 +4,8 @@
 
 * BUG FIX: Fix long_name of rf_mse and rf_nmse in metrics.tsv.
 
+* FEATURE: Allow expression_source to be specified for feature importance metrics.
+
 # dyneval 0.1.0 (10-03-2017)
 
 * INITIAL RELEASE: dyneval provides an evaluation pipeline and the required metrics for evaluating trajectory inference methods.
