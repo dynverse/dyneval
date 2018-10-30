@@ -1,4 +1,4 @@
-# dyneval 0.2.0 (24-10-2018)
+# dyneval 0.2.0 (30-10-2018)
 
 * DOCUMENTATION: Add NEWS.md.
 
@@ -7,6 +7,8 @@
 * FEATURE: Allow expression_source to be specified for feature importance metrics.
 
 * BUG FIX: Fix category and type of lm_nmse.
+
+* MINOR CHANGE: update dyneval for dynfeature 0.2.0.
 
 # dyneval 0.1.0 (10-03-2017)
 

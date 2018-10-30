@@ -61,7 +61,7 @@ changes.
 
 <!-- This section gets automatically generated from inst/NEWS.md, and also generates inst/NEWS -->
 
-### Latest changes in dyneval 0.2.0 (24-10-2018)
+### Latest changes in dyneval 0.2.0 (30-10-2018)
 
   - DOCUMENTATION: Add NEWS.md.
 
@@ -71,6 +71,8 @@ changes.
     importance metrics.
 
   - BUG FIX: Fix category and type of lm\_nmse.
+
+  - MINOR CHANGE: update dyneval for dynfeature 0.2.0.
 
 ### Latest changes in dyneval 0.1.0 (10-03-2017)
 
