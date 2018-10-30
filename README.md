@@ -70,7 +70,7 @@ changes.
   - FEATURE: Allow expression\_source to be specified for feature
     importance metrics.
 
-  - BUG FIX: Fix category and type of lm\_nmse.
+  - BUG FIX: Fix category and type of lm\_nmse in metrics.tsv.
 
   - MINOR CHANGE: update dyneval for dynfeature 0.2.0.
 

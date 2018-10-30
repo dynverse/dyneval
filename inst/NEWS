@@ -6,7 +6,7 @@ dyneval 0.2.0 (30-10-2018)
 
 * FEATURE: Allow expression_source to be specified for feature importance metrics.
 
-* BUG FIX: Fix category and type of lm_nmse.
+* BUG FIX: Fix category and type of lm_nmse in metrics.tsv.
 
 * MINOR CHANGE: update dyneval for dynfeature 0.2.0.
 
