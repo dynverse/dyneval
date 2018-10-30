@@ -14,9 +14,11 @@ calculate_arithmetic_mean(..., weights = NULL)
 }
 \arguments{
 \item{...}{Can be:
-- One numeric vector
-- A list containg numeric vectors
-- Numeric vectors given as separate inputs}
+\itemize{
+\item One numeric vector
+\item A list containg numeric vectors
+\item Numeric vectors given as separate inputs
+}}
 
 \item{weights}{Weights with the same length as ...}
 }

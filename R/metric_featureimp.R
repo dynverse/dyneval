@@ -3,20 +3,37 @@
 #'
 #' @param dataset A dataset
 #' @param prediction A predicted model
-#' @param num_trees The number of trees to use for the random forest
-#' @param mtry Number of features to split in each node. Can be a function with as argument the dataset
+#' @param expression_source The expression data matrix, with features as columns.
+#'   * If a matrix is provided, it is used as is.
+#'   * If a character is provided, `dataset[[expression_source]]` should contain the matrix.
+#'   * If a function is provided, that function will be called in order to obtain the expression (useful for lazy loading).
 #'
-#' @importFrom dynfeature calculate_overall_feature_importance
+#' @inheritParams dynfeature::calculate_overall_feature_importance
+#'
+#' @importFrom dynfeature calculate_overall_feature_importance fi_ranger_rf_lite
 #'
 #' @export
-calculate_featureimp_cor <- function(dataset, prediction, num_trees = 10000, mtry = function(x) ncol(x) * .01) {
+calculate_featureimp_cor <- function(
+  dataset,
+  prediction,
+  expression_source = dataset$expression_source,
+  fi_method = dynfeature::fi_ranger_rf_lite()
+) {
   cell_ids <- dataset$cell_ids
 
   if (!is.null(prediction) && length(unique(prediction$milestone_percentages$cell_id)) >= 3) {
-    method_params <- list(num.trees = num_trees, mtry = mtry)
-
-    dataset_imp <- dynfeature::calculate_overall_feature_importance(dataset, expression_source = dataset$expression, method_params = method_params)
-    pred_imp <- dynfeature::calculate_overall_feature_importance(prediction, expression_source = dataset$expression, method_params = method_params)
+    dataset_imp <-
+      dynfeature::calculate_overall_feature_importance(
+        traj = dataset,
+        expression_source = expression_source,
+        fi_method = fi_method
+      )
+    pred_imp <-
+      dynfeature::calculate_overall_feature_importance(
+        traj = prediction,
+        expression_source = expression_source,
+        fi_method = fi_method
+      )
 
     .calculate_featureimp_cor(dataset_imp, pred_imp)
   } else {
@@ -54,17 +71,31 @@ calculate_featureimp_cor <- function(dataset, prediction, num_trees = 10000, mtr
 #'
 #' @param dataset A dataset
 #' @param prediction A predicted model
-#' @param num_trees the number of trees to use during the calculation of the metric
+#' @param expression_source The expression data matrix, with features as columns.
+#'   * If a matrix is provided, it is used as is.
+#'   * If a character is provided, `dataset[[expression_source]]` should contain the matrix.
+#'   * If a function is provided, that function will be called in order to obtain the expression (useful for lazy loading).
+#' @inheritParams dynfeature::calculate_overall_feature_importance
 #'
-#' @importFrom dynfeature calculate_overall_feature_importance
+#' @importFrom dynfeature calculate_overall_feature_importance fi_ranger_rf_lite
 #' @importFrom stats ks.test wilcox.test
-calculate_featureimp_enrichment <- function(dataset, prediction, num_trees = 10000) {
+calculate_featureimp_enrichment <- function(
+  dataset,
+  prediction,
+  expression_source = dataset$expression,
+  fi_method = dynfeature::fi_ranger_rf_lite()
+) {
   cell_ids <- dataset$cell_ids
 
   tryCatch({
     if (!is.null(prediction) && length(unique(prediction$milestone_percentages$cell_id)) >= 3) {
-      method_params <- list(num.trees = num_trees)
-      pred_imp <- dynfeature::calculate_overall_feature_importance(prediction, expression_source = dataset$expression, method_params = method_params)
+      pred_imp <-
+        dynfeature::calculate_overall_feature_importance(
+          prediction,
+          expression_source = expression_source,
+          fi_method = fi_method
+        )
+
       dataset_features <- dataset$prior_information$features_id
 
       sel <- pred_imp$importance[pred_imp$feature_id %in% dataset_features]
@@ -89,10 +120,3 @@ calculate_featureimp_enrichment <- function(dataset, prediction, num_trees = 100
     list(featureimp_ks = 0, featureimp_wilcox = 0)
   })
 }
-
-#' @examples
-#' dataset <- dyntoy::generate_dataset(num_cells = 300, num_features = 300)
-#' prediction <- dynwrap::infer_trajectory(dataset, "slingshot", parameters = list())
-#' num_trees <- 10000
-#' mtry = function(x) ncol(x) * .01
-#' calculate_featureimp_cor(dataset, prediction)
