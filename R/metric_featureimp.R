@@ -52,19 +52,27 @@ calculate_featureimp_cor <- function(
   ) %>%
     mutate_at(c("dataset_imp", "pred_imp"), ~ ifelse(is.na(.), 0, .))
 
-  featureimp_cor <- cor(join$dataset_imp, join$pred_imp) %>% max(0)
+  # if either of the feauture importances are all the same, return 0 as correlation
+  if (sd(join$dataset_imp) == 0 || sd(join$pred_imp) == 0) {
+    list(
+      featureimp_cor = 0,
+      featureimp_wcor = 0
+    )
+  } else {
+    featureimp_cor <- cor(join$dataset_imp, join$pred_imp) %>% max(0)
 
-  cov_wt <- cov.wt(
-    x = matrix(c(join$dataset_imp, join$pred_imp), ncol = 2),
-    wt = join$dataset_imp,
-    cor = TRUE
-  )
-  featureimp_wcor <- cov_wt$cor[1, 2] %>% max(0)
+    cov_wt <- cov.wt(
+      x = matrix(c(join$dataset_imp, join$pred_imp), ncol = 2),
+      wt = join$dataset_imp,
+      cor = TRUE
+    )
+    featureimp_wcor <- cov_wt$cor[1, 2] %>% max(0)
 
-  lst(
-    featureimp_cor,
-    featureimp_wcor
-  )
+    lst(
+      featureimp_cor,
+      featureimp_wcor
+    )
+  }
 }
 
 #' Compare enrichment in finding back the most important genes
