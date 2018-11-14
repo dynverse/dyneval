@@ -1,4 +1,4 @@
-# dyneval 0.2.1 
+# dyneval 0.2.1 (14-11-2018)
 
 * BUG FIX: Fix for feature importance scores when only a limited number of features are present
 
