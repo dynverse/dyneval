@@ -1,7 +1,7 @@
 Package: dyneval
 Type: Package
 Title: Evaluating trajectory inference methods
-Version: 0.2.1
+Version: 0.2.1.9000
 Authors@R: c(
   person("Robrecht", "Cannoodt", email = "rcannood@gmail.com", role = c("aut", "cre")),
   person("Wouter", "Saelens", email = "wouter.saelens@ugent.be", role = c("aut")),
