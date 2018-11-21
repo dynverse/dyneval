@@ -5,11 +5,11 @@
 \title{Running an evaluation of a method on a set of datasets with a set of parameters}
 \usage{
 evaluate_ti_method(dataset, method, parameters, metrics,
-  give_priors = NULL, output_model = TRUE, mc_cores = 1,
+  give_priors = NULL, output_model = TRUE, map_fun = map,
   verbose = FALSE)
 }
 \arguments{
-\item{dataset}{The original dataset.}
+\item{dataset}{The first trajectory, in most cases a gold standard trajectory}
 
 \item{method}{One or more methods. Must be one of:
 \itemize{
@@ -25,16 +25,17 @@ If multiple methods were provided in the \code{method} parameter,
 \code{parameters} must be an unnamed list of the same length.}
 
 \item{metrics}{Which metrics to evaluate. Check \code{dyneval::metrics} for a list of possible metrics.
-Passing a custom metric function with format \code{function(dataset, model) { 1 }} is also supported.}
+Passing a custom metric function with format \code{function(dataset, model) { 1 }} is also supported. The name of this function within the list will be used as the name of the metric.}
 
 \item{give_priors}{All the priors a method is allowed to receive.
 Must be a subset of all available priors (\code{\link[dynwrap:priors]{priors}}).}
 
 \item{output_model}{Whether or not the model will be outputted.}
 
-\item{mc_cores}{The number of cores to use, allowing to parallellise the different datasets}
+\item{map_fun}{A mao function to use when inferring trajectories with multiple datasets or methods.
+Allows to parallellise the execution in an arbitrary way.}
 
-\item{verbose}{Whether or not to print information output}
+\item{verbose}{Whether or not to print information output.}
 }
 \description{
 Running an evaluation of a method on a set of datasets with a set of parameters

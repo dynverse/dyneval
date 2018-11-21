@@ -44,7 +44,7 @@ test_that(paste0("Testing evaluate_ti_method with random"), {
     parameters = NULL,
     metrics = metrics,
     output_model = TRUE,
-    mc_cores = 2,
+    map_fun = function(x, fun) parallel::mclapply(x, fun, mc.cores = 2),
     verbose = TRUE
   )
   sink()
@@ -56,7 +56,7 @@ test_that(paste0("Testing evaluate_ti_method with random"), {
 
   expect_is(score, "numeric")
 
-  expect_null(summary$error[[1]])
+  expect_true(is.na(summary$error[[1]]))
 
   expect_is(summary$correlation, "numeric")
 
@@ -84,7 +84,7 @@ test_that(paste0("Testing evaluate_ti_method with error"), {
     parameters = list(),
     metrics = metrics,
     output_model = TRUE,
-    mc_cores = 2,
+    map_fun = map,
     verbose = FALSE
   )
 
@@ -95,7 +95,7 @@ test_that(paste0("Testing evaluate_ti_method with error"), {
 
   expect_is(score, "numeric")
 
-  expect_true(!is.null(summary$error[[1]]))
+  expect_true(!is.na(summary$error[[1]]))
 
   expect_is(summary$correlation, "numeric")
   expect_is(summary$edge_flip, "numeric")
@@ -113,7 +113,7 @@ test_that(paste0("Testing evaluate_ti_method with identity"), {
     parameters = list(),
     metrics = metrics,
     output_model = TRUE,
-    mc_cores = 2,
+    map_fun = lapply,
     verbose = FALSE
   )
 
@@ -125,7 +125,7 @@ test_that(paste0("Testing evaluate_ti_method with identity"), {
   expect_is(score, "numeric")
   expect_true(all(score - c(1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1) < .01))
 
-  expect_null(summary$error[[1]])
+  expect_true(is.na(summary$error[[1]]))
 
   expect_is(summary$correlation, "numeric")
 

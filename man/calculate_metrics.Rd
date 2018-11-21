@@ -2,18 +2,18 @@
 % Please edit documentation in R/calculate_metrics.R
 \name{calculate_metrics}
 \alias{calculate_metrics}
-\title{Calculate the performance of a model with respect to a dataset}
+\title{Calculate the similarity between two trajectory models.}
 \usage{
 calculate_metrics(dataset, model, metrics = dyneval::metrics$metric_id,
   expression_source = dataset$expression)
 }
 \arguments{
-\item{dataset}{The original dataset.}
+\item{dataset}{The first trajectory, in most cases a gold standard trajectory}
 
-\item{model}{The predicted model.}
+\item{model}{The second trajectory, in most cases a predicted trajectory}
 
 \item{metrics}{Which metrics to evaluate. Check \code{dyneval::metrics} for a list of possible metrics.
-Passing a custom metric function with format \code{function(dataset, model) { 1 }} is also supported.}
+Passing a custom metric function with format \code{function(dataset, model) { 1 }} is also supported. The name of this function within the list will be used as the name of the metric.}
 
 \item{expression_source}{The expression data matrix, with features as columns.
 \itemize{
@@ -23,5 +23,8 @@ Passing a custom metric function with format \code{function(dataset, model) { 1 
 }}
 }
 \description{
-Calculate the performance of a model with respect to a dataset
+One use case for these metrics is to calculate the accuracy of a certain prediction compared to a reference trajectory. However, these metrics can also be used for other purposes, such as clustering of trajectories.
+}
+\details{
+Some metrics are asymmetric (see \code{dyneval::metrics$symmetric}), in which case the order of the dataset and model parameters matters.
 }

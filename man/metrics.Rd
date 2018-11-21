@@ -9,6 +9,12 @@
 metrics
 }
 \description{
-Metadata on metrics
+Also contained are:
+\itemize{
+\item Ways of rendering the metrics
+\item Categorisation of the metrics
+\item The perfect and worst possible scores (if possible to determine beforehand)
+\item Whether the metric is symmetric (i.e. whether flipping the order of trajectories would change the expected value of the metric)
+}
 }
 \keyword{datasets}
