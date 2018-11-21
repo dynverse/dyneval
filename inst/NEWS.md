@@ -1,5 +1,6 @@
-# dyneval 0.3.0 (unreleased)
+# dyneval 0.2.2 (21-11-2018)
 
+* BUG FIX: Update dyneval for dynwrap 0.3.1.
 
 # dyneval 0.2.1 (14-11-2018)
 

@@ -5,7 +5,6 @@
 #' @param output_model Whether or not the model will be outputted.
 #' @export
 #' @importFrom dynwrap infer_trajectories add_cell_waypoints
-#' @importFrom parallel mclapply
 #' @importFrom testthat expect_false expect_true
 #' @importFrom readr write_rds
 evaluate_ti_method <- function(
@@ -15,7 +14,7 @@ evaluate_ti_method <- function(
   metrics,
   give_priors = NULL,
   output_model = TRUE,
-  mc_cores = 1,
+  map_fun = map,
   verbose = FALSE
 ) {
   if (dynwrap::is_wrapper_with_trajectory(dataset)) {
@@ -28,13 +27,13 @@ evaluate_ti_method <- function(
     method = method,
     parameters = parameters,
     give_priors = give_priors,
-    mc_cores = mc_cores,
+    map_fun = map_fun,
     verbose = verbose,
-    capture_output = TRUE
+    return_verbose = TRUE
   )
 
   # Calculate scores
-  eval_outputs <- parallel::mclapply(seq_len(nrow(dataset)), mc.cores = mc_cores, function(i) {
+  eval_outputs <- map_fun(seq_len(nrow(dataset)), function(i) {
     dataseti <- dynutils::extract_row_to_list(dataset, i)
 
     # Fetch method outputs

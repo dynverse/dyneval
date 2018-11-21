@@ -5,7 +5,7 @@
 \title{Running an evaluation of a method on a set of datasets with a set of parameters}
 \usage{
 evaluate_ti_method(dataset, method, parameters, metrics,
-  give_priors = NULL, output_model = TRUE, mc_cores = 1,
+  give_priors = NULL, output_model = TRUE, map_fun = map,
   verbose = FALSE)
 }
 \arguments{
@@ -32,9 +32,10 @@ Must be a subset of all available priors (\code{\link[dynwrap:priors]{priors}}).
 
 \item{output_model}{Whether or not the model will be outputted.}
 
-\item{mc_cores}{The number of cores to use, allowing to parallellise the different datasets}
+\item{map_fun}{A mao function to use when inferring trajectories with multiple datasets or methods.
+Allows to parallellise the execution in an arbitrary way.}
 
-\item{verbose}{Whether or not to print information output}
+\item{verbose}{Whether or not to print information output.}
 }
 \description{
 Running an evaluation of a method on a set of datasets with a set of parameters
