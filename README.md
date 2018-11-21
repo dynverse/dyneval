@@ -61,20 +61,13 @@ changes.
 
 <!-- This section gets automatically generated from inst/NEWS.md, and also generates inst/NEWS -->
 
+### Latest changes in dyneval 0.2.2 (21-11-2018)
+
+  - BUG FIX: Update dyneval for dynwrap 0.3.1.
+
+  - MINOR CHANGE: Clean up imports and suggests.
+
 ### Latest changes in dyneval 0.2.1 (14-11-2018)
 
   - BUG FIX: Fix for feature importance scores when only a limited
     number of features are present
-
-### Latest changes in dyneval 0.2.0 (30-10-2018)
-
-  - DOCUMENTATION: Add NEWS.md.
-
-  - BUG FIX: Fix long\_name of rf\_mse and rf\_nmse in metrics.tsv.
-
-  - FEATURE: Allow expression\_source to be specified for feature
-    importance metrics.
-
-  - BUG FIX: Fix category and type of lm\_nmse in metrics.tsv.
-
-  - MINOR CHANGE: update dyneval for dynfeature 0.2.0.
