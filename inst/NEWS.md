@@ -1,5 +1,7 @@
 # dyneval 0.2.2 (21-11-2018)
 
+* DOCUMENTATION: Update and expand documentation
+
 * BUG FIX: Update dyneval for dynwrap 0.3.1.
 
 * MINOR CHANGE: Clean up imports and suggests.

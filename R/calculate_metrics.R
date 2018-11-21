@@ -1,9 +1,13 @@
-#' Calculate the performance of a model with respect to a dataset
+#' Calculate the similarity between two trajectory models.
 #'
-#' @param dataset The original dataset.
-#' @param model The predicted model.
+#' One use case for these metrics is to calculate the accuracy of a certain prediction compared to a reference trajectory. However, these metrics can also be used for other purposes, such as clustering of trajectories.
+#'
+#' Some metrics are asymmetric (see `dyneval::metrics$symmetric`), in which case the order of the dataset and model parameters matters.
+#'
+#' @param dataset The first trajectory, in most cases a gold standard trajectory
+#' @param model The second trajectory, in most cases a predicted trajectory
 #' @param metrics Which metrics to evaluate. Check `dyneval::metrics` for a list of possible metrics.
-#'   Passing a custom metric function with format `function(dataset, model) { 1 }` is also supported.
+#'   Passing a custom metric function with format `function(dataset, model) { 1 }` is also supported. The name of this function within the list will be used as the name of the metric.
 #' @param expression_source The expression data matrix, with features as columns.
 #'   * If a matrix is provided, it is used as is.
 #'   * If a character is provided, `dataset[[expression_source]]` should contain the matrix.
