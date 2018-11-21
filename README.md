@@ -63,9 +63,9 @@ changes.
 
 ### Latest changes in dyneval 0.2.2 (21-11-2018)
 
-  - DOCUMENTATION: Update and expand documentation
+  - DOCUMENTATION: Update and expand documentation.
 
-  - BUG FIX: Update dyneval for dynwrap 0.3.1.
+  - BUG FIX: Update dyneval for dynwrap 0.3.1 (\#50).
 
   - MINOR CHANGE: Clean up imports and suggests.
 
