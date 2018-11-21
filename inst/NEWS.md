@@ -1,5 +1,6 @@
-# dyneval 0.3.0 (unreleased)
+# dyneval 0.2.2 (unreleased)
 
+* DOCUMENTATION: Update and expand documentation
 
 # dyneval 0.2.1 (14-11-2018)
 
