@@ -23,11 +23,8 @@ Imports:
   glue,
   magrittr, 
   methods,
-  parallel, 
-  ParamHelpers (>= 1.11),
   purrr, 
   ranger,
-  readr,
   reshape2,
   testthat,
   tibble, 
@@ -35,6 +32,7 @@ Imports:
 Suggests:
   dyndimred,
   dyntoy,
+  parallel,
   roxygen2,
   netdist
 Remotes:

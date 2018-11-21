@@ -3,7 +3,6 @@
 #' @import dplyr
 #' @import tidyr
 #' @import methods
-#' @import ParamHelpers
 #' @import tibble
 #' @import dynutils
 #' @importFrom stats cor dist kmeans median prcomp quantile runif setNames step time cov.wt

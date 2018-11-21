@@ -6,7 +6,6 @@
 #' @export
 #' @importFrom dynwrap infer_trajectories add_cell_waypoints
 #' @importFrom testthat expect_false expect_true
-#' @importFrom readr write_rds
 evaluate_ti_method <- function(
   dataset,
   method,
