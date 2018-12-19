@@ -1,3 +1,7 @@
+# dyneval 0.2.3 (unreleased)
+
+* MINOR CHANGE: update categories of metrics
+
 # dyneval 0.2.2 (21-11-2018)
 
 * DOCUMENTATION: Update and expand documentation.
