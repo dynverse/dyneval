@@ -29,19 +29,29 @@ calculate_mapping <- function(dataset, prediction, grouping = c("branches", "mil
       groups_prediction <- prediction %>% dynwrap::group_onto_nearest_milestones()
     }
 
-    groups_dataset <- groups_dataset %>% na.omit() %>% as.character() %>% enframe("cell_id", "group_dataset")
-    groups_prediction <- groups_prediction %>% na.omit() %>% as.character() %>% enframe("cell_id", "group_prediction")
+    groups_dataset <- groups_dataset %>% as.character() %>% enframe("cell_id", "group_dataset")
+    groups_dataset_levels <- unique(groups_dataset$group_dataset) %>% na.omit()
+    groups_prediction <- groups_prediction %>% as.character() %>% enframe("cell_id", "group_prediction")
+    groups_prediction_levels <- unique(groups_prediction$group_prediction) %>% na.omit()
 
     groups <- full_join(groups_dataset, groups_prediction, "cell_id")
 
     # calculate the size of the intersections and of each group separately
     intersections <-
       groups %>%
-      filter(!is.na(group_dataset) & !is.na(group_prediction)) %>%
+      filter(!is.na(group_dataset), !is.na(group_prediction)) %>%
       group_by(group_dataset, group_prediction) %>%
       summarise(intersection = n()) %>%
       ungroup() %>%
-      complete(group_dataset, group_prediction, fill = list(intersection = 0))
+      mutate(
+        group_dataset = factor(group_dataset, levels = groups_dataset_levels),
+        group_prediction = factor(group_prediction, levels = groups_prediction_levels)
+      ) %>%
+      complete(
+        group_dataset, group_prediction,
+        fill = list(intersection = 0)
+      ) %>%
+      mutate_if(is.factor, as.character)
 
     n_dataset <-
       groups %>%
@@ -68,7 +78,8 @@ calculate_mapping <- function(dataset, prediction, grouping = c("branches", "mil
       slice(1) %>%
       ungroup()
 
-    relevances <- jaccards %>%
+    relevances <-
+      jaccards %>%
       group_by(group_prediction) %>%
       arrange(-jaccard) %>%
       slice(1) %>%
