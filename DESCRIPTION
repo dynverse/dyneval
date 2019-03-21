@@ -1,7 +1,7 @@
 Package: dyneval
 Type: Package
 Title: Evaluating trajectory inference methods
-Version: 0.2.2.99
+Version: 0.9.9
 Authors@R: c(
   person("Robrecht", "Cannoodt", email = "rcannood@gmail.com", role = c("aut", "cre")),
   person("Wouter", "Saelens", email = "wouter.saelens@ugent.be", role = c("aut")),
@@ -16,8 +16,8 @@ Depends:
   R (>= 3.4.0)
 Imports: 
   dplyr, 
-  dynfeature (>= 0.2.0),
-  dynutils (>= 1.0.1),
+  dynfeature (>= 0.9.9),
+  dynutils (>= 1.0.1.9000),
   dynwrap (>= 0.9.9),
   igraph,
   glue,
@@ -30,7 +30,7 @@ Imports:
   tibble, 
   tidyr
 Suggests:
-  dyndimred,
+  dyndimred (>= 0.9.9),
   dyntoy,
   parallel,
   roxygen2,
