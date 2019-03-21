@@ -21,7 +21,7 @@ calculate_him <- function(
   net2,
   simplify = TRUE
 ) {
-  requireNamespace("netdist")
+  requireNamespace("netdist", quietly = TRUE)
 
   # get the matched adjacencies
   adjacencies <- get_matched_adjacencies(
