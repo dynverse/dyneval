@@ -13,6 +13,7 @@ evaluate_ti_method <- function(
   metrics,
   give_priors = NULL,
   output_model = TRUE,
+  seed = function() random_seed(),
   map_fun = map,
   verbose = FALSE
 ) {
@@ -26,6 +27,7 @@ evaluate_ti_method <- function(
     method = method,
     parameters = parameters,
     give_priors = give_priors,
+    seed = seed,
     map_fun = map_fun,
     verbose = verbose,
     return_verbose = TRUE
