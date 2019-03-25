@@ -11,7 +11,7 @@ calculate_featureimp_enrichment(dataset, prediction,
 \arguments{
 \item{dataset}{A dataset}
 
-\item{prediction}{A predicted model}
+\item{prediction}{A predicted trajectory}
 
 \item{expression_source}{The expression data matrix, with features as columns.
 \itemize{

@@ -45,7 +45,7 @@ calculate_metrics <- function(
     model <- dynwrap::simplify_trajectory(model)
   }
 
-  if (("correlation" %in% metrics)) {
+  if ("correlation" %in% metrics) {
     testthat::expect_true(dynwrap::is_wrapper_with_waypoint_cells(dataset))
     testthat::expect_true(is.null(model) || dynwrap::is_wrapper_with_waypoint_cells(model))
 

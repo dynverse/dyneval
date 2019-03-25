@@ -21,8 +21,6 @@ calculate_featureimp_cor <- function(
   expression_source = dataset$expression_source,
   fi_method = dynfeature::fi_ranger_rf_lite()
 ) {
-  cell_ids <- dataset$cell_ids
-
   if (!is.null(prediction) && length(unique(prediction$milestone_percentages$cell_id)) >= 3) {
     dataset_imp <-
       dynfeature::calculate_overall_feature_importance(
@@ -97,8 +95,6 @@ calculate_featureimp_enrichment <- function(
   expression_source = dataset$expression,
   fi_method = dynfeature::fi_ranger_rf_lite()
 ) {
-  cell_ids <- dataset$cell_ids
-
   tryCatch({
     if (!is.null(prediction) && length(unique(prediction$milestone_percentages$cell_id)) >= 3) {
       pred_imp <-
