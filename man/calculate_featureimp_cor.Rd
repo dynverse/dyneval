@@ -25,3 +25,4 @@ calculate_featureimp_cor(dataset, prediction,
 \description{
 Compare feature importances derived by both trajectories
 }
+\keyword{metric}

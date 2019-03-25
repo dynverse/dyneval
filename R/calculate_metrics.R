@@ -17,6 +17,8 @@
 #' @importFrom testthat expect_equal expect_true
 #' @importFrom dynwrap is_wrapper_with_waypoint_cells calculate_geodesic_distances
 #'
+#' @keywords metric
+#'
 #' @export
 calculate_metrics <- function(
   dataset,

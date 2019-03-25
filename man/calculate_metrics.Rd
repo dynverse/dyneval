@@ -28,3 +28,4 @@ One use case for these metrics is to calculate the accuracy of a certain predict
 \details{
 Some metrics are asymmetric (see \code{dyneval::metrics$symmetric}), in which case the order of the dataset and model parameters matters.
 }
+\keyword{metric}

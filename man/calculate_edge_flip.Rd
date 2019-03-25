@@ -34,3 +34,4 @@ net2 <- dyntoy::generate_milestone_network("diverging_with_loops")
 calculate_edge_flip(net1, net2)
 
 }
+\keyword{metric}

@@ -5,6 +5,8 @@
 #' @param grouping How to group the cells, either branches or milestones
 #' @param simplify Whether to simplify the trajectory (allowing self loops)
 #'
+#' @keywords metric
+#'
 #' @importFrom dynfeature calculate_overall_feature_importance
 calculate_mapping <- function(dataset, prediction, grouping = c("branches", "milestones"), simplify = TRUE) {
   grouping <- match.arg(grouping)

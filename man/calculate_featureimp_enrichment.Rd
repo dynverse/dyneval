@@ -25,3 +25,4 @@ calculate_featureimp_enrichment(dataset, prediction,
 \description{
 Compare enrichment in finding back the most important genes
 }
+\keyword{metric}

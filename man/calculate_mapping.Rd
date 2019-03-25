@@ -25,3 +25,4 @@ calculate_mapping_branches(dataset, prediction, simplify = TRUE)
 \description{
 Compares the mapping between milestones or branches
 }
+\keyword{metric}

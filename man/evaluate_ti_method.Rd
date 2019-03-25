@@ -42,3 +42,4 @@ Allows to parallellise the execution in an arbitrary way.}
 \description{
 Running an evaluation of a method on a set of datasets with a set of parameters
 }
+\keyword{evaluation}

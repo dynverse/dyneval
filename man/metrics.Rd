@@ -17,4 +17,4 @@ Also contained are:
 \item Whether the metric is symmetric (i.e. whether flipping the order of trajectories would change the expected value of the metric)
 }
 }
-\keyword{datasets}
+\keyword{metric}

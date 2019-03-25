@@ -2,11 +2,13 @@
 #' Compare feature importances derived by both trajectories
 #'
 #' @param dataset A dataset
-#' @param prediction A predicted model
+#' @param prediction A predicted trajectory
 #' @param expression_source The expression data matrix, with features as columns.
 #'   * If a matrix is provided, it is used as is.
 #'   * If a character is provided, `dataset[[expression_source]]` should contain the matrix.
 #'   * If a function is provided, that function will be called in order to obtain the expression (useful for lazy loading).
+#'
+#' @keywords metric
 #'
 #' @inheritParams dynfeature::calculate_overall_feature_importance
 #'
@@ -24,13 +26,13 @@ calculate_featureimp_cor <- function(
   if (!is.null(prediction) && length(unique(prediction$milestone_percentages$cell_id)) >= 3) {
     dataset_imp <-
       dynfeature::calculate_overall_feature_importance(
-        traj = dataset,
+        trajectory = dataset,
         expression_source = expression_source,
         fi_method = fi_method
       )
     pred_imp <-
       dynfeature::calculate_overall_feature_importance(
-        traj = prediction,
+        trajectory = prediction,
         expression_source = expression_source,
         fi_method = fi_method
       )
@@ -78,12 +80,14 @@ calculate_featureimp_cor <- function(
 #' Compare enrichment in finding back the most important genes
 #'
 #' @param dataset A dataset
-#' @param prediction A predicted model
+#' @param prediction A predicted trajectory
 #' @param expression_source The expression data matrix, with features as columns.
 #'   * If a matrix is provided, it is used as is.
 #'   * If a character is provided, `dataset[[expression_source]]` should contain the matrix.
 #'   * If a function is provided, that function will be called in order to obtain the expression (useful for lazy loading).
 #' @inheritParams dynfeature::calculate_overall_feature_importance
+#'
+#' @keywords metric
 #'
 #' @importFrom dynfeature calculate_overall_feature_importance fi_ranger_rf_lite
 #' @importFrom stats ks.test wilcox.test

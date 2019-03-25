@@ -13,6 +13,8 @@
 #' net2 <- dyntoy::generate_milestone_network("cyclic")
 #' calculate_him(net1, net2)
 #'
+#' @keywords metric
+#'
 #' @importFrom dynwrap simplify_igraph_network
 #'
 #' @export

@@ -17,3 +17,4 @@ calculate_position_predict(dataset, prediction, metrics = c("rf_mse",
 \description{
 Compute metrics related to the prediction of the positions
 }
+\keyword{metric}

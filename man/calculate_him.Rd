@@ -26,3 +26,4 @@ net2 <- dyntoy::generate_milestone_network("cyclic")
 calculate_him(net1, net2)
 
 }
+\keyword{metric}
