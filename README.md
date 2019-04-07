@@ -69,6 +69,8 @@ changes.
 
   - MINOR CHANGE: Move metric functions from dyneval to dynutils.
 
+  - MINOR CHANGE: Bump version number for dynwrap 1.0.0
+
 ### Recent changes in dyneval 0.2.2 (21-11-2018)
 
   - DOCUMENTATION: Update and expand documentation.
