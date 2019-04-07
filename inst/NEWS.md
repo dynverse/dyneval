@@ -1,6 +1,8 @@
-# dyneval 0.2.3 (unreleased)
+# dyneval 0.9.9 (07-04-2019)
 
-* MINOR CHANGE: update categories of metrics
+* MINOR CHANGE: Update categories of metrics
+
+* MINOR CHANGE: Move metric functions from dyneval to dynutils.
 
 # dyneval 0.2.2 (21-11-2018)
 

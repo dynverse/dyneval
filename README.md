@@ -57,15 +57,17 @@ ordering
 
 ## Latest changes
 
-Check out `news(package = "dynwrap")` or [NEWS.md](inst/NEWS.md) for a
+Check out `news(package = "dyneval")` or [NEWS.md](inst/NEWS.md) for a
 full list of
 changes.
 
 <!-- This section gets automatically generated from inst/NEWS.md, and also generates inst/NEWS -->
 
-### Recent changes in dyneval 0.2.3 (unreleased)
+### Recent changes in dyneval 0.9.9 (07-04-2019)
 
-  - MINOR CHANGE: update categories of metrics
+  - MINOR CHANGE: Update categories of metrics
+
+  - MINOR CHANGE: Move metric functions from dyneval to dynutils.
 
 ### Recent changes in dyneval 0.2.2 (21-11-2018)
 

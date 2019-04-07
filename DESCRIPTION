@@ -17,8 +17,8 @@ Depends:
 Imports: 
   dplyr, 
   dynfeature (>= 0.9.9),
-  dynutils (>= 1.0.1.9000),
-  dynwrap (>= 0.9.9),
+  dynutils (>= 1.0.3),
+  dynwrap (>= 1.0.0),
   igraph,
   glue,
   magrittr, 
