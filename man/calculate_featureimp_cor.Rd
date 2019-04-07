@@ -11,7 +11,7 @@ calculate_featureimp_cor(dataset, prediction,
 \arguments{
 \item{dataset}{A dataset}
 
-\item{prediction}{A predicted model}
+\item{prediction}{A predicted trajectory}
 
 \item{expression_source}{The expression data matrix, with features as columns.
 \itemize{
@@ -25,3 +25,4 @@ calculate_featureimp_cor(dataset, prediction,
 \description{
 Compare feature importances derived by both trajectories
 }
+\keyword{metric}

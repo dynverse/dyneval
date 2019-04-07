@@ -1,9 +1,11 @@
 
 #' Compute metrics related to the prediction of the positions
 #'
-#' @param dataset A dataset
-#' @param prediction A predicted model
+#' @param dataset A dataset containing a trajectory
+#' @param prediction A predicted trajectory
 #' @param metrics Which metrics to predict, can be rf_mse, rf_rsq, rf_nmse, lm_mse, lm_rsq and/or lm_nmse
+#'
+#' @keywords metric
 #'
 #' @importFrom reshape2 acast
 #' @importFrom ranger ranger

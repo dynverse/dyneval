@@ -13,6 +13,8 @@
 #' net2 <- dyntoy::generate_milestone_network("cyclic")
 #' calculate_him(net1, net2)
 #'
+#' @keywords metric
+#'
 #' @importFrom dynwrap simplify_igraph_network
 #'
 #' @export
@@ -21,7 +23,7 @@ calculate_him <- function(
   net2,
   simplify = TRUE
 ) {
-  requireNamespace("netdist")
+  requireNamespace("netdist", quietly = TRUE)
 
   # get the matched adjacencies
   adjacencies <- get_matched_adjacencies(

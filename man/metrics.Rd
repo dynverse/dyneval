@@ -4,7 +4,7 @@
 \name{metrics}
 \alias{metrics}
 \title{Metadata on metrics}
-\format{An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 19 rows and 9 columns.}
+\format{An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 19 rows and 10 columns.}
 \usage{
 metrics
 }
@@ -17,4 +17,4 @@ Also contained are:
 \item Whether the metric is symmetric (i.e. whether flipping the order of trajectories would change the expected value of the metric)
 }
 }
-\keyword{datasets}
+\keyword{metric}

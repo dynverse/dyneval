@@ -5,6 +5,8 @@
 #' @param grouping How to group the cells, either branches or milestones
 #' @param simplify Whether to simplify the trajectory (allowing self loops)
 #'
+#' @keywords metric
+#'
 #' @importFrom dynfeature calculate_overall_feature_importance
 calculate_mapping <- function(dataset, prediction, grouping = c("branches", "milestones"), simplify = TRUE) {
   grouping <- match.arg(grouping)
@@ -22,29 +24,45 @@ calculate_mapping <- function(dataset, prediction, grouping = c("branches", "mil
     }
 
     if (grouping == "branches") {
-      groups_dataset <- dataset %>% dynwrap::group_onto_trajectory_edges() %>% factor() %>% enframe("cell_id", "group_dataset")
-      groups_prediction <- prediction %>% dynwrap::group_onto_trajectory_edges() %>% factor() %>% enframe("cell_id", "group_prediction")
+      groups_dataset <- dataset %>% dynwrap::group_onto_trajectory_edges()
+      groups_prediction <- prediction %>% dynwrap::group_onto_trajectory_edges()
     } else if (grouping == "milestones") {
-      groups_dataset <- dataset %>% dynwrap::group_onto_nearest_milestones() %>% factor() %>% enframe("cell_id", "group_dataset")
-      groups_prediction <- prediction %>% dynwrap::group_onto_nearest_milestones() %>% factor() %>% enframe("cell_id", "group_prediction")
+      groups_dataset <- dataset %>% dynwrap::group_onto_nearest_milestones()
+      groups_prediction <- prediction %>% dynwrap::group_onto_nearest_milestones()
     }
+
+    groups_dataset <- groups_dataset %>% as.character() %>% enframe("cell_id", "group_dataset")
+    groups_dataset_levels <- unique(groups_dataset$group_dataset) %>% na.omit()
+    groups_prediction <- groups_prediction %>% as.character() %>% enframe("cell_id", "group_prediction")
+    groups_prediction_levels <- unique(groups_prediction$group_prediction) %>% na.omit()
 
     groups <- full_join(groups_dataset, groups_prediction, "cell_id")
 
     # calculate the size of the intersections and of each group separately
-    intersections <- groups %>%
-      filter(!is.na(group_dataset) & !is.na(group_prediction)) %>%
+    intersections <-
+      groups %>%
+      filter(!is.na(group_dataset), !is.na(group_prediction)) %>%
       group_by(group_dataset, group_prediction) %>%
       summarise(intersection = n()) %>%
       ungroup() %>%
-      complete(group_dataset, group_prediction, fill = list(intersection = 0))
+      mutate(
+        group_dataset = factor(group_dataset, levels = groups_dataset_levels),
+        group_prediction = factor(group_prediction, levels = groups_prediction_levels)
+      ) %>%
+      complete(
+        group_dataset, group_prediction,
+        fill = list(intersection = 0)
+      ) %>%
+      mutate_if(is.factor, as.character)
 
-    n_dataset <- groups %>%
+    n_dataset <-
+      groups %>%
       filter(!is.na(group_dataset)) %>%
       group_by(group_dataset) %>%
       summarise(n_dataset = n())
 
-    n_prediction <- groups %>%
+    n_prediction <-
+      groups %>%
       filter(!is.na(group_prediction)) %>%
       group_by(group_prediction) %>%
       summarise(n_prediction = n())
@@ -62,7 +80,8 @@ calculate_mapping <- function(dataset, prediction, grouping = c("branches", "mil
       slice(1) %>%
       ungroup()
 
-    relevances <- jaccards %>%
+    relevances <-
+      jaccards %>%
       group_by(group_prediction) %>%
       arrange(-jaccard) %>%
       slice(1) %>%
@@ -89,7 +108,7 @@ calculate_mapping_milestones <- function(dataset, prediction, simplify = TRUE) {
 
 #' @rdname calculate_mapping
 calculate_mapping_branches <- function(dataset, prediction, simplify = TRUE) {
-  mapping <- calculate_mapping(dataset, prediction, "branches", simplify = simplify)
+  mapping <- calculate_mapping(dataset, prediction, grouping = "branches", simplify = simplify)
   names(mapping) <- paste0(names(mapping), "_branches")
   mapping
 }

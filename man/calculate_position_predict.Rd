@@ -8,12 +8,13 @@ calculate_position_predict(dataset, prediction, metrics = c("rf_mse",
   "rf_rsq", "lm_mse", "lm_rsq"))
 }
 \arguments{
-\item{dataset}{A dataset}
+\item{dataset}{A dataset containing a trajectory}
 
-\item{prediction}{A predicted model}
+\item{prediction}{A predicted trajectory}
 
 \item{metrics}{Which metrics to predict, can be rf_mse, rf_rsq, rf_nmse, lm_mse, lm_rsq and/or lm_nmse}
 }
 \description{
 Compute metrics related to the prediction of the positions
 }
+\keyword{metric}

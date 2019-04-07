@@ -1,0 +1,7 @@
+reference:
+  - id: "evaluation"
+    title: "Evaluating methods"
+    desc: "Methods to compare different TI methods"
+  - id: "metric"
+    title: "Metrics for comparing trajectories"
+    desc: "Metrics for comparing two trajectories"

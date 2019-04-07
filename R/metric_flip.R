@@ -8,6 +8,8 @@
 #' @param limit_flips Maximal number of flips to check
 #' @param limit_combinations Maximal number of combinations to check
 #'
+#' @keywords metric
+#'
 #' @examples
 #' net1 <- dyntoy::generate_milestone_network("linear")
 #' net2 <- dyntoy::generate_milestone_network("bifurcating")

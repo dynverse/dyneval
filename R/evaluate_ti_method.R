@@ -3,9 +3,13 @@
 #' @inheritParams calculate_metrics
 #' @inheritParams dynwrap::infer_trajectories
 #' @param output_model Whether or not the model will be outputted.
-#' @export
+#'
+#' @keywords evaluation
+#'
 #' @importFrom dynwrap infer_trajectories add_cell_waypoints
 #' @importFrom testthat expect_false expect_true
+#'
+#' @export
 evaluate_ti_method <- function(
   dataset,
   method,
@@ -13,6 +17,7 @@ evaluate_ti_method <- function(
   metrics,
   give_priors = NULL,
   output_model = TRUE,
+  seed = function() random_seed(),
   map_fun = map,
   verbose = FALSE
 ) {
@@ -26,6 +31,7 @@ evaluate_ti_method <- function(
     method = method,
     parameters = parameters,
     give_priors = give_priors,
+    seed = seed,
     map_fun = map_fun,
     verbose = verbose,
     return_verbose = TRUE

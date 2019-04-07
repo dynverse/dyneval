@@ -5,8 +5,8 @@
 \title{Running an evaluation of a method on a set of datasets with a set of parameters}
 \usage{
 evaluate_ti_method(dataset, method, parameters, metrics,
-  give_priors = NULL, output_model = TRUE, map_fun = map,
-  verbose = FALSE)
+  give_priors = NULL, output_model = TRUE, seed = function()
+  random_seed(), map_fun = map, verbose = FALSE)
 }
 \arguments{
 \item{dataset}{The first trajectory, in most cases a gold standard trajectory}
@@ -28,11 +28,13 @@ If multiple methods were provided in the \code{method} parameter,
 Passing a custom metric function with format \code{function(dataset, model) { 1 }} is also supported. The name of this function within the list will be used as the name of the metric.}
 
 \item{give_priors}{All the priors a method is allowed to receive.
-Must be a subset of all available priors (\code{\link[dynwrap:priors]{priors}}).}
+Must be a subset of all available priors (\link[dynwrap:priors]{dynwrap::priors}).}
 
 \item{output_model}{Whether or not the model will be outputted.}
 
-\item{map_fun}{A mao function to use when inferring trajectories with multiple datasets or methods.
+\item{seed}{A seed to be passed to the TI method.}
+
+\item{map_fun}{A map function to use when inferring trajectories with multiple datasets or methods.
 Allows to parallellise the execution in an arbitrary way.}
 
 \item{verbose}{Whether or not to print information output.}
@@ -40,3 +42,4 @@ Allows to parallellise the execution in an arbitrary way.}
 \description{
 Running an evaluation of a method on a set of datasets with a set of parameters
 }
+\keyword{evaluation}
