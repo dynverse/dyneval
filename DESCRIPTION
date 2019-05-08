@@ -1,7 +1,7 @@
 Package: dyneval
 Type: Package
 Title: Evaluating trajectory inference methods
-Version: 0.9.9
+Version: 0.9.9.9000
 Authors@R: c(
   person("Robrecht", "Cannoodt", email = "rcannood@gmail.com", role = c("aut", "cre")),
   person("Wouter", "Saelens", email = "wouter.saelens@ugent.be", role = c("aut")),
@@ -35,10 +35,10 @@ Suggests:
   parallel,
   roxygen2,
   netdist
-Remotes:
-  dynverse/dyndimred,
-  dynverse/dynfeature,
-  dynverse/dyntoy,
-  dynverse/dynutils,
-  dynverse/dynwrap,
-  dynverse/netdist
+Remotes: 
+  dynverse/dyndimred@devel,
+  dynverse/dynfeature@devel,
+  dynverse/dyntoy@devel,
+  dynverse/dynutils@devel,
+  dynverse/dynwrap@devel,
+  dynverse/netdist@devel
