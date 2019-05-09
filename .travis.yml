@@ -6,7 +6,7 @@ before_install:
 install:
 - install_hdf5
 - install_cran devtools covr
-- install_withdeps
 - install_dynverse
+- install_withdeps
 after_success:
  - R -e 'covr::codecov()'
