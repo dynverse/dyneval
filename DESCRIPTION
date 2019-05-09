@@ -27,12 +27,13 @@ Imports:
   ranger,
   reshape2,
   testthat,
-  tibble, 
+  tibble,   
   tidyr
 Suggests:
   dyndimred (>= 0.9.9),
   dyntoy,
   parallel,
+  pkgload,
   roxygen2,
   netdist
 Remotes: 
