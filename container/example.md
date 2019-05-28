@@ -1,5 +1,7 @@
 Make sure docker is installed, and the folder ~/tmp exists (or change it in the code)
 
+Run this in command-line:
+
 ```
 docker run -v ~/tmp/:/ti/ dynverse/dyntoy --model linear --num_cells 100 --output /ti/dataset.h5
 
