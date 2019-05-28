@@ -46,8 +46,13 @@ calculate_metrics <- function(
   }
 
   if ("correlation" %in% metrics) {
+    # make sure dataset and model have waypoint cells
     testthat::expect_true(dynwrap::is_wrapper_with_waypoint_cells(dataset))
-    testthat::expect_true(is.null(model) || dynwrap::is_wrapper_with_waypoint_cells(model))
+    testthat::expect_true(is.null(model) || dynwrap::is_wrapper_with_trajectory(model))
+
+    if (!dynwrap::is_wrapper_with_waypoint_cells(model)) {
+      model <- dynwrap::add_cell_waypoints(model)
+    }
 
     # calculate geodesic distances
     if (!is.null(model)) {
