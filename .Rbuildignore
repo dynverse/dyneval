@@ -6,3 +6,5 @@
 ^.git$
 ^data-raw$
 ^README\.Rmd$
+^_pkgdown\.yml$
+^container$
