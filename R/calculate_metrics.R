@@ -50,12 +50,12 @@ calculate_metrics <- function(
     testthat::expect_true(dynwrap::is_wrapper_with_waypoint_cells(dataset))
     testthat::expect_true(is.null(model) || dynwrap::is_wrapper_with_trajectory(model))
 
-    if (!dynwrap::is_wrapper_with_waypoint_cells(model)) {
-      model <- dynwrap::add_cell_waypoints(model)
-    }
-
     # calculate geodesic distances
     if (!is.null(model)) {
+      if (!dynwrap::is_wrapper_with_waypoint_cells(model)) {
+        model <- dynwrap::add_cell_waypoints(model)
+      }
+
       testthat::expect_true(all(model$cell_ids %in% dataset$cell_ids))
       model$cell_ids <- dataset$cell_ids
 
@@ -67,10 +67,7 @@ calculate_metrics <- function(
       model$geodesic_dist <- dynwrap::calculate_geodesic_distances(model, waypoints)
       time1 <- Sys.time()
       summary_list$time_waypointedgeodesic <- as.numeric(difftime(time1, time0, units = "sec"))
-    }
 
-
-    if (!is.null(model)) {
       dataset$geodesic_dist[is.infinite(dataset$geodesic_dist)] <- .Machine$double.xmax
       model$geodesic_dist[is.infinite(model$geodesic_dist)] <- .Machine$double.xmax
 
