@@ -8,6 +8,7 @@
 #' @keywords metric
 #'
 #' @importFrom dynfeature calculate_overall_feature_importance
+#' @importFrom stats na.omit
 calculate_mapping <- function(dataset, prediction, grouping = c("branches", "milestones"), simplify = TRUE) {
   grouping <- match.arg(grouping)
 

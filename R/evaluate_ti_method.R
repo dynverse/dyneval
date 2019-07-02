@@ -6,7 +6,7 @@
 #'
 #' @keywords evaluation
 #'
-#' @importFrom dynwrap infer_trajectories add_cell_waypoints
+#' @importFrom dynwrap infer_trajectories add_cell_waypoints random_seed
 #' @importFrom testthat expect_false expect_true
 #'
 #' @export
