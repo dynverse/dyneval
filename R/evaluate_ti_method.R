@@ -50,7 +50,7 @@ evaluate_ti_method <- function(
       model <- model %>% dynwrap::add_cell_waypoints(num_cells_selected = length(dataseti$waypoint_cells))
       time1 <- Sys.time()
       time_cellwaypoints <- as.numeric(difftime(time1, time0, units = "sec"))
-      df_cellwaypoints <- data_frame(time_cellwaypoints)
+      df_cellwaypoints <- tibble(time_cellwaypoints)
     } else {
       df_cellwaypoints <- NULL
     }

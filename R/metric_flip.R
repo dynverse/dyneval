@@ -319,7 +319,7 @@ insert_two_nodes_into_selfloop <- function(df) {
     l <- df$length[[i]]
     d <- df$directed[[i]]
     newn <- paste0(dynutils::random_time_string(), seq_len(2))
-    data_frame(
+    tibble(
       from = c(n, newn),
       to = c(newn, n),
       length = l/3,
@@ -341,7 +341,7 @@ insert_one_node_into_duplicate_edges <- function(df) {
     l <- df$length[[i]]
     d <- df$directed[[i]]
     newn <- paste0(dynutils::random_time_string(), seq_len(1))
-    data_frame(
+    tibble(
       from = c(n, newn),
       to = c(newn, t),
       length = l/2,
@@ -356,7 +356,7 @@ insert_one_node_into_duplicate_edges <- function(df) {
 
 change_single_edge_into_double <- function(df) {
   if (nrow(df) == 1 && df$from[[1]] != df$to[[1]]) {
-    data_frame(
+    tibble(
       from = c("a", "b"),
       to = c("b", "c"),
       length = df$length/2,

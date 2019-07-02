@@ -17,7 +17,7 @@ test_that(paste0("Edge flip returns relevant results"), {
       "b",   "c", 0.9,      FALSE
     ),
 
-    linear3 = data_frame(
+    linear3 = tibble(
       from = letters %>% head(-1),
       to = letters %>% tail(-1),
       length = runif(length(from), 10, 30),
@@ -48,7 +48,7 @@ test_that(paste0("Edge flip returns relevant results"), {
       "c", "a", 3, TRUE
     ),
 
-    cycle2 = data_frame(
+    cycle2 = tibble(
       from = letters,
       to = c(letters[-1], letters[[1]]),
       length = runif(length(letters), 4, 10),
