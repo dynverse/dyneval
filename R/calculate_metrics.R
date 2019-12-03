@@ -209,8 +209,9 @@ calculate_metrics <- function(
       } else {
         output <- 0
       }
-      names(output) <- fn
-
+      if (is.null(names(output))) {
+        names(output) <- fn
+      }
       summary_list[names(output)] <- output
     }
   }
