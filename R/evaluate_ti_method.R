@@ -21,10 +21,12 @@ evaluate_ti_method <- function(
   map_fun = map,
   verbose = FALSE
 ) {
-  if (dynwrap::is_wrapper_with_trajectory(dataset)) {
+  if (dynwrap::is_data_wrapper(dataset)) {
     dataset <- list_as_tibble(list(dataset))
   }
-  testthat::expect_true(all(mapdf_lgl(dataset, dynwrap::is_wrapper_with_waypoint_cells)))
+  testthat::expect_true(all(mapdf_lgl(dataset, function(d) {
+    !dynwrap::is_wrapper_with_trajectory(d) || dynwrap::is_wrapper_with_waypoint_cells(d)
+  })))
 
   method_outputs <- dynwrap::infer_trajectories(
     dataset = dataset,
@@ -44,7 +46,7 @@ evaluate_ti_method <- function(
     # Fetch method outputs
     model <- method_outputs$model[[i]]
 
-    if (!is.null(model)) {
+    if (!is.null(model) && dynwrap::is_wrapper_with_trajectory(model)) {
       # Calculate geodesic distances
       time0 <- Sys.time()
       model <- model %>% dynwrap::add_cell_waypoints(num_cells_selected = length(dataseti$waypoint_cells))
