@@ -10,6 +10,8 @@
 #' @importFrom reshape2 acast
 #' @importFrom ranger ranger
 #' @importFrom stats lm sd
+#'
+#' @export
 calculate_position_predict <- function(dataset, prediction, metrics = c("rf_mse", "rf_rsq", "lm_mse", "lm_rsq")) {
   cell_ids <- dataset$cell_ids
 

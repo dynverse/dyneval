@@ -8,3 +8,5 @@
 ^README\.Rmd$
 ^_pkgdown\.yml$
 ^container$
+^LICENSE\.md$
+^LICENSE\.md$

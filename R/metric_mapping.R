@@ -9,6 +9,8 @@
 #'
 #' @importFrom dynfeature calculate_overall_feature_importance
 #' @importFrom stats na.omit
+#'
+#' @export
 calculate_mapping <- function(dataset, prediction, grouping = c("branches", "milestones"), simplify = TRUE) {
   grouping <- match.arg(grouping)
 
@@ -99,6 +101,7 @@ calculate_mapping <- function(dataset, prediction, grouping = c("branches", "mil
   }
 }
 
+#' @export
 #' @rdname calculate_mapping
 calculate_mapping_milestones <- function(dataset, prediction, simplify = TRUE) {
   mapping <- calculate_mapping(dataset, prediction, "milestones", simplify = simplify)
@@ -106,7 +109,7 @@ calculate_mapping_milestones <- function(dataset, prediction, simplify = TRUE) {
   mapping
 }
 
-
+#' @export
 #' @rdname calculate_mapping
 calculate_mapping_branches <- function(dataset, prediction, simplify = TRUE) {
   mapping <- calculate_mapping(dataset, prediction, grouping = "branches", simplify = simplify)
